@@ -59,7 +59,9 @@
         </div>
       </template>
 
+      <table-skeleton v-if="loading && !menuList?.length" />
       <el-table
+        v-else
         ref="menuTableRef"
         v-loading="loading"
         class="data-table"
@@ -72,6 +74,7 @@
         :load="getChildrenList"
         :expand-change="expandMenuHandle"
       >
+        <template #empty><empty-state /></template>
         <el-table-column prop="menuName" label="菜单名称" :show-overflow-tooltip="true" width="220">
           <template #default="scope">
             <div class="menu-name-cell">
@@ -376,6 +379,8 @@ import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 import { handleTree } from '@/utils/ruoyi';
+import EmptyState from '@/components/EmptyState/index.vue';
+import TableSkeleton from '@/components/TableSkeleton/index.vue';
 
 interface MenuOptionsType {
   menuId: number;

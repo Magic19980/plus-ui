@@ -20,6 +20,16 @@
   tbody tr:last-child td:last-child {
     border-bottom-right-radius: var(--app-radius-md);
   }
+
+  // 表行悬停与选中增强
+  .el-table__body tr {
+    transition: background-color 0.2s ease;
+  }
+
+  // 当前行左侧彩色指示条
+  .el-table__body tr.current-row > td.el-table__cell:first-child {
+    box-shadow: inset 3px 0 0 var(--app-accent-strong);
+  }
 }
 
 .el-table__header-wrapper {
@@ -74,8 +84,9 @@ html.dark {
       word-break: break-word;
       background-color: $table-header-bg !important;
       color: $table-header-text-color;
-      height: 40px !important;
+      height: 44px !important;
       font-size: 13px;
+      font-weight: 600;
     }
   }
 

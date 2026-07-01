@@ -7,7 +7,7 @@ const setting: DefaultSettings = {
    */
   title: import.meta.env.VITE_APP_TITLE,
 
-  theme: '#409EFF',
+  theme: '#0EA5E9',
 
   /**
    * 侧边栏主题 深色主题theme-dark，浅色主题theme-light
@@ -81,11 +81,6 @@ const setting: DefaultSettings = {
   /**
    * 页面圆角大小
    */
-  radiusBase: 14,
-
-  /**
-   * 表格全高内部滚动
-   */
-  fullHeightTable: true
+  radiusBase: 18
 };
 export default setting;

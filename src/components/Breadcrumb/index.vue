@@ -90,6 +90,18 @@ onMounted(() => {
     font-weight: 500;
   }
 
+  :deep(.el-breadcrumb__inner a) {
+    color: var(--app-text-muted);
+    font-weight: 500;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--app-accent-strong);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  }
+
   .no-redirect {
     color: var(--app-text-title);
     cursor: text;

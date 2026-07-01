@@ -15,7 +15,7 @@
   margin-top: 8px;
   border: 1px solid var(--app-surface-border);
   background: var(--app-surface-bg);
-  border-radius: 22px;
+  border-radius: var(--app-radius-lg);
   width: 100%;
   padding: 12px;
 }
@@ -52,14 +52,16 @@
   border-color: var(--app-surface-border);
   overflow: hidden;
   transition:
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+    box-shadow 0.25s ease,
+    transform 0.25s ease,
+    border-color 0.25s ease;
   background: var(--app-surface-bg);
 }
 
 .el-card:hover {
   box-shadow: var(--app-shadow-md);
   border-color: var(--app-accent-soft);
+  transform: translateY(-1px);
 }
 
 .card-box {

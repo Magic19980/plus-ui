@@ -77,22 +77,22 @@
 .query-form .el-input-number,
 .query-form .el-input-number__decrease,
 .query-form .el-input-number__increase {
-  border-radius: 12px !important;
+  border-radius: var(--app-radius-md) !important;
 }
 
 .query-form .el-button {
-  border-radius: 10px !important;
+  border-radius: var(--app-radius-md) !important;
 }
 
 html.dark .query-form .el-button--primary {
-  --el-button-bg-color: rgba(37, 99, 235, 0.28);
-  --el-button-border-color: rgba(96, 165, 250, 0.62);
+  --el-button-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.28);
+  --el-button-border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.62);
   --el-button-text-color: #dbeafe;
-  --el-button-hover-bg-color: rgba(59, 130, 246, 0.36);
+  --el-button-hover-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.36);
   --el-button-hover-border-color: rgba(147, 197, 253, 0.78);
   --el-button-hover-text-color: #eff6ff;
-  --el-button-active-bg-color: rgba(29, 78, 216, 0.44);
-  --el-button-active-border-color: rgba(96, 165, 250, 0.86);
+  --el-button-active-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.44);
+  --el-button-active-border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.86);
   --el-button-active-text-color: #eff6ff;
 }
 

@@ -30,7 +30,7 @@
 .el-cascader-node {
   min-height: 38px;
   margin: 2px 0;
-  border-radius: 10px;
+  border-radius: var(--app-radius-md);
   color: var(--app-text-title);
   line-height: 38px;
   transition:
@@ -49,7 +49,7 @@
 
 .el-select-dropdown__item.is-selected,
 .el-autocomplete-suggestion li.highlighted {
-  background: rgba(64, 158, 255, 0.12);
+  background: rgba(14, 165, 233, 0.12);
   color: var(--app-accent-strong);
   font-weight: 600;
 }
@@ -154,7 +154,7 @@
 .el-date-table td,
 .el-month-table td .cell,
 .el-year-table td .cell {
-  border-radius: 10px;
+  border-radius: var(--app-radius-md);
 }
 
 .el-date-table td.today .el-date-table-cell__text,

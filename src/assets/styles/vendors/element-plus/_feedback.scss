@@ -10,7 +10,7 @@
   overflow: hidden;
   border: 1px solid var(--app-surface-border);
   background: var(--app-surface-bg);
-  border-radius: 20px;
+  border-radius: var(--app-radius-lg);
   box-shadow: var(--app-shadow-md);
 
   .el-message-box__header {
@@ -63,7 +63,7 @@
     margin-top: 1px;
     width: 30px;
     height: 30px;
-    border-radius: 10px;
+    border-radius: var(--app-radius-md);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -221,6 +221,6 @@ html.dark {
   }
 
   .el-message--info {
-    background: rgba(43, 107, 211, 0.18);
+    background: rgba(14, 165, 233, 0.18);
   }
 }

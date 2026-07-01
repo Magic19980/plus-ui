@@ -6,7 +6,7 @@
   height: 28px !important;
   min-width: 28px !important;
   padding: 0 !important;
-  border-radius: 10px !important;
+  border-radius: var(--app-radius-md) !important;
   background: var(--app-accent-soft) !important;
 }
 
@@ -52,6 +52,24 @@
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     pointer-events: none;
+  }
+}
+
+// --- 搜索面板折叠时筛选摘要 ---
+.search-panel-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 10px;
+  border-top: 1px solid var(--app-surface-border);
+  background: var(--app-elevated-soft-bg);
+
+  .summary-label {
+    font-size: var(--app-text-xs, 12px);
+    color: var(--app-text-muted);
+    white-space: nowrap;
+    font-weight: 500;
   }
 }
 

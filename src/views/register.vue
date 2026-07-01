@@ -240,7 +240,7 @@ onMounted(() => {
   justify-content: center;
   padding: 40px 24px 88px;
   background:
-    radial-gradient(circle at 12% 12%, rgba(53, 109, 255, 0.22), transparent 24%),
+    radial-gradient(circle at 12% 12%, rgba(14, 165, 233, 0.22), transparent 24%),
     radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.18), transparent 24%),
     linear-gradient(135deg, #071120 0%, #0f1b33 42%, #15345f 100%);
 }
@@ -269,7 +269,7 @@ onMounted(() => {
   color: #eef4ff;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
-    linear-gradient(135deg, rgba(53, 109, 255, 0.32), rgba(15, 23, 42, 0.24));
+    linear-gradient(135deg, rgba(14, 165, 233, 0.32), rgba(15, 23, 42, 0.24));
 }
 
 .brand-pill {
@@ -447,7 +447,7 @@ onMounted(() => {
   width: 100%;
   height: 50px;
   border-radius: 16px;
-  box-shadow: 0 18px 34px rgba(53, 109, 255, 0.22);
+  box-shadow: 0 18px 34px rgba(14, 165, 233, 0.22);
 }
 
 .register-form :deep(.el-input__wrapper) {
@@ -459,8 +459,8 @@ onMounted(() => {
 
 .register-form :deep(.el-input__wrapper.is-focus) {
   box-shadow:
-    0 0 0 1px rgba(53, 109, 255, 0.24) inset,
-    0 0 0 4px rgba(53, 109, 255, 0.12);
+    0 0 0 1px rgba(14, 165, 233, 0.24) inset,
+    0 0 0 4px rgba(14, 165, 233, 0.12);
 }
 
 .el-register-footer {

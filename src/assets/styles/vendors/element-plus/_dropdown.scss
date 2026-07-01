@@ -2,7 +2,7 @@
 
 .el-dropdown-menu {
   padding: 8px;
-  border-radius: 14px;
+  border-radius: var(--app-radius-lg);
   border: 1px solid var(--app-surface-border);
   background: var(--app-surface-bg);
   box-shadow: var(--app-shadow-md);
@@ -10,7 +10,7 @@
   .el-dropdown-menu__item {
     min-height: 36px;
     margin: 2px 0;
-    border-radius: 10px;
+    border-radius: var(--app-radius-md);
     color: var(--app-text-title);
     transition:
       background-color 0.2s ease,

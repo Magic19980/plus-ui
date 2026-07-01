@@ -5,12 +5,12 @@
   --menuBg: #ffffff;
   --menuColor: #1f2937;
   --menuActiveText: #111827;
-  --menuHover: rgba(64, 158, 255, 0.12);
+  --menuHover: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.12);
 
   --subMenuBg: #ffffff;
   --subMenuActiveText: #111827;
-  --subMenuHover: rgba(64, 158, 255, 0.12);
-  --subMenuTitleHover: rgba(64, 158, 255, 0.08);
+  --subMenuHover: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.12);
+  --subMenuTitleHover: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.08);
 
   --el-menu-base-level-padding: 12px;
   --el-menu-level-padding: 8px;
@@ -29,33 +29,61 @@
   --app-radius-sm: calc(var(--app-radius-base) - 8px);
   --app-radius-md: calc(var(--app-radius-base) - 4px);
   --app-radius-lg: var(--app-radius-base);
-  --app-radius-base: 14px;
+  --app-radius-base: 18px;
 
   --app-space-base: 12px;
 
-  --app-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --app-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.06);
-  --app-shadow-lg: 0 14px 36px rgba(15, 23, 42, 0.1);
+  --app-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --app-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06), 0 12px 32px rgba(15, 23, 42, 0.08);
+  --app-shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08), 0 20px 48px rgba(15, 23, 42, 0.12);
 
   --app-font-size-base: 14px;
+
+  // --- 排版阶：字号、字重、行高、字间距 ---
+  --app-text-xs: 12px;
+  --app-text-sm: 13px;
+  --app-text-base: 14px;
+  --app-text-md: 15px;
+  --app-text-lg: 16px;
+  --app-text-xl: 18px;
+  --app-text-2xl: 20px;
+  --app-text-3xl: 24px;
+  --app-text-4xl: 30px;
+  --app-text-5xl: 36px;
+
+  --app-font-weight-normal: 400;
+  --app-font-weight-medium: 500;
+  --app-font-weight-semibold: 600;
+  --app-font-weight-bold: 700;
+
+  --app-line-height-tight: 1.08;
+  --app-line-height-normal: 1.5;
+  --app-line-height-relaxed: 1.8;
+
+  --app-letter-spacing-tight: -0.03em;
+  --app-letter-spacing-wide: 0.04em;
+  --app-letter-spacing-wider: 0.08em;
 
   --app-surface-bg: #ffffff;
   --app-surface-border: #e5e7eb;
   --app-shell-bg: #f5f7fa;
-  --app-shell-spot-1: rgba(64, 158, 255, 0.08);
-  --app-shell-spot-2: rgba(64, 158, 255, 0.04);
+  --app-shell-spot-1: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.08);
+  --app-shell-spot-2: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.04);
   --app-sidebar-border: #e5e7eb;
   --app-navbar-bg: #ffffff;
   --app-navbar-border: #e5e7eb;
   --app-navbar-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --app-accent-soft: rgba(64, 158, 255, 0.08);
-  --app-accent-strong: #409eff;
+  --app-accent-r: 14;
+  --app-accent-g: 165;
+  --app-accent-b: 233;
+  --app-accent-soft: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.08);
+  --app-accent-strong: #0ea5e9;
   --app-text-title: #1f2937;
   --app-text-muted: #6b7280;
   --app-overlay-mask: rgba(15, 23, 42, 0.22);
   --app-elevated-soft-bg: #f8fafc;
   --app-elevated-close-bg: rgba(148, 163, 184, 0.14);
-  --app-elevated-close-hover-bg: rgba(64, 158, 255, 0.14);
+  --app-elevated-close-hover-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.14);
 
   // --- 与 Element Plus 主题变量的桥接（页面背景、默认圆角/阴影） ---
   --el-border-radius-base: var(--app-radius-md);

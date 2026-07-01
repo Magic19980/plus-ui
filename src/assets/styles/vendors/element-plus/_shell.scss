@@ -60,7 +60,7 @@
 }
 
 .el-descriptions__body .el-descriptions__table {
-  border-radius: 12px;
+  border-radius: var(--app-radius-md);
   overflow: hidden;
 }
 
@@ -82,7 +82,7 @@
 .el-tree-node__content {
   min-height: 34px;
   margin: 2px 0;
-  border-radius: 10px;
+  border-radius: var(--app-radius-md);
   transition:
     background-color 0.2s ease,
     color 0.2s ease;

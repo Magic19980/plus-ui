@@ -98,7 +98,7 @@
     <div class="drawer-item">
       <span>深色模式</span>
       <span class="comp-style">
-        <el-switch v-model="isDark" class="drawer-switch" @change="toggleDark" />
+        <el-switch v-model="isDark" class="drawer-switch" />
       </span>
     </div>
     <div class="drawer-item">
@@ -187,7 +187,7 @@ const showSettings = ref(false);
 const theme = ref(settingsStore.theme);
 const sideTheme = ref(settingsStore.sideTheme);
 const storeSettings = computed(() => settingsStore);
-const predefineColors = ref(['#409EFF', '#ff4500', '#ff8c00', '#ffd700', '#90ee90', '#00ced1', '#1e90ff', '#c71585']);
+const predefineColors = ref(['#0EA5E9', '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#84cc16']);
 const navType = ref(settingsStore.navType);
 const radiusBase = ref(settingsStore.radiusBase);
 // 是否暗黑模式
@@ -196,15 +196,18 @@ const isDark = useDark({
   valueDark: 'dark',
   valueLight: 'light'
 });
-// 匹配菜单颜色
+// 匹配菜单颜色 + 暗黑切换过渡
 watch(isDark, () => {
+  const html = document.documentElement;
+  html.classList.add('dark-transitioning');
+  setTimeout(() => html.classList.remove('dark-transitioning'), 400);
+
   if (isDark.value) {
     settingsStore.sideTheme = SideThemeEnum.DARK;
   } else {
     settingsStore.sideTheme = sideTheme.value;
   }
 });
-const toggleDark = () => useToggle(isDark);
 
 /** 菜单导航设置 */
 watch(
@@ -329,7 +332,7 @@ defineExpose({
       transform 0.2s ease;
 
     &:hover {
-      border-color: rgba(64, 158, 255, 0.28);
+      border-color: rgba(14, 165, 233, 0.28);
       transform: translateY(-1px);
     }
 

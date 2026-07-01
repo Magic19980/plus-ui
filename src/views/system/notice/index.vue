@@ -77,13 +77,16 @@
         </div>
       </template>
 
+      <table-skeleton v-if="loading && !noticeList?.length" />
       <el-table
+        v-else
         v-loading="loading"
         border
         class="data-table"
         :data="noticeList"
         @selection-change="handleSelectionChange"
       >
+        <template #empty><empty-state /></template>
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column v-if="false" label="序号" align="center" prop="noticeId" width="100" />
         <el-table-column label="公告标题" align="center" prop="noticeTitle" :show-overflow-tooltip="true" />
@@ -241,6 +244,8 @@ import { useDict } from '@/utils/dict';
 import { resolveOssContent } from '@/utils/ossContent';
 import { parseTime } from '@/utils/ruoyi';
 import { sanitizeHtml } from '@/utils/sanitize';
+import EmptyState from '@/components/EmptyState/index.vue';
+import TableSkeleton from '@/components/TableSkeleton/index.vue';
 
 const { sys_notice_status, sys_notice_type } = toRefs<any>(useDict('sys_notice_status', 'sys_notice_type'));
 const route = useRoute();

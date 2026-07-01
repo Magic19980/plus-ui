@@ -1,9 +1,9 @@
 <template>
   <div class="errPage-container">
     <el-button icon="arrow-left" class="pan-back-btn" @click="back">返回</el-button>
-    <el-row>
-      <el-col :span="12">
-        <h1 class="text-jumbo text-ginormous">401错误!</h1>
+    <div class="err-content">
+      <div class="err-text">
+        <h1 class="text-jumbo">401错误!</h1>
         <h2>您没有访问权限！</h2>
         <h6>对不起，您没有访问权限，请不要进行非法操作！您可以返回主页面</h6>
         <ul class="list-unstyled">
@@ -11,11 +11,11 @@
             <router-link to="/">回首页</router-link>
           </li>
         </ul>
-      </el-col>
-      <el-col :span="12">
-        <img :src="errGif" width="313" height="428" alt="Girl has dropped her ice cream." />
-      </el-col>
-    </el-row>
+      </div>
+      <div class="err-image">
+        <img :src="errGif" alt="Girl has dropped her ice cream." />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -39,39 +39,94 @@ function back() {
 
 <style lang="scss" scoped>
 .errPage-container {
-  width: 800px;
-  max-width: 100%;
-  margin: 100px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+
   .pan-back-btn {
-    background: #008489;
+    align-self: flex-start;
+    background: var(--app-accent-strong);
     color: #fff;
     border: none !important;
+    border-radius: var(--app-radius-md);
+    margin-bottom: 24px;
   }
-  .pan-gif {
-    margin: 0 auto;
-    display: block;
-  }
-  .pan-img {
-    display: block;
-    margin: 0 auto;
+
+  .err-content {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    max-width: 800px;
     width: 100%;
   }
-  .text-jumbo {
-    font-size: 60px;
-    font-weight: 700;
-    color: #484848;
+
+  .err-text {
+    flex: 1;
   }
+
+  .err-image {
+    flex: 0 0 auto;
+
+    img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+  }
+
+  .text-jumbo {
+    font-size: var(--app-text-5xl, 36px);
+    font-weight: 700;
+    color: var(--app-text-title);
+    margin: 0 0 8px;
+  }
+
+  h2 {
+    font-size: var(--app-text-xl, 18px);
+    color: var(--app-text-title);
+    margin: 0 0 12px;
+  }
+
+  h6 {
+    font-size: var(--app-text-sm, 13px);
+    color: var(--app-text-muted);
+    font-weight: 400;
+    margin: 0 0 20px;
+    line-height: 1.6;
+  }
+
   .list-unstyled {
-    font-size: 14px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
     li {
       padding-bottom: 5px;
     }
+
     a {
-      color: #008489;
+      color: var(--app-accent-strong);
       text-decoration: none;
+      font-weight: 500;
+
       &:hover {
         text-decoration: underline;
       }
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .errPage-container .err-content {
+    flex-direction: column-reverse;
+    text-align: center;
+    gap: 24px;
+
+    .err-image img {
+      max-width: 200px;
     }
   }
 }

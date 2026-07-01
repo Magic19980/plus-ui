@@ -79,6 +79,11 @@
                 <el-button icon="Refresh" @click="resetQuery">重置</el-button>
               </el-form-item>
             </el-form>
+            <search-filter-summary
+              :show-search="showSearch"
+              :active-filters="activeFilters"
+              @clear-all="handleQuery"
+            />
           </el-card>
         </div>
 
@@ -153,13 +158,16 @@
             </div>
           </template>
 
+          <table-skeleton v-if="loading && !userList?.length" />
           <el-table
+            v-else
             v-loading="loading"
             border
             class="data-table"
             :data="userList"
             @selection-change="handleSelectionChange"
           >
+            <template #empty><empty-state /></template>
             <el-table-column type="selection" width="50" align="center" />
             <el-table-column v-if="columns[0].visible" key="userId" label="用户编号" align="center" prop="userId" />
             <el-table-column
@@ -461,6 +469,9 @@ import { RoleVO } from '@/api/system/role/types';
 import api from '@/api/system/user';
 import { UserForm, UserQuery, UserVO } from '@/api/system/user/types';
 import TreePanel from '@/components/TreePanel/index.vue';
+import EmptyState from '@/components/EmptyState/index.vue';
+import SearchFilterSummary from '@/components/SearchFilterSummary/index.vue';
+import TableSkeleton from '@/components/TableSkeleton/index.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDialogState } from '@/hooks/dialog/useDialogState';
 import { useDateRangeQuery } from '@/hooks/form/useDateRangeQuery';
@@ -485,6 +496,21 @@ const total = ref(0);
 const { dateRange, applyDateRange, resetDateRange } = useDateRangeQuery();
 const { treeCollapsed } = useTreeCollapsed();
 const deptOptions = ref<DeptTreeVO[]>([]);
+
+// --- 搜索面板折叠时显示已选筛选条件 ---
+const activeFilters = computed(() => {
+  const filters: { label: string; value: string; onRemove: () => void }[] = [];
+  const qp = queryParams.value;
+  if (qp.userName) filters.push({ label: '用户名称', value: qp.userName, onRemove: () => { qp.userName = undefined; handleQuery(); } });
+  if (qp.nickName) filters.push({ label: '用户昵称', value: qp.nickName, onRemove: () => { qp.nickName = undefined; handleQuery(); } });
+  if (qp.phoneNumber) filters.push({ label: '手机号码', value: qp.phoneNumber, onRemove: () => { qp.phoneNumber = undefined; handleQuery(); } });
+  if (qp.status !== undefined && qp.status !== null && qp.status !== '') filters.push({ label: '状态', value: qp.status, onRemove: () => { qp.status = undefined; handleQuery(); } });
+  if (dateRange.value?.length) {
+    const rangeStr = dateRange.value.join(' ~ ').substring(0, 20) + '...';
+    filters.push({ label: '创建时间', value: rangeStr, onRemove: () => { dateRange.value = []; handleQuery(); } });
+  }
+  return filters;
+});
 const enabledDeptOptions = ref<DeptTreeVO[]>([]);
 const initPassword = ref<string>('');
 const postOptions = ref<PostVO[]>([]);

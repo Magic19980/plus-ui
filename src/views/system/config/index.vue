@@ -72,7 +72,9 @@
         </el-tabs>
 
         <div class="config-content">
-          <el-table :data="configList" :border="false">
+          <table-skeleton v-if="loading && !configList?.length" />
+          <el-table v-else :data="configList" :border="false">
+            <template #empty><empty-state /></template>
             <el-table-column label="参数名称" prop="configName" min-width="160" />
             <el-table-column label="参数键名" prop="configKey" min-width="160" />
             <el-table-column label="参数键值" min-width="160">
@@ -165,6 +167,8 @@ import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 import { download as requestDownload } from '@/utils/request';
+import EmptyState from '@/components/EmptyState/index.vue';
+import TableSkeleton from '@/components/TableSkeleton/index.vue';
 
 const { sys_yes_no } = toRefs<any>(useDict('sys_yes_no'));
 

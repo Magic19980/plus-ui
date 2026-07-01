@@ -93,7 +93,9 @@
           </div>
 
           <div class="dict-table-wrap">
+            <table-skeleton v-if="typeLoading && !typeList?.length" />
             <el-table
+              v-else
               ref="typeTableRef"
               v-loading="typeLoading"
               border
@@ -103,6 +105,7 @@
               @row-click="handleTypeRowClick"
               @selection-change="handleTypeSelectionChange"
             >
+              <template #empty><empty-state /></template>
               <el-table-column type="selection" width="55" align="center" />
               <el-table-column v-if="false" label="字典编号" align="center" prop="dictId" />
               <el-table-column label="字典名称" align="center" prop="dictName" width="120" />
@@ -247,13 +250,16 @@
           </div>
 
           <div class="dict-table-wrap">
+            <table-skeleton v-if="dataLoading && !dataList?.length" />
             <el-table
+              v-else
               v-loading="dataLoading"
               border
               class="data-table"
               :data="dataList"
               @selection-change="handleDataSelectionChange"
             >
+              <template #empty><empty-state /></template>
               <el-table-column type="selection" width="55" align="center" />
               <el-table-column v-if="false" label="字典编码" align="center" prop="dictCode" />
               <el-table-column label="字典标签" align="center" prop="dictLabel" width="100">
@@ -409,6 +415,8 @@ import modal from '@/plugins/modal';
 import { useDictStore } from '@/store/modules/dict';
 import { download as requestDownload } from '@/utils/request';
 import { parseTime } from '@/utils/ruoyi';
+import EmptyState from '@/components/EmptyState/index.vue';
+import TableSkeleton from '@/components/TableSkeleton/index.vue';
 
 const typeList = ref<DictTypeVO[]>([]);
 const typeLoading = ref(true);

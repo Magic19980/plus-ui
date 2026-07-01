@@ -89,18 +89,4 @@ function addIframe() {
     padding-right: 6px;
   }
 }
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background-color: var(--el-fill-color-lighter);
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--el-text-color-placeholder);
-  border-radius: 999px;
-}
 </style>

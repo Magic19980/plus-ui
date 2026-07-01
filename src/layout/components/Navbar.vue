@@ -190,7 +190,7 @@ const handleCommand = (command: string) => {
 
     &:hover {
       transform: translateY(-1px);
-      border-color: rgba(64, 158, 255, 0.22);
+      border-color: rgba(14, 165, 233, 0.22);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.76),
         0 10px 22px rgba(15, 23, 42, 0.08);
@@ -368,7 +368,7 @@ const handleCommand = (command: string) => {
         &:hover {
           background: var(--app-accent-soft);
           color: var(--app-accent-strong);
-          border-color: rgba(64, 158, 255, 0.16);
+          border-color: rgba(14, 165, 233, 0.16);
         }
       }
     }
@@ -407,7 +407,7 @@ const handleCommand = (command: string) => {
 
         &:hover {
           background: var(--app-accent-soft);
-          border-color: rgba(64, 158, 255, 0.16);
+          border-color: rgba(14, 165, 233, 0.16);
         }
 
         .user-avatar {

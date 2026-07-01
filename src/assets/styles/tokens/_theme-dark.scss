@@ -4,11 +4,11 @@ html.dark {
   --menuBg: #111827;
   --menuColor: #e5edf8;
   --menuActiveText: #f8fbff;
-  --menuHover: rgba(85, 129, 255, 0.2);
+  --menuHover: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.2);
 
   --subMenuBg: #111827;
   --subMenuActiveText: #f8fbff;
-  --subMenuHover: rgba(85, 129, 255, 0.18);
+  --subMenuHover: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.18);
   --subMenuTitleHover: rgba(148, 163, 184, 0.12);
 
   --fixedHeaderBg: #0f172a;
@@ -16,51 +16,52 @@ html.dark {
   --tableHeaderTextColor: var(--el-text-color);
 
   // --- 表格：暗色下选中行背景 ---
-  --el-table-current-row-bg-color: rgba(53, 109, 255, 0.14);
-  --el-table-row-hover-bg-color: rgba(148, 163, 184, 0.07);
+  --el-table-current-row-bg-color: rgba(14, 165, 233, 0.14);
+  --el-table-row-hover-bg-color: rgba(148, 163, 184, 0.08);
 
   // --- 全局：暗色下修正 primary 浅底色（表格行选中、树节点等） ---
-  --el-color-primary-light-9: rgba(53, 109, 255, 0.14);
+  --el-color-primary-light-9: rgba(14, 165, 233, 0.14);
 
   .el-tree-node__content {
-    --el-color-primary-light-9: rgba(53, 109, 255, 0.14);
+    --el-color-primary-light-9: rgba(14, 165, 233, 0.14);
   }
 
+  // --- 通用按钮（无 type / plain）暗色 ---
   .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info):not(.is-text):not(
       .is-link
     ) {
     --el-button-bg-color: rgba(15, 23, 42, 0.44);
-    --el-button-border-color: rgba(96, 165, 250, 0.38);
+    --el-button-border-color: rgba(56, 189, 248, 0.38);
     --el-button-text-color: #dbeafe;
-    --el-button-hover-bg-color: rgba(96, 165, 250, 0.16);
-    --el-button-hover-border-color: rgba(96, 165, 250, 0.58);
+    --el-button-hover-bg-color: rgba(56, 189, 248, 0.16);
+    --el-button-hover-border-color: rgba(56, 189, 248, 0.58);
     --el-button-hover-text-color: #bfdbfe;
-    --el-button-active-bg-color: rgba(59, 130, 246, 0.22);
-    --el-button-active-border-color: rgba(96, 165, 250, 0.72);
+    --el-button-active-bg-color: rgba(14, 165, 233, 0.22);
+    --el-button-active-border-color: rgba(56, 189, 248, 0.72);
     --el-button-active-text-color: #dbeafe;
   }
 
   // --- 各类型按钮（含 plain）在暗色下的 EP CSS 变量 ---
   .el-button--primary {
-    --el-button-bg-color: #2b6bd3;
-    --el-button-border-color: #3a7be8;
+    --el-button-bg-color: var(--app-button-hover);
+    --el-button-border-color: var(--app-accent-strong);
     --el-button-text-color: #eef4ff;
-    --el-button-hover-bg-color: #3a7be8;
-    --el-button-hover-border-color: #3a7be8;
-    --el-button-active-bg-color: #255fb8;
-    --el-button-active-border-color: #255fb8;
+    --el-button-hover-bg-color: var(--app-accent-strong);
+    --el-button-hover-border-color: var(--app-accent-strong);
+    --el-button-active-bg-color: var(--app-button-active);
+    --el-button-active-border-color: var(--app-button-active);
   }
 
   .el-button--primary.is-plain {
-    --el-button-bg-color: rgba(43, 107, 211, 0.12);
-    --el-button-border-color: rgba(58, 123, 232, 0.5);
+    --el-button-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.12);
+    --el-button-border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.5);
     --el-button-text-color: #dbe8ff;
     --el-button-hover-text-color: #dbe8ff;
-    --el-button-hover-bg-color: rgba(58, 123, 232, 0.2);
-    --el-button-hover-border-color: rgba(58, 123, 232, 0.7);
+    --el-button-hover-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.2);
+    --el-button-hover-border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.7);
     --el-button-active-text-color: #dbe8ff;
-    --el-button-active-bg-color: rgba(43, 107, 211, 0.28);
-    --el-button-active-border-color: rgba(43, 107, 211, 0.8);
+    --el-button-active-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.28);
+    --el-button-active-border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.8);
   }
 
   .el-button--success {
@@ -187,34 +188,34 @@ html.dark {
   }
 
   // --- tags-view 与 app 壳变量（暗色） ---
-  --tags-view-active-bg: var(--el-color-primary-dark-6);
-  --tags-view-active-border-color: var(--el-color-primary-light-2);
+  --tags-view-active-bg: rgb(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b));
+  --tags-view-active-border-color: rgb(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b));
 
-  --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
-  --app-shadow-md: 0 12px 28px rgba(0, 0, 0, 0.28);
-  --app-shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.32);
+  --app-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --app-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.3);
+  --app-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.32), 0 20px 48px rgba(0, 0, 0, 0.35);
   --app-surface-bg: #111827;
   --app-surface-border: rgba(71, 85, 105, 0.5);
   --app-shell-bg: #060b16;
-  --app-shell-spot-1: rgba(69, 120, 255, 0.18);
-  --app-shell-spot-2: rgba(45, 212, 191, 0.14);
+  --app-shell-spot-1: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.18);
+  --app-shell-spot-2: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.14);
   --app-sidebar-border: rgba(148, 163, 184, 0.1);
   --app-navbar-bg: #111827;
   --app-navbar-border: rgba(71, 85, 105, 0.48);
   --app-navbar-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
-  --app-accent-soft: rgba(64, 158, 255, 0.14);
-  --app-accent-strong: #60a5fa;
+  --app-accent-soft: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.14);
+  --app-accent-strong: rgb(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b));
   --app-text-title: #f3f7ff;
   --app-text-muted: #8ea0bd;
   --app-overlay-mask: rgba(2, 6, 23, 0.58);
   --app-elevated-soft-bg: rgba(148, 163, 184, 0.08);
   --app-elevated-close-bg: rgba(148, 163, 184, 0.18);
-  --app-elevated-close-hover-bg: rgba(96, 165, 250, 0.18);
+  --app-elevated-close-hover-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.18);
   --el-bg-color-page: var(--app-shell-bg);
 
   // --- vxe-table 暗色（与 vxe 业务表并存） ---
   --vxe-font-color: #98989e;
-  --vxe-primary-color: #2c7ecf;
+  --vxe-primary-color: #0ea5e9;
   --vxe-icon-background-color: #98989e;
   --vxe-table-font-color: #98989e;
   --vxe-table-resizable-color: #95969a;

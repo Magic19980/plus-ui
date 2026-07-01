@@ -87,13 +87,16 @@
         </div>
       </template>
 
+      <table-skeleton v-if="loading && !roleList?.length" />
       <el-table
+        v-else
         border
         class="data-table"
         v-loading="loading"
         :data="roleList"
         @selection-change="handleSelectionChange"
       >
+        <template #empty><empty-state /></template>
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column v-if="false" label="角色编号" prop="roleId" width="120" />
         <el-table-column label="角色名称" prop="roleName" :show-overflow-tooltip="true" width="150" />
@@ -354,6 +357,8 @@ import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 import { download as requestDownload } from '@/utils/request';
 import { parseTime } from '@/utils/ruoyi';
+import EmptyState from '@/components/EmptyState/index.vue';
+import TableSkeleton from '@/components/TableSkeleton/index.vue';
 
 const router = useRouter();
 const { sys_normal_disable } = toRefs<any>(useDict('sys_normal_disable'));

@@ -30,10 +30,10 @@
 .el-button--primary {
   --el-button-bg-color: var(--app-accent-strong);
   --el-button-border-color: var(--app-accent-strong);
-  --el-button-hover-bg-color: #4a7cff;
-  --el-button-hover-border-color: #4a7cff;
-  --el-button-active-bg-color: #2e5ce0;
-  --el-button-active-border-color: #2e5ce0;
+  --el-button-hover-bg-color: var(--app-button-hover);
+  --el-button-hover-border-color: var(--app-button-hover);
+  --el-button-active-bg-color: var(--app-button-active);
+  --el-button-active-border-color: var(--app-button-active);
 }
 
 // --- 表格 CSS 变量接业务 token ---
@@ -51,9 +51,9 @@
 html.dark .el-table {
   --el-table-tr-bg-color: var(--app-surface-bg);
   --el-table-bg-color: var(--app-surface-bg);
-  --el-table-row-hover-bg-color: #2a3a55;
-  --el-table-current-row-bg-color: #1e3a6e;
-  --el-color-primary-light-9: #1e3a6e;
+  --el-table-row-hover-bg-color: rgba(14, 165, 233, 0.12);
+  --el-table-current-row-bg-color: rgba(14, 165, 233, 0.16);
+  --el-color-primary-light-9: rgba(14, 165, 233, 0.16);
   background: var(--app-surface-bg);
 }
 

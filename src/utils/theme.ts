@@ -7,6 +7,18 @@ export const handleThemeStyle = (theme: string) => {
   for (let i = 1; i <= 9; i++) {
     document.documentElement.style.setProperty(`--el-color-primary-dark-${i}`, `${getDarkColor(theme, i / 10)}`);
   }
+  // 同时更新应用层的高亮色变量，使其跟随主色变化
+  const rgb = hexToRgb(theme);
+  if (rgb?.length >= 3) {
+    document.documentElement.style.setProperty('--app-accent-r', rgb[0]);
+    document.documentElement.style.setProperty('--app-accent-g', rgb[1]);
+    document.documentElement.style.setProperty('--app-accent-b', rgb[2]);
+  }
+  document.documentElement.style.setProperty('--app-accent-strong', theme);
+  document.documentElement.style.setProperty('--app-accent-soft', `rgba(${rgb.join(',')}, 0.08)`);
+  // 计算按钮交互态颜色（hover ≈ 暗 15%，active ≈ 暗 25%）
+  document.documentElement.style.setProperty('--app-button-hover', getDarkColor(theme, 0.15));
+  document.documentElement.style.setProperty('--app-button-active', getDarkColor(theme, 0.25));
 };
 
 // hex颜色转rgb颜色

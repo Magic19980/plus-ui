@@ -256,9 +256,15 @@ onMounted(() => {
   justify-content: center;
   padding: 40px 24px 88px;
   background:
-    radial-gradient(circle at 12% 12%, rgba(53, 109, 255, 0.22), transparent 24%),
+    radial-gradient(circle at 12% 12%, rgba(14, 165, 233, 0.22), transparent 24%),
     radial-gradient(circle at 88% 18%, rgba(14, 165, 233, 0.18), transparent 24%),
     linear-gradient(135deg, #071120 0%, #0f1b33 42%, #15345f 100%);
+  animation: loginBgFloat 8s ease-in-out infinite alternate;
+}
+
+@keyframes loginBgFloat {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 2% 2%; }
 }
 
 .login-shell {
@@ -285,7 +291,7 @@ onMounted(() => {
   color: #eef4ff;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
-    linear-gradient(135deg, rgba(53, 109, 255, 0.32), rgba(15, 23, 42, 0.24));
+    linear-gradient(135deg, rgba(14, 165, 233, 0.32), rgba(15, 23, 42, 0.24));
 }
 
 .brand-pill {
@@ -465,7 +471,7 @@ onMounted(() => {
   width: 100%;
   height: 50px;
   border-radius: 16px;
-  box-shadow: 0 18px 34px rgba(53, 109, 255, 0.22);
+  box-shadow: 0 18px 34px rgba(14, 165, 233, 0.22);
 }
 
 .login-form :deep(.el-input__wrapper) {
@@ -477,8 +483,8 @@ onMounted(() => {
 
 .login-form :deep(.el-input__wrapper.is-focus) {
   box-shadow:
-    0 0 0 1px rgba(53, 109, 255, 0.24) inset,
-    0 0 0 4px rgba(53, 109, 255, 0.12);
+    0 0 0 1px rgba(14, 165, 233, 0.24) inset,
+    0 0 0 4px rgba(14, 165, 233, 0.12);
 }
 
 .login-form :deep(.el-checkbox__label) {
@@ -492,8 +498,8 @@ onMounted(() => {
 }
 
 .login-form :deep(.el-button.is-circle:hover) {
-  background: rgba(53, 109, 255, 0.12);
-  border-color: rgba(53, 109, 255, 0.2);
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(14, 165, 233, 0.2);
   color: var(--app-accent-strong);
 }
 
