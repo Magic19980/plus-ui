@@ -1,6 +1,14 @@
 import type { MenuTypeEnum } from '@/enums/MenuTypeEnum';
 
 /**
+ * 菜单国际化单项类型
+ */
+export interface MenuI18nItem {
+  locale: string;
+  menuName: string;
+}
+
+/**
  * 菜单树形结构类型
  */
 export interface MenuTreeOption {
@@ -63,6 +71,8 @@ export interface MenuVO extends BaseEntity {
   activeMenu: string;
   ext: string;
   remark: string;
+  /** 国际化名称列表 */
+  i18nList?: MenuI18nItem[];
 }
 
 export interface MenuForm {
@@ -86,4 +96,6 @@ export interface MenuForm {
   remark?: string;
   query?: string;
   perms?: string;
+  /** 国际化名称列表 */
+  i18nList?: MenuI18nItem[];
 }

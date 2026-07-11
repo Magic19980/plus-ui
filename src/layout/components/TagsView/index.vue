@@ -17,7 +17,7 @@
         @contextmenu.prevent="openMenu(tag, $event)"
       >
         <svg-icon v-if="tagsIcon && tag.meta && tag.meta.icon && tag.meta.icon !== '#'" :icon-class="tag.meta.icon" />
-        <span class="tags-view-item-title">{{ tag.title || tag.meta?.title }}</span>
+        <span class="tags-view-item-title">{{ t(tag.title || tag.meta?.title) }}</span>
         <span v-if="!isAffix(tag)" @click.prevent.stop="closeSelectedTag(tag)">
           <Close class="el-icon-close" style="width: 1em; height: 1em; vertical-align: middle" />
         </span>
@@ -89,6 +89,7 @@
 
 <script setup lang="ts">
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import {
   ArrowDown,
   ArrowLeft,
@@ -124,6 +125,8 @@ const router = useRouter();
 const settingsStore = useSettingsStore();
 const permissionStore = usePermissionStore();
 const tagsViewStore = useTagsViewStore();
+
+const { t } = useI18n();
 
 const visitedViews = computed(() => tagsViewStore.getVisitedViews());
 const routes = computed(() => permissionStore.getRoutes());

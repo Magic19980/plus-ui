@@ -9,6 +9,7 @@ import auth from '@/plugins/auth';
 import router, { constantRoutes, dynamicRoutes } from '@/router';
 import store from '@/store';
 import { createCustomNameComponent } from '@/utils/createCustomNameComponent';
+import { getNormalPath } from '@/utils/ruoyi';
 
 // 匹配views里面所有的.vue文件，预建查找表避免每次 O(n) 扫描
 const modules = import.meta.glob('./../../views/**/*.vue');
@@ -120,6 +121,49 @@ export const usePermissionStore = defineStore('permission', () => {
     });
     return children;
   };
+  /**
+   * 刷新路由（切换语言后使用，不重新注册路由，仅更新菜单名称）
+   * @returns path → title 映射，调用方可直接用于 refreshTitles，无需重复扫描路由树
+   */
+  const refreshRoutes = async (): Promise<Map<string, string>> => {
+    const res = await getRouters();
+    const data = Array.isArray(res.data) ? res.data : [];
+    const sdata = structuredClone(data);
+    const defaultData = structuredClone(data);
+    const sidebarRoutes = filterAsyncRouter(sdata);
+    const defaultRoutes = filterAsyncRouter(defaultData);
+    setSidebarRouters(constantRoutes.concat(sidebarRoutes));
+    setDefaultRoutes(sidebarRoutes);
+    setTopbarRoutes(defaultRoutes);
+
+    // 构建 path → title 映射，同时更新 router meta（确保新打开的标签页标题正确）
+    const pathTitleMap = new Map<string, string>();
+    const flattenRoutes = (list: RouteRecordRaw[], prefix: string) => {
+      for (const item of list) {
+        const fullPath = getNormalPath(prefix + '/' + item.path);
+        const title = item.meta?.title;
+        if (title && typeof title === 'string') {
+          pathTitleMap.set(fullPath, title);
+        }
+        if (item.children?.length) {
+          flattenRoutes(item.children, fullPath);
+        }
+      }
+    };
+    flattenRoutes(sidebarRoutes, '');
+
+    // 同步已注册路由的 meta.title（用于新打开的标签页）
+    const allRoutes = router.getRoutes();
+    for (const route of allRoutes) {
+      const newTitle = pathTitleMap.get(route.path);
+      if (newTitle && route.meta) {
+        route.meta.title = newTitle;
+      }
+    }
+
+    return pathTitleMap;
+  };
+
   return {
     routes,
     topbarRouters,
@@ -133,6 +177,7 @@ export const usePermissionStore = defineStore('permission', () => {
 
     setRoutes,
     generateRoutes,
+    refreshRoutes,
     setSidebarRouters
   };
 });

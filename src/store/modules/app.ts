@@ -1,5 +1,6 @@
 import { useStorage } from '@vueuse/core';
 import enUS from 'element-plus/es/locale/lang/en';
+import idID from 'element-plus/es/locale/lang/id';
 import zhCN from 'element-plus/es/locale/lang/zh-cn';
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
@@ -16,8 +17,9 @@ export const useAppStore = defineStore('app', () => {
 
   // 语言
   const language = useStorage('language', 'zh_CN');
-  const languageObj: any = {
+  const languageObj: Record<string, any> = {
     en_US: enUS,
+    id_ID: idID,
     zh_CN: zhCN
   };
   const locale = computed(() => {

@@ -132,7 +132,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" destroy-on-close append-to-bod width="750px">
+    <el-dialog v-model="dialog.visible" :title="dialog.title" destroy-on-close append-to-bod width="800px">
       <el-form ref="menuFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
@@ -164,7 +164,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="菜单名称" prop="menuName">
-              <el-input v-model="form.menuName" placeholder="请输入菜单名称" />
+              <el-input v-model="form.menuName" placeholder="请输入中文菜单名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -172,6 +172,32 @@
               <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
           </el-col>
+          <template v-if="form.menuType !== 'F'">
+            <el-col :span="24">
+              <div class="i18n-card" :class="{ 'is-expanded': i18nExpanded }">
+                <div class="i18n-card-head" @click="i18nExpanded = !i18nExpanded">
+                  <span class="i18n-card-title">多语言名称</span>
+                  <span class="i18n-card-badge" :class="`i18n-badge--${i18nCompletionTagType}`">{{ i18nCompletionText }}</span>
+                  <el-icon class="i18n-card-arrow"><arrow-right /></el-icon>
+                </div>
+                <el-collapse-transition>
+                  <div v-show="i18nExpanded" class="i18n-card-body">
+                    <p class="i18n-card-hint">留空的语种，侧边栏将自动展示中文默认名称</p>
+                    <div class="i18n-card-grid">
+                      <div v-for="cfg in LOCALE_CONFIG" :key="cfg.locale" class="i18n-card-field">
+                        <label class="i18n-card-label">{{ cfg.label }}</label>
+                        <el-input
+                          v-model="i18nForm[cfg.locale]"
+                          :placeholder="cfg.placeholder"
+                          clearable
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </el-collapse-transition>
+              </div>
+            </el-col>
+          </template>
           <el-col v-if="form.menuType !== 'F'" :span="12">
             <el-form-item>
               <template #label>
@@ -370,7 +396,7 @@
 
 <script setup name="Menu" lang="ts">
 import { addMenu, cascadeDelMenu, delMenu, getMenu, listMenu, updateMenu } from '@/api/system/menu';
-import { MenuForm, MenuQuery, MenuVO } from '@/api/system/menu/types';
+import { MenuForm, MenuI18nItem, MenuQuery, MenuVO } from '@/api/system/menu/types';
 import { MenuTypeEnum } from '@/enums/MenuTypeEnum';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDialogState } from '@/hooks/dialog/useDialogState';
@@ -392,12 +418,50 @@ const { sys_show_hide, sys_normal_disable, sys_yes_no } = toRefs<any>(
   useDict('sys_show_hide', 'sys_normal_disable', 'sys_yes_no')
 );
 
+/** 国际化语言配置，新增语言只需追加一项 */
+const LOCALE_CONFIG = [
+  { locale: 'en_US', label: 'English', placeholder: '请输入英文菜单名称' },
+  { locale: 'id_ID', label: 'Bahasa Indonesia', placeholder: 'Masukkan nama menu' }
+];
+
+/** 初始化国际化表单数据 */
+function initI18nForm(): Record<string, string> {
+  const form: Record<string, string> = {};
+  LOCALE_CONFIG.forEach(c => (form[c.locale] = ''));
+  return form;
+}
+
+/** 从 i18nForm 构建 i18nList */
+function buildI18nList(i18nForm: Record<string, string>): MenuI18nItem[] {
+  return LOCALE_CONFIG.filter(c => i18nForm[c.locale]?.trim()).map(c => ({
+    locale: c.locale,
+    menuName: i18nForm[c.locale].trim()
+  }));
+}
+
+/** 从 i18nList 解析到 i18nForm */
+function parseI18nList(i18nList?: MenuI18nItem[]): Record<string, string> {
+  const form = initI18nForm();
+  i18nList?.forEach(item => {
+    form[item.locale] = item.menuName;
+  });
+  return form;
+}
+
 const menuList = ref<MenuVO[]>([]);
 const menuChildrenListMap = ref({});
 const menuExpandMap = ref({});
 const { loading, withLoading } = useLoading(true);
 const { showSearch } = useSearchToggle();
 const menuOptions = ref<MenuOptionsType[]>([]);
+const i18nForm = reactive<Record<string, string>>(initI18nForm());
+const i18nExpanded = ref(false);
+
+/** 计算国际化完成度 */
+function getI18nStats() {
+  const filled = LOCALE_CONFIG.filter(c => i18nForm[c.locale]?.trim()).length;
+  return { filled, total: LOCALE_CONFIG.length };
+}
 
 const queryFormRef = ref<ElFormInstance>();
 const menuFormRef = ref<ElFormInstance>();
@@ -453,6 +517,20 @@ const getMenuTypeMeta = (menu: Partial<MenuVO>): { label: string; type: MenuTagT
   }
   return { label: '菜单', type: 'success' };
 };
+
+const i18nCompletionText = computed(() => {
+  const { filled, total } = getI18nStats();
+  if (filled === 0) return '未配置';
+  if (filled === total) return `${total}/${total}`;
+  return `${filled}/${total}`;
+});
+
+const i18nCompletionTagType = computed(() => {
+  const { filled, total } = getI18nStats();
+  if (filled === total) return 'success';
+  if (filled > 0) return 'warning';
+  return 'info';
+});
 
 /** 获取子菜单列表 */
 const getChildrenList = async (row: any, treeNode: unknown, resolve: (data: any[]) => void) => {
@@ -538,6 +616,8 @@ const cancel = () => {
 /** 表单重置 */
 const reset = () => {
   form.value = { ...initFormData };
+  Object.assign(i18nForm, initI18nForm());
+  i18nExpanded.value = false;
   menuFormRef.value?.resetFields();
 };
 
@@ -567,6 +647,10 @@ const handleUpdate = async (row: Partial<MenuVO>) => {
   if (row.menuId) {
     const { data } = await getMenu(row.menuId);
     form.value = data;
+    // 回填国际化数据
+    const parsed = parseI18nList(data.i18nList);
+    Object.assign(i18nForm, parsed);
+    if (getI18nStats().filled > 0) i18nExpanded.value = true;
   }
   setTitle('修改菜单');
   openDialog();
@@ -575,6 +659,8 @@ const handleUpdate = async (row: Partial<MenuVO>) => {
 const submitForm = () => {
   menuFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
+      // 从国际化表单构建 i18nList
+      form.value.i18nList = buildI18nList(i18nForm);
       form.value.menuId ? await updateMenu(form.value) : await addMenu(form.value);
       modal.msgSuccess('操作成功');
       closeDialog();
@@ -648,6 +734,98 @@ onMounted(() => {
   .menu-name-text {
     min-width: 0;
   }
+}
+
+.i18n-card {
+  margin: 8px 0;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--el-border-radius-base);
+
+  &.is-expanded {
+    border-color: var(--el-border-color-light);
+  }
+}
+
+.i18n-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+
+  &:hover {
+    background: var(--el-fill-color-lighter);
+  }
+}
+
+.i18n-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.i18n-card-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+
+  &.i18n-badge--info {
+    background: var(--el-color-info-light-9);
+    color: var(--el-color-info);
+  }
+  &.i18n-badge--warning {
+    background: var(--el-color-warning-light-9);
+    color: var(--el-color-warning);
+  }
+  &.i18n-badge--success {
+    background: var(--el-color-success-light-9);
+    color: var(--el-color-success);
+  }
+}
+
+.i18n-card-arrow {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  transition: transform .25s;
+
+  .is-expanded & {
+    transform: rotate(90deg);
+  }
+}
+
+.i18n-card-body {
+  border-top: 1px solid var(--el-border-color-lighter);
+  padding: 14px;
+}
+
+.i18n-card-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.i18n-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.i18n-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.i18n-card-label {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
 }
 </style>
 

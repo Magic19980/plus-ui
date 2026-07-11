@@ -1,6 +1,7 @@
 import type { LocationQuery, RouteLocationNormalized, RouteMeta } from 'vue-router';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { getNormalPath } from '@/utils/ruoyi';
 import { useSettingsStore } from './settings';
 
 const PERSIST_KEY = 'tags-view-visited';
@@ -307,6 +308,28 @@ export const useTagsViewStore = defineStore('tagsView', () => {
     }
   };
 
+  /**
+   * 切换语言后刷新所有标签页标题
+   * 接收已翻译好的 path -> title 映射，直接赋值触发模板重新渲染
+   * @param pathTitleMap 路径到已翻译标题的映射表
+   */
+  const refreshTitles = (pathTitleMap: Map<string, string>) => {
+    // 整体替换数组触发响应式更新（避免原地修改被 computed 缓存忽略）
+    visitedViews.value = visitedViews.value.map(tag => {
+      const tagPath = tag.fullPath || tag.path;
+      const newTitle = pathTitleMap.get(tagPath);
+      if (newTitle) {
+        return {
+          ...tag,
+          title: newTitle,
+          meta: tag.meta ? { ...tag.meta, title: newTitle } : undefined
+        } as TagView;
+      }
+      return tag;
+    });
+    saveVisitedViews(visitedViews.value);
+  };
+
   return {
     visitedViews,
     cachedViews,
@@ -332,6 +355,7 @@ export const useTagsViewStore = defineStore('tagsView', () => {
     delLeftTags,
     addIframeView,
     delIframeView,
-    loadPersistedViews
+    loadPersistedViews,
+    refreshTitles
   };
 });

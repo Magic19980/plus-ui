@@ -3,76 +3,114 @@
     <transition-group name="breadcrumb">
       <el-breadcrumb-item v-for="(item, index) in levelList" :key="item.path">
         <span v-if="item.redirect === 'noRedirect' || index == levelList.length - 1" class="no-redirect">
-          {{ item.meta?.title }}
+          {{ t(item.meta?.title) }}
         </span>
-        <a v-else @click.prevent="handleLink(item)">{{ item.meta?.title }}</a>
+        <a v-else @click.prevent="handleLink(item)">{{ t(item.meta?.title) }}</a>
       </el-breadcrumb-item>
     </transition-group>
   </el-breadcrumb>
 </template>
 
 <script setup lang="ts">
-import { RouteLocationMatched } from 'vue-router';
+import type { RouteMeta, RouteRecordRaw } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { usePermissionStore } from '@/store/modules/permission';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const permissionStore = usePermissionStore();
-const levelList = ref<RouteLocationMatched[]>([]);
+const levelList = ref<{ path: string; meta: RouteMeta; redirect?: string }[]>([]);
 
+/**
+ * 关键修复：从 defaultRoutes（响应式）取 meta.title，
+ * 而不是从 route.matched（不可触发响应式更新）取。
+ * 这样切换语言时，后端返回的英文 title 能立即反映到面包屑。
+ */
 const getBreadcrumb = () => {
-  // only show routes with meta.title
-  let matched = [];
+  // 仅取 defaultRoutes 中第一个匹配项（顶级菜单）的子链作为面包屑
   const pathNum = findPathNum(route.path);
-  // multi-level menu
+  let matched: { path: string; meta: RouteMeta; redirect?: string }[] = [];
   if (pathNum > 2) {
     const reg = /\/\w+/gi;
-    const pathList = route.path.match(reg).map((item, index) => {
+    const pathList = route.path.match(reg).map((item: string, index: number) => {
       if (index !== 0) item = item.slice(1);
       return item;
     });
-    getMatched(pathList, permissionStore.defaultRoutes, matched);
+    const found = getMatched(pathList, permissionStore.defaultRoutes);
+    matched = found.map(item => ({ path: item.path, meta: { ...item.meta } as RouteMeta, redirect: item.redirect as string | undefined }));
   } else {
-    matched = route.matched.filter(item => item.meta && item.meta.title);
+    matched = route.matched
+      .filter(item => item.meta && item.meta.title)
+      .map(item => ({ path: item.path, meta: { ...item.meta } as RouteMeta, redirect: item.redirect as string | undefined }));
   }
   // 判断是否为首页
   if (!isDashboard(matched[0])) {
-    matched = [{ path: '/index', meta: { title: '首页' } }].concat(matched);
+    matched = [{ path: '/index', meta: { title: 'route.dashboard' } as RouteMeta }].concat(matched);
   }
+  // 从响应式 defaultRoutes 中同步对应菜单项的最新 meta.title
+  matched = matched.map(item => {
+    const latest = findMetaByPath(item.path, permissionStore.defaultRoutes);
+    if (latest) {
+      return { ...item, meta: { ...item.meta, ...latest } as RouteMeta };
+    }
+    return item;
+  });
   levelList.value = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false);
 };
-const findPathNum = (str, char = '/') => {
+
+const findMetaByPath = (targetPath: string, list: RouteRecordRaw[]): RouteMeta | null => {
+  for (const item of list) {
+    if (item.path === targetPath) {
+      const meta = item.meta;
+      if (meta) {
+        return meta as RouteMeta;
+      }
+    }
+    const children = item.children as RouteRecordRaw[] | undefined;
+    if (children && children.length) {
+      const found = findMetaByPath(targetPath, children);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+const findPathNum = (str: string, char = '/'): number => {
   if (typeof str !== 'string' || str.length === 0) return 0;
   return str.split(char).length - 1;
 };
-const getMatched = (pathList, routeList, matched) => {
-  const data = routeList.find(item => item.path == pathList[0] || (item.name += '').toLowerCase() == pathList[0]);
-  if (data) {
-    matched.push(data);
-    if (data.children && pathList.length) {
-      pathList.shift();
-      getMatched(pathList, data.children, matched);
+const getMatched = (pathList: string[], routeList: RouteRecordRaw[]): RouteRecordRaw[] => {
+  const matched: RouteRecordRaw[] = [];
+  const find = (list: RouteRecordRaw[], pl: string[]) => {
+    const data = list.find(item => item.path == pl[0] || (item.name as string)?.toLowerCase() == pl[0]);
+    if (data) {
+      matched.push(data);
+      if (data.children && pl.length) {
+        pl.shift();
+        find(data.children, pl);
+      }
     }
-  }
+  };
+  find(routeList, pathList);
+  return matched;
 };
-const isDashboard = (route: RouteLocationMatched) => {
-  const name = route && (route.name as string);
+const isDashboard = (matchedRoute?: { name?: string | symbol }) => {
+  const name = matchedRoute && (matchedRoute.name as string);
   if (!name) {
     return false;
   }
   return name.trim() === 'Index';
 };
-const handleLink = item => {
+const handleLink = (item: { redirect?: string; path: string }) => {
   const { redirect, path } = item;
   redirect ? router.push(redirect) : router.push(path);
 };
 
+// watchEffect 在 setup 阶段即同步执行，响应 route.path 和 defaultRoutes 变化
 watchEffect(() => {
-  // if you go to the redirect page, do not update the breadcrumbs
   if (route.path.startsWith('/redirect/')) return;
-  getBreadcrumb();
-});
-onMounted(() => {
+  // 显式访问 defaultRoutes（ref）以建立响应式依赖（语言切换时菜单刷新触发更新）
+  permissionStore.defaultRoutes;
   getBreadcrumb();
 });
 </script>
