@@ -7,9 +7,9 @@
     size="300px"
     close-on-click-modal
   >
-    <h3 class="drawer-title">菜单导航设置</h3>
+    <h3 class="drawer-title">{{ t('settingMenuNavigation') }}</h3>
     <div class="nav-wrap">
-      <el-tooltip content="左侧菜单" placement="bottom">
+      <el-tooltip :content="t('settingLeftMenu')" placement="bottom">
         <div
           class="item left"
           @click="handleNavType(NavTypeEnum.LEFT)"
@@ -21,7 +21,7 @@
         </div>
       </el-tooltip>
 
-      <el-tooltip content="混合菜单" placement="bottom">
+      <el-tooltip :content="t('settingMixedMenu')" placement="bottom">
         <div
           class="item mix"
           @click="handleNavType(NavTypeEnum.MIX)"
@@ -32,7 +32,7 @@
           <b></b>
         </div>
       </el-tooltip>
-      <el-tooltip content="顶部菜单" placement="bottom">
+      <el-tooltip :content="t('settingTopMenu')" placement="bottom">
         <div
           class="item top"
           @click="handleNavType(NavTypeEnum.TOP)"
@@ -45,7 +45,7 @@
       </el-tooltip>
     </div>
 
-    <h3 class="drawer-title">主题风格设置</h3>
+    <h3 class="drawer-title">{{ t('settingThemeStyle') }}</h3>
 
     <div class="setting-drawer-block-checbox">
       <div class="setting-drawer-block-checbox-item" @click="handleTheme(SideThemeEnum.DARK)">
@@ -90,19 +90,19 @@
       </div>
     </div>
     <div class="drawer-item">
-      <span>主题颜色</span>
+      <span>{{ t('settingThemeColor') }}</span>
       <span class="comp-style">
         <el-color-picker v-model="theme" :predefine="predefineColors" @change="themeChange" />
       </span>
     </div>
     <div class="drawer-item">
-      <span>深色模式</span>
+      <span>{{ t('settingDarkMode') }}</span>
       <span class="comp-style">
         <el-switch v-model="isDark" class="drawer-switch" />
       </span>
     </div>
     <div class="drawer-item">
-      <span>页面圆角</span>
+      <span>{{ t('settingPageRadius') }}</span>
       <span class="comp-style">
         <el-slider v-model="radiusBase" :min="0" :max="32" :step="2" style="width: 120px" @change="radiusBaseChange" />
       </span>
@@ -110,52 +110,52 @@
 
     <el-divider />
 
-    <h3 class="drawer-title">系统布局配置</h3>
+    <h3 class="drawer-title">{{ t('settingLayoutConfig') }}</h3>
 
     <div class="drawer-item">
-      <span>开启 Tags-Views</span>
+      <span>{{ t('settingEnableTagsView') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>持久化标签页</span>
+      <span>{{ t('settingPersistTagsView') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsViewPersist" :disabled="!settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>显示页签图标</span>
+      <span>{{ t('settingShowTagsIcon') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsIcon" :disabled="!settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>固定 Header</span>
+      <span>{{ t('settingFixedHeader') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.fixedHeader" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>显示 Logo</span>
+      <span>{{ t('settingShowLogo') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.sidebarLogo" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>动态标题</span>
+      <span>{{ t('settingDynamicTitle') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.dynamicTitle" class="drawer-switch" @change="dynamicTitleChange" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>全高表格</span>
+      <span>{{ t('settingFullHeightTable') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.fullHeightTable" class="drawer-switch" />
       </span>
@@ -163,8 +163,8 @@
 
     <el-divider />
 
-    <el-button type="primary" plain icon="DocumentAdd" @click="saveSetting">保存配置</el-button>
-    <el-button plain icon="Refresh" @click="resetSetting">重置配置</el-button>
+    <el-button type="primary" plain icon="DocumentAdd" @click="saveSetting">{{ t('settingSaveConfig') }}</el-button>
+    <el-button plain icon="Refresh" @click="resetSetting">{{ t('settingResetConfig') }}</el-button>
   </el-drawer>
 </template>
 
@@ -178,6 +178,9 @@ import { usePermissionStore } from '@/store/modules/permission';
 import { useSettingsStore } from '@/store/modules/settings';
 import { useDynamicTitle } from '@/utils/dynamicTitle';
 import { handleThemeStyle } from '@/utils/theme';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const appStore = useAppStore();
 const settingsStore = useSettingsStore();
@@ -255,7 +258,7 @@ const handleTheme = (val: string) => {
   settingsStore.sideTheme = val;
 };
 const saveSetting = () => {
-  modal.loading('正在保存到本地，请稍候...');
+  modal.loading(t('settingSaving'));
   const settings = useStorage<LayoutSetting>('layout-setting', defaultSettings);
   if (!storeSettings.value.tagsViewPersist) {
     localStorage.removeItem('tags-view-visited');
@@ -276,7 +279,7 @@ const saveSetting = () => {
   }, 1000);
 };
 const resetSetting = () => {
-  modal.loading('正在清除设置缓存并刷新，请稍候...');
+  modal.loading(t('settingClearCacheAndRefresh'));
   localStorage.removeItem('tags-view-visited');
   useStorage<any>('layout-setting', null).value = null;
   setTimeout('window.location.reload()', 1000);

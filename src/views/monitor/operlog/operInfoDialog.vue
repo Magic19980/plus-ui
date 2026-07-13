@@ -1,17 +1,17 @@
 <template>
   <el-dialog
     v-model="open"
-    title="操作日志详细"
+    :title="$t('common.dialogOperDetail')"
     width="700px"
     append-to-body
     close-on-click-modal
     @closed="info = null"
   >
     <el-descriptions v-if="info" :column="1" border>
-      <el-descriptions-item label="操作状态">
+      <el-descriptions-item :label="$t('common.operStatus')">
         <template #default>
-          <el-tag v-if="info.status === 0" type="success">正常</el-tag>
-          <el-tag v-else-if="info.status === 1" type="danger">失败</el-tag>
+          <el-tag v-if="info.status === 0" type="success">{{ $t('common.tagNormal') }}</el-tag>
+          <el-tag v-else-if="info.status === 1" type="danger">{{ $t('common.tagFailed') }}</el-tag>
         </template>
       </el-descriptions-item>
       <el-descriptions-item label="登录信息">
@@ -46,12 +46,12 @@
           </div>
         </template>
       </el-descriptions-item>
-      <el-descriptions-item label="消耗时间">
+      <el-descriptions-item :label="$t('common.costTime')">
         <template #default>
           <span>{{ info.costTime }}ms</span>
         </template>
       </el-descriptions-item>
-      <el-descriptions-item label="操作时间">
+      <el-descriptions-item :label="$t('common.operTimeRange')">
         <template #default>{{ parseTime(info.operTime) }}</template>
       </el-descriptions-item>
       <el-descriptions-item v-if="info.status === 1" label="异常信息">

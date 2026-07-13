@@ -14,7 +14,7 @@
         v-model="state.menuQuery"
         size="large"
         clearable
-        placeholder="菜单搜索，支持标题、URL模糊查询"
+        :placeholder="$t('navbar.searchPlaceholder')"
         @input="querySearch"
         @keydown="handleSearchKeydown"
       >
@@ -24,9 +24,9 @@
       </el-input>
 
       <div v-if="state.menuQuery && state.options.length > 0" class="result-count">
-        找到
+        {{ t('navbar.searchResults') }}
         <strong>{{ state.options.length }}</strong>
-        个结果
+        {{ t('navbar.searchResultsCount') }}
       </div>
 
       <el-scrollbar wrap-class="layout-search-scrollbar">
@@ -57,11 +57,11 @@
           <div v-else-if="state.menuQuery" class="empty-state">
             <el-icon class="empty-icon"><Search /></el-icon>
             <p class="empty-text">
-              未找到 "
+              {{ t('navbar.searchEmpty') }}"
               <strong>{{ state.menuQuery }}</strong>
-              " 相关菜单
+              "{{ t('navbar.searchEmptySuffix') }}
             </p>
-            <p class="empty-tip">试试其他关键词或路径</p>
+            <p class="empty-tip">{{ t('navbar.searchEmptyTip') }}</p>
           </div>
         </div>
       </el-scrollbar>
@@ -70,15 +70,15 @@
         <span class="shortcut-item">
           <kbd>↑</kbd>
           <kbd>↓</kbd>
-          切换
+          {{ t('navbar.searchNavigate') }}
         </span>
         <span class="shortcut-item">
           <kbd>↵</kbd>
-          选择
+          {{ t('navbar.searchSelect') }}
         </span>
         <span class="shortcut-item">
           <kbd>Esc</kbd>
-          关闭
+          {{ t('navbar.searchClose') }}
         </span>
       </div>
     </el-dialog>
@@ -88,10 +88,13 @@
 <script setup lang="ts" name="layoutBreadcrumbSearch">
 import type { RouteRecordRaw } from 'vue-router';
 import { Search } from '@element-plus/icons-vue';
+import { useI18n } from 'vue-i18n';
 import { usePermissionStore } from '@/store/modules/permission';
 import { useSettingsStore } from '@/store/modules/settings';
 import { getNormalPath } from '@/utils/ruoyi';
 import { isHttp } from '@/utils/validate';
+
+const { t } = useI18n();
 
 type SearchMenuItem = {
   path: string;

@@ -4,19 +4,19 @@
       <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-            <div><h3>筛选条件</h3></div>
+            <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="key键" prop="testKey">
-            <el-input v-model="queryParams.testKey" placeholder="请输入key键" clearable @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.key')" prop="testKey">
+            <el-input v-model="queryParams.testKey" :placeholder="$t('common.placeholderInputKey')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="值" prop="value">
-            <el-input v-model="queryParams.value" placeholder="请输入值" clearable @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.value')" prop="value">
+            <el-input v-model="queryParams.value" :placeholder="$t('common.placeholderInputValue')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -26,11 +26,11 @@
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
-            <h3>测试单列表</h3>
+            <h3>{{ $t('common.testSingleList') }}</h3>
           </div>
           <div class="toolbar-actions">
             <el-button v-hasPermi="['demo:demo:add']" type="primary" plain icon="Plus" @click="handleAdd">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button
               v-hasPermi="['demo:demo:edit']"
@@ -40,7 +40,7 @@
               :disabled="single"
               @click="handleUpdate()"
             >
-              修改
+              {{ $t('common.btnEdit') }}
             </el-button>
             <el-button
               v-hasPermi="['demo:demo:remove']"
@@ -50,10 +50,10 @@
               :disabled="multiple"
               @click="handleDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <el-button v-hasPermi="['demo:demo:export']" type="warning" plain icon="Download" @click="handleExport">
-              导出
+              {{ $t('common.btnExport') }}
             </el-button>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
@@ -68,15 +68,15 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column v-if="true" label="主键" align="center" prop="id" />
-        <el-table-column label="部门id" align="center" prop="deptId" />
-        <el-table-column label="用户id" align="center" prop="userId" />
-        <el-table-column label="排序号" align="center" prop="orderNum" />
-        <el-table-column label="key键" align="center" prop="testKey" />
-        <el-table-column label="值" align="center" prop="value" />
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column v-if="true" :label="$t('common.primaryKey')" align="center" prop="id" />
+        <el-table-column :label="$t('common.deptId')" align="center" prop="deptId" />
+        <el-table-column :label="$t('common.userId')" align="center" prop="userId" />
+        <el-table-column :label="$t('common.sortNo')" align="center" prop="orderNum" />
+        <el-table-column :label="$t('common.key')" align="center" prop="testKey" />
+        <el-table-column :label="$t('common.value')" align="center" prop="value" />
+        <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip content="修改" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
               <el-button
                 v-hasPermi="['demo:demo:edit']"
                 link
@@ -85,7 +85,7 @@
                 @click="handleUpdate(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 v-hasPermi="['demo:demo:remove']"
                 link
@@ -109,26 +109,26 @@
     <!-- 添加或修改测试单对话框 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
       <el-form ref="demoFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="部门id" prop="deptId">
-          <el-input v-model="form.deptId" placeholder="请输入部门id" />
+        <el-form-item :label="$t('common.deptId')" prop="deptId">
+          <el-input v-model="form.deptId" :placeholder="$t('common.placeholderInputDeptId')" />
         </el-form-item>
-        <el-form-item label="用户id" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户id" />
+        <el-form-item :label="$t('common.userId')" prop="userId">
+          <el-input v-model="form.userId" :placeholder="$t('common.placeholderInputUserId')" />
         </el-form-item>
-        <el-form-item label="排序号" prop="orderNum">
-          <el-input v-model="form.orderNum" placeholder="请输入排序号" />
+        <el-form-item :label="$t('common.sortNo')" prop="orderNum">
+          <el-input v-model="form.orderNum" :placeholder="$t('common.placeholderInputOrderNum')" />
         </el-form-item>
-        <el-form-item label="key键" prop="testKey">
-          <el-input v-model="form.testKey" placeholder="请输入key键" />
+        <el-form-item :label="$t('common.key')" prop="testKey">
+          <el-input v-model="form.testKey" :placeholder="$t('common.placeholderInputKey')" />
         </el-form-item>
-        <el-form-item label="值" prop="value">
-          <el-input v-model="form.value" placeholder="请输入值" />
+        <el-form-item :label="$t('common.value')" prop="value">
+          <el-input v-model="form.value" :placeholder="$t('common.placeholderInputValue')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -137,6 +137,8 @@
 
 <script setup name="Demo" lang="ts">
 import { listDemo, getDemo, delDemo, addDemo, updateDemo } from '@/api/demo/demo';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { DemoVO, DemoQuery, DemoForm } from '@/api/demo/demo/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
@@ -175,7 +177,7 @@ const data = reactive<PageData<DemoForm, DemoQuery>>({
     value: undefined
   },
   rules: {
-    id: [{ required: true, message: '主键不能为空', trigger: 'blur' }],
+    id: [{ required: true, message: t('common.validationPrimaryKeyRequired'), trigger: 'blur' }],
     deptId: [{ required: true, message: '部门id不能为空', trigger: 'blur' }],
     userId: [{ required: true, message: '用户id不能为空', trigger: 'blur' }],
     orderNum: [{ required: true, message: '排序号不能为空', trigger: 'blur' }],
@@ -252,7 +254,7 @@ const submitForm = () => {
       } else {
         await addDemo(form.value).finally(() => (buttonLoading.value = false));
       }
-      modal.msgSuccess('修改成功');
+      modal.msgSuccess(t('common.msgEditSuccess'));
       closeDialog();
       await getList();
     }
@@ -262,9 +264,9 @@ const submitForm = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<DemoVO>) => {
   const demoIds = row?.id || ids.value;
-  await modal.confirm('是否确认删除测试单编号为"' + demoIds + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteDemo', { ids: demoIds }));
   await delDemo(demoIds);
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
   await getList();
 };
 

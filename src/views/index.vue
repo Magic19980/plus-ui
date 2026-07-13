@@ -2,13 +2,13 @@
   <div class="home">
     <section class="hero-panel">
       <div class="hero-copy">
-        <h1>RuoYi-Vue-Plus 控制台</h1>
+        <h1>{{ $t('common.consoleTitle') }}</h1>
         <p>
           企业级后台管理系统 重写 RuoYi-Vue 所有功能 集成 Sa-Token、Mybatis-Plus、WarmFlow、SpringDoc、Hutool、OSS
           等组件
         </p>
         <div class="hero-actions">
-          <el-button type="primary" @click="goTarget('https://gitee.com/dromara/RuoYi-Vue-Plus')">查看源码</el-button>
+          <el-button type="primary" @click="goTarget('https://gitee.com/dromara/RuoYi-Vue-Plus')">{{ $t('common.viewSourceCode') }}</el-button>
           <el-button plain @click="goTarget('https://plus-doc.dromara.org/#/ruoyi-vue-plus/changlog')">
             更新日志
           </el-button>
@@ -20,7 +20,7 @@
       <section class="section-card">
         <div class="section-head">
           <div>
-            <h2>项目矩阵</h2>
+            <h2>{{ $t('common.projectMatrix') }}</h2>
           </div>
         </div>
         <div class="product-list">
@@ -48,7 +48,7 @@
       <section class="section-card capability-card">
         <div class="section-head">
           <div>
-            <h2>能力地图</h2>
+            <h2>{{ $t('common.capabilityMap') }}</h2>
           </div>
         </div>
         <div class="capability-groups">

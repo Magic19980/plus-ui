@@ -1,18 +1,18 @@
 <template>
   <div class="profile-auth">
     <el-table :data="auths" border class="data-table profile-auth-table">
-      <el-table-column label="序号" width="50" type="index" />
-      <el-table-column label="绑定账号平台" width="140" align="center" prop="source" show-overflow-tooltip />
-      <el-table-column label="头像" width="120" align="center" prop="avatar">
+      <el-table-column :label="$t('common.index')" width="50" type="index" />
+      <el-table-column :label="$t('common.bindPlatform')" width="140" align="center" prop="source" show-overflow-tooltip />
+      <el-table-column :label="$t('common.avatar')" width="120" align="center" prop="avatar">
         <template #default="scope">
           <img :src="scope.row.avatar" style="width: 45px; height: 45px" />
         </template>
       </el-table-column>
-      <el-table-column label="系统账号" width="180" align="center" prop="userName" :show-overflow-tooltip="true" />
-      <el-table-column label="绑定时间" width="180" align="center" prop="createTime" />
-      <el-table-column label="操作" width="80" align="center" class-name="small-padding fixed-width">
+      <el-table-column :label="$t('common.systemAccount')" width="180" align="center" prop="userName" :show-overflow-tooltip="true" />
+      <el-table-column :label="$t('common.bindTime')" width="180" align="center" prop="createTime" />
+      <el-table-column :label="$t('common.operation')" width="80" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-tooltip content="解绑" placement="top">
+          <el-tooltip :content="$t('common.tooltipUnbind')" placement="top">
             <el-button link type="primary" icon="CircleClose" @click="unlockAuth(scope.row)"></el-button>
           </el-tooltip>
         </template>
@@ -21,15 +21,15 @@
 
     <div class="provider-section">
       <div class="provider-heading">
-        <h4 class="provider-desc">可绑定的第三方应用</h4>
-        <p>点击下方平台完成账号绑定。</p>
+        <h4 class="provider-desc">{{ $t('common.bindableThirdParty') }}</h4>
+        <p>{{ $t('common.descThirdParty') }}</p>
       </div>
       <div class="user-bind">
         <a class="third-app" href="#" title="使用 微信 账号授权登录" @click="authUrl('wechat')">
           <div class="third-app__icon">
             <svg-icon icon-class="wechat" />
           </div>
-          <span class="app-name">微信</span>
+          <span class="app-name">{{ $t('common.wechat') }}</span>
         </a>
         <a class="third-app" href="#" title="使用 MaxKey 账号授权登录" @click="authUrl('maxkey')">
           <div class="third-app__icon">
@@ -62,9 +62,12 @@
 
 <script setup lang="ts">
 import { authUnlock, authRouterUrl } from '@/api/system/social/auth';
+import { useI18n } from 'vue-i18n';
 import modal from '@/plugins/modal';
 import tab from '@/plugins/tab';
 import { propTypes } from '@/utils/propTypes';
+
+const { t } = useI18n();
 
 const props = defineProps({
   auths: propTypes.any.isRequired
@@ -72,13 +75,13 @@ const props = defineProps({
 const auths = computed(() => props.auths);
 
 const unlockAuth = (row: any) => {
-  ElMessageBox.confirm('您确定要解除"' + row.source + '"的账号绑定吗？')
+  ElMessageBox.confirm(t('common.msgboxConfirmUnbind', { source: row.source }))
     .then(() => {
       return authUnlock(row.id);
     })
     .then((res: any) => {
       if (res.code === 200) {
-        modal.msgSuccess('解绑成功');
+        modal.msgSuccess(t('common.msgUnbindSuccess'));
         tab.refreshPage();
       } else {
         modal.msgError(res.msg);

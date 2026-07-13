@@ -5,8 +5,8 @@
       <tree-panel
         ref="treePanelRef"
         v-model:collapsed="treeCollapsed"
-        title="部门结构"
-        placeholder="请输入部门名称"
+        :title="$t('common.dialogDeptStructure')"
+        :placeholder="$t('common.placeholderInputDeptName')"
         :data="deptOptions"
         :expanded-span="5"
         @node-click="handleNodeClick"
@@ -23,38 +23,38 @@
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
                 <div>
                   <span class="panel-kicker">Search Filters</span>
-                  <h3>筛选条件</h3>
+                  <h3>{{ $t('common.sectionSearchCondition') }}</h3>
                 </div>
               </div>
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-              <el-form-item label="用户名称" prop="userName">
+              <el-form-item :label="$t('common.userName')" prop="userName">
                 <el-input
                   v-model="queryParams.userName"
-                  placeholder="请输入用户名称"
+                  :placeholder="$t('common.placeholderInputUserName')"
                   clearable
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
-              <el-form-item label="用户昵称" prop="nickName">
+              <el-form-item :label="$t('common.nickName')" prop="nickName">
                 <el-input
                   v-model="queryParams.nickName"
-                  placeholder="请输入用户昵称"
+                  :placeholder="$t('common.placeholderInputNickName')"
                   clearable
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
-              <el-form-item label="手机号码" prop="phoneNumber">
+              <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
                 <el-input
                   v-model="queryParams.phoneNumber"
-                  placeholder="请输入手机号码"
+                  :placeholder="$t('common.placeholderInputPhone')"
                   clearable
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
 
-              <el-form-item label="状态" prop="status">
-                <el-select v-model="queryParams.status" placeholder="用户状态" clearable>
+              <el-form-item :label="$t('common.status')" prop="status">
+                <el-select v-model="queryParams.status" :placeholder="$t('common.userStatus')" clearable>
                   <el-option
                     v-for="dict in sys_normal_disable"
                     :key="dict.value"
@@ -63,20 +63,20 @@
                   />
                 </el-select>
               </el-form-item>
-              <el-form-item label="创建时间" style="width: 308px">
+              <el-form-item :label="$t('common.createTime')" style="width: 308px">
                 <el-date-picker
                   v-model="dateRange"
                   value-format="YYYY-MM-DD HH:mm:ss"
                   type="daterange"
                   range-separator="-"
-                  start-placeholder="开始日期"
-                  end-placeholder="结束日期"
+                  :start-placeholder="$t('common.placeholderStartDate')"
+                  :end-placeholder="$t('common.placeholderEndDate')"
                   :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
                 ></el-date-picker>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
               </el-form-item>
             </el-form>
             <search-filter-summary
@@ -92,12 +92,12 @@
             <div class="toolbar-shell">
               <div class="table-heading">
                 <span class="panel-kicker">User Dataset</span>
-                <h3>用户列表</h3>
-                <p>共 {{ total }} 条记录，支持部门筛选、状态切换、导入导出和角色分配。</p>
+                <h3>{{ $t('common.sectionUserList') }}</h3>
+                <p>{{ $t("common.recordCount", { total }) }}</p>
               </div>
               <div class="toolbar-actions">
                 <el-button v-has-permi="['system:user:add']" type="primary" plain icon="Plus" @click="handleAdd()">
-                  新增
+                  {{ $t('common.btnAdd') }}
                 </el-button>
                 <el-button
                   v-has-permi="['system:user:edit']"
@@ -107,7 +107,7 @@
                   icon="Edit"
                   @click="handleUpdate()"
                 >
-                  修改
+                  {{ $t('common.btnEdit') }}
                 </el-button>
                 <el-button
                   v-has-permi="['system:user:remove']"
@@ -117,7 +117,7 @@
                   icon="Delete"
                   @click="handleDelete()"
                 >
-                  删除
+                  {{ $t('common.btnDelete') }}
                 </el-button>
                 <el-button
                   v-hasPermi="['system:user:edit']"
@@ -127,22 +127,22 @@
                   :disabled="single"
                   @click="handleUnlock()"
                 >
-                  解锁
+                  {{ $t('common.btnUnlock') }}
                 </el-button>
                 <el-dropdown class="mt-[1px]">
                   <el-button plain type="info">
-                    更多
+                    {{ $t('common.btnMore') }}
                     <el-icon class="el-icon--right"><arrow-down /></el-icon>
                   </el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item icon="Download" @click="importTemplate">下载模板</el-dropdown-item>
+                      <el-dropdown-item icon="Download" @click="importTemplate">{{ $t('common.btnDownloadTemplate') }}</el-dropdown-item>
                       <!-- 注意 由于el-dropdown-item标签是延迟加载的 所以v-has-permi自定义标签不生效 需要使用v-if调用方法执行 -->
                       <el-dropdown-item v-if="checkPermi(['system:user:import'])" icon="Top" @click="handleImport">
-                        导入数据
+                        {{ $t('common.btnImportData') }}
                       </el-dropdown-item>
                       <el-dropdown-item v-if="checkPermi(['system:user:export'])" icon="Download" @click="handleExport">
-                        导出数据
+                        {{ $t('common.btnExportData') }}
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -169,11 +169,11 @@
           >
             <template #empty><empty-state /></template>
             <el-table-column type="selection" width="50" align="center" />
-            <el-table-column v-if="columns[0].visible" key="userId" label="用户编号" align="center" prop="userId" />
+            <el-table-column v-if="columns[0].visible" key="userId" :label="$t('common.userId')" align="center" prop="userId" />
             <el-table-column
               v-if="columns[1].visible"
               key="userName"
-              label="用户名称"
+              :label="$t('common.userName')"
               align="center"
               :show-overflow-tooltip="true"
             >
@@ -186,7 +186,7 @@
             <el-table-column
               v-if="columns[2].visible"
               key="nickName"
-              label="用户昵称"
+              :label="$t('common.nickName')"
               align="center"
               prop="nickName"
               :show-overflow-tooltip="true"
@@ -194,7 +194,7 @@
             <el-table-column
               v-if="columns[3].visible"
               key="deptName"
-              label="部门"
+              :label="$t('common.dept')"
               align="center"
               prop="deptName"
               :show-overflow-tooltip="true"
@@ -202,12 +202,12 @@
             <el-table-column
               v-if="columns[4].visible"
               key="phoneNumber"
-              label="手机号码"
+              :label="$t('common.phoneNumber')"
               align="center"
               prop="phoneNumber"
               width="120"
             />
-            <el-table-column v-if="columns[5].visible" key="status" label="状态" align="center">
+            <el-table-column v-if="columns[5].visible" key="status" :label="$t('common.status')" align="center">
               <template #default="scope">
                 <el-switch
                   v-model="scope.row.status"
@@ -218,15 +218,15 @@
               </template>
             </el-table-column>
 
-            <el-table-column v-if="columns[6].visible" label="创建时间" align="center" prop="createTime" width="160">
+            <el-table-column v-if="columns[6].visible" :label="$t('common.createTime')" align="center" prop="createTime" width="160">
               <template #default="scope">
                 <span>{{ scope.row.createTime }}</span>
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" fixed="right" width="180" class-name="small-padding fixed-width">
+            <el-table-column :label="$t('common.operation')" fixed="right" width="180" class-name="small-padding fixed-width">
               <template #default="scope">
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" content="修改" placement="top">
+                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipModify')" placement="top">
                   <el-button
                     v-hasPermi="['system:user:edit']"
                     link
@@ -235,7 +235,7 @@
                     @click="handleUpdate(scope.row)"
                   ></el-button>
                 </el-tooltip>
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" content="删除" placement="top">
+                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipDelete')" placement="top">
                   <el-button
                     v-hasPermi="['system:user:remove']"
                     link
@@ -245,7 +245,7 @@
                   ></el-button>
                 </el-tooltip>
 
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" content="重置密码" placement="top">
+                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipResetPwd')" placement="top">
                   <el-button
                     v-hasPermi="['system:user:resetPwd']"
                     link
@@ -255,7 +255,7 @@
                   ></el-button>
                 </el-tooltip>
 
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" content="分配角色" placement="top">
+                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipAssignRole')" placement="top">
                   <el-button
                     v-hasPermi="['system:user:edit']"
                     link
@@ -291,18 +291,18 @@
       <el-form ref="userFormRef" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="用户昵称" prop="nickName">
-              <el-input v-model="form.nickName" placeholder="请输入用户昵称" maxlength="30" />
+            <el-form-item :label="$t('common.nickName')" prop="nickName">
+              <el-input v-model="form.nickName" :placeholder="$t('common.placeholderInputNickName')" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="form.userId == null || form.userId != useUserStore().userId">
-            <el-form-item label="归属部门" prop="deptId">
+            <el-form-item :label="$t('common.dept')" prop="deptId">
               <el-tree-select
                 v-model="form.deptId"
                 :data="enabledDeptOptions"
                 :props="{ value: 'id', label: 'label', children: 'children' } as any"
                 value-key="id"
-                placeholder="请选择归属部门"
+                :placeholder="$t('common.placeholderSelectDept')"
                 check-strictly
                 @change="handleDeptChange"
               />
@@ -311,27 +311,27 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="手机号码" prop="phoneNumber">
-              <el-input v-model="form.phoneNumber" placeholder="请输入手机号码" maxlength="11" />
+            <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
+              <el-input v-model="form.phoneNumber" :placeholder="$t('common.placeholderInputPhone')" maxlength="11" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50" />
+            <el-form-item :label="$t('common.email')" prop="email">
+              <el-input v-model="form.email" :placeholder="$t('common.placeholderInputEmail')" maxlength="50" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item v-if="form.userId == undefined" label="用户名称" prop="userName">
-              <el-input v-model="form.userName" placeholder="请输入用户名称" maxlength="30" />
+            <el-form-item v-if="form.userId == undefined" :label="$t('common.userName')" prop="userName">
+              <el-input v-model="form.userName" :placeholder="$t('common.placeholderInputUserName')" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item v-if="form.userId == undefined" label="用户密码" prop="password">
+            <el-form-item v-if="form.userId == undefined" :label="$t('common.userPassword')" prop="password">
               <el-input
                 v-model="form.password"
-                placeholder="请输入用户密码"
+                :placeholder="$t('common.placeholderInputUserPwd')"
                 type="password"
                 maxlength="20"
                 show-password
@@ -341,8 +341,8 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="用户性别">
-              <el-select v-model="form.gender" placeholder="请选择">
+            <el-form-item :label="$t('common.gender')">
+              <el-select v-model="form.gender" :placeholder="$t('common.placeholderSelect')">
                 <el-option
                   v-for="dict in sys_user_gender"
                   :key="dict.value"
@@ -353,7 +353,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="状态">
+            <el-form-item :label="$t('common.status')">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
                   {{ dict.label }}
@@ -364,8 +364,8 @@
         </el-row>
         <el-row>
           <el-col :span="12" v-if="form.userId == null || form.userId != useUserStore().userId">
-            <el-form-item label="岗位">
-              <el-select v-model="form.postIds" multiple placeholder="请选择">
+            <el-form-item :label="$t('common.post')">
+              <el-select v-model="form.postIds" multiple :placeholder="$t('common.placeholderSelect')">
                 <el-option
                   v-for="item in postOptions"
                   :key="item.postId"
@@ -377,8 +377,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="form.userId == null || form.userId != useUserStore().userId">
-            <el-form-item label="角色" prop="roleIds">
-              <el-select v-model="form.roleIds" filterable multiple placeholder="请选择">
+            <el-form-item :label="$t('common.role')" prop="roleIds">
+              <el-select v-model="form.roleIds" filterable multiple :placeholder="$t('common.placeholderSelect')">
                 <el-option
                   v-for="item in roleOptions"
                   :key="item.roleId"
@@ -392,16 +392,16 @@
         </el-row>
         <el-row>
           <el-col :span="24">
-            <el-form-item label="备注">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
+            <el-form-item :label="$t('common.remark')">
+              <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel()">取 消</el-button>
+          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel()">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -424,31 +424,31 @@
           <UploadFilled />
         </el-icon>
         <div class="el-upload__text">
-          将文件拖到此处，或
-          <em>点击上传</em>
+          {{ $t('common.uploadDragHint') }}
+          <em>{{ $t('common.uploadClickHint') }}</em>
         </div>
         <template #tip>
           <div class="text-center el-upload__tip">
             <div class="el-upload__tip">
               <el-checkbox v-model="upload.updateSupport" />
-              是否更新已经存在的用户数据
+              {{ $t('common.checkboxUpdateExisting') }}
             </div>
-            <span>仅允许导入xls、xlsx格式文件。</span>
+            <span>{{ $t('common.uploadFileLimit') }}</span>
             <el-link
               type="primary"
               underline="never"
               style="font-size: 12px; vertical-align: baseline"
               @click="importTemplate"
             >
-              下载模板
+              {{ $t('common.btnDownloadTemplate') }}
             </el-link>
           </div>
         </template>
       </el-upload>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitFileForm">确 定</el-button>
-          <el-button @click="upload.open = false">取 消</el-button>
+          <el-button type="primary" @click="submitFileForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="upload.open = false">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -459,8 +459,11 @@
 </template>
 
 <script setup name="User" lang="ts">
+import { ArrowDown, UploadFilled } from '@element-plus/icons-vue';
 import { to } from 'await-to-js';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+const { t, locale } = useI18n();
 import { getConfigKey } from '@/api/system/config';
 import { DeptTreeVO, DeptVO } from '@/api/system/dept/types';
 import { optionselect } from '@/api/system/post';
@@ -501,13 +504,13 @@ const deptOptions = ref<DeptTreeVO[]>([]);
 const activeFilters = computed(() => {
   const filters: { label: string; value: string; onRemove: () => void }[] = [];
   const qp = queryParams.value;
-  if (qp.userName) filters.push({ label: '用户名称', value: qp.userName, onRemove: () => { qp.userName = undefined; handleQuery(); } });
-  if (qp.nickName) filters.push({ label: '用户昵称', value: qp.nickName, onRemove: () => { qp.nickName = undefined; handleQuery(); } });
-  if (qp.phoneNumber) filters.push({ label: '手机号码', value: qp.phoneNumber, onRemove: () => { qp.phoneNumber = undefined; handleQuery(); } });
-  if (qp.status !== undefined && qp.status !== null && qp.status !== '') filters.push({ label: '状态', value: qp.status, onRemove: () => { qp.status = undefined; handleQuery(); } });
+  if (qp.userName) filters.push({ label: t('common.userName'), value: qp.userName, onRemove: () => { qp.userName = undefined; handleQuery(); } });
+  if (qp.nickName) filters.push({ label: t('common.nickName'), value: qp.nickName, onRemove: () => { qp.nickName = undefined; handleQuery(); } });
+  if (qp.phoneNumber) filters.push({ label: t('common.phoneNumber'), value: qp.phoneNumber, onRemove: () => { qp.phoneNumber = undefined; handleQuery(); } });
+  if (qp.status !== undefined && qp.status !== null && qp.status !== '') filters.push({ label: t('common.status'), value: qp.status, onRemove: () => { qp.status = undefined; handleQuery(); } });
   if (dateRange.value?.length) {
     const rangeStr = dateRange.value.join(' ~ ').substring(0, 20) + '...';
-    filters.push({ label: '创建时间', value: rangeStr, onRemove: () => { dateRange.value = []; handleQuery(); } });
+    filters.push({ label: t('common.createDate'), value: rangeStr, onRemove: () => { dateRange.value = []; handleQuery(); } });
   }
   return filters;
 });
@@ -523,7 +526,7 @@ const upload = reactive<ImportOption>({
   title: '',
   // 是否禁用上传
   isUploading: false,
-  // 是否更新已经存在的用户数据
+  // {{ $t('common.checkboxUpdateExisting') }}
   updateSupport: 0,
   // 设置上传的请求头部
   headers: globalHeaders(),
@@ -532,14 +535,25 @@ const upload = reactive<ImportOption>({
 });
 // 列显隐信息
 const columns = ref<FieldOption[]>([
-  { key: 0, label: `用户编号`, visible: false, children: [] },
-  { key: 1, label: `用户名称`, visible: true, children: [] },
-  { key: 2, label: `用户昵称`, visible: true, children: [] },
-  { key: 3, label: `部门`, visible: true, children: [] },
-  { key: 4, label: `手机号码`, visible: true, children: [] },
-  { key: 5, label: `状态`, visible: true, children: [] },
-  { key: 6, label: `创建时间`, visible: true, children: [] }
+  { key: 0, label: t('common.userId'), visible: false, children: [] },
+  { key: 1, label: t('common.userName'), visible: true, children: [] },
+  { key: 2, label: t('common.nickName'), visible: true, children: [] },
+  { key: 3, label: t('common.dept'), visible: true, children: [] },
+  { key: 4, label: t('common.phoneNumber'), visible: true, children: [] },
+  { key: 5, label: t('common.status'), visible: true, children: [] },
+  { key: 6, label: t('common.createTime'), visible: true, children: [] }
 ]);
+
+// 语言切换时更新列标签
+watch(locale, () => {
+  columns.value[0].label = t('common.userId');
+  columns.value[1].label = t('common.userName');
+  columns.value[2].label = t('common.nickName');
+  columns.value[3].label = t('common.dept');
+  columns.value[4].label = t('common.phoneNumber');
+  columns.value[5].label = t('common.status');
+  columns.value[6].label = t('common.createTime');
+});
 
 const treePanelRef = ref<InstanceType<typeof TreePanel>>();
 const queryFormRef = ref<ElFormInstance>();
@@ -576,44 +590,44 @@ const initData: PageData<UserForm, UserQuery> = {
   },
   rules: {
     userName: [
-      { required: true, message: '用户名称不能为空', trigger: 'blur' },
+      { required: true, message: t('common.validationUserNameRequired'), trigger: 'blur' },
       {
         min: 2,
         max: 20,
-        message: '用户名称长度必须介于 2 和 20 之间',
+        message: t('common.validationLengthBetween'),
         trigger: 'blur'
       }
     ],
-    nickName: [{ required: true, message: '用户昵称不能为空', trigger: 'blur' }],
+    nickName: [{ required: true, message: t('common.validationNickNameRequired'), trigger: 'blur' }],
     password: [
-      { required: true, message: '用户密码不能为空', trigger: 'blur' },
+      { required: true, message: t('common.validationUserPwdRequired'), trigger: 'blur' },
       {
         min: 5,
         max: 20,
-        message: '用户密码长度必须介于 5 和 20 之间',
+        message: t('common.validationLengthBetween'),
         trigger: 'blur'
       },
       {
         pattern: /^[^<>"'|\\]+$/,
-        message: '不能包含非法字符：< > " \' \\ |',
+        message: t('common.validationInvalidChars'),
         trigger: 'blur'
       }
     ],
     email: [
       {
         type: 'email',
-        message: '请输入正确的邮箱地址',
+        message: t('common.validationInvalidEmail'),
         trigger: ['blur', 'change']
       }
     ],
     phoneNumber: [
       {
         pattern: /^1[3456789][0-9]\d{8}$/,
-        message: '请输入正确的手机号码',
+        message: t('common.validationInvalidPhone'),
         trigger: 'blur'
       }
     ],
-    roleIds: [{ required: true, message: '用户角色不能为空', trigger: 'blur' }]
+    roleIds: [{ required: true, message: t('common.validationUserRoleRequired'), trigger: 'blur' }]
   }
 };
 const data = reactive<PageData<UserForm, UserQuery>>(initData);
@@ -680,31 +694,31 @@ const { resetQuery } = useSearchReset({
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<UserVO>) => {
   const userIds = row?.userId || ids.value;
-  const [err] = await to(modal.confirm('是否确认删除用户编号为"' + userIds + '"的数据项？') as any);
+  const [err] = await to(modal.confirm(t('common.msgboxConfirmDeleteUser', { id: userIds })) as any);
   if (!err) {
     await api.delUser(userIds);
     await getList();
-    modal.msgSuccess('删除成功');
+    modal.msgSuccess(t('common.msgDeleteSuccess'));
   }
 };
 
 /** 解锁按钮操作 */
 const handleUnlock = async () => {
   const userId = ids.value[0];
-  const [err] = await to(modal.confirm('是否确认解锁用户编号为"' + userId + '"的数据项?') as any);
+  const [err] = await to(modal.confirm(t('common.msgboxConfirmUnlockUser', { id: userId })) as any);
   if (!err) {
     await api.unlockUser(userId);
-    modal.msgSuccess('用户编号"' + userId + '"解锁成功');
+    modal.msgSuccess(t('common.msgUnlockSuccess'));
   }
 };
 
 /** 用户状态修改  */
 const handleStatusChange = async (row: Partial<UserVO>) => {
-  const text = row.status === '0' ? '启用' : '停用';
+  const text = row.status === '0' ? t('common.tagEnabled') : t('common.tagDisabled');
   try {
-    await modal.confirm('确认要"' + text + '""' + row.userName + '"用户吗?');
+    await modal.confirm(t('common.msgboxConfirmStatusChange', { action: text, name: row.userName }));
     await api.changeUserStatus(row.userId, row.status);
-    modal.msgSuccess(text + '成功');
+    modal.msgSuccess(t('common.msgStatusChangeSuccess'));
   } catch (err) {
     row.status = row.status === '0' ? '1' : '0';
   }
@@ -718,22 +732,22 @@ const handleAuthRole = (row: Partial<UserVO>) => {
 /** 重置密码按钮操作 */
 const handleResetPwd = async (row: Partial<UserVO>) => {
   const [err, res] = await to(
-    ElMessageBox.prompt('请输入"' + row.userName + '"的新密码', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    ElMessageBox.prompt(t('common.msgboxInputNewPwd', { name: row.userName }), t('common.tip'), {
+      confirmButtonText: t('common.btnConfirm'),
+      cancelButtonText: t('common.btnCancel'),
       closeOnClickModal: false,
       inputPattern: /^.{5,20}$/,
-      inputErrorMessage: '用户密码长度必须介于 5 和 20 之间',
+      inputErrorMessage: t('common.msgboxPwdLength'),
       inputValidator: value => {
         if (/<|>|"|'|\||\\/.test(value)) {
-          return '不能包含非法字符：< > " \' \\ |';
+          return t('common.validationInvalidChars');
         }
       }
     })
   );
   if (!err && res) {
     await api.resetUserPwd(row.userId, res.value);
-    modal.msgSuccess('修改成功，新密码是：' + res.value);
+    modal.msgSuccess(t('common.msgResetPwdSuccess') + ': ' + res.value);
   }
 };
 
@@ -744,7 +758,7 @@ const handleViewDetail = (row: Partial<UserVO>) => {
 
 /** 导入按钮操作 */
 const handleImport = () => {
-  upload.title = '用户导入';
+  upload.title = t('common.userImport');
   upload.open = true;
 };
 /** 导出按钮操作 */
@@ -779,7 +793,7 @@ const handleFileSuccess = (response: any, file: UploadFile) => {
   upload.open = false;
   upload.isUploading = false;
   uploadRef.value?.handleRemove(file);
-  ElMessageBox.alert(formatImportResultMessage(response.msg), '导入结果', {
+  ElMessageBox.alert(formatImportResultMessage(response.msg), t('common.dialogImportResult'), {
     customClass: 'import-result-box'
   });
   getList();
@@ -805,7 +819,7 @@ const cancel = () => {
 const handleAdd = async () => {
   reset();
   const { data } = await api.getUser();
-  setDialogTitle('新增用户');
+  setDialogTitle(t('common.dialogAddUser'));
   openUserDialog();
   postOptions.value = data.posts;
   roleOptions.value = data.roles;
@@ -817,7 +831,7 @@ const handleUpdate = async (row?: Partial<UserForm>) => {
   reset();
   const userId = row?.userId || ids.value[0];
   const { data } = await api.getUser(userId);
-  setDialogTitle('修改用户');
+  setDialogTitle(t('common.dialogEditUser'));
   openUserDialog();
   Object.assign(form.value, data.user);
   postOptions.value = data.posts;
@@ -844,7 +858,7 @@ const submitForm = () => {
       } else {
         await api.addUser(form.value);
       }
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeUserDialog();
       await getList();
     }

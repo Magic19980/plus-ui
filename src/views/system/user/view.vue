@@ -1,40 +1,40 @@
 <template>
   <el-drawer
     v-model="visible"
-    title="用户信息详情"
+    :title="$t('common.dialogUserDetail')"
     :size="680"
     append-to-body
     :close-on-click-modal="true"
     @closed="info = null"
   >
     <el-descriptions v-if="info" v-loading="loading" :column="2" border>
-      <el-descriptions-item label="用户名称">{{ info.nickName }}</el-descriptions-item>
-      <el-descriptions-item label="归属部门">
+      <el-descriptions-item :label="$t('common.userName')">{{ info.nickName }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.dept')">
         {{ info.deptName || (info.dept && info.dept.deptName) || '-' }}
       </el-descriptions-item>
-      <el-descriptions-item label="手机号码">{{ info.phoneNumber || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="邮箱">{{ info.email || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="登录账号">{{ info.userName }}</el-descriptions-item>
-      <el-descriptions-item label="用户状态">
+      <el-descriptions-item :label="$t('common.phoneNumber')">{{ info.phoneNumber || '-' }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.email')">{{ info.email || '-' }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.loginAccount')">{{ info.userName }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.userStatus')">
         <el-tag :type="info.status === '0' ? 'success' : 'danger'">
           {{ selectDictLabel(sys_normal_disable, info.status) }}
         </el-tag>
       </el-descriptions-item>
-      <el-descriptions-item label="岗位">{{ postNames || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="用户性别">
+      <el-descriptions-item :label="$t('common.post')">{{ postNames || '-' }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.gender')">
         {{ selectDictLabel(sys_user_gender, info.gender) || '-' }}
       </el-descriptions-item>
-      <el-descriptions-item label="角色" :span="2">{{ roleNames || '-' }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.role')" :span="2">{{ roleNames || '-' }}</el-descriptions-item>
     </el-descriptions>
 
     <el-divider />
 
     <el-descriptions v-if="info" :column="2" border>
-      <el-descriptions-item label="创建时间">{{ info.createTime || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="更新时间">{{ info.updateTime || '-' }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.createTime')">{{ info.createTime || '-' }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.updateTime')">{{ info.updateTime || '-' }}</el-descriptions-item>
       <el-descriptions-item label="最后登录IP">{{ info.loginIp || '-' }}</el-descriptions-item>
       <el-descriptions-item label="最后登录时间">{{ info.loginDate || '-' }}</el-descriptions-item>
-      <el-descriptions-item label="备注" :span="2">{{ info.remark || '-' }}</el-descriptions-item>
+      <el-descriptions-item :label="$t('common.remark')" :span="2">{{ info.remark || '-' }}</el-descriptions-item>
     </el-descriptions>
   </el-drawer>
 </template>

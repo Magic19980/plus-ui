@@ -3,7 +3,7 @@
     <div class="login-shell">
       <section class="login-brand">
         <span class="brand-pill">Plus UI Workspace</span>
-        <h1 class="brand-title">企业级后台管理系统</h1>
+        <h1 class="brand-title">{{ $t('common.enterpriseAdminSystem') }}</h1>
         <p class="brand-desc">
           真正面向企业级的应用框架 组件化 模块化 轻耦合 高扩展 针对企业痛点 业界一流技术栈
           <br />
@@ -25,7 +25,7 @@
           <div>
             <p class="eyebrow">Workspace Sign In</p>
             <h3 class="title">{{ title }}</h3>
-            <p class="subtitle">使用当前账号体系登录到业务工作台。</p>
+            <p class="subtitle">{{ $t('common.loginSubtitle') }}</p>
           </div>
           <lang-select />
         </div>
@@ -78,7 +78,7 @@
         </div>
 
         <div class="social-panel">
-          <span class="social-label">第三方登录</span>
+          <span class="social-label">{{ $t('common.thirdPartyLogin') }}</span>
           <div class="social-actions">
             <el-button circle :title="$t('login.social.wechat')" @click="doSocialLogin('wechat')">
               <svg-icon icon-class="wechat" />

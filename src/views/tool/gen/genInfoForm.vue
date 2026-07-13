@@ -3,7 +3,7 @@
     <el-row>
       <el-col :span="12">
         <el-form-item prop="tplCategory">
-          <template #label>生成模板</template>
+          <template #label>{{ $t('common.tplCategory') }}</template>
           <el-select v-model="infoForm.tplCategory">
             <el-option label="单表（增删改查）" value="crud" />
             <el-option label="树表（增删改查）" value="tree" />
@@ -73,7 +73,7 @@
             :props="{ value: 'menuId', label: 'menuName', children: 'children' } as any"
             value-key="menuId"
             node-key="menuId"
-            placeholder="选择上级菜单"
+            :placeholder="$t('common.selectParentMenu')"
             check-strictly
             filterable
             clearable
@@ -100,7 +100,7 @@
 
     </el-row>
 
-    <h4 class="form-header">增强选项</h4>
+    <h4 class="form-header">{{ $t('common.sectionEnhancedOptions') }}</h4>
     <el-row class="enhance-options" :gutter="20">
       <el-col :span="24">
         <el-row :gutter="20" class="enhance-option-row">
@@ -133,7 +133,7 @@
           </el-col>
           <el-col v-if="infoForm.enableStatus" :span="16">
             <el-form-item prop="statusField">
-              <el-select v-model="infoForm.statusField" placeholder="请选择状态字段">
+              <el-select v-model="infoForm.statusField" :placeholder="$t('common.placeholderSelectStatusField')">
                 <el-option
                   v-for="column in availableColumns"
                   :key="column.columnName"
@@ -161,7 +161,7 @@
           </el-col>
           <el-col v-if="infoForm.enableUnique" :span="16">
             <el-form-item prop="uniqueFields">
-              <el-select v-model="infoForm.uniqueFields" multiple clearable filterable placeholder="请选择唯一字段">
+              <el-select v-model="infoForm.uniqueFields" multiple clearable filterable :placeholder="$t('common.placeholderSelectUniqueFields')">
                 <el-option
                   v-for="column in availableColumns"
                   :key="column.columnName"
@@ -189,7 +189,7 @@
           </el-col>
           <el-col v-if="infoForm.enableSort" :span="16">
             <el-form-item prop="sortField">
-              <el-select v-model="infoForm.sortField" placeholder="请选择排序字段">
+              <el-select v-model="infoForm.sortField" :placeholder="$t('common.placeholderSelectSortField')">
                 <el-option
                   v-for="column in sortableColumns"
                   :key="column.columnName"
@@ -204,7 +204,7 @@
     </el-row>
 
     <template v-if="info.tplCategory == 'tree'">
-      <h4 class="form-header">其他信息</h4>
+      <h4 class="form-header">{{ $t('common.sectionOtherInfo') }}</h4>
       <el-row v-show="info.tplCategory == 'tree'">
         <el-col :span="12">
           <el-form-item>
@@ -214,7 +214,7 @@
                 <el-icon><question-filled /></el-icon>
               </el-tooltip>
             </template>
-            <el-select v-model="infoForm.treeCode" placeholder="请选择">
+            <el-select v-model="infoForm.treeCode" :placeholder="$t('common.placeholderSelect')">
               <el-option
                 v-for="(column, index) in availableColumns"
                 :key="index"
@@ -232,7 +232,7 @@
                 <el-icon><question-filled /></el-icon>
               </el-tooltip>
             </template>
-            <el-select v-model="infoForm.treeParentCode" placeholder="请选择">
+            <el-select v-model="infoForm.treeParentCode" :placeholder="$t('common.placeholderSelect')">
               <el-option
                 v-for="(column, index) in availableColumns"
                 :key="index"
@@ -250,7 +250,7 @@
                 <el-icon><question-filled /></el-icon>
               </el-tooltip>
             </template>
-            <el-select v-model="infoForm.treeName" placeholder="请选择">
+            <el-select v-model="infoForm.treeName" :placeholder="$t('common.placeholderSelect')">
               <el-option
                 v-for="(column, index) in availableColumns"
                 :key="index"
@@ -268,7 +268,7 @@
                 <el-icon><question-filled /></el-icon>
               </el-tooltip>
             </template>
-            <el-input v-model="infoForm.treeRootValue" placeholder="请输入根节点值" />
+            <el-input v-model="infoForm.treeRootValue" :placeholder="$t('common.placeholderInputRootValue')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -279,7 +279,7 @@
                 <el-icon><question-filled /></el-icon>
               </el-tooltip>
             </template>
-            <el-select v-model="infoForm.treeAncestorsField" clearable placeholder="请选择祖级字段">
+            <el-select v-model="infoForm.treeAncestorsField" clearable :placeholder="$t('common.placeholderSelectAncestorField')">
               <el-option
                 v-for="column in availableColumns"
                 :key="column.columnName"
@@ -297,7 +297,7 @@
                 <el-icon><question-filled /></el-icon>
               </el-tooltip>
             </template>
-            <el-select v-model="infoForm.treeOrderField" clearable placeholder="请选择树排序字段">
+            <el-select v-model="infoForm.treeOrderField" clearable :placeholder="$t('common.placeholderSelectTreeOrderField')">
               <el-option
                 v-for="column in sortableColumns"
                 :key="column.columnName"
@@ -316,6 +316,7 @@
 <script setup lang="ts">
 import type { FormInstance } from 'element-plus';
 import { listMenu } from '@/api/system/menu';
+import { useI18n } from 'vue-i18n';
 import { propTypes } from '@/utils/propTypes';
 import { handleTree } from '@/utils/ruoyi';
 
@@ -347,15 +348,15 @@ const sortableColumns = computed(() =>
 
 // 表单校验
 const rules = ref({
-  tplCategory: [{ required: true, message: '请选择生成模板', trigger: 'blur' }],
+  tplCategory: [{ required: true, message: t('common.validationTplCategoryRequired'), trigger: 'blur' }],
   frontendType: [
-    { required: true, message: '请选择前端模板', trigger: 'change' },
-    { pattern: /^[A-Za-z0-9_-]+$/, message: '仅支持字母、数字、下划线和中划线', trigger: 'change' }
+    { required: true, message: t('common.validationFrontTplRequired'), trigger: 'change' },
+    { pattern: /^[A-Za-z0-9_-]+$/, message: t('common.validationAlphanumericOnly'), trigger: 'change' }
   ],
-  packageName: [{ required: true, message: '请输入生成包路径', trigger: 'blur' }],
-  moduleName: [{ required: true, message: '请输入生成模块名', trigger: 'blur' }],
-  businessName: [{ required: true, message: '请输入生成业务名', trigger: 'blur' }],
-  functionName: [{ required: true, message: '请输入生成功能名', trigger: 'blur' }],
+  packageName: [{ required: true, message: t('common.validationPkgNameRequired'), trigger: 'blur' }],
+  moduleName: [{ required: true, message: t('common.validationModuleNameRequired'), trigger: 'blur' }],
+  businessName: [{ required: true, message: t('common.validationBusinessNameRequired'), trigger: 'blur' }],
+  functionName: [{ required: true, message: t('common.validationFuncNameRequired'), trigger: 'blur' }],
   statusField: [
     {
       validator: (_rule: any, value: string, callback: (error?: Error) => void) => {

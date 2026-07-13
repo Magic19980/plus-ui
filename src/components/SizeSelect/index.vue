@@ -21,15 +21,17 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useAppStore } from '@/store/modules/app';
 
+const { t } = useI18n();
 const appStore = useAppStore();
 const size = computed(() => appStore.size);
 
-const sizeOptions = ref([
-  { label: '较大', value: 'large' },
-  { label: '默认', value: 'default' },
-  { label: '稍小', value: 'small' }
+const sizeOptions = computed(() => [
+  { label: t('navbar.layoutSizeLarge'), value: 'large' },
+  { label: t('navbar.layoutSizeDefault'), value: 'default' },
+  { label: t('navbar.layoutSizeSmall'), value: 'small' }
 ]);
 
 const handleSetSize = (size: 'large' | 'default' | 'small') => {

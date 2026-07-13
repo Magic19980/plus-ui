@@ -6,30 +6,30 @@
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
               <span class="panel-kicker">Search Filters</span>
-              <h3>筛选条件</h3>
+              <h3>{{ $t('common.sectionSearchCondition') }}</h3>
             </div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="参数名称" prop="configName">
+          <el-form-item :label="$t('common.parameterName')" prop="configName">
             <el-input
               v-model="queryParams.configName"
-              placeholder="请输入参数名称"
+              :placeholder="$t('common.placeholderInputConfigName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="参数键名" prop="configKey">
+          <el-form-item :label="$t('common.configKey')" prop="configKey">
             <el-input
               v-model="queryParams.configKey"
-              placeholder="请输入参数键名"
+              :placeholder="$t('common.placeholderInputConfigKey')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -40,15 +40,15 @@
         <div class="toolbar-shell">
           <div class="table-heading">
             <span class="panel-kicker">Config Dataset</span>
-            <h3>参数列表</h3>
+            <h3>{{ $t('common.sectionConfigList') }}</h3>
             <p>共 {{ total }} 条记录，支持键值维护、导出和缓存刷新。</p>
           </div>
           <div class="toolbar-actions">
             <el-button v-hasPermi="['system:config:add']" type="primary" plain icon="Plus" @click="handleAdd">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button v-hasPermi="['system:config:export']" type="warning" plain icon="Download" @click="handleExport">
-              导出
+              {{ $t('common.btnExport') }}
             </el-button>
             <el-button
               v-hasPermi="['system:config:remove']"
@@ -66,35 +66,35 @@
 
       <div class="config-body">
         <el-tabs v-model="activeTab" tab-position="left" class="config-tabs" @tab-change="handleTabChange">
-          <el-tab-pane label="全部" name="" />
-          <el-tab-pane label="系统内置" name="Y" />
-          <el-tab-pane label="自定义配置" name="N" />
+          <el-tab-pane :label="$t('common.all')" name="" />
+          <el-tab-pane :label="$t('common.systemBuiltIn')" name="Y" />
+          <el-tab-pane :label="$t('common.tabCustomConfig')" name="N" />
         </el-tabs>
 
         <div class="config-content">
           <table-skeleton v-if="loading && !configList?.length" />
           <el-table v-else :data="configList" :border="false">
             <template #empty><empty-state /></template>
-            <el-table-column label="参数名称" prop="configName" min-width="160" />
-            <el-table-column label="参数键名" prop="configKey" min-width="160" />
-            <el-table-column label="参数键值" min-width="160">
+            <el-table-column :label="$t('common.parameterName')" prop="configName" min-width="160" />
+            <el-table-column :label="$t('common.configKey')" prop="configKey" min-width="160" />
+            <el-table-column :label="$t('common.configValue')" min-width="160">
               <template #default="{ row }">
                 <el-input
                   v-model="row.configValue"
-                  placeholder="请输入参数键值"
+                  :placeholder="$t('common.placeholderInputConfigValue')"
                   @blur="handleInlineSave(row)"
                   @keyup.enter="handleInlineSave(row)"
                 />
               </template>
             </el-table-column>
-            <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip>
+            <el-table-column :label="$t('common.remark')" prop="remark" min-width="180" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.remark || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80" align="center">
+            <el-table-column :label="$t('common.operation')" width="80" align="center">
               <template #default="{ row }">
-                <el-tooltip content="修改" placement="top">
+                <el-tooltip :content="$t('common.tooltipModify')" placement="top">
                   <el-button
                     v-hasPermi="['system:config:edit']"
                     link
@@ -103,7 +103,7 @@
                     @click="handleUpdate(row)"
                   ></el-button>
                 </el-tooltip>
-                <el-tooltip content="删除" placement="top">
+                <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
                   <el-button
                     v-hasPermi="['system:config:remove']"
                     link
@@ -129,28 +129,28 @@
     <!-- 添加或修改参数配置对话框 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
       <el-form ref="configFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="参数名称" prop="configName">
-          <el-input v-model="form.configName" placeholder="请输入参数名称" />
+        <el-form-item :label="$t('common.parameterName')" prop="configName">
+          <el-input v-model="form.configName" :placeholder="$t('common.placeholderInputConfigName')" />
         </el-form-item>
-        <el-form-item label="参数键名" prop="configKey">
-          <el-input v-model="form.configKey" placeholder="请输入参数键名" />
+        <el-form-item :label="$t('common.configKey')" prop="configKey">
+          <el-input v-model="form.configKey" :placeholder="$t('common.placeholderInputConfigKey')" />
         </el-form-item>
-        <el-form-item label="参数键值" prop="configValue">
-          <el-input v-model="form.configValue" type="textarea" placeholder="请输入参数键值" />
+        <el-form-item :label="$t('common.configValue')" prop="configValue">
+          <el-input v-model="form.configValue" type="textarea" :placeholder="$t('common.placeholderInputConfigValue')" />
         </el-form-item>
-        <el-form-item label="系统内置" prop="configType">
+        <el-form-item :label="$t('common.systemBuiltIn')" prop="configType">
           <el-radio-group v-model="form.configType">
             <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+        <el-form-item :label="$t('common.remark')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -159,6 +159,8 @@
 
 <script setup name="Config" lang="ts">
 import { listConfig, getConfig, delConfig, addConfig, updateConfig, updateConfigByKey, refreshCache } from '@/api/system/config';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { ConfigForm, ConfigQuery, ConfigVO } from '@/api/system/config/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
@@ -260,16 +262,16 @@ const handleInlineSave = async (row: Partial<ConfigVO>) => {
   if (!row.configKey) {
     return;
   }
-  await modal.confirm('确认要保存对参数"' + row.configKey + '"的修改吗？');
+  await modal.confirm(t('common.msgboxConfirmSaveConfig', { name: row.configKey }));
   await updateConfigByKey(row.configKey, row.configValue ?? '');
-  modal.msgSuccess('修改成功');
+  modal.msgSuccess(t('common.msgEditSuccess'));
 };
 /** 提交按钮 */
 const submitForm = () => {
   configFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       form.value.configId ? await updateConfig(form.value) : await addConfig(form.value);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeDialog();
       await getList();
     }
@@ -278,10 +280,10 @@ const submitForm = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<ConfigVO>) => {
   const configIds = row?.configId;
-  await modal.confirm('是否确认删除参数编号为"' + configIds + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteConfig', { ids: configIds }));
   await delConfig(configIds!);
   await getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 /** 导出按钮操作 */
 const handleExport = () => {

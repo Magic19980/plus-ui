@@ -46,7 +46,7 @@ onMounted(() => {
   <div v-loading="loading" class="ai-chat-page">
     <iframe v-if="chatUrl" class="chat-frame" :src="chatUrl" title="Snail AI" allow="clipboard-read; clipboard-write" />
     <el-empty v-else class="chat-empty" :description="loadError || '正在加载 Snail AI'">
-      <el-button v-if="loadError" type="primary" @click="loadChat">重新加载</el-button>
+      <el-button v-if="loadError" type="primary" @click="loadChat">{{ $t('common.null') }}</el-button>
     </el-empty>
   </div>
 </template>

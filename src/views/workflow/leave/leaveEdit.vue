@@ -23,33 +23,33 @@
         :rules="rules"
         label-width="80px"
       >
-        <el-form-item label="流程定义" v-if="routeParams.type === 'add'">
-          <el-select v-model="flowCode" placeholder="选择流程定义" style="width: 100%">
+        <el-form-item :label="$t('common.processDefinition')" v-if="routeParams.type === 'add'">
+          <el-select v-model="flowCode" :placeholder="$t('common.placeholderSelectFlowDef')" style="width: 100%">
             <el-option v-for="item in flowCodeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="请假类型" prop="leaveType">
-          <el-select v-model="form.leaveType" placeholder="请选择请假类型" style="width: 100%">
+        <el-form-item :label="$t('common.leaveType')" prop="leaveType">
+          <el-select v-model="form.leaveType" :placeholder="$t('common.placeholderSelectLeaveType')" style="width: 100%">
             <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="请假时间" required>
+        <el-form-item :label="$t('common.leaveTime')" required>
           <el-date-picker
             v-model="leaveTime"
             value-format="YYYY-MM-DD HH:mm:ss"
             type="daterange"
             range-separator="To"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
+            :start-placeholder="$t('common.placeholderStartTime')"
+            :end-placeholder="$t('common.placeholderEndTime')"
             :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
             @change="changeLeaveTime()"
           />
         </el-form-item>
-        <el-form-item label="请假天数" prop="leaveDays">
-          <el-input v-model="form.leaveDays" disabled type="number" placeholder="请输入请假天数" />
+        <el-form-item :label="$t('common.leaveDays')" prop="leaveDays">
+          <el-input v-model="form.leaveDays" disabled type="number" :placeholder="$t('common.placeholderInputLeaveDays')" />
         </el-form-item>
-        <el-form-item label="请假原因" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入请假原因" />
+        <el-form-item :label="$t('common.leaveReason')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :rows="3" :placeholder="$t('common.placeholderInputLeaveReason')" />
         </el-form-item>
       </el-form>
     </el-card>
@@ -83,19 +83,19 @@ const routeParams = ref<Record<string, any>>({});
 const options = [
   {
     value: '1',
-    label: '事假'
+    label: t('common.leaveTypePersonal')
   },
   {
     value: '2',
-    label: '调休'
+    label: t('common.leaveTypeCompensatory')
   },
   {
     value: '3',
-    label: '病假'
+    label: t('common.leaveTypeSick')
   },
   {
     value: '4',
-    label: '婚假'
+    label: t('common.leaveTypeMarriage')
   }
 ];
 const flowCodeOptions = [
@@ -161,10 +161,10 @@ const data = reactive<PageData<LeaveForm, LeaveQuery>>({
     endLeaveDays: undefined
   },
   rules: {
-    id: [{ required: true, message: '主键不能为空', trigger: 'blur' }],
-    leaveType: [{ required: true, message: '请假类型不能为空', trigger: 'blur' }],
-    leaveTime: [{ required: true, message: '请假时间不能为空', trigger: 'blur' }],
-    leaveDays: [{ required: true, message: '请假天数不能为空', trigger: 'blur' }]
+    id: [{ required: true, message: t('common.validationPrimaryKeyRequired'), trigger: 'blur' }],
+    leaveType: [{ required: true, message: t('common.validationLeaveTypeRequired'), trigger: 'blur' }],
+    leaveTime: [{ required: true, message: t('common.validationLeaveTimeRequired'), trigger: 'blur' }],
+    leaveDays: [{ required: true, message: t('common.validationLeaveDaysRequired'), trigger: 'blur' }]
   }
 });
 
@@ -215,7 +215,7 @@ const submitForm = (status: string, mode: boolean) => {
           const res = await submitAndFlowStart(form.value).finally(() => (buttonLoading.value = false));
           form.value = res.data;
           buttonLoading.value = false;
-          modal.msgSuccess('操作成功');
+          modal.msgSuccess(t('common.msgOperateSuccess'));
           tab.closePage(route);
           router.go(-1);
         } else {

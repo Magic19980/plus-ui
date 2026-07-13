@@ -5,8 +5,8 @@
       <tree-panel
         ref="treePanelRef"
         v-model:collapsed="treeCollapsed"
-        title="流程分类"
-        placeholder="请输入流程分类名"
+        :title="$t('common.dialogFlowCategory')"
+        :placeholder="$t('common.placeholderInputFlowCategory')"
         :data="categoryOptions"
         :expanded-span="4"
         filter-field="categoryName"
@@ -22,16 +22,16 @@
           <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-                <div><h3>筛选条件</h3></div>
+                <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
               </div>
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="120px" class="query-form">
-              <el-form-item label="流程定义编码" prop="flowCode">
-                <el-input v-model="queryParams.flowCode" placeholder="请输入流程定义编码" @keyup.enter="handleQuery" />
+              <el-form-item :label="$t('common.processDefinitionCode')" prop="flowCode">
+                <el-input v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
               </el-form-item>
             </el-form>
           </el-card>
@@ -40,7 +40,7 @@
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
-                <h3>我的单据</h3>
+                <h3>{{ $t('common.sectionMyDocument') }}</h3>
               </div>
               <div class="toolbar-actions">
                 <right-toolbar
@@ -60,32 +60,32 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55" align="center" />
-            <el-table-column align="center" type="index" label="序号" width="60"></el-table-column>
+            <el-table-column align="center" type="index" :label="$t('common.index')" width="60"></el-table-column>
             <el-table-column v-if="false" align="center" prop="id" label="id"></el-table-column>
             <el-table-column
               :show-overflow-tooltip="true"
               prop="flowName"
               align="center"
-              label="流程定义名称"
+              :label="$t('common.processDefinitionName')"
             ></el-table-column>
-            <el-table-column align="center" prop="flowCode" label="流程定义编码"></el-table-column>
-            <el-table-column align="center" prop="categoryName" label="流程分类"></el-table-column>
-            <el-table-column align="center" prop="version" label="版本号" width="90">
+            <el-table-column align="center" prop="flowCode" :label="$t('common.processDefinitionCode')"></el-table-column>
+            <el-table-column align="center" prop="categoryName" :label="$t('common.processCategory')"></el-table-column>
+            <el-table-column align="center" prop="version" :label="$t('common.versionNumber')" width="90">
               <template #default="scope">v{{ scope.row.version }}.0</template>
             </el-table-column>
-            <el-table-column v-if="tab === 'running'" align="center" prop="isSuspended" label="状态" min-width="70">
+            <el-table-column v-if="tab === 'running'" align="center" prop="isSuspended" :label="$t('common.status')" min-width="70">
               <template #default="scope">
-                <el-tag v-if="!scope.row.isSuspended" type="success">激活</el-tag>
-                <el-tag v-else type="danger">挂起</el-tag>
+                <el-tag v-if="!scope.row.isSuspended" type="success">{{ $t('common.tagActive') }}</el-tag>
+                <el-tag v-else type="danger">{{ $t('common.tagSuspended') }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column align="center" label="流程状态" min-width="70">
+            <el-table-column align="center" :label="$t('common.processStatus')" min-width="70">
               <template #default="scope">
                 <dict-tag :options="wf_business_status" :value="scope.row.flowStatus"></dict-tag>
               </template>
             </el-table-column>
-            <el-table-column align="center" prop="createTime" label="启动时间" width="160"></el-table-column>
-            <el-table-column label="操作" align="center" width="162">
+            <el-table-column align="center" prop="createTime" :label="$t('common.launchTime')" width="160"></el-table-column>
+            <el-table-column :label="$t('common.operation')" align="center" width="162">
               <template #default="scope">
                 <el-row :gutter="10" class="mb8">
                   <el-col
@@ -109,7 +109,7 @@
                     "
                   >
                     <el-button type="primary" size="small" icon="Delete" @click="handleDelete(scope.row)">
-                      删除
+                      {{ $t('common.btnDelete') }}
                     </el-button>
                   </el-col>
                 </el-row>
@@ -151,6 +151,8 @@
 <script setup lang="ts">
 import { categoryTree } from '@/api/workflow/category';
 import { CategoryTreeVO } from '@/api/workflow/category/types';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { pageByCurrent, deleteByInstanceIds, cancelProcessApply } from '@/api/workflow/instance';
 import { FlowInstanceQuery, FlowInstanceVO } from '@/api/workflow/instance/types';
 import workflowCommon from '@/api/workflow/workflowCommon';
@@ -240,23 +242,23 @@ const getList = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row: Partial<FlowInstanceVO>) => {
   const instanceIdList = row.id || instanceIds.value;
-  await modal.confirm('是否确认删除？');
+  await modal.confirm(t('common.msgConfirmDelete'));
   setLoading(true);
   if ('running' === tab.value) {
     await deleteByInstanceIds(instanceIdList).finally(() => setLoading(false));
     getList();
   }
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 /** 撤销按钮操作 */
 const handleCancelProcessApply = async (businessId: string) => {
-  await modal.confirm('是否确认撤销当前单据？');
+  await modal.confirm(t('common.msgboxConfirmCancelProcess'));
   setLoading(true);
   if ('running' === tab.value) {
     const data = {
       businessId: businessId,
-      message: '申请人撤销流程！'
+      message: t('common.msgboxConfirmCancelProcess')
     };
     await cancelProcessApply(data).finally(() => setLoading(false));
     getList();

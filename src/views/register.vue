@@ -3,7 +3,7 @@
     <div class="register-shell">
       <section class="register-brand">
         <span class="brand-pill">Plus UI Workspace</span>
-        <h1 class="brand-title">企业级后台管理系统</h1>
+        <h1 class="brand-title">{{ $t('common.enterpriseAdminSystem') }}</h1>
         <p class="brand-desc">
           真正面向企业级的应用框架 组件化 模块化 轻耦合 高扩展 针对企业痛点 业界一流技术栈
           <br />
@@ -25,7 +25,7 @@
           <div>
             <p class="eyebrow">Workspace Register</p>
             <h3 class="title">{{ title }}</h3>
-            <p class="subtitle">创建新的业务工作台账号，接入当前系统权限与登录体系。</p>
+            <p class="subtitle">{{ $t('common.registerSubtitle') }}</p>
           </div>
           <lang-select />
         </div>
@@ -81,7 +81,7 @@
         </el-form-item>
 
         <div class="form-meta">
-          <span class="register-tip">注册后将返回登录页继续完成认证</span>
+          <span class="register-tip">{{ $t('common.registerTip') }}</span>
           <router-link class="link-type" :to="'/login'">{{ $t('register.switchLoginPage') }}</router-link>
         </div>
 

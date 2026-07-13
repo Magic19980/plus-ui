@@ -4,24 +4,24 @@
       <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-            <div><h3>筛选条件</h3></div>
+            <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item>
             <el-badge :value="userSelectCount" :max="10" class="item">
-              <el-button type="primary" @click="openUserSelect">选择申请人</el-button>
+              <el-button type="primary" @click="openUserSelect">{{ $t('common.selectApplicant') }}</el-button>
             </el-badge>
           </el-form-item>
-          <el-form-item label="任务名称" prop="nodeName">
-            <el-input v-model="queryParams.nodeName" placeholder="请输入任务名称" @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.taskName')" prop="nodeName">
+            <el-input v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="流程定义名称" label-width="100" prop="flowName">
-            <el-input v-model="queryParams.flowName" placeholder="请输入流程定义名称" @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.processDefinitionName')" label-width="100" prop="flowName">
+            <el-input v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -30,7 +30,7 @@
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
-            <h3>全部任务</h3>
+            <h3>{{ $t('common.sectionAllTask') }}</h3>
           </div>
           <div class="toolbar-actions">
             <template v-if="tab === 'waiting'">
@@ -60,8 +60,8 @@
         </div>
       </template>
       <el-tabs v-model="tab" @tab-click="changeTab">
-        <el-tab-pane name="waiting" label="待办任务"></el-tab-pane>
-        <el-tab-pane name="finish" label="已办任务"></el-tab-pane>
+        <el-tab-pane name="waiting" :label="$t('common.tabWaitingTask')"></el-tab-pane>
+        <el-tab-pane name="finish" :label="$t('common.tabFinishedTask')"></el-tab-pane>
         <el-table
           v-loading="loading"
           border
@@ -70,44 +70,44 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="55" align="center" />
-          <el-table-column align="center" type="index" label="序号" width="60"></el-table-column>
+          <el-table-column align="center" type="index" :label="$t('common.index')" width="60"></el-table-column>
           <el-table-column
             :show-overflow-tooltip="true"
             prop="businessCode"
             align="center"
-            label="业务编码"
+            :label="$t('common.businessCode')"
           ></el-table-column>
           <el-table-column
             :show-overflow-tooltip="true"
             prop="businessTitle"
             align="center"
-            label="业务标题"
+            :label="$t('common.businessTitle')"
           ></el-table-column>
           <el-table-column
             :show-overflow-tooltip="true"
             prop="flowName"
             align="center"
             width="120"
-            label="流程定义名称"
+            :label="$t('common.processDefinitionName')"
           ></el-table-column>
-          <el-table-column align="center" prop="flowCode" width="120" label="流程定义编码"></el-table-column>
-          <el-table-column align="center" prop="categoryName" label="流程分类"></el-table-column>
-          <el-table-column align="center" prop="version" label="版本号" width="90">
+          <el-table-column align="center" prop="flowCode" width="120" :label="$t('common.processDefinitionCode')"></el-table-column>
+          <el-table-column align="center" prop="categoryName" :label="$t('common.processCategory')"></el-table-column>
+          <el-table-column align="center" prop="version" :label="$t('common.versionNumber')" width="90">
             <template #default="scope">v{{ scope.row.version }}.0</template>
           </el-table-column>
           <el-table-column
             align="center"
             prop="nodeName"
             :show-overflow-tooltip="true"
-            label="任务名称"
+            :label="$t('common.taskName')"
           ></el-table-column>
           <el-table-column
             align="center"
             prop="createByName"
             :show-overflow-tooltip="true"
-            label="申请人"
+            :label="$t('common.applicant')"
           ></el-table-column>
-          <el-table-column align="center" label="办理人" min-width="180">
+          <el-table-column align="center" :label="$t('common.assignee')" min-width="180">
             <template #default="scope">
               <template v-if="tab === 'waiting'">
                 <UserNameDisplay :content="scope.row.assigneeNames" />
@@ -117,22 +117,22 @@
               </template>
             </template>
           </el-table-column>
-          <el-table-column align="center" label="流程状态" prop="flowStatus" min-width="70">
+          <el-table-column align="center" :label="$t('common.processStatus')" prop="flowStatus" min-width="70">
             <template #default="scope">
               <dict-tag :options="wf_business_status" :value="scope.row.flowStatus"></dict-tag>
             </template>
           </el-table-column>
-          <el-table-column v-if="tab === 'finish'" align="center" label="任务状态" prop="flowTaskStatus" min-width="70">
+          <el-table-column v-if="tab === 'finish'" align="center" :label="$t('common.taskStatus')" prop="flowTaskStatus" min-width="70">
             <template #default="scope">
               <dict-tag :options="wf_task_status" :value="scope.row.flowTaskStatus"></dict-tag>
             </template>
           </el-table-column>
-          <el-table-column align="center" prop="createTime" label="创建时间" width="160"></el-table-column>
-          <el-table-column label="操作" align="center" :width="tab === 'finish' ? '88' : '188'">
+          <el-table-column align="center" prop="createTime" :label="$t('common.createTime')" width="160"></el-table-column>
+          <el-table-column :label="$t('common.operation')" align="center" :width="tab === 'finish' ? '88' : '188'">
             <template #default="scope">
               <el-row :gutter="10" class="mb8">
                 <el-col :span="1.5" v-if="tab === 'waiting' || tab === 'finish'">
-                  <el-button type="primary" size="small" icon="View" @click="handleView(scope.row)">查看</el-button>
+                  <el-button type="primary" size="small" icon="View" @click="handleView(scope.row)">{{ $t('common.btnView') }}</el-button>
                 </el-col>
                 <el-col :span="1.5" v-if="tab === 'waiting'">
                   <el-button type="primary" size="small" icon="Setting" @click="handleMeddle(scope.row)">
@@ -279,20 +279,20 @@ const handleUserOpen = () => {
 
 //打开修改选人
 const handleUserTask = async data => {
-  await modal.confirm('是否确认提交？');
+  await modal.confirm(t('common.msgConfirmSubmit'));
   data.taskIdList = ids.value;
   await urgeTask(data);
   messageTypeRef.value.close();
-  modal.msgSuccess('操作成功');
+  modal.msgSuccess(t('common.msgOperateSuccess'));
   handleQuery();
 };
 //修改办理人
 const submitCallback = async data => {
   if (data && data.length > 0) {
-    await modal.confirm('是否确认提交？');
+    await modal.confirm(t('common.msgConfirmSubmit'));
     await updateAssignee(ids.value, data[0].userId);
     handleQuery();
-    modal.msgSuccess('操作成功');
+    modal.msgSuccess(t('common.msgOperateSuccess'));
   } else {
     modal.msgWarning('请选择用户！');
   }

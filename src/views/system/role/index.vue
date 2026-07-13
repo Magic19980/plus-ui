@@ -6,42 +6,42 @@
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
               <span class="panel-kicker">Search Filters</span>
-              <h3>筛选条件</h3>
+              <h3>{{ $t('common.sectionSearchCondition') }}</h3>
             </div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="角色名称" prop="roleName">
+          <el-form-item :label="$t('common.roleName')" prop="roleName">
             <el-input
               v-model="queryParams.roleName"
-              placeholder="请输入角色名称"
+              :placeholder="$t('common.placeholderInputRoleName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="权限字符" prop="roleKey">
-            <el-input v-model="queryParams.roleKey" placeholder="请输入权限字符" clearable @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.permission')" prop="roleKey">
+            <el-input v-model="queryParams.roleKey" :placeholder="$t('common.placeholderInputRoleKey')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="角色状态" clearable>
+          <el-form-item :label="$t('common.status')" prop="status">
+            <el-select v-model="queryParams.status" :placeholder="$t('common.menuStatus')" clearable>
               <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="创建时间" style="width: 308px">
+          <el-form-item :label="$t('common.createTime')" style="width: 308px">
             <el-date-picker
               v-model="dateRange"
               value-format="YYYY-MM-DD HH:mm:ss"
               type="daterange"
               range-separator="-"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :start-placeholder="$t('common.placeholderStartDate')"
+              :end-placeholder="$t('common.placeholderEndDate')"
               :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
             ></el-date-picker>
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -52,12 +52,12 @@
         <div class="toolbar-shell">
           <div class="table-heading">
             <span class="panel-kicker">Role Dataset</span>
-            <h3>角色列表</h3>
-            <p>共 {{ total }} 条记录，支持菜单权限、数据权限和分配用户等完整配置流程。</p>
+            <h3>{{ $t('common.sectionRoleList') }}</h3>
+            <p>{{ $t("common.recordCountRole", { total }) }}</p>
           </div>
           <div class="toolbar-actions">
             <el-button v-hasPermi="['system:role:add']" type="primary" plain icon="Plus" @click="handleAdd()">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button
               v-hasPermi="['system:role:edit']"
@@ -67,7 +67,7 @@
               icon="Edit"
               @click="handleUpdate()"
             >
-              修改
+              {{ $t('common.btnEdit') }}
             </el-button>
             <el-button
               v-hasPermi="['system:role:remove']"
@@ -77,10 +77,10 @@
               icon="Delete"
               @click="handleDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <el-button v-hasPermi="['system:role:export']" type="warning" plain icon="Download" @click="handleExport">
-              导出
+              {{ $t('common.btnExport') }}
             </el-button>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
@@ -98,11 +98,11 @@
       >
         <template #empty><empty-state /></template>
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column v-if="false" label="角色编号" prop="roleId" width="120" />
-        <el-table-column label="角色名称" prop="roleName" :show-overflow-tooltip="true" width="150" />
-        <el-table-column label="权限字符" prop="roleKey" :show-overflow-tooltip="true" width="200" />
-        <el-table-column label="显示顺序" prop="roleSort" width="100" />
-        <el-table-column label="状态" align="center" width="100">
+        <el-table-column v-if="false" :label="$t('common.roleId')" prop="roleId" width="120" />
+        <el-table-column :label="$t('common.roleName')" prop="roleName" :show-overflow-tooltip="true" width="150" />
+        <el-table-column :label="$t('common.permission')" prop="roleKey" :show-overflow-tooltip="true" width="200" />
+        <el-table-column :label="$t('common.sort')" prop="roleSort" width="100" />
+        <el-table-column :label="$t('common.status')" align="center" width="100">
           <template #default="scope">
             <el-switch
               v-model="scope.row.status"
@@ -112,15 +112,15 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime">
+        <el-table-column :label="$t('common.createTime')" align="center" prop="createTime">
           <template #default="scope">
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column fixed="right" label="操作" width="180">
+        <el-table-column fixed="right" :label="$t('common.operation')" width="180">
           <template #default="scope">
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" content="修改" placement="top">
+            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipModify')" placement="top">
               <el-button
                 v-hasPermi="['system:role:edit']"
                 link
@@ -129,7 +129,7 @@
                 @click="handleUpdate(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" content="删除" placement="top">
+            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 v-hasPermi="['system:role:remove']"
                 link
@@ -138,7 +138,7 @@
                 @click="handleDelete(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" content="分配权限" placement="top">
+            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipAssignPermission')" placement="top">
               <el-button
                 v-hasPermi="['system:role:edit']"
                 link
@@ -147,7 +147,7 @@
                 @click="handleDataScope(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" content="分配用户" placement="top">
+            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipAssignUser')" placement="top">
               <el-button
                 v-hasPermi="['system:role:edit']"
                 link
@@ -173,8 +173,8 @@
       <el-form ref="roleFormRef" :model="form" :rules="rules" label-width="100px" class="dialog-grid-form">
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="角色名称" prop="roleName">
-              <el-input v-model="form.roleName" placeholder="请输入角色名称" />
+            <el-form-item :label="$t('common.roleName')" prop="roleName">
+              <el-input v-model="form.roleName" :placeholder="$t('common.placeholderInputRoleName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -183,20 +183,18 @@
                 <span>
                   <el-tooltip content="控制器中定义的权限字符，如：@SaCheckRole('admin')" placement="top">
                     <el-icon><question-filled /></el-icon>
-                  </el-tooltip>
-                  权限字符
-                </span>
+                  </el-tooltip>{{ $t('common.permissionLabel') }}</span>
               </template>
-              <el-input v-model="form.roleKey" placeholder="请输入权限字符" />
+              <el-input v-model="form.roleKey" :placeholder="$t('common.placeholderInputRoleKey')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="角色顺序" prop="roleSort">
+            <el-form-item :label="$t('common.roleSort')" prop="roleSort">
               <el-input-number v-model="form.roleSort" controls-position="right" :min="0" class="w-full" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="状态">
+            <el-form-item :label="$t('common.status')">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
                   {{ dict.label }}
@@ -205,16 +203,16 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="备注">
-              <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入内容"></el-input>
+            <el-form-item :label="$t('common.remark')">
+              <el-input v-model="form.remark" type="textarea" :rows="3" :placeholder="$t('common.placeholderInputContent')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -223,8 +221,8 @@
     <el-dialog v-model="openDataScope" :title="dialog.title" width="760px" append-to-body>
       <el-form ref="dataScopeRef" :model="form" label-width="90px" class="dialog-grid-form permission-dialog-form">
         <el-tabs v-model="permissionTab">
-          <el-tab-pane label="菜单权限" name="menu">
-            <el-checkbox v-model="menuExpand" @change="handleCheckedTreeExpand($event, 'menu')">展开/折叠</el-checkbox>
+          <el-tab-pane :label="$t('common.tabMenuPermission')" name="menu">
+            <el-checkbox v-model="menuExpand" @change="handleCheckedTreeExpand($event, 'menu')">{{ $t('common.checkboxExpandCollapse') }}</el-checkbox>
             <el-checkbox v-model="menuNodeAll" @change="handleCheckedTreeNodeAll($event, 'menu')">
               全选/全不选
             </el-checkbox>
@@ -233,8 +231,8 @@
             </el-checkbox>
             <div class="menu-tree-permission-wrap tree-border">
               <div class="menu-tree-header" role="row">
-                <span class="menu-tree-header-name">菜单名称</span>
-                <span class="menu-tree-header-buttons">按钮权限</span>
+                <span class="menu-tree-header-name">{{ $t('common.menuName') }}</span>
+                <span class="menu-tree-header-buttons">{{ $t('common.permissionButton') }}</span>
               </div>
               <el-tree
                 ref="menuRef"
@@ -244,7 +242,7 @@
                 show-checkbox
                 node-key="id"
                 :check-strictly="!form.menuCheckStrictly"
-                empty-text="加载中，请稍候"
+                :empty-text="$t('common.isLoading')"
                 :props="{ label: 'label', children: 'children', disabled: 'disabled' }"
                 @check="handleMenuTreeCheck"
               >
@@ -256,10 +254,10 @@
                       :style="getMenuNodeLabelStyle(node.level)"
                     >
                       <span>{{ data.label }}</span>
-                      <el-tooltip v-if="isMenuPermissionHidden(data)" content="隐藏" placement="top">
+                      <el-tooltip v-if="isMenuPermissionHidden(data)" :content="$t('common.tooltipHidden')" placement="top">
                         <el-icon class="menu-visibility-icon"><Hide /></el-icon>
                       </el-tooltip>
-                      <el-tooltip v-if="data.disabled" content="停用" placement="top">
+                      <el-tooltip v-if="data.disabled" :content="$t('common.tooltipDisabled')" placement="top">
                         <el-icon class="menu-disabled-icon"><CircleCloseFilled /></el-icon>
                       </el-tooltip>
                     </span>
@@ -274,7 +272,7 @@
                       >
                         <span class="menu-button-label" :class="{ 'is-disabled': button.disabled }">
                           <span>{{ button.menuName }}</span>
-                          <el-tooltip v-if="button.disabled" content="停用" placement="top">
+                          <el-tooltip v-if="button.disabled" :content="$t('common.tooltipDisabled')" placement="top">
                             <el-icon class="menu-button-disabled-icon"><CircleCloseFilled /></el-icon>
                           </el-tooltip>
                         </span>
@@ -285,8 +283,8 @@
               </el-tree>
             </div>
           </el-tab-pane>
-          <el-tab-pane label="数据权限" name="data">
-            <el-form-item label="权限范围">
+          <el-tab-pane :label="$t('common.dataScope')" name="data">
+            <el-form-item :label="$t('common.authScope')">
               <el-select v-model="form.dataScope" @change="dataScopeSelectChange">
                 <el-option
                   v-for="item in dataScopeOptions"
@@ -296,10 +294,8 @@
                 ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item v-show="form.dataScope === '2'" label="数据权限">
-              <el-checkbox v-model="deptExpand" @change="handleCheckedTreeExpand($event, 'dept')">
-                展开/折叠
-              </el-checkbox>
+            <el-form-item v-show="form.dataScope === '2'" :label="$t('common.dataScope')">
+              <el-checkbox v-model="deptExpand" @change="handleCheckedTreeExpand($event, 'dept')">{{ $t('common.checkboxExpandCollapse') }}</el-checkbox>
               <el-checkbox v-model="deptNodeAll" @change="handleCheckedTreeNodeAll($event, 'dept')">
                 全选/全不选
               </el-checkbox>
@@ -314,7 +310,7 @@
                 default-expand-all
                 node-key="id"
                 :check-strictly="!form.deptCheckStrictly"
-                empty-text="加载中，请稍候"
+                :empty-text="$t('common.isLoading')"
                 :props="{ label: 'label', children: 'children' }"
               ></el-tree>
             </el-form-item>
@@ -323,8 +319,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitDataScope">确 定</el-button>
-          <el-button @click="cancelDataScope">取 消</el-button>
+          <el-button type="primary" @click="submitDataScope">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancelDataScope">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -334,6 +330,8 @@
 <script setup name="Role" lang="ts">
 import { useRouter } from 'vue-router';
 import { roleMenuTreeselect } from '@/api/system/menu';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { MenuTreeOption, RoleMenuButtonOption, RoleMenuTree } from '@/api/system/menu/types';
 import {
   addRole,
@@ -405,12 +403,12 @@ const permissionTab = ref<'data' | 'menu'>('menu');
 
 /** 数据范围选项*/
 const dataScopeOptions = ref([
-  { value: '1', label: '全部数据权限' },
-  { value: '2', label: '自定数据权限' },
-  { value: '3', label: '本部门数据权限' },
-  { value: '4', label: '本部门及以下数据权限' },
-  { value: '5', label: '仅本人数据权限' },
-  { value: '6', label: '部门及以下或本人数据权限' }
+  { value: '1', label: t('common.dataScopeAll') },
+  { value: '2', label: t('common.dataScopeCustom') },
+  { value: '3', label: t('common.dataScopeDept') },
+  { value: '4', label: t('common.dataScopeDeptBelow') },
+  { value: '5', label: t('common.dataScopeSelf') },
+  { value: '6', label: t('common.dataScopeDeptOrSelf') }
 ]);
 
 const queryFormRef = ref<ElFormInstance>();
@@ -801,9 +799,9 @@ const data = reactive<PageData<RoleForm, RoleQuery>>({
     status: ''
   },
   rules: {
-    roleName: [{ required: true, message: '角色名称不能为空', trigger: 'blur' }],
-    roleKey: [{ required: true, message: '权限字符不能为空', trigger: 'blur' }],
-    roleSort: [{ required: true, message: '角色顺序不能为空', trigger: 'blur' }]
+    roleName: [{ required: true, message: t('common.validationRoleNameRequired'), trigger: 'blur' }],
+    roleKey: [{ required: true, message: t('common.validationRoleKeyRequired'), trigger: 'blur' }],
+    roleSort: [{ required: true, message: t('common.validationRoleSortRequired'), trigger: 'blur' }]
   }
 });
 const { form, queryParams, rules } = toRefs(data);
@@ -843,10 +841,10 @@ const { resetQuery } = useSearchReset({
 /**删除按钮操作 */
 const handleDelete = async (row?: Partial<RoleVO>) => {
   const roleids = row?.roleId || ids.value;
-  await modal.confirm('是否确认删除角色编号为' + roleids + '数据项目');
+  await modal.confirm(t('common.msgboxConfirmDeleteRole', { ids: roleids }));
   await delRole(roleids);
   getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 /** 导出按钮操作 */
@@ -861,11 +859,11 @@ const handleExport = () => {
 };
 /** 角色状态修改 */
 const handleStatusChange = async (row: Partial<RoleVO>) => {
-  const text = row.status === '0' ? '启用' : '停用';
+  const text = row.status === '0' ? t('common.tagEnabled') : t('common.tagDisabled');
   try {
-    await modal.confirm('确认要"' + text + '""' + row.roleName + '"角色吗?');
+    await modal.confirm(t('common.msgboxConfirmStatusChange', { action: text, name: row.roleName }));
     await changeRoleStatus(row.roleId, row.status);
-    modal.msgSuccess(text + '成功');
+    modal.msgSuccess(t('common.msgStatusChangeSuccess'));
   } catch {
     row.status = row.status === '0' ? '1' : '0';
   }
@@ -906,7 +904,7 @@ const reset = () => {
 /** 添加角色 */
 const handleAdd = () => {
   reset();
-  setTitle('添加角色');
+  setTitle(t('common.dialogAddRole'));
   openDialog();
 };
 /** 修改角色 */
@@ -919,7 +917,7 @@ const handleUpdate = async (row?: Partial<RoleVO>) => {
   // 菜单分配已迁移到“分配权限”弹窗，这里预置已有菜单，避免基础信息保存时误清空菜单权限。
   const { checkedKeys } = await getRoleMenuTreeselect(roleId);
   form.value.menuIds = checkedKeys;
-  setTitle('修改角色');
+  setTitle(t('common.dialogEditRole'));
   openDialog();
 };
 /** 根据角色ID查询菜单树结构 */
@@ -984,7 +982,7 @@ const submitForm = () => {
     if (valid) {
       syncFormMenuPermissionIds();
       form.value.roleId ? await updateRole(form.value) : await addRole(form.value);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeDialog();
       getList();
     }
@@ -1009,7 +1007,7 @@ const handleDataScope = async (row: Partial<RoleVO>) => {
   const menuRes = await getRoleMenuTreeselect(row.roleId);
   const res = await getRoleDeptTreeSelect(row.roleId);
   openDataScope.value = true;
-  setTitle('分配权限');
+  setTitle(t('common.dialogAssignPermission'));
   await nextTick(() => {
     initPermissionState(menuRes.checkedKeys);
     syncFormMenuPermissionIds();
@@ -1026,7 +1024,7 @@ const submitDataScope = async () => {
     syncFormMenuPermissionIds();
     form.value.deptIds = getDeptAllCheckedKeys();
     await updateRolePermission(form.value);
-    modal.msgSuccess('修改成功');
+    modal.msgSuccess(t('common.msgEditSuccess'));
     openDataScope.value = false;
     getList();
   }

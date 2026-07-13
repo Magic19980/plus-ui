@@ -5,8 +5,8 @@
       <tree-panel
         ref="treePanelRef"
         v-model:collapsed="treeCollapsed"
-        title="部门结构"
-        placeholder="请输入部门名称"
+        :title="$t('common.dialogDeptStructure')"
+        :placeholder="$t('common.placeholderInputDeptName')"
         :data="deptOptions"
         :expanded-span="5"
         @node-click="handleNodeClick"
@@ -23,48 +23,48 @@
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
                 <div>
                   <span class="panel-kicker">Search Filters</span>
-                  <h3>筛选条件</h3>
+                  <h3>{{ $t('common.sectionSearchCondition') }}</h3>
                 </div>
               </div>
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-              <el-form-item label="岗位编码" prop="postCode">
+              <el-form-item :label="$t('common.postCode')" prop="postCode">
                 <el-input
                   v-model="queryParams.postCode"
-                  placeholder="请输入岗位编码"
+                  :placeholder="$t('common.placeholderInputPostCode')"
                   clearable
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
-              <el-form-item label="类别编码" prop="postCategory">
+              <el-form-item :label="$t('common.categoryCode')" prop="postCategory">
                 <el-input
                   v-model="queryParams.postCategory"
-                  placeholder="请输入类别编码"
+                  :placeholder="$t('common.placeholderInputPostCategory')"
                   clearable
                   style="width: 200px"
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
-              <el-form-item label="岗位名称" prop="postName">
+              <el-form-item :label="$t('common.postName')" prop="postName">
                 <el-input
                   v-model="queryParams.postName"
-                  placeholder="请输入岗位名称"
+                  :placeholder="$t('common.placeholderInputPostName')"
                   clearable
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
-              <el-form-item label="部门" prop="deptId">
+              <el-form-item :label="$t('common.dept')" prop="deptId">
                 <el-tree-select
                   v-model="queryParams.deptId"
                   :data="deptOptions"
                   :props="{ value: 'id', label: 'label', children: 'children' } as any"
                   value-key="id"
-                  placeholder="请选择部门"
+                  :placeholder="$t('common.placeholderSelectDept')"
                   check-strictly
                 />
               </el-form-item>
-              <el-form-item label="状态" prop="status">
-                <el-select v-model="queryParams.status" placeholder="岗位状态" clearable>
+              <el-form-item :label="$t('common.status')" prop="status">
+                <el-select v-model="queryParams.status" :placeholder="$t('common.postStatus')" clearable>
                   <el-option
                     v-for="dict in sys_normal_disable"
                     :key="dict.value"
@@ -74,8 +74,8 @@
                 </el-select>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
               </el-form-item>
             </el-form>
           </el-card>
@@ -85,12 +85,12 @@
             <div class="toolbar-shell">
               <div class="table-heading">
                 <span class="panel-kicker">Post Dataset</span>
-                <h3>岗位列表</h3>
+                <h3>{{ $t('common.sectionPostList') }}</h3>
                 <p>共 {{ total }} 条记录，支持按部门筛选、岗位维护和导出。</p>
               </div>
               <div class="toolbar-actions">
                 <el-button v-hasPermi="['system:post:add']" type="primary" plain icon="Plus" @click="handleAdd">
-                  新增
+                  {{ $t('common.btnAdd') }}
                 </el-button>
                 <el-button
                   v-hasPermi="['system:post:edit']"
@@ -100,7 +100,7 @@
                   :disabled="single"
                   @click="handleUpdate()"
                 >
-                  修改
+                  {{ $t('common.btnEdit') }}
                 </el-button>
                 <el-button
                   v-hasPermi="['system:post:remove']"
@@ -110,7 +110,7 @@
                   :disabled="multiple"
                   @click="handleDelete()"
                 >
-                  删除
+                  {{ $t('common.btnDelete') }}
                 </el-button>
                 <el-button
                   v-hasPermi="['system:post:export']"
@@ -119,7 +119,7 @@
                   icon="Download"
                   @click="handleExport"
                 >
-                  导出
+                  {{ $t('common.btnExport') }}
                 </el-button>
                 <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
               </div>
@@ -133,25 +133,25 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55" align="center" />
-            <el-table-column v-if="false" label="岗位编号" align="center" prop="postId" />
-            <el-table-column label="岗位编码" align="center" prop="postCode" />
-            <el-table-column label="类别编码" align="center" prop="postCategory" />
-            <el-table-column label="岗位名称" align="center" prop="postName" />
-            <el-table-column label="部门" align="center" prop="deptName" />
-            <el-table-column label="排序" align="center" prop="postSort" />
-            <el-table-column label="状态" align="center" prop="status">
+            <el-table-column v-if="false" :label="$t('common.postId')" align="center" prop="postId" />
+            <el-table-column :label="$t('common.postCode')" align="center" prop="postCode" />
+            <el-table-column :label="$t('common.categoryCode')" align="center" prop="postCategory" />
+            <el-table-column :label="$t('common.postName')" align="center" prop="postName" />
+            <el-table-column :label="$t('common.dept')" align="center" prop="deptName" />
+            <el-table-column :label="$t('common.sort')" align="center" prop="postSort" />
+            <el-table-column :label="$t('common.status')" align="center" prop="status">
               <template #default="scope">
                 <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
               </template>
             </el-table-column>
-            <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+            <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="180">
               <template #default="scope">
                 <span>{{ parseTime(scope.row.createTime) }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="180" align="center" class-name="small-padding fixed-width">
+            <el-table-column :label="$t('common.operation')" width="180" align="center" class-name="small-padding fixed-width">
               <template #default="scope">
-                <el-tooltip content="修改" placement="top">
+                <el-tooltip :content="$t('common.tooltipModify')" placement="top">
                   <el-button
                     v-hasPermi="['system:post:edit']"
                     link
@@ -160,7 +160,7 @@
                     @click="handleUpdate(scope.row)"
                   ></el-button>
                 </el-tooltip>
-                <el-tooltip content="删除" placement="top">
+                <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
                   <el-button
                     v-hasPermi="['system:post:remove']"
                     link
@@ -185,43 +185,43 @@
         <!-- 添加或修改岗位对话框 -->
         <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
           <el-form ref="postFormRef" :model="form" :rules="rules" label-width="80px">
-            <el-form-item label="岗位名称" prop="postName">
-              <el-input v-model="form.postName" placeholder="请输入岗位名称" />
+            <el-form-item :label="$t('common.postName')" prop="postName">
+              <el-input v-model="form.postName" :placeholder="$t('common.placeholderInputPostName')" />
             </el-form-item>
-            <el-form-item label="部门" prop="deptId">
+            <el-form-item :label="$t('common.dept')" prop="deptId">
               <el-tree-select
                 v-model="form.deptId"
                 :data="deptOptions"
                 :props="{ value: 'id', label: 'label', children: 'children' } as any"
                 value-key="id"
-                placeholder="请选择部门"
+                :placeholder="$t('common.placeholderSelectDept')"
                 check-strictly
               />
             </el-form-item>
-            <el-form-item label="岗位编码" prop="postCode">
-              <el-input v-model="form.postCode" placeholder="请输入编码名称" />
+            <el-form-item :label="$t('common.postCode')" prop="postCode">
+              <el-input v-model="form.postCode" :placeholder="$t('common.placeholderInputPostCodeName')" />
             </el-form-item>
-            <el-form-item label="类别编码" prop="postCategory">
-              <el-input v-model="form.postCategory" placeholder="请输入类别编码" />
+            <el-form-item :label="$t('common.categoryCode')" prop="postCategory">
+              <el-input v-model="form.postCategory" :placeholder="$t('common.placeholderInputPostCategory')" />
             </el-form-item>
-            <el-form-item label="岗位顺序" prop="postSort">
+            <el-form-item :label="$t('common.postSort')" prop="postSort">
               <el-input-number v-model="form.postSort" controls-position="right" :min="0" />
             </el-form-item>
-            <el-form-item label="岗位状态" prop="status">
+            <el-form-item :label="$t('common.postStatus')" prop="status">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
                   {{ dict.label }}
                 </el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="备注" prop="remark">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+            <el-form-item :label="$t('common.remark')" prop="remark">
+              <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')" />
             </el-form-item>
           </el-form>
           <template #footer>
             <div class="dialog-footer">
-              <el-button type="primary" @click="submitForm">确 定</el-button>
-              <el-button @click="cancel">取 消</el-button>
+              <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+              <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
             </div>
           </template>
         </el-dialog>
@@ -232,6 +232,8 @@
 
 <script setup name="Post" lang="ts">
 import { DeptTreeVO, DeptVO } from '@/api/system/dept/types';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { listPost, addPost, delPost, getPost, updatePost, deptTreeSelect } from '@/api/system/post';
 import { PostForm, PostQuery, PostVO } from '@/api/system/post/types';
 import TreePanel from '@/components/TreePanel/index.vue';
@@ -283,10 +285,10 @@ const data = reactive<PageData<PostForm, PostQuery>>({
     status: ''
   },
   rules: {
-    postName: [{ required: true, message: '岗位名称不能为空', trigger: 'blur' }],
-    postCode: [{ required: true, message: '岗位编码不能为空', trigger: 'blur' }],
-    deptId: [{ required: true, message: '部门不能为空', trigger: 'blur' }],
-    postSort: [{ required: true, message: '岗位顺序不能为空', trigger: 'blur' }]
+    postName: [{ required: true, message: t('common.validationPostNameRequired'), trigger: 'blur' }],
+    postCode: [{ required: true, message: t('common.validationPostCodeRequired'), trigger: 'blur' }],
+    deptId: [{ required: true, message: t('common.validationDeptRequired'), trigger: 'blur' }],
+    postSort: [{ required: true, message: t('common.validationPostSortRequired'), trigger: 'blur' }]
   }
 });
 
@@ -366,7 +368,7 @@ const submitForm = () => {
   postFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       form.value.postId ? await updatePost(form.value) : await addPost(form.value);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeDialog();
       await getList();
     }
@@ -376,10 +378,10 @@ const submitForm = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<PostVO>) => {
   const postIds = row?.postId || ids.value;
-  await modal.confirm('是否确认删除岗位编号为"' + postIds + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeletePost', { ids: postIds }));
   await delPost(postIds);
   await getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 /** 导出按钮操作 */

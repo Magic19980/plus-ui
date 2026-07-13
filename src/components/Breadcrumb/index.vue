@@ -3,7 +3,7 @@
     <transition-group name="breadcrumb">
       <el-breadcrumb-item v-for="(item, index) in levelList" :key="item.path">
         <span v-if="item.redirect === 'noRedirect' || index == levelList.length - 1" class="no-redirect">
-          {{ t(item.meta?.title) }}
+          {{ te(item.meta?.title) ? t(item.meta?.title) : item.meta?.title }}
         </span>
         <a v-else @click.prevent="handleLink(item)">{{ t(item.meta?.title) }}</a>
       </el-breadcrumb-item>
@@ -16,7 +16,7 @@ import type { RouteMeta, RouteRecordRaw } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { usePermissionStore } from '@/store/modules/permission';
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const permissionStore = usePermissionStore();

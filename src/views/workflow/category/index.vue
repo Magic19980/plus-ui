@@ -4,21 +4,21 @@
       <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-            <div><h3>筛选条件</h3></div>
+            <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="分类名称" prop="categoryName">
+          <el-form-item :label="$t('common.categoryName')" prop="categoryName">
             <el-input
               v-model="queryParams.categoryName"
-              placeholder="请输入分类名称"
+              :placeholder="$t('common.placeholderInputCategoryName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -28,13 +28,13 @@
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
-            <h3>流程分类</h3>
+            <h3>{{ $t('common.sectionFlowCategory') }}</h3>
           </div>
           <div class="toolbar-actions">
             <el-button type="primary" plain icon="Plus" @click="handleAdd()" v-hasPermi="['workflow:category:add']">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
-            <el-button type="info" plain icon="Sort" @click="handleToggleExpandAll">展开/折叠</el-button>
+            <el-button type="info" plain icon="Sort" @click="handleToggleExpandAll">{{ $t('common.checkboxExpandCollapse') }}</el-button>
             <right-toolbar v-model:showSearch="showSearch" :search="false" @queryTable="getList"></right-toolbar>
           </div>
         </div>
@@ -49,12 +49,12 @@
         :default-expand-all="isExpandAll"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
       >
-        <el-table-column label="分类名称" prop="categoryName" width="260" />
-        <el-table-column label="显示顺序" align="center" prop="orderNum" width="200" />
-        <el-table-column label="创建时间" align="center" prop="createTime" width="180" />
-        <el-table-column label="操作" fixed="right" align="center" class-name="small-padding fixed-width">
+        <el-table-column :label="$t('common.categoryName')" prop="categoryName" width="260" />
+        <el-table-column :label="$t('common.sort')" align="center" prop="orderNum" width="200" />
+        <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="180" />
+        <el-table-column :label="$t('common.operation')" fixed="right" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip content="修改" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
               <el-button
                 link
                 type="primary"
@@ -63,7 +63,7 @@
                 v-hasPermi="['workflow:category:edit']"
               />
             </el-tooltip>
-            <el-tooltip content="新增" placement="top">
+            <el-tooltip :content="$t('common.tooltipAdd')" placement="top">
               <el-button
                 link
                 type="primary"
@@ -72,7 +72,7 @@
                 v-hasPermi="['workflow:category:add']"
               />
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 link
                 type="primary"
@@ -87,24 +87,24 @@
     </el-card>
     <el-dialog :title="dialog.title" v-model="dialog.visible" width="500px" append-to-body>
       <el-form ref="categoryFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="上级分类" prop="parentId">
+        <el-form-item :label="$t('common.parentCategory')" prop="parentId">
           <el-tree-select
             v-model="form.parentId"
             :data="categoryOptions"
             :props="{ value: 'categoryId', label: 'categoryName', children: 'children' } as any"
             value-key="categoryId"
-            placeholder="请选择上级分类"
+            :placeholder="$t('common.placeholderSelectCategory')"
             check-strictly
           />
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="分类名称" prop="categoryName">
-              <el-input v-model="form.categoryName" placeholder="请输入分类名称" />
+            <el-form-item :label="$t('common.categoryName')" prop="categoryName">
+              <el-input v-model="form.categoryName" :placeholder="$t('common.placeholderInputCategoryName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="排序" prop="orderNum">
+            <el-form-item :label="$t('common.sort')" prop="orderNum">
               <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
           </el-col>
@@ -112,8 +112,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -122,6 +122,8 @@
 
 <script setup name="Category" lang="ts">
 import { listCategory, getCategory, delCategory, addCategory, updateCategory } from '@/api/workflow/category';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { CategoryVO, CategoryQuery, CategoryForm } from '@/api/workflow/category/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
@@ -164,9 +166,9 @@ const data = reactive<PageData<CategoryForm, CategoryQuery>>({
     categoryName: undefined
   },
   rules: {
-    categoryId: [{ required: true, message: '流程分类ID不能为空', trigger: 'blur' }],
-    parentId: [{ required: true, message: '请选择上级分类', trigger: 'change' }],
-    categoryName: [{ required: true, message: '请输入分类名称', trigger: 'blur' }]
+    categoryId: [{ required: true, message: t('common.validationCategoryIdRequired'), trigger: 'blur' }],
+    parentId: [{ required: true, message: t('common.validationParentIdRequired'), trigger: 'change' }],
+    categoryName: [{ required: true, message: t('common.validationParentIdRequired'), trigger: 'blur' }]
   }
 });
 
@@ -257,7 +259,7 @@ const submitForm = () => {
       } else {
         await addCategory(form.value).finally(() => (buttonLoading.value = false));
       }
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeDialog();
       getList();
     }
@@ -266,11 +268,11 @@ const submitForm = () => {
 
 /** 删除按钮操作 */
 const handleDelete = async (row: Partial<CategoryVO>) => {
-  await modal.confirm('是否确认删除"' + row.categoryName + '"的分类？');
+  await modal.confirm(t('common.msgboxConfirmDeleteCategory', { name: row.categoryName }));
   setLoading(true);
   await delCategory(row.categoryId).finally(() => setLoading(false));
   await getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 onMounted(() => {

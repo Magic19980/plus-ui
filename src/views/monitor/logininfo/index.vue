@@ -6,41 +6,41 @@
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
               <span class="panel-kicker">Search Filters</span>
-              <h3>筛选条件</h3>
+              <h3>{{ $t('common.sectionSearchCondition') }}</h3>
             </div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="登录地址" prop="ipaddr">
-            <el-input v-model="queryParams.ipaddr" placeholder="请输入登录地址" clearable @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.loginAddress')" prop="ipaddr">
+            <el-input v-model="queryParams.ipaddr" :placeholder="$t('common.placeholderInputLoginAddress')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="用户名称" prop="userName">
+          <el-form-item :label="$t('common.userName')" prop="userName">
             <el-input
               v-model="queryParams.userName"
-              placeholder="请输入用户名称"
+              :placeholder="$t('common.placeholderInputUserName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="登录状态" clearable>
+          <el-form-item :label="$t('common.status')" prop="status">
+            <el-select v-model="queryParams.status" :placeholder="$t('common.placeholderLoginStatus')" clearable>
               <el-option v-for="dict in sys_common_status" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="登录时间" style="width: 308px">
+          <el-form-item :label="$t('common.loginTime')" style="width: 308px">
             <el-date-picker
               v-model="dateRange"
               value-format="YYYY-MM-DD HH:mm:ss"
               type="daterange"
               range-separator="-"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :start-placeholder="$t('common.placeholderStartDate')"
+              :end-placeholder="$t('common.placeholderEndDate')"
               :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
             ></el-date-picker>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -51,7 +51,7 @@
         <div class="toolbar-shell">
           <div class="table-heading">
             <span class="panel-kicker">Access Logs</span>
-            <h3>登录日志</h3>
+            <h3>{{ $t('common.sectionLoginLog') }}</h3>
             <p>共 {{ total }} 条记录，支持排序、批量清理、导出和账号解锁。</p>
           </div>
           <div class="toolbar-actions">
@@ -63,10 +63,10 @@
               :disabled="multiple"
               @click="handleDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <el-button v-hasPermi="['monitor:logininfo:remove']" type="danger" plain icon="Delete" @click="handleClean">
-              清空
+              {{ $t('common.btnClear') }}
             </el-button>
             <el-button
               v-hasPermi="['monitor:logininfo:unlock']"
@@ -76,7 +76,7 @@
               :disabled="single"
               @click="handleUnlock"
             >
-              解锁
+              {{ $t('common.btnUnlock') }}
             </el-button>
             <el-button
               v-hasPermi="['monitor:logininfo:export']"
@@ -85,7 +85,7 @@
               icon="Download"
               @click="handleExport"
             >
-              导出
+              {{ $t('common.btnExport') }}
             </el-button>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
@@ -103,33 +103,33 @@
         @sort-change="handleSortChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="访问编号" align="center" prop="infoId" />
+        <el-table-column :label="$t('common.infoId')" align="center" prop="infoId" />
         <el-table-column
-          label="用户名称"
+          :label="$t('common.userName')"
           align="center"
           prop="userName"
           :show-overflow-tooltip="true"
           sortable="custom"
           :sort-orders="['descending', 'ascending']"
         />
-        <el-table-column label="客户端" align="center" prop="clientKey" :show-overflow-tooltip="true" />
-        <el-table-column label="设备类型" align="center">
+        <el-table-column :label="$t('common.clientKey')" align="center" prop="clientKey" :show-overflow-tooltip="true" />
+        <el-table-column :label="$t('common.deviceType')" align="center">
           <template #default="scope">
             <dict-tag :options="sys_device_type" :value="scope.row.deviceType" />
           </template>
         </el-table-column>
-        <el-table-column label="地址" align="center" prop="ipaddr" :show-overflow-tooltip="true" />
-        <el-table-column label="登录地点" align="center" prop="loginLocation" :show-overflow-tooltip="true" />
-        <el-table-column label="操作系统" align="center" prop="os" :show-overflow-tooltip="true" />
-        <el-table-column label="浏览器" align="center" prop="browser" :show-overflow-tooltip="true" />
-        <el-table-column label="登录状态" align="center" prop="status">
+        <el-table-column :label="$t('common.ipaddr')" align="center" prop="ipaddr" :show-overflow-tooltip="true" />
+        <el-table-column :label="$t('common.loginLocation')" align="center" prop="loginLocation" :show-overflow-tooltip="true" />
+        <el-table-column :label="$t('common.os')" align="center" prop="os" :show-overflow-tooltip="true" />
+        <el-table-column :label="$t('common.browser')" align="center" prop="browser" :show-overflow-tooltip="true" />
+        <el-table-column :label="$t('common.loginStatus')" align="center" prop="status">
           <template #default="scope">
             <dict-tag :options="sys_common_status" :value="scope.row.status" />
           </template>
         </el-table-column>
-        <el-table-column label="描述" align="center" prop="msg" :show-overflow-tooltip="true" />
+        <el-table-column :label="$t('common.description')" align="center" prop="msg" :show-overflow-tooltip="true" />
         <el-table-column
-          label="访问时间"
+          :label="$t('common.loginTime')"
           align="center"
           prop="loginTime"
           sortable="custom"
@@ -155,6 +155,8 @@
 
 <script setup name="LoginInfo" lang="ts">
 import { list, delLoginInfo, cleanLoginInfo, unlockLoginInfo } from '@/api/monitor/logininfo';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { LoginInfoQuery, LoginInfoVO } from '@/api/monitor/logininfo/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDateRangeQuery } from '@/hooks/form/useDateRangeQuery';
@@ -233,14 +235,14 @@ const handleSelectionChange = (selection: LoginInfoVO[]) => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: LoginInfoVO) => {
   const infoIds = row?.infoId || ids.value;
-  await modal.confirm('是否确认删除访问编号为"' + infoIds + '"的数据项?');
+  await modal.confirm(t('common.msgboxConfirmDeleteLoginInfo', { ids: infoIds }));
   await delLoginInfo(infoIds);
   await getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 /** 清空按钮操作 */
 const handleClean = async () => {
-  await modal.confirm('是否确认清空所有登录日志数据项?');
+  await modal.confirm(t('common.msgboxConfirmClearLoginlog'));
   await cleanLoginInfo();
   await getList();
   modal.msgSuccess('清空成功');
@@ -248,7 +250,7 @@ const handleClean = async () => {
 /** 解锁按钮操作 */
 const handleUnlock = async () => {
   const username = selectName.value;
-  await modal.confirm('是否确认解锁用户"' + username + '"数据项?');
+  await modal.confirm(t('common.msgboxConfirmUnlockUserByName', { name: username }));
   await unlockLoginInfo(username);
   modal.msgSuccess('用户' + username + '解锁成功');
 };

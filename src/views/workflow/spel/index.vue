@@ -4,29 +4,29 @@
       <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-            <div><h3>筛选条件</h3></div>
+            <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="组件名称" prop="componentName">
+          <el-form-item :label="$t('common.componentName')" prop="componentName">
             <el-input
               v-model="queryParams.componentName"
-              placeholder="请输入组件名称"
+              :placeholder="$t('common.placeholderInputComponentName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="方法名" prop="methodName">
+          <el-form-item :label="$t('common.methodName')" prop="methodName">
             <el-input
               v-model="queryParams.methodName"
-              placeholder="请输入方法名"
+              :placeholder="$t('common.placeholderInputMethodName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -36,11 +36,11 @@
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
-            <h3>流程表达式</h3>
+            <h3>{{ $t('common.sectionFlowExpression') }}</h3>
           </div>
           <div class="toolbar-actions">
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['workflow:spel:add']">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button
               type="success"
@@ -50,7 +50,7 @@
               @click="handleUpdate()"
               v-hasPermi="['workflow:spel:edit']"
             >
-              修改
+              {{ $t('common.btnEdit') }}
             </el-button>
             <el-button
               type="danger"
@@ -60,7 +60,7 @@
               @click="handleDelete()"
               v-hasPermi="['workflow:spel:remove']"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <right-toolbar v-model:showSearch="showSearch" :search="false" @queryTable="getList"></right-toolbar>
           </div>
@@ -75,41 +75,41 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="序号" type="index" width="60" align="center">
+        <el-table-column :label="$t('common.index')" type="index" width="60" align="center">
           <template #default="scope">
             <span>{{ (queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1 }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="组件名称" align="center">
+        <el-table-column :label="$t('common.componentName')" align="center">
           <template #default="scope">
             {{ scope.row.componentName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="方法名称" align="center">
+        <el-table-column :label="$t('common.methodName')" align="center">
           <template #default="scope">
             {{ scope.row.methodName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="参数名称" align="center">
+        <el-table-column :label="$t('common.parameterName')" align="center">
           <template #default="scope">
             {{ scope.row.methodParams || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="SPEL表达式" align="center" prop="viewSpel" />
-        <el-table-column label="状态" align="center" prop="status">
+        <el-table-column :label="$t('common.spelExpression')" align="center" prop="viewSpel" />
+        <el-table-column :label="$t('common.status')" align="center" prop="status">
           <template #default="scope">
-            <el-tag v-if="scope.row.status === '0'">正常</el-tag>
-            <el-tag v-else>停用</el-tag>
+            <el-tag v-if="scope.row.status === '0'">{{ $t('common.tagNormal') }}</el-tag>
+            <el-tag v-else>{{ $t('common.tagDisabled') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="备注" align="center">
+        <el-table-column :label="$t('common.remark')" align="center">
           <template #default="scope">
             {{ scope.row.remark || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip content="修改" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
               <el-button
                 link
                 type="primary"
@@ -118,7 +118,7 @@
                 v-hasPermi="['workflow:spel:edit']"
               ></el-button>
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 link
                 type="primary"
@@ -143,8 +143,8 @@
     <el-dialog :title="dialog.title" v-model="dialog.visible" width="550px" append-to-body>
       <el-form ref="spelFormRef" :model="form" :rules="rules" label-width="100px">
         <!-- 组件名称 -->
-        <el-form-item label="组件名称" prop="componentName">
-          <el-input v-model="form.componentName" placeholder="请输入组件名称" @input="updateViewSpel" />
+        <el-form-item :label="$t('common.componentName')" prop="componentName">
+          <el-input v-model="form.componentName" :placeholder="$t('common.placeholderInputComponentName')" @input="updateViewSpel" />
           <template #label>
             <span>
               <el-tooltip content="注册到Spring容器中的组件名，如：spelRuleComponent" placement="top">
@@ -154,8 +154,8 @@
             </span>
           </template>
         </el-form-item>
-        <el-form-item label="方法名称" prop="methodName">
-          <el-input v-model="form.methodName" placeholder="请输入方法名称" @input="updateViewSpel" />
+        <el-form-item :label="$t('common.methodName')" prop="methodName">
+          <el-input v-model="form.methodName" :placeholder="$t('common.placeholderInputMethodName_')" @input="updateViewSpel" />
           <template #label>
             <span>
               <el-tooltip content="组件中的方法名称，如：selectDeptLeaderById" placement="top">
@@ -165,8 +165,8 @@
             </span>
           </template>
         </el-form-item>
-        <el-form-item label="方法参数" prop="methodParams">
-          <el-input v-model="form.methodParams" placeholder="请输入方法参数" @input="updateViewSpel" />
+        <el-form-item :label="$t('common.methodParams')" prop="methodParams">
+          <el-input v-model="form.methodParams" :placeholder="$t('common.placeholderInputMethodParams')" @input="updateViewSpel" />
           <template #label>
             <span>
               <el-tooltip
@@ -181,26 +181,26 @@
         </el-form-item>
 
         <!-- 改为只读文本展示 -->
-        <el-form-item label="SPEL表达式">
+        <el-form-item :label="$t('common.spelExpression')">
           <span class="preview-box">
             {{ form.viewSpel || '例如：#{@组件名.方法名(#方法参数)} 或 ${方法参数}' }}
           </span>
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$t('common.status')" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
               {{ dict.label }}
             </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        <el-form-item :label="$t('common.remark')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :rows="3" :placeholder="$t('common.placeholderInputRemark')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -209,6 +209,8 @@
 
 <script setup name="Spel" lang="ts">
 import { listSpel, getSpel, delSpel, addSpel, updateSpel } from '@/api/workflow/spel';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { SpelVO, SpelQuery, SpelForm } from '@/api/workflow/spel/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
@@ -252,7 +254,7 @@ const data = reactive<PageData<SpelForm, SpelQuery>>({
     params: {}
   },
   rules: {
-    status: [{ required: true, message: '状态不能为空', trigger: 'change' }]
+    status: [{ required: true, message: t('common.validationStatusRequired'), trigger: 'change' }]
   }
 });
 
@@ -317,7 +319,7 @@ const submitForm = () => {
           await addSpel(form.value);
         }
       });
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeDialog();
       await getList();
     }
@@ -327,9 +329,9 @@ const submitForm = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<SpelVO>) => {
   const spelIds = row?.id || ids.value;
-  await modal.confirm('是否确认删除流程spel表达式定义编号为"' + spelIds + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteSpel', { ids: spelIds }));
   await delSpel(spelIds);
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
   await getList();
 };
 

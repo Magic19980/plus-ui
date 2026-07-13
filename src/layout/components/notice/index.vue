@@ -1,26 +1,26 @@
 <template>
   <div v-loading="state.loading" class="layout-navbars-breadcrumb-user-news">
     <div class="head-box">
-      <div class="head-box-title">消息盒子</div>
-      <div class="head-box-btn" @click="readAll">全部已读</div>
+      <div class="head-box-title">{{ t('navbar.messageBox') }}</div>
+      <div class="head-box-btn" @click="readAll">{{ t('navbar.readAll') }}</div>
     </div>
     <el-tabs v-model="activeTab" class="message-tabs" stretch>
-      <el-tab-pane :label="`系统 ${tabCount.system}`" name="system"></el-tab-pane>
-      <el-tab-pane :label="`通知 ${tabCount.notice}`" name="notice"></el-tab-pane>
-      <el-tab-pane :label="`工作 ${tabCount.workflow}`" name="workflow"></el-tab-pane>
+      <el-tab-pane :label="`${t('navbar.systemTab')} ${tabCount.system}`" name="system"></el-tab-pane>
+      <el-tab-pane :label="`${t('navbar.noticeTab')} ${tabCount.notice}`" name="notice"></el-tab-pane>
+      <el-tab-pane :label="`${t('navbar.workflowTab')} ${tabCount.workflow}`" name="workflow"></el-tab-pane>
     </el-tabs>
     <div v-loading="state.loading" class="content-box">
       <template v-if="currentNewsList.length > 0">
         <div v-for="(v, k) in currentNewsList" :key="k" class="content-box-item" @click="onNewsClick(k)">
           <div class="item-conten">
-            <div class="content-box-title">{{ v.title || '消息' }}</div>
+            <div class="content-box-title">{{ v.title || t('navbar.message') }}</div>
             <div>{{ v.message }}</div>
             <div v-if="v.content" class="content-box-msg">{{ v.content }}</div>
             <div class="content-box-time">{{ v.time }}</div>
           </div>
           <!-- 已读/未读 -->
-          <span v-if="v.read" class="el-tag el-tag--success el-tag--mini read">已读</span>
-          <span v-else class="el-tag el-tag--danger el-tag--mini read">未读</span>
+          <span v-if="v.read" class="el-tag el-tag--success el-tag--mini read">{{ t('navbar.read') }}</span>
+          <span v-else class="el-tag el-tag--danger el-tag--mini read">{{ t('navbar.unread') }}</span>
         </div>
       </template>
       <el-empty v-else :description="emptyDescription"></el-empty>
@@ -29,11 +29,14 @@
 </template>
 
 <script setup lang="ts" name="layoutBreadcrumbUserNews">
+import { useI18n } from 'vue-i18n';
 import router from '@/router';
 import { useNoticeStore } from '@/store/modules/notice';
 import { useUserStore } from '@/store/modules/user';
 import { markMessageRead, markMessageReadBatch } from '@/utils/message-read';
 import { NOTICE_GROUP } from '@/utils/push-message';
+
+const { t } = useI18n();
 
 const noticeStore = useNoticeStore();
 const userStore = useUserStore();
@@ -59,12 +62,12 @@ const currentNewsList = computed(() => {
 
 const emptyDescription = computed(() => {
   if (activeTab.value === NOTICE_GROUP.NOTICE) {
-    return '暂无通知公告消息';
+    return t('navbar.noNoticeMsg');
   }
   if (activeTab.value === NOTICE_GROUP.WORKFLOW) {
-    return '暂无工作流消息';
+    return t('navbar.noWorkflowMsg');
   }
-  return '暂无系统消息';
+  return t('navbar.noSystemMsg');
 });
 
 //点击消息，写入已读

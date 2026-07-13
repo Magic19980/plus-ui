@@ -13,7 +13,7 @@
                   @click.stop="showTypeSearch = !showTypeSearch"
                 >
                   <div>
-                    <h3>字典管理</h3>
+                    <h3>{{ $t('common.sectionDictManage') }}</h3>
                   </div>
                 </div>
               </div>
@@ -25,32 +25,32 @@
 
           <div class="dict-search" :class="{ 'is-collapsed': !showTypeSearch }">
             <el-form ref="typeQueryFormRef" :model="typeQueryParams" :inline="true" class="query-form">
-              <el-form-item label="字典名称" prop="dictName">
+              <el-form-item :label="$t('common.dictName')" prop="dictName">
                 <el-input
                   v-model="typeQueryParams.dictName"
-                  placeholder="请输入字典名称"
+                  :placeholder="$t('common.placeholderInputDictName')"
                   clearable
                   @keyup.enter="handleTypeQuery"
                 />
               </el-form-item>
-              <el-form-item label="字典类型" prop="dictType">
+              <el-form-item :label="$t('common.dictType')" prop="dictType">
                 <el-input
                   v-model="typeQueryParams.dictType"
-                  placeholder="请输入字典类型"
+                  :placeholder="$t('common.placeholderInputDictType')"
                   clearable
                   @keyup.enter="handleTypeQuery"
                 />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleTypeQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="handleTypeResetQuery">重置</el-button>
+                <el-button type="primary" icon="Search" @click="handleTypeQuery">{{ $t('common.btnSearch') }}</el-button>
+                <el-button icon="Refresh" @click="handleTypeResetQuery">{{ $t('common.btnReset') }}</el-button>
               </el-form-item>
             </el-form>
           </div>
 
           <div class="toolbar-actions dict-actions">
             <el-button v-hasPermi="['system:dict:add']" type="primary" plain icon="Plus" @click="handleTypeAdd">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button
               v-hasPermi="['system:dict:edit']"
@@ -60,7 +60,7 @@
               :disabled="typeSingle"
               @click="handleTypeUpdate()"
             >
-              修改
+              {{ $t('common.btnEdit') }}
             </el-button>
             <el-button
               v-hasPermi="['system:dict:remove']"
@@ -70,7 +70,7 @@
               :disabled="typeMultiple"
               @click="handleTypeDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <el-button
               v-hasPermi="['system:dict:export']"
@@ -79,7 +79,7 @@
               icon="Download"
               @click="handleTypeExport"
             >
-              导出
+              {{ $t('common.btnExport') }}
             </el-button>
             <el-button
               v-hasPermi="['system:dict:remove']"
@@ -107,30 +107,30 @@
             >
               <template #empty><empty-state /></template>
               <el-table-column type="selection" width="55" align="center" />
-              <el-table-column v-if="false" label="字典编号" align="center" prop="dictId" />
-              <el-table-column label="字典名称" align="center" prop="dictName" width="120" />
-              <el-table-column label="字典类型" align="center" prop="dictType" width="160">
+              <el-table-column v-if="false" :label="$t('common.dictId')" align="center" prop="dictId" />
+              <el-table-column :label="$t('common.dictName')" align="center" prop="dictName" width="120" />
+              <el-table-column :label="$t('common.dictType')" align="center" prop="dictType" width="160">
                 <template #default="scope">
                   <span class="link-type" @click.stop="handleTypeRowClick(scope.row)">
                     {{ scope.row.dictType }}
                   </span>
                 </template>
               </el-table-column>
-              <el-table-column label="备注" align="center" prop="remark" width="160" />
-              <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+              <el-table-column :label="$t('common.remark')" align="center" prop="remark" width="160" />
+              <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="180">
                 <template #default="scope">
                   <span>{{ parseTime(scope.row.createTime) }}</span>
                 </template>
               </el-table-column>
               <el-table-column
-                label="操作"
+                :label="$t('common.operation')"
                 fixed="right"
                 align="center"
                 width="120"
                 class-name="small-padding fixed-width"
               >
                 <template #default="scope">
-                  <el-tooltip content="修改" placement="top">
+                  <el-tooltip :content="$t('common.tooltipModify')" placement="top">
                     <el-button
                       v-hasPermi="['system:dict:edit']"
                       link
@@ -139,7 +139,7 @@
                       @click="handleTypeUpdate(scope.row)"
                     ></el-button>
                   </el-tooltip>
-                  <el-tooltip content="删除" placement="top">
+                  <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
                     <el-button
                       v-hasPermi="['system:dict:remove']"
                       link
@@ -175,7 +175,7 @@
                   @click.stop="showDataSearch = !showDataSearch"
                 >
                   <div>
-                    <h3>字典数据</h3>
+                    <h3>{{ $t('common.sectionDictData') }}</h3>
                     <p v-if="hasCurrentDict" class="dict-card__subtitle">{{ currentDictLabel }}</p>
                   </div>
                 </div>
@@ -188,10 +188,10 @@
 
           <div class="dict-search" :class="{ 'is-collapsed': !showDataSearch }">
             <el-form ref="dataQueryFormRef" :model="dataQueryParams" :inline="true" class="query-form">
-              <el-form-item label="字典标签" prop="dictLabel">
+              <el-form-item :label="$t('common.dictLabel')" prop="dictLabel">
                 <el-input
                   v-model="dataQueryParams.dictLabel"
-                  placeholder="请输入字典标签"
+                  :placeholder="$t('common.placeholderInputDictLabel')"
                   clearable
                   :disabled="!hasCurrentDict"
                   @keyup.enter="handleDataQuery"
@@ -199,9 +199,9 @@
               </el-form-item>
               <el-form-item>
                 <el-button type="primary" icon="Search" :disabled="!hasCurrentDict" @click="handleDataQuery">
-                  搜索
+                  {{ $t('common.btnSearch') }}
                 </el-button>
-                <el-button icon="Refresh" :disabled="!hasCurrentDict" @click="handleDataResetQuery">重置</el-button>
+                <el-button icon="Refresh" :disabled="!hasCurrentDict" @click="handleDataResetQuery">{{ $t('common.btnReset') }}</el-button>
               </el-form-item>
             </el-form>
           </div>
@@ -215,7 +215,7 @@
               :disabled="!hasCurrentDict"
               @click="handleDataAdd"
             >
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button
               v-hasPermi="['system:dict:edit']"
@@ -225,7 +225,7 @@
               :disabled="dataSingle || !hasCurrentDict"
               @click="handleDataUpdate()"
             >
-              修改
+              {{ $t('common.btnEdit') }}
             </el-button>
             <el-button
               v-hasPermi="['system:dict:remove']"
@@ -235,7 +235,7 @@
               :disabled="dataMultiple || !hasCurrentDict"
               @click="handleDataDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <el-button
               v-hasPermi="['system:dict:export']"
@@ -245,7 +245,7 @@
               :disabled="!hasCurrentDict"
               @click="handleDataExport"
             >
-              导出
+              {{ $t('common.btnExport') }}
             </el-button>
           </div>
 
@@ -261,8 +261,8 @@
             >
               <template #empty><empty-state /></template>
               <el-table-column type="selection" width="55" align="center" />
-              <el-table-column v-if="false" label="字典编码" align="center" prop="dictCode" />
-              <el-table-column label="字典标签" align="center" prop="dictLabel" width="100">
+              <el-table-column v-if="false" :label="$t('common.dictCode')" align="center" prop="dictCode" />
+              <el-table-column :label="$t('common.dictLabel')" align="center" prop="dictLabel" width="100">
                 <template #default="scope">
                   <span
                     v-if="
@@ -285,23 +285,23 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="字典键值" align="center" prop="dictValue" width="100" />
-              <el-table-column label="字典排序" align="center" prop="dictSort" width="80" />
-              <el-table-column label="备注" align="center" prop="remark" width="100" />
-              <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+              <el-table-column :label="$t('common.dictValue')" align="center" prop="dictValue" width="100" />
+              <el-table-column :label="$t('common.dictSort')" align="center" prop="dictSort" width="80" />
+              <el-table-column :label="$t('common.remark')" align="center" prop="remark" width="100" />
+              <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="180">
                 <template #default="scope">
                   <span>{{ parseTime(scope.row.createTime) }}</span>
                 </template>
               </el-table-column>
               <el-table-column
-                label="操作"
+                :label="$t('common.operation')"
                 fixed="right"
                 align="center"
                 width="120"
                 class-name="small-padding fixed-width"
               >
                 <template #default="scope">
-                  <el-tooltip content="修改" placement="top">
+                  <el-tooltip :content="$t('common.tooltipModify')" placement="top">
                     <el-button
                       v-hasPermi="['system:dict:edit']"
                       link
@@ -310,7 +310,7 @@
                       @click="handleDataUpdate(scope.row)"
                     ></el-button>
                   </el-tooltip>
-                  <el-tooltip content="删除" placement="top">
+                  <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
                     <el-button
                       v-hasPermi="['system:dict:remove']"
                       link
@@ -338,8 +338,8 @@
     <!-- 字典类型对话框 -->
     <el-dialog v-model="typeDialog.visible" :title="typeDialog.title" width="500px" append-to-body>
       <el-form ref="typeFormRef" :model="typeForm" :rules="typeRules" label-width="100px">
-        <el-form-item label="字典名称" prop="dictName">
-          <el-input v-model="typeForm.dictName" placeholder="请输入字典名称" />
+        <el-form-item :label="$t('common.dictName')" prop="dictName">
+          <el-input v-model="typeForm.dictName" :placeholder="$t('common.placeholderInputDictName')" />
         </el-form-item>
         <el-form-item prop="dictType">
           <template #label>
@@ -350,16 +350,16 @@
               字典类型
             </span>
           </template>
-          <el-input v-model="typeForm.dictType" placeholder="请输入字典类型" maxlength="100" />
+          <el-input v-model="typeForm.dictType" :placeholder="$t('common.placeholderInputDictType')" maxlength="100" />
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="typeForm.remark" type="textarea" placeholder="请输入内容"></el-input>
+        <el-form-item :label="$t('common.remark')" prop="remark">
+          <el-input v-model="typeForm.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitTypeForm">确 定</el-button>
-          <el-button @click="cancelType">取 消</el-button>
+          <el-button type="primary" @click="submitTypeForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancelType">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -367,22 +367,22 @@
     <!-- 字典数据对话框 -->
     <el-dialog v-model="dataDialog.visible" :title="dataDialog.title" width="500px" append-to-body>
       <el-form ref="dataFormRef" :model="dataForm" :rules="dataRules" label-width="80px">
-        <el-form-item label="字典类型">
+        <el-form-item :label="$t('common.dictType')">
           <el-input v-model="dataForm.dictType" :disabled="true" />
         </el-form-item>
-        <el-form-item label="数据标签" prop="dictLabel">
-          <el-input v-model="dataForm.dictLabel" placeholder="请输入数据标签" />
+        <el-form-item :label="$t('common.dataLabel')" prop="dictLabel">
+          <el-input v-model="dataForm.dictLabel" :placeholder="$t('common.placeholderInputDataLabel')" />
         </el-form-item>
-        <el-form-item label="数据键值" prop="dictValue">
-          <el-input v-model="dataForm.dictValue" placeholder="请输入数据键值" />
+        <el-form-item :label="$t('common.dataKey')" prop="dictValue">
+          <el-input v-model="dataForm.dictValue" :placeholder="$t('common.placeholderInputDataValue')" />
         </el-form-item>
-        <el-form-item label="样式属性" prop="cssClass">
-          <el-input v-model="dataForm.cssClass" placeholder="请输入样式属性" />
+        <el-form-item :label="$t('common.cssClass')" prop="cssClass">
+          <el-input v-model="dataForm.cssClass" :placeholder="$t('common.placeholderInputCssClass')" />
         </el-form-item>
-        <el-form-item label="显示排序" prop="dictSort">
+        <el-form-item :label="$t('common.sort')" prop="dictSort">
           <el-input-number v-model="dataForm.dictSort" controls-position="right" :min="0" />
         </el-form-item>
-        <el-form-item label="回显样式" prop="listClass">
+        <el-form-item :label="$t('common.listClass')" prop="listClass">
           <el-select v-model="dataForm.listClass">
             <el-option
               v-for="item in listClassOptions"
@@ -392,14 +392,14 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="dataForm.remark" type="textarea" placeholder="请输入内容"></el-input>
+        <el-form-item :label="$t('common.remark')" prop="remark">
+          <el-input v-model="dataForm.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitDataForm">确 定</el-button>
-          <el-button @click="cancelData">取 消</el-button>
+          <el-button type="primary" @click="submitDataForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancelData">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -408,6 +408,8 @@
 
 <script setup name="Dict" lang="ts">
 import { listData, getData, delData, addData, updateData } from '@/api/system/dict/data';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { DictDataForm, DictDataQuery, DictDataVO } from '@/api/system/dict/data/types';
 import { listType, getType, delType, addType, updateType, refreshCache } from '@/api/system/dict/type';
 import { DictTypeForm, DictTypeQuery, DictTypeVO } from '@/api/system/dict/type/types';
@@ -482,12 +484,12 @@ const dataDialog = reactive<DialogOption>({
 });
 
 const listClassOptions = ref<Array<{ value: string; label: string }>>([
-  { value: 'default', label: '默认' },
-  { value: 'primary', label: '主要' },
-  { value: 'success', label: '成功' },
-  { value: 'info', label: '信息' },
-  { value: 'warning', label: '警告' },
-  { value: 'danger', label: '危险' }
+  { value: 'default', label: t('common.listStyleDefault') },
+  { value: 'primary', label: t('common.listStylePrimary') },
+  { value: 'success', label: t('common.listStyleSuccess') },
+  { value: 'info', label: t('common.listStyleInfo') },
+  { value: 'warning', label: t('common.listStyleWarning') },
+  { value: 'danger', label: t('common.listStyleDanger') }
 ]);
 
 const dataInitFormData: DictDataForm = {
@@ -600,7 +602,7 @@ const submitTypeForm = () => {
   typeFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       typeForm.value.dictId ? await updateType(typeForm.value) : await addType(typeForm.value);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       typeDialog.visible = false;
       getTypeList();
     }
@@ -609,10 +611,10 @@ const submitTypeForm = () => {
 
 const handleTypeDelete = async (row?: Partial<DictTypeVO>) => {
   const dictIds = row?.dictId || typeIds.value;
-  await modal.confirm('是否确认删除字典编号为"' + dictIds + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteDict', { ids: dictIds }));
   await delType(dictIds);
   getTypeList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 const handleTypeExport = () => {
@@ -702,7 +704,7 @@ const submitDataForm = () => {
     if (valid) {
       dataForm.value.dictCode ? await updateData(dataForm.value) : await addData(dataForm.value);
       useDictStore().removeDict(dataQueryParams.value.dictType);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       dataDialog.visible = false;
       await getDataList();
     }
@@ -715,10 +717,10 @@ const handleDataDelete = async (row?: Partial<DictDataVO>) => {
     return;
   }
   const dictCodes = row?.dictCode || dataIds.value;
-  await modal.confirm('是否确认删除字典编码为"' + dictCodes + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteDictData', { ids: dictCodes }));
   await delData(dictCodes);
   await getDataList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
   useDictStore().removeDict(dataQueryParams.value.dictType);
 };
 

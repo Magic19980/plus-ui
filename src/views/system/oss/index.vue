@@ -6,47 +6,47 @@
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
               <span class="panel-kicker">Search Filters</span>
-              <h3>筛选条件</h3>
+              <h3>{{ $t('common.sectionSearchCondition') }}</h3>
             </div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="文件名" prop="fileName">
-            <el-input v-model="queryParams.fileName" placeholder="请输入文件名" clearable @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.fileName')" prop="fileName">
+            <el-input v-model="queryParams.fileName" :placeholder="$t('common.placeholderInputFileName')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="原名" prop="originalName">
+          <el-form-item :label="$t('common.originalName')" prop="originalName">
             <el-input
               v-model="queryParams.originalName"
-              placeholder="请输入原名"
+              :placeholder="$t('common.placeholderInputOriginalName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="文件后缀" prop="fileSuffix">
+          <el-form-item :label="$t('common.fileSuffix')" prop="fileSuffix">
             <el-input
               v-model="queryParams.fileSuffix"
-              placeholder="请输入文件后缀"
+              :placeholder="$t('common.placeholderInputFileSuffix')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="创建时间" style="width: 308px">
+          <el-form-item :label="$t('common.createTime')" style="width: 308px">
             <el-date-picker
               v-model="dateRangeCreateTime"
               value-format="YYYY-MM-DD HH:mm:ss"
               type="daterange"
               range-separator="-"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :start-placeholder="$t('common.placeholderStartDate')"
+              :end-placeholder="$t('common.placeholderEndDate')"
               :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
             ></el-date-picker>
           </el-form-item>
-          <el-form-item label="服务商" prop="service">
-            <el-input v-model="queryParams.service" placeholder="请输入服务商" clearable @keyup.enter="handleQuery" />
+          <el-form-item :label="$t('common.provider')" prop="service">
+            <el-input v-model="queryParams.service" :placeholder="$t('common.placeholderInputProvider')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -57,12 +57,12 @@
         <div class="toolbar-shell">
           <div class="table-heading">
             <span class="panel-kicker">Object Storage</span>
-            <h3>文件列表</h3>
+            <h3>{{ $t('common.sectionFileList') }}</h3>
             <p>共 {{ total }} 条记录，支持文件上传、预览切换和 OSS 配置跳转。</p>
           </div>
           <div class="toolbar-actions">
             <el-button v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleFile">
-              上传文件
+              {{ $t('common.btnUploadFile') }}
             </el-button>
             <el-button v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleImage">
               上传图片
@@ -75,7 +75,7 @@
               :disabled="multiple"
               @click="handleDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <el-button
               v-hasPermi="['system:oss:edit']"
@@ -83,7 +83,7 @@
               plain
               @click="handlePreviewListResource(!previewListResource)"
             >
-              预览开关 : {{ previewListResource ? '禁用' : '启用' }}
+              预览开关 : {{ previewListResource ? '禁用' : t('common.tagEnabled') }}
             </el-button>
             <el-button
               v-hasPermi="['system:ossConfig:list']"
@@ -110,11 +110,11 @@
         @header-click="handleHeaderCLick"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column v-if="false" label="对象存储主键" align="center" prop="ossId" />
-        <el-table-column label="文件名" align="center" prop="fileName" />
-        <el-table-column label="原名" align="center" prop="originalName" />
-        <el-table-column label="文件后缀" align="center" prop="fileSuffix" />
-        <el-table-column label="文件展示" align="center" prop="url">
+        <el-table-column v-if="false" :label="$t('common.ossPrimaryKey')" align="center" prop="ossId" />
+        <el-table-column :label="$t('common.fileName')" align="center" prop="fileName" />
+        <el-table-column :label="$t('common.originalName')" align="center" prop="originalName" />
+        <el-table-column :label="$t('common.fileSuffix')" align="center" prop="fileSuffix" />
+        <el-table-column :label="$t('common.fileDisplay')" align="center" prop="url">
           <template #default="scope">
             <ImagePreview
               v-if="previewListResource && checkFileSuffix(scope.row.fileSuffix)"
@@ -126,16 +126,16 @@
             <span v-if="!checkFileSuffix(scope.row.fileSuffix) || !previewListResource" v-text="scope.row.url" />
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="180" sortable="custom">
+        <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="180" sortable="custom">
           <template #default="scope">
             <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="上传人" align="center" prop="createByName" />
-        <el-table-column label="服务商" align="center" prop="service" sortable="custom" />
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column :label="$t('common.uploader')" align="center" prop="createByName" />
+        <el-table-column :label="$t('common.provider')" align="center" prop="service" sortable="custom" />
+        <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip content="下载" placement="top">
+            <el-tooltip :content="$t('common.tooltipDownload')" placement="top">
               <el-button
                 v-hasPermi="['system:oss:download']"
                 link
@@ -144,7 +144,7 @@
                 @click="handleDownload(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 v-hasPermi="['system:oss:remove']"
                 link
@@ -168,15 +168,15 @@
     <!-- 添加或修改OSS对象存储对话框 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
       <el-form ref="ossFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="文件名">
+        <el-form-item :label="$t('common.fileName')">
           <fileUpload v-if="type === 0" v-model="form.file" />
           <imageUpload v-if="type === 1" v-model="form.file" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -186,6 +186,8 @@
 <script setup name="Oss" lang="ts">
 import { useRouter } from 'vue-router';
 import { getConfigKey, updateConfigByKey } from '@/api/system/config';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { listOss, delOss } from '@/api/system/oss';
 import { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
 import ImagePreview from '@/components/ImagePreview/index.vue';
@@ -239,7 +241,7 @@ const data = reactive<PageData<OssForm, OssQuery>>({
     isAsc: defaultSort.value.order
   },
   rules: {
-    file: [{ required: true, message: '文件不能为空', trigger: 'blur' }]
+    file: [{ required: true, message: t('common.validationFileRequired'), trigger: 'blur' }]
   }
 });
 
@@ -369,7 +371,7 @@ const handlePreviewListResource = async (preview: boolean) => {
   try {
     await updateConfigByKey('sys.oss.previewListResource', preview);
     await getList();
-    modal.msgSuccess((preview ? '启用' : '停用') + '成功');
+    modal.msgSuccess((preview ? t('common.tagEnabled') : t('common.tagDisabled')) + '成功');
   } catch {
     return;
   }
@@ -377,11 +379,11 @@ const handlePreviewListResource = async (preview: boolean) => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<OssVO>) => {
   const ossIds = row?.ossId || ids.value;
-  await modal.confirm('是否确认删除OSS对象存储编号为"' + ossIds + '"的数据项?');
+  await modal.confirm(t('common.msgboxConfirmDeleteOss', { ids: ossIds }));
   setLoading(true);
   await delOss(ossIds).finally(() => setLoading(false));
   await getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 onMounted(() => {

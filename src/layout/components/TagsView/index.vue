@@ -17,7 +17,7 @@
         @contextmenu.prevent="openMenu(tag, $event)"
       >
         <svg-icon v-if="tagsIcon && tag.meta && tag.meta.icon && tag.meta.icon !== '#'" :icon-class="tag.meta.icon" />
-        <span class="tags-view-item-title">{{ t(tag.title || tag.meta?.title) }}</span>
+        <span class="tags-view-item-title">{{ te(tag.title || tag.meta?.title) ? t(tag.title || tag.meta?.title) : (tag.title || tag.meta?.title) }}</span>
         <span v-if="!isAffix(tag)" @click.prevent.stop="closeSelectedTag(tag)">
           <Close class="el-icon-close" style="width: 1em; height: 1em; vertical-align: middle" />
         </span>
@@ -34,54 +34,54 @@
       </span>
       <template #dropdown>
         <el-dropdown-menu class="tags-dropdown-menu">
-          <el-dropdown-item v-if="!isAffix(selectedDropdownTag)" command="close">关闭当前</el-dropdown-item>
-          <el-dropdown-item command="closeOthers">关闭其他</el-dropdown-item>
-          <el-dropdown-item command="closeLeft" :disabled="isFirstView()">关闭左侧</el-dropdown-item>
-          <el-dropdown-item command="closeRight" :disabled="isLastView()">关闭右侧</el-dropdown-item>
-          <el-dropdown-item command="closeAll">全部关闭</el-dropdown-item>
+          <el-dropdown-item v-if="!isAffix(selectedDropdownTag)" command="close">{{ t('common.tagsViewCloseCurrent') }}</el-dropdown-item>
+          <el-dropdown-item command="closeOthers">{{ t('common.tagsViewCloseOthers') }}</el-dropdown-item>
+          <el-dropdown-item command="closeLeft" :disabled="isFirstView()">{{ t('common.tagsViewCloseLeft') }}</el-dropdown-item>
+          <el-dropdown-item command="closeRight" :disabled="isLastView()">{{ t('common.tagsViewCloseRight') }}</el-dropdown-item>
+          <el-dropdown-item command="closeAll">{{ t('common.tagsViewCloseAll') }}</el-dropdown-item>
           <el-dropdown-item command="fullscreen" divided>
             <template v-if="!isFullscreen">
               <FullScreen />
-              <span>全屏显示</span>
+              <span>{{ t('common.tagsViewFullscreen') }}</span>
             </template>
             <template v-else>
               <CloseBold />
-              <span>退出全屏</span>
+              <span>{{ t('common.tagsViewExitFullscreen') }}</span>
             </template>
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
 
-    <span class="tags-action-btn tags-refresh-btn" title="刷新页面" @click="refreshSelectedTag(selectedDropdownTag)">
+    <span class="tags-action-btn tags-refresh-btn" :title="t('common.tagsViewRefreshPage')" @click="refreshSelectedTag(selectedDropdownTag)">
       <el-icon><RefreshRight /></el-icon>
-      <span>刷新</span>
+      <span>{{ t('common.tagsViewRefresh') }}</span>
     </span>
 
     <ul v-show="visible" :style="{ left: left + 'px', top: top + 'px' }" class="contextmenu">
       <li @click="refreshSelectedTag(selectedTag)">
         <RefreshRight style="width: 1em; height: 1em" />
-        刷新页面
+        {{ t('common.tagsViewRefreshPage') }}
       </li>
       <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">
         <Close style="width: 1em; height: 1em" />
-        关闭当前
+        {{ t('common.tagsViewCloseCurrent') }}
       </li>
       <li @click="closeOthersTags">
         <CircleClose style="width: 1em; height: 1em" />
-        关闭其他
+        {{ t('common.tagsViewCloseOthers') }}
       </li>
       <li v-if="!isFirstView()" @click="closeLeftTags">
         <Back style="width: 1em; height: 1em" />
-        关闭左侧
+        {{ t('common.tagsViewCloseLeft') }}
       </li>
       <li v-if="!isLastView()" @click="closeRightTags">
         <Right style="width: 1em; height: 1em" />
-        关闭右侧
+        {{ t('common.tagsViewCloseRight') }}
       </li>
       <li @click="closeAllTags(selectedTag)">
         <CircleClose style="width: 1em; height: 1em" />
-        全部关闭
+        {{ t('common.tagsViewCloseAll') }}
       </li>
     </ul>
   </div>
@@ -126,7 +126,7 @@ const settingsStore = useSettingsStore();
 const permissionStore = usePermissionStore();
 const tagsViewStore = useTagsViewStore();
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 const visitedViews = computed(() => tagsViewStore.getVisitedViews());
 const routes = computed(() => permissionStore.getRoutes());

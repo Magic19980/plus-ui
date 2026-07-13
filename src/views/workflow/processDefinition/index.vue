@@ -5,8 +5,8 @@
       <tree-panel
         ref="treePanelRef"
         v-model:collapsed="treeCollapsed"
-        title="流程分类"
-        placeholder="请输入流程分类名"
+        :title="$t('common.dialogFlowCategory')"
+        :placeholder="$t('common.placeholderInputFlowCategory')"
         :data="categoryOptions"
         :expanded-span="4"
         filter-field="categoryName"
@@ -22,29 +22,29 @@
           <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-                <div><h3>筛选条件</h3></div>
+                <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
               </div>
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="120px" class="query-form">
-              <el-form-item label="流程定义名称" prop="flowName">
+              <el-form-item :label="$t('common.processDefinitionName')" prop="flowName">
                 <el-input
                   v-model="queryParams.flowName"
-                  placeholder="请输入流程定义名称"
+                  :placeholder="$t('common.placeholderInputFlowName')"
                   clearable
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
-              <el-form-item label="流程定义编码" prop="flowCode">
+              <el-form-item :label="$t('common.processDefinitionCode')" prop="flowCode">
                 <el-input
                   v-model="queryParams.flowCode"
-                  placeholder="请输入流程定义编码"
+                  :placeholder="$t('common.placeholderInputFlowCode')"
                   clearable
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
               </el-form-item>
             </el-form>
           </el-card>
@@ -53,7 +53,7 @@
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
-                <h3>流程定义</h3>
+                <h3>{{ $t('common.sectionFlowDefinition') }}</h3>
               </div>
               <div class="toolbar-actions">
                 <el-button v-hasPermi="['workflow:definition:add']" type="primary" icon="Plus" @click="handleAdd()">
@@ -66,7 +66,7 @@
                   :disabled="single"
                   @click="handleUpdate()"
                 >
-                  修改
+                  {{ $t('common.btnEdit') }}
                 </el-button>
                 <el-button
                   v-hasPermi="['workflow:definition:remove']"
@@ -75,7 +75,7 @@
                   :disabled="multiple"
                   @click="handleDelete()"
                 >
-                  删除
+                  {{ $t('common.btnDelete') }}
                 </el-button>
                 <el-button
                   v-hasPermi="['workflow:definition:import']"
@@ -92,7 +92,7 @@
                   :disabled="single"
                   @click="handleExportDef"
                 >
-                  导出
+                  {{ $t('common.btnExport') }}
                 </el-button>
                 <right-toolbar
                   v-model:show-search="showSearch"
@@ -113,11 +113,11 @@
               @selection-change="handleSelectionChange"
             >
               <el-table-column type="selection" width="55" align="center" />
-              <el-table-column align="center" prop="id" label="主键" v-if="false"></el-table-column>
+              <el-table-column align="center" prop="id" :label="$t('common.primaryKey')" v-if="false"></el-table-column>
               <el-table-column
                 align="center"
                 prop="flowName"
-                label="流程定义名称"
+                :label="$t('common.processDefinitionName')"
                 :show-overflow-tooltip="true"
               ></el-table-column>
               <el-table-column
@@ -129,13 +129,13 @@
               <el-table-column
                 align="center"
                 prop="categoryName"
-                label="流程分类"
+                :label="$t('common.processCategory')"
                 :show-overflow-tooltip="true"
               ></el-table-column>
-              <el-table-column align="center" prop="version" label="版本号" width="80">
+              <el-table-column align="center" prop="version" :label="$t('common.versionNumber')" width="80">
                 <template #default="scope">v{{ scope.row.version }}.0</template>
               </el-table-column>
-              <el-table-column align="center" prop="activityStatus" label="激活状态" width="130">
+              <el-table-column align="center" prop="activityStatus" :label="$t('common.activeStatus')" width="130">
                 <template #default="scope">
                   <el-switch
                     v-hasPermi="['workflow:definition:active']"
@@ -146,16 +146,16 @@
                   />
                 </template>
               </el-table-column>
-              <el-table-column align="center" prop="isPublish" label="发布状态" width="100">
+              <el-table-column align="center" prop="isPublish" :label="$t('common.publishStatus')" width="100">
                 <template #default="scope">
-                  <el-tag v-if="scope.row.isPublish == 0" type="danger">未发布</el-tag>
-                  <el-tag v-else-if="scope.row.isPublish == 1" type="success">已发布</el-tag>
-                  <el-tag v-else type="danger">失效</el-tag>
+                  <el-tag v-if="scope.row.isPublish == 0" type="danger">{{ $t('common.tagUnpublished') }}</el-tag>
+                  <el-tag v-else-if="scope.row.isPublish == 1" type="success">{{ $t('common.tagPublished') }}</el-tag>
+                  <el-tag v-else type="danger">{{ $t('common.tagExpired') }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column
                 fixed="right"
-                label="操作"
+                :label="$t('common.operation')"
                 align="center"
                 width="236"
                 class-name="small-padding fixed-width"
@@ -180,7 +180,7 @@
                       icon="CopyDocument"
                       @click="handleCopyDef(scope.row)"
                     >
-                      复制流程
+                      {{ $t('common.btnCopyDefinition') }}
                     </el-button>
                     <el-button
                       v-hasPermi="['workflow:definition:query']"
@@ -259,9 +259,9 @@
           :http-request="handlerImportDefinition"
         >
           <el-icon class="UploadFilled"><upload-filled /></el-icon>
-          <div class="el-upload__text"><em>点击上传，选择JSON流程文件</em></div>
-          <div class="el-upload__text">仅支持json格式文件</div>
-          <div class="el-upload__text">PS:如若部署请部署从本项目模型管理导出的数据</div>
+          <div class="el-upload__text"><em>{{ $t('common.clickUploadJsonProcess') }}</em></div>
+          <div class="el-upload__text">{{ $t('common.onlyJsonSupported') }}</div>
+          <div class="el-upload__text">{{ $t('common.psDeployExportData') }}</div>
         </el-upload>
       </div>
     </el-dialog>
@@ -276,7 +276,7 @@
       class="definition-dialog"
     >
       <el-form ref="defFormRef" :model="form" :rules="rules" label-width="120px" class="definition-form">
-        <el-form-item label="流程类别" prop="category">
+        <el-form-item :label="$t('common.processCategory')" prop="category">
           <el-tree-select
             v-model="form.category"
             :data="categoryOptions"
@@ -288,35 +288,35 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="流程编码" prop="flowCode">
-          <el-input v-model="form.flowCode" placeholder="请输入流程编码" maxlength="40" show-word-limit />
+        <el-form-item :label="$t('common.processCode')" prop="flowCode">
+          <el-input v-model="form.flowCode" :placeholder="$t('common.placeholderInputFlowCode_')" maxlength="40" show-word-limit />
         </el-form-item>
-        <el-form-item label="流程名称" prop="flowName">
-          <el-input v-model="form.flowName" placeholder="请输入流程名称" maxlength="100" show-word-limit />
+        <el-form-item :label="$t('common.processName')" prop="flowName">
+          <el-input v-model="form.flowName" :placeholder="$t('common.placeholderInputFlowName_')" maxlength="100" show-word-limit />
         </el-form-item>
-        <el-form-item label="设计器模式" prop="modelValue">
+        <el-form-item :label="$t('common.designerMode')" prop="modelValue">
           <el-radio-group v-model="form.modelValue" :disabled="!!form.id" class="definition-radio-group">
-            <el-radio value="CLASSICS" size="large" border>经典模式</el-radio>
-            <el-radio value="MIMIC" size="large" border>仿钉钉模式</el-radio>
+            <el-radio value="CLASSICS" size="large" border>{{ $t('common.designerMode') }}</el-radio>
+            <el-radio value="MIMIC" size="large" border>MIMIC Mode</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="流程配置">
+        <el-form-item :label="$t('common.flowConfig')">
           <el-checkbox v-model="autoPass" label="下一节点执行人是当前任务处理人自动审批" />
         </el-form-item>
-        <el-form-item label="是否动态表单" prop="formCustom">
+        <el-form-item :label="$t('common.isDynamicForm')" prop="formCustom">
           <el-radio-group v-model="form.formCustom" class="definition-radio-group">
-            <el-radio value="Y" size="large" border disabled>是</el-radio>
-            <el-radio value="N" size="large" border>否</el-radio>
+            <el-radio value="Y" size="large" border disabled>{{ $t('common.yes') }}</el-radio>
+            <el-radio value="N" size="large" border>{{ $t('common.no') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="表单路径" prop="formPath">
-          <el-input v-model="form.formPath" placeholder="请输入表单路径" maxlength="100" show-word-limit />
+        <el-form-item :label="$t('common.formPath')" prop="formPath">
+          <el-input v-model="form.formPath" :placeholder="$t('common.placeholderInputFormPath')" maxlength="100" show-word-limit />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="closeModelDialog()">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">保存</el-button>
+          <el-button @click="closeModelDialog()">{{ $t('common.btnCancel') }}</el-button>
+          <el-button type="primary" @click="handleSubmit">{{ $t('common.btnSave') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -325,6 +325,7 @@
 
 <script setup name="processDefinition" lang="ts">
 import type { ElMessageBoxOptions, TabsPaneContext, UploadRequestOptions } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { categoryTree } from '@/api/workflow/category';
 import { CategoryTreeVO } from '@/api/workflow/category/types';
@@ -380,11 +381,11 @@ const queryParams = ref<FlowDefinitionQuery>({
   category: undefined
 });
 const rules = {
-  category: [{ required: true, message: '分类名称不能为空', trigger: 'blur' }],
-  flowName: [{ required: true, message: '流程定义名称不能为空', trigger: 'blur' }],
-  formCustom: [{ required: true, message: '请选择是否动态表单', trigger: 'change' }],
-  modelValue: [{ required: true, message: '设计器模式不能为空', trigger: 'change' }],
-  flowCode: [{ required: true, message: '流程定义编码不能为空', trigger: 'blur' }]
+  category: [{ required: true, message: t('common.validationCategoryRequired'), trigger: 'blur' }],
+  flowName: [{ required: true, message: t('common.validationFlowNameRequired'), trigger: 'blur' }],
+  formCustom: [{ required: true, message: t('common.validationFormCustomRequired'), trigger: 'change' }],
+  modelValue: [{ required: true, message: t('common.validationModelValueRequired'), trigger: 'change' }],
+  flowCode: [{ required: true, message: t('common.validationFlowCodeRequired'), trigger: 'blur' }]
 };
 const initFormData: FlowDefinitionForm = {
   id: '',
@@ -506,11 +507,11 @@ const getUnPublishList = async () => {
 const handleDelete = async (row?: Partial<FlowDefinitionVo>) => {
   const id = row?.id || ids.value;
   const defList = processDefinitionList.value.filter(x => id.indexOf(x.id) != -1).map(x => x.flowCode);
-  await modal.confirm('是否确认删除流程定义编码为【' + defList + '】的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteDef', { ids: defList }));
   setLoading(true);
   await deleteDefinition(id).finally(() => setLoading(false));
   await handleQuery();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 /** 发布流程定义 */
@@ -526,7 +527,7 @@ const handlePublish = async (row?: Partial<FlowDefinitionVo>) => {
   await publish(row.id).finally(() => setLoading(false));
   activeName.value = '0';
   await handleQuery();
-  modal.msgSuccess('发布成功');
+  modal.msgSuccess(t('common.msgPublishSuccess'));
 };
 /** 挂起/激活 */
 const handleProcessDefState = async (row: Partial<FlowDefinitionVo>, status: number | string | boolean) => {
@@ -541,7 +542,7 @@ const handleProcessDefState = async (row: Partial<FlowDefinitionVo>, status: num
     await modal.confirm(msg);
     await active(row.id, !!status);
     await handleQuery();
-    modal.msgSuccess('操作成功');
+    modal.msgSuccess(t('common.msgOperateSuccess'));
   } catch (error) {
     row.activityStatus = status === 0 ? 1 : 0;
     console.error(error);
@@ -650,7 +651,7 @@ const handleSubmit = async () => {
         await add(form.value).finally(() => setLoading(false));
         activeName.value = '1';
       }
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeModelDialog();
       handleQuery();
     }
@@ -660,14 +661,14 @@ const handleSubmit = async () => {
 const handleCopyDef = async (row: Partial<FlowDefinitionVo>) => {
   ElMessageBox.confirm(`是否确认复制【${row.flowCode}】版本为【${row.version}】的流程定义！`, '提示', {
     confirmButtonText: '确认',
-    cancelButtonText: '取消',
+    cancelButtonText: t('common.btnCancel'),
     type: 'warning'
   } as ElMessageBoxOptions).then(() => {
     setLoading(true);
     copy(row.id)
       .then(resp => {
         if (resp.code === 200) {
-          modal.msgSuccess('操作成功');
+          modal.msgSuccess(t('common.msgOperateSuccess'));
           activeName.value = '1';
           handleQuery();
         }

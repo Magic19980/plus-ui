@@ -5,8 +5,8 @@
       <tree-panel
         ref="treePanelRef"
         v-model:collapsed="treeCollapsed"
-        title="流程分类"
-        placeholder="请输入流程分类名"
+        :title="$t('common.dialogFlowCategory')"
+        :placeholder="$t('common.placeholderInputFlowCategory')"
         :data="categoryOptions"
         :expanded-span="4"
         filter-field="label"
@@ -22,27 +22,27 @@
           <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-                <div><h3>筛选条件</h3></div>
+                <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
               </div>
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
               <el-form-item>
                 <el-badge :value="userSelectCount" :max="10" class="item">
-                  <el-button type="primary" @click="openUserSelect">选择申请人</el-button>
+                  <el-button type="primary" @click="openUserSelect">{{ $t('common.selectApplicant') }}</el-button>
                 </el-badge>
               </el-form-item>
-              <el-form-item label="任务名称" prop="nodeName">
-                <el-input v-model="queryParams.nodeName" placeholder="请输入任务名称" @keyup.enter="handleQuery" />
+              <el-form-item :label="$t('common.taskName')" prop="nodeName">
+                <el-input v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
               </el-form-item>
-              <el-form-item label="流程定义名称" label-width="100" prop="flowName">
-                <el-input v-model="queryParams.flowName" placeholder="请输入流程定义名称" @keyup.enter="handleQuery" />
+              <el-form-item :label="$t('common.processDefinitionName')" label-width="100" prop="flowName">
+                <el-input v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
               </el-form-item>
-              <el-form-item label="流程定义编码" label-width="100" prop="flowCode">
-                <el-input v-model="queryParams.flowCode" placeholder="请输入流程定义编码" @keyup.enter="handleQuery" />
+              <el-form-item :label="$t('common.processDefinitionCode')" label-width="100" prop="flowCode">
+                <el-input v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
               </el-form-item>
             </el-form>
           </el-card>
@@ -51,7 +51,7 @@
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
-                <h3>流程实例</h3>
+                <h3>{{ $t('common.sectionFlowInstance') }}</h3>
               </div>
               <div class="toolbar-actions">
                 <el-button
@@ -62,7 +62,7 @@
                   :disabled="multiple"
                   @click="() => handleDelete()"
                 >
-                  删除
+                  {{ $t('common.btnDelete') }}
                 </el-button>
                 <right-toolbar
                   v-model:show-search="showSearch"
@@ -73,8 +73,8 @@
             </div>
           </template>
           <el-tabs v-model="tab" @tab-click="changeTab">
-            <el-tab-pane name="running" label="运行中"></el-tab-pane>
-            <el-tab-pane name="finish" label="已完成"></el-tab-pane>
+            <el-tab-pane name="running" :label="$t('common.tabRunningProcess')"></el-tab-pane>
+            <el-tab-pane name="finish" :label="$t('common.tabFinishedProcess')"></el-tab-pane>
             <el-table
               v-loading="loading"
               border
@@ -83,34 +83,34 @@
               @selection-change="handleSelectionChange"
             >
               <el-table-column type="selection" width="55" align="center" />
-              <el-table-column align="center" type="index" label="序号" width="60"></el-table-column>
+              <el-table-column align="center" type="index" :label="$t('common.index')" width="60"></el-table-column>
               <el-table-column
                 :show-overflow-tooltip="true"
                 prop="businessCode"
                 align="center"
-                label="业务编码"
+                :label="$t('common.businessCode')"
               ></el-table-column>
               <el-table-column
                 :show-overflow-tooltip="true"
                 prop="businessTitle"
                 align="center"
-                label="业务标题"
+                :label="$t('common.businessTitle')"
               ></el-table-column>
-              <el-table-column :show-overflow-tooltip="true" align="center" width="120" label="流程定义名称">
+              <el-table-column :show-overflow-tooltip="true" align="center" width="120" :label="$t('common.processDefinitionName')">
                 <template #default="scope">
                   <span>{{ scope.row.flowName }}v{{ scope.row.version }}</span>
                 </template>
               </el-table-column>
-              <el-table-column align="center" prop="flowCode" width="120" label="流程定义编码"></el-table-column>
-              <el-table-column align="center" prop="categoryName" label="流程分类"></el-table-column>
-              <el-table-column align="center" prop="nodeName" label="任务名称"></el-table-column>
+              <el-table-column align="center" prop="flowCode" width="120" :label="$t('common.processDefinitionCode')"></el-table-column>
+              <el-table-column align="center" prop="categoryName" :label="$t('common.processCategory')"></el-table-column>
+              <el-table-column align="center" prop="nodeName" :label="$t('common.taskName')"></el-table-column>
               <el-table-column
                 align="center"
                 prop="createByName"
                 :show-overflow-tooltip="true"
-                label="申请人"
+                :label="$t('common.applicant')"
               ></el-table-column>
-              <el-table-column align="center" prop="version" label="版本号" width="90">
+              <el-table-column align="center" prop="version" :label="$t('common.versionNumber')" width="90">
                 <template #default="scope">v{{ scope.row.version }}.0</template>
               </el-table-column>
               <el-table-column
@@ -118,28 +118,28 @@
                 v-hasPermi="['workflow:instance:active']"
                 align="center"
                 prop="isSuspended"
-                label="状态"
+                :label="$t('common.status')"
                 min-width="70"
               >
                 <template #default="scope">
-                  <el-tag v-if="!scope.row.isSuspended" type="success">激活</el-tag>
-                  <el-tag v-else type="danger">挂起</el-tag>
+                  <el-tag v-if="!scope.row.isSuspended" type="success">{{ $t('common.tagActive') }}</el-tag>
+                  <el-tag v-else type="danger">{{ $t('common.tagSuspended') }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column align="center" label="流程状态" min-width="80">
+              <el-table-column align="center" :label="$t('common.processStatus')" min-width="80">
                 <template #default="scope">
                   <dict-tag :options="wf_business_status" :value="scope.row.flowStatus"></dict-tag>
                 </template>
               </el-table-column>
-              <el-table-column align="center" prop="createTime" label="启动时间" width="160"></el-table-column>
+              <el-table-column align="center" prop="createTime" :label="$t('common.launchTime')" width="160"></el-table-column>
               <el-table-column
                 v-if="tab === 'finish'"
                 align="center"
                 prop="updateTime"
-                label="结束时间"
+                :label="$t('common.endTime')"
                 width="160"
               ></el-table-column>
-              <el-table-column label="操作" align="center" :width="165" fixed="right">
+              <el-table-column :label="$t('common.operation')" align="center" :width="165" fixed="right">
                 <template #default="scope">
                   <el-row v-if="tab === 'running'" :gutter="10" class="mb8">
                     <el-col :span="1.5">
@@ -154,14 +154,14 @@
                           resize="none"
                           :rows="3"
                           type="textarea"
-                          placeholder="请输入作废原因"
+                          :placeholder="$t('common.placeholderInputInvalidReason')"
                         />
                         <div style="text-align: right; margin: 5px 0px 0px 0px">
-                          <el-button size="small" text @click="cancelPopover(scope.$index)">取消</el-button>
-                          <el-button size="small" type="primary" @click="handleInvalid(scope.row)">确认</el-button>
+                          <el-button size="small" text @click="cancelPopover(scope.$index)">{{ $t('common.btnCancel') }}</el-button>
+                          <el-button size="small" type="primary" @click="handleInvalid(scope.row)">{{ $t('common.btnConfirm') }}</el-button>
                         </div>
                         <template #reference>
-                          <el-button type="danger" size="small" icon="CircleClose">作废</el-button>
+                          <el-button type="danger" size="small" icon="CircleClose">{{ $t('common.btnInvalid') }}</el-button>
                         </template>
                       </el-popover>
                     </el-col>
@@ -173,7 +173,7 @@
                         icon="Delete"
                         @click="handleDelete(scope.row)"
                       >
-                        删除
+                        {{ $t('common.btnDelete') }}
                       </el-button>
                     </el-col>
                   </el-row>
@@ -222,29 +222,29 @@
       width="70%"
     >
       <el-table v-loading="loading" :data="processDefinitionHistoryList">
-        <el-table-column fixed align="center" type="index" label="序号" width="60"></el-table-column>
-        <el-table-column fixed align="center" prop="name" label="流程定义名称"></el-table-column>
-        <el-table-column fixed align="center" prop="nodeName" label="任务名称"></el-table-column>
-        <el-table-column align="center" prop="key" label="标识Key"></el-table-column>
-        <el-table-column align="center" prop="version" label="版本号" width="90">
+        <el-table-column fixed align="center" type="index" :label="$t('common.index')" width="60"></el-table-column>
+        <el-table-column fixed align="center" prop="name" :label="$t('common.processDefinitionName')"></el-table-column>
+        <el-table-column fixed align="center" prop="nodeName" :label="$t('common.taskName')"></el-table-column>
+        <el-table-column align="center" prop="key" :label="$t('common.processKey')"></el-table-column>
+        <el-table-column align="center" prop="version" :label="$t('common.versionNumber')" width="90">
           <template #default="scope">v{{ scope.row.version }}.0</template>
         </el-table-column>
         <el-table-column
           v-hasPermi="['workflow:instance:active']"
           align="center"
           prop="suspensionState"
-          label="状态"
+          :label="$t('common.status')"
           min-width="70"
         >
           <template #default="scope">
-            <el-tag v-if="scope.row.suspensionState == 1" type="success">激活</el-tag>
-            <el-tag v-else type="danger">挂起</el-tag>
+            <el-tag v-if="scope.row.suspensionState == 1" type="success">{{ $t('common.tagActive') }}</el-tag>
+            <el-tag v-else type="danger">{{ $t('common.tagSuspended') }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column
           align="center"
           prop="deploymentTime"
-          label="部署时间"
+          :label="$t('common.deployTime')"
           :show-overflow-tooltip="true"
         ></el-table-column>
       </el-table>
@@ -254,7 +254,7 @@
       v-model="variableVisible"
       v-if="variableVisible"
       draggable
-      title="流程变量"
+      :title="$t('common.dialogFlowVariables')"
       width="60%"
       :close-on-click-modal="false"
     >
@@ -273,15 +273,15 @@
       </el-card>
       <el-card v-loading="variableLoading">
         <el-form ref="ruleFormRef" :model="form" :inline="true" :rules="rules" label-width="120px">
-          <el-form-item label="变量KEY" prop="key">
-            <el-input v-model="form.key" placeholder="请输入变量KEY" />
+          <el-form-item :label="$t('common.variableKey')" prop="key">
+            <el-input v-model="form.key" :placeholder="$t('common.placeholderInputVarKey')" />
           </el-form-item>
-          <el-form-item label="变量值" prop="value">
-            <el-input v-model="form.value" placeholder="请输入变量值" />
+          <el-form-item :label="$t('common.variableValue')" prop="value">
+            <el-input v-model="form.value" :placeholder="$t('common.placeholderInputVarValue')" />
           </el-form-item>
           <el-form-item>
             <el-button v-hasPermi="['workflow:instance:variable']" type="primary" @click="handleVariable(ruleFormRef)">
-              确认
+              {{ $t('common.btnConfirm') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -301,6 +301,8 @@
 
 <script setup lang="ts">
 import { ElForm, FormInstance, type TabsPaneContext } from 'element-plus';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { ref } from 'vue';
 import VueJsonPretty from 'vue-json-pretty';
 import { UserVO } from '@/api/system/user/types';
@@ -450,7 +452,7 @@ const getProcessInstanceFinishList = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<FlowInstanceVO>) => {
   const instanceIdList = row?.id ?? instanceIds.value;
-  await modal.confirm('是否确认删除？');
+  await modal.confirm(t('common.msgConfirmDelete'));
   setLoading(true);
   if ('running' === tab.value) {
     await deleteByInstanceIds(instanceIdList).finally(() => setLoading(false));
@@ -459,7 +461,7 @@ const handleDelete = async (row?: Partial<FlowInstanceVO>) => {
     await deleteHisByInstanceIds(instanceIdList).finally(() => setLoading(false));
     getProcessInstanceFinishList();
   }
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 const changeTab = async (pane: TabsPaneContext) => {
   processInstanceList.value = [];
@@ -472,7 +474,7 @@ const changeTab = async (pane: TabsPaneContext) => {
 };
 /** 作废按钮操作 */
 const handleInvalid = async (row: Partial<FlowInstanceVO>) => {
-  await modal.confirm('是否确认作废？');
+  await modal.confirm(t('common.msgConfirmInvalidate'));
   setLoading(true);
   if ('running' === tab.value) {
     const param = {
@@ -481,7 +483,7 @@ const handleInvalid = async (row: Partial<FlowInstanceVO>) => {
     };
     await invalid(param).finally(() => setLoading(false));
     getProcessInstanceRunningList();
-    modal.msgSuccess('操作成功');
+    modal.msgSuccess(t('common.msgOperateSuccess'));
   }
 };
 const cancelPopover = async (index: number) => {
@@ -562,9 +564,9 @@ const handleVariable = async (formEl: FormInstance | undefined) => {
   await formEl.validate(async (valid, fields) => {
     if (valid) {
       form.value.instanceId = instanceId.value;
-      await modal.confirm('是否确认提交？');
+      await modal.confirm(t('common.msgConfirmSubmit'));
       await updateVariable(form.value);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       const data = await instanceVariable(instanceId.value);
       variables.value = data.data.variable;
     }

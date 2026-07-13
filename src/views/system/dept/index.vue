@@ -6,36 +6,36 @@
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
               <span class="panel-kicker">Search Filters</span>
-              <h3>筛选条件</h3>
+              <h3>{{ $t('common.sectionSearchCondition') }}</h3>
             </div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="部门名称" prop="deptName">
+          <el-form-item :label="$t('common.deptName')" prop="deptName">
             <el-input
               v-model="queryParams.deptName"
-              placeholder="请输入部门名称"
+              :placeholder="$t('common.placeholderInputDeptName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="类别编码" prop="deptCategory">
+          <el-form-item :label="$t('common.categoryCode')" prop="deptCategory">
             <el-input
               v-model="queryParams.deptCategory"
-              placeholder="请输入类别编码"
+              :placeholder="$t('common.placeholderInputPostCategory')"
               clearable
               style="width: 240px"
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="部门状态" clearable>
+          <el-form-item :label="$t('common.status')" prop="status">
+            <el-select v-model="queryParams.status" :placeholder="$t('common.deptStatus')" clearable>
               <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -46,14 +46,14 @@
         <div class="toolbar-shell">
           <div class="table-heading">
             <span class="panel-kicker">Department Dataset</span>
-            <h3>部门列表</h3>
-            <p>支持树形层级维护、负责人绑定和部门状态管理。</p>
+            <h3>{{ $t('common.sectionDeptList') }}</h3>
+            <p>{{ $t('common.descDeptList') }}</p>
           </div>
           <div class="toolbar-actions">
             <el-button v-hasPermi="['system:dept:add']" type="primary" plain icon="Plus" @click="handleAdd()">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
-            <el-button type="info" plain icon="Sort" @click="handleToggleExpandAll">展开/折叠</el-button>
+            <el-button type="info" plain icon="Sort" @click="handleToggleExpandAll">{{ $t('common.checkboxExpandCollapse') }}</el-button>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
@@ -69,22 +69,22 @@
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         :default-expand-all="isExpandAll"
       >
-        <el-table-column prop="deptName" label="部门名称" width="260"></el-table-column>
-        <el-table-column prop="deptCategory" align="center" label="类别编码" width="200"></el-table-column>
-        <el-table-column prop="orderNum" align="center" label="排序" width="200"></el-table-column>
-        <el-table-column prop="status" align="center" label="状态" width="100">
+        <el-table-column prop="deptName" :label="$t('common.deptName')" width="260"></el-table-column>
+        <el-table-column prop="deptCategory" align="center" :label="$t('common.categoryCode')" width="200"></el-table-column>
+        <el-table-column prop="orderNum" align="center" :label="$t('common.sort')" width="200"></el-table-column>
+        <el-table-column prop="status" align="center" :label="$t('common.status')" width="100">
           <template #default="scope">
             <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="200">
+        <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="200">
           <template #default="scope">
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column fixed="right" align="center" label="操作">
+        <el-table-column fixed="right" align="center" :label="$t('common.operation')">
           <template #default="scope">
-            <el-tooltip content="修改" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
               <el-button
                 v-hasPermi="['system:dept:edit']"
                 link
@@ -93,7 +93,7 @@
                 @click="handleUpdate(scope.row)"
               />
             </el-tooltip>
-            <el-tooltip content="新增" placement="top">
+            <el-tooltip :content="$t('common.tooltipAdd')" placement="top">
               <el-button
                 v-hasPermi="['system:dept:add']"
                 link
@@ -102,7 +102,7 @@
                 @click="handleAdd(scope.row)"
               />
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 v-hasPermi="['system:dept:remove']"
                 link
@@ -120,35 +120,35 @@
       <el-form ref="deptFormRef" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col v-if="form.parentId !== 0" :span="24">
-            <el-form-item label="上级部门" prop="parentId">
+            <el-form-item :label="$t('common.parentDept')" prop="parentId">
               <el-tree-select
                 v-model="form.parentId"
                 :data="deptOptions"
                 :props="{ value: 'deptId', label: 'deptName', children: 'children' } as any"
                 value-key="deptId"
-                placeholder="选择上级部门"
+                :placeholder="$t('common.placeholderSelectParentDept')"
                 check-strictly
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="部门名称" prop="deptName">
-              <el-input v-model="form.deptName" placeholder="请输入部门名称" />
+            <el-form-item :label="$t('common.deptName')" prop="deptName">
+              <el-input v-model="form.deptName" :placeholder="$t('common.placeholderInputDeptName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="类别编码" prop="deptCategory">
-              <el-input v-model="form.deptCategory" placeholder="请输入类别编码" />
+            <el-form-item :label="$t('common.categoryCode')" prop="deptCategory">
+              <el-input v-model="form.deptCategory" :placeholder="$t('common.placeholderInputPostCategory')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="显示排序" prop="orderNum">
+            <el-form-item :label="$t('common.sort')" prop="orderNum">
               <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="负责人" prop="leader">
-              <el-select v-model="form.leader" placeholder="请选择负责人">
+            <el-form-item :label="$t('common.leader')" prop="leader">
+              <el-select v-model="form.leader" :placeholder="$t('common.placeholderSelectLeader')">
                 <el-option
                   v-for="item in deptUserList"
                   :key="item.userId"
@@ -159,17 +159,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="联系电话" prop="phone">
-              <el-input v-model="form.phone" placeholder="请输入联系电话" maxlength="11" />
+            <el-form-item :label="$t('common.phone')" prop="phone">
+              <el-input v-model="form.phone" :placeholder="$t('common.placeholderInputPhone')" maxlength="11" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50" />
+            <el-form-item :label="$t('common.email')" prop="email">
+              <el-input v-model="form.email" :placeholder="$t('common.placeholderInputEmail')" maxlength="50" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="部门状态">
+            <el-form-item :label="$t('common.deptStatus')">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
                   {{ dict.label }}
@@ -181,8 +181,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -191,6 +191,8 @@
 
 <script setup name="Dept" lang="ts">
 import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from '@/api/system/dept';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { DeptForm, DeptQuery, DeptVO } from '@/api/system/dept/types';
 import { listUserByDeptId } from '@/api/system/user';
 import { UserVO } from '@/api/system/user/types';
@@ -246,20 +248,20 @@ const initData: PageData<DeptForm, DeptQuery> = {
     status: undefined
   },
   rules: {
-    parentId: [{ required: true, message: '上级部门不能为空', trigger: 'blur' }],
-    deptName: [{ required: true, message: '部门名称不能为空', trigger: 'blur' }],
-    orderNum: [{ required: true, message: '显示排序不能为空', trigger: 'blur' }],
+    parentId: [{ required: true, message: t('common.validationDeptRequired'), trigger: 'blur' }],
+    deptName: [{ required: true, message: t('common.validationPleaseInput', { field: t('common.deptName') }), trigger: 'blur' }],
+    orderNum: [{ required: true, message: t('common.validationOrderNumRequired'), trigger: 'blur' }],
     email: [
       {
         type: 'email',
-        message: '请输入正确的邮箱地址',
+        message: t('common.validationInvalidEmail'),
         trigger: ['blur', 'change']
       }
     ],
     phone: [
       {
         pattern: /^1[3456789][0-9]\d{8}$/,
-        message: '请输入正确的手机号码',
+        message: t('common.validationInvalidPhone'),
         trigger: 'blur'
       }
     ]
@@ -322,7 +324,7 @@ const handleAdd = async (row?: Partial<DeptVO>) => {
     if (row && row.deptId) {
       form.value.parentId = row?.deptId;
     }
-    setTitle('添加部门');
+    setTitle(t('common.dialogAddDept'));
     openDialog();
   }
 };
@@ -347,7 +349,7 @@ const handleUpdate = async (row: Partial<DeptVO>) => {
       deptOptions.value.push(noResultsOptions);
     }
   }
-  setTitle('修改部门');
+  setTitle(t('common.dialogEditDept'));
   openDialog();
 };
 /** 提交按钮 */
@@ -355,7 +357,7 @@ const submitForm = () => {
   deptFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       form.value.deptId ? await updateDept(form.value) : await addDept(form.value);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeDialog();
       await getList();
     }
@@ -363,10 +365,10 @@ const submitForm = () => {
 };
 /** 删除按钮操作 */
 const handleDelete = async (row: Partial<DeptVO>) => {
-  await modal.confirm('是否确认删除名称为"' + row.deptName + '"的数据项?');
+  await modal.confirm(t('common.msgboxConfirmDeleteMenu', { name: row.deptName }));
   await delDept(row.deptId);
   await getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 onMounted(() => {

@@ -28,7 +28,7 @@
         <el-col :lg="2" :md="2">
           <el-upload action="#" :http-request="requestUpload" :show-file-list="false" :before-upload="beforeUpload">
             <el-button>
-              选择
+              {{ $t('common.btnSelect') }}
               <el-icon class="el-icon--right">
                 <Upload />
               </el-icon>
@@ -58,6 +58,7 @@
 <script setup lang="ts">
 import 'vue-cropper/dist/index.css';
 import { UploadRawFile } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { VueCropper } from 'vue-cropper';
 import { uploadOss } from '@/api/system/oss';
 import { updateUserProfile } from '@/api/system/user';
@@ -142,7 +143,7 @@ const uploadImg = async () => {
     open.value = false;
     options.img = res.data.url;
     userStore.setAvatar(options.img);
-    modal.msgSuccess('修改成功');
+    modal.msgSuccess(t('common.msgEditSuccess'));
     visible.value = false;
   });
 };

@@ -6,35 +6,35 @@
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
               <span class="panel-kicker">Search Filters</span>
-              <h3>筛选条件</h3>
+              <h3>{{ $t('common.sectionSearchCondition') }}</h3>
             </div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
-          <el-form-item label="公告标题" prop="noticeTitle">
+          <el-form-item :label="$t('common.noticeTitle')" prop="noticeTitle">
             <el-input
               v-model="queryParams.noticeTitle"
-              placeholder="请输入公告标题"
+              :placeholder="$t('common.placeholderInputNoticeTitle')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="操作人员" prop="createByName">
+          <el-form-item :label="$t('common.operator')" prop="createByName">
             <el-input
               v-model="queryParams.createByName"
-              placeholder="请输入操作人员"
+              :placeholder="$t('common.placeholderInputOperName')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="类型" prop="noticeType">
-            <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable>
+          <el-form-item :label="$t('common.type')" prop="noticeType">
+            <el-select v-model="queryParams.noticeType" :placeholder="$t('common.placeholderSelectNoticeType')" clearable>
               <el-option v-for="dict in sys_notice_type" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -45,12 +45,12 @@
         <div class="toolbar-shell">
           <div class="table-heading">
             <span class="panel-kicker">Notice Dataset</span>
-            <h3>公告列表</h3>
+            <h3>{{ $t('common.sectionNoticeList') }}</h3>
             <p>共 {{ total }} 条记录，支持类型筛选、内容编辑和状态管理。</p>
           </div>
           <div class="toolbar-actions">
             <el-button v-hasPermi="['system:notice:add']" type="primary" plain icon="Plus" @click="handleAdd">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button
               v-hasPermi="['system:notice:edit']"
@@ -60,7 +60,7 @@
               :disabled="single"
               @click="handleUpdate()"
             >
-              修改
+              {{ $t('common.btnEdit') }}
             </el-button>
             <el-button
               v-hasPermi="['system:notice:remove']"
@@ -70,7 +70,7 @@
               :disabled="multiple"
               @click="handleDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
@@ -88,30 +88,30 @@
       >
         <template #empty><empty-state /></template>
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column v-if="false" label="序号" align="center" prop="noticeId" width="100" />
-        <el-table-column label="公告标题" align="center" prop="noticeTitle" :show-overflow-tooltip="true" />
-        <el-table-column label="公告类型" align="center" prop="noticeType" width="100">
+        <el-table-column v-if="false" :label="$t('common.index')" align="center" prop="noticeId" width="100" />
+        <el-table-column :label="$t('common.noticeTitle')" align="center" prop="noticeTitle" :show-overflow-tooltip="true" />
+        <el-table-column :label="$t('common.noticeType')" align="center" prop="noticeType" width="100">
           <template #default="scope">
             <dict-tag :options="sys_notice_type" :value="scope.row.noticeType" />
           </template>
         </el-table-column>
-        <el-table-column label="状态" align="center" prop="status" width="100">
+        <el-table-column :label="$t('common.status')" align="center" prop="status" width="100">
           <template #default="scope">
             <dict-tag :options="sys_notice_status" :value="scope.row.status" />
           </template>
         </el-table-column>
-        <el-table-column label="创建者" align="center" prop="createByName" width="100" />
-        <el-table-column label="创建时间" align="center" prop="createTime" width="100">
+        <el-table-column :label="$t('common.createBy')" align="center" prop="createByName" width="100" />
+        <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="100">
           <template #default="scope">
             <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip content="详情" placement="top">
+            <el-tooltip :content="$t('common.tooltipDetail')" placement="top">
               <el-button link type="primary" icon="View" @click="handleDetail(scope.row)"></el-button>
             </el-tooltip>
-            <el-tooltip content="修改" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
               <el-button
                 v-hasPermi="['system:notice:edit']"
                 link
@@ -120,7 +120,7 @@
                 @click="handleUpdate(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 v-hasPermi="['system:notice:remove']"
                 link
@@ -153,13 +153,13 @@
       <el-form ref="noticeFormRef" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="公告标题" prop="noticeTitle">
-              <el-input v-model="form.noticeTitle" placeholder="请输入公告标题" />
+            <el-form-item :label="$t('common.noticeTitle')" prop="noticeTitle">
+              <el-input v-model="form.noticeTitle" :placeholder="$t('common.placeholderInputNoticeTitle')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="公告类型" prop="noticeType">
-              <el-select v-model="form.noticeType" placeholder="请选择">
+            <el-form-item :label="$t('common.noticeType')" prop="noticeType">
+              <el-select v-model="form.noticeType" :placeholder="$t('common.placeholderSelect')">
                 <el-option
                   v-for="dict in sys_notice_type"
                   :key="dict.value"
@@ -170,7 +170,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="状态">
+            <el-form-item :label="$t('common.status')">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in sys_notice_status" :key="dict.value" :value="dict.value">
                   {{ dict.label }}
@@ -179,7 +179,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="内容">
+            <el-form-item :label="$t('common.content')">
               <editor v-model="form.noticeContent" :min-height="192" />
             </el-form-item>
           </el-col>
@@ -187,15 +187,15 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <el-dialog
       v-model="detailDialog.visible"
-      title="公告详情"
+      :title="$t('common.dialogNoticeDetail')"
       width="820px"
       append-to-body
       @closed="handleDetailDialogClosed"
@@ -205,19 +205,19 @@
           <div class="notice-detail__title">{{ detailForm.noticeTitle || '-' }}</div>
           <div class="notice-detail__meta">
             <div class="notice-detail__meta-item">
-              <span class="notice-detail__meta-label">类型：</span>
+              <span class="notice-detail__meta-label">{{ $t('common.typeColon') }}</span>
               <dict-tag :options="sys_notice_type" :value="detailForm.noticeType" />
             </div>
             <div class="notice-detail__meta-item">
-              <span class="notice-detail__meta-label">状态：</span>
+              <span class="notice-detail__meta-label">{{ $t('common.statusColon') }}</span>
               <dict-tag :options="sys_notice_status" :value="detailForm.status" />
             </div>
             <div class="notice-detail__meta-item">
-              <span class="notice-detail__meta-label">创建者：</span>
+              <span class="notice-detail__meta-label">{{ $t('common.creatorColon') }}</span>
               <span>{{ detailForm.createByName || '-' }}</span>
             </div>
             <div class="notice-detail__meta-item">
-              <span class="notice-detail__meta-label">创建时间：</span>
+              <span class="notice-detail__meta-label">{{ $t('common.createTimeColon') }}</span>
               <span>{{ parseTime(detailForm.createTime, '{y}-{m}-{d} {h}:{i}:{s}') || '-' }}</span>
             </div>
           </div>
@@ -232,6 +232,8 @@
 <script setup name="Notice" lang="ts">
 import { useRoute, useRouter } from 'vue-router';
 import { listNotice, getNotice, delNotice, addNotice, updateNotice } from '@/api/system/notice';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { NoticeForm, NoticeQuery, NoticeVO } from '@/api/system/notice/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDialogState } from '@/hooks/dialog/useDialogState';
@@ -259,7 +261,7 @@ const total = ref(0);
 const queryFormRef = ref<ElFormInstance>();
 const noticeFormRef = ref<ElFormInstance>();
 const routeDetailSyncing = ref(false);
-const emptyNoticeContent = '<p>暂无公告内容</p>';
+const emptyNoticeContent = computed(() => `<p>${t('common.noNoticeContent')}</p>`);
 
 const initFormData: NoticeForm = {
   noticeId: undefined,
@@ -283,8 +285,8 @@ const data = reactive<PageData<NoticeForm, NoticeQuery>>({
     noticeType: ''
   },
   rules: {
-    noticeTitle: [{ required: true, message: '公告标题不能为空', trigger: 'blur' }],
-    noticeType: [{ required: true, message: '公告类型不能为空', trigger: 'change' }]
+    noticeTitle: [{ required: true, message: t('common.validationNoticeTitleRequired'), trigger: 'blur' }],
+    noticeType: [{ required: true, message: t('common.validationNoticeTypeRequired'), trigger: 'change' }]
   }
 });
 
@@ -379,7 +381,7 @@ const submitForm = () => {
   noticeFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       form.value.noticeId ? await updateNotice(form.value) : await addNotice(form.value);
-      modal.msgSuccess('操作成功');
+      modal.msgSuccess(t('common.msgOperateSuccess'));
       closeDialog();
       await getList();
     }
@@ -388,10 +390,10 @@ const submitForm = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<NoticeVO>) => {
   const noticeIds = row?.noticeId || ids.value;
-  await modal.confirm('是否确认删除公告编号为"' + noticeIds + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteNotice', { ids: noticeIds }));
   await delNotice(noticeIds);
   await getList();
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
 
 onMounted(() => {

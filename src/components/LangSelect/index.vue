@@ -23,7 +23,7 @@ import { useTagsViewStore } from '@/store/modules/tagsView';
 const appStore = useAppStore();
 const permissionStore = usePermissionStore();
 const tagsViewStore = useTagsViewStore();
-const { locale, t } = useI18n();
+const { locale, t, te } = useI18n();
 
 const message: Record<string, string> = {
   zh_CN: '切换语言成功！',
@@ -39,7 +39,7 @@ const handleLanguageChange = async (lang: string) => {
   // 对静态 i18n key（如 route.dashboard）做翻译；后端返回的目标语言原文 t() 会透传
   const translatedMap = new Map<string, string>();
   for (const [path, title] of pathTitleMap) {
-    translatedMap.set(path, t(title));
+    translatedMap.set(path, te(title) ? t(title) : title);
   }
   tagsViewStore.refreshTitles(translatedMap);
   ElMessage.success(message[lang] || '切换语言成功！');

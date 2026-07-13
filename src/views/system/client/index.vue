@@ -4,34 +4,34 @@
       <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
-            <div><h3>筛选条件</h3></div>
+            <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
           </div>
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="85px" class="query-form">
-          <el-form-item label="客户端key" prop="clientKey">
+          <el-form-item :label="$t('common.clientKey')" prop="clientKey">
             <el-input
               v-model="queryParams.clientKey"
-              placeholder="请输入客户端key"
+              :placeholder="$t('common.placeholderInputClientKey')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="客户端秘钥" prop="clientSecret">
+          <el-form-item :label="$t('common.clientSecret')" prop="clientSecret">
             <el-input
               v-model="queryParams.clientSecret"
-              placeholder="请输入客户端秘钥"
+              :placeholder="$t('common.placeholderInputSecretKey')"
               clearable
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="状态" clearable>
+          <el-form-item :label="$t('common.status')" prop="status">
+            <el-select v-model="queryParams.status" :placeholder="$t('common.status')" clearable>
               <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
+            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -41,11 +41,11 @@
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
-            <h3>客户端列表</h3>
+            <h3>{{ $t('common.sectionClientList') }}</h3>
           </div>
           <div class="toolbar-actions">
             <el-button v-hasPermi="['system:client:add']" type="primary" plain icon="Plus" @click="handleAdd">
-              新增
+              {{ $t('common.btnAdd') }}
             </el-button>
             <el-button
               v-hasPermi="['system:client:edit']"
@@ -55,7 +55,7 @@
               :disabled="single"
               @click="handleUpdate()"
             >
-              修改
+              {{ $t('common.btnEdit') }}
             </el-button>
             <el-button
               v-hasPermi="['system:client:remove']"
@@ -65,10 +65,10 @@
               :disabled="multiple"
               @click="handleDelete()"
             >
-              删除
+              {{ $t('common.btnDelete') }}
             </el-button>
             <el-button v-hasPermi="['system:client:export']" type="warning" plain icon="Download" @click="handleExport">
-              导出
+              {{ $t('common.btnExport') }}
             </el-button>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
@@ -84,20 +84,20 @@
       >
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column v-if="false" label="id" align="center" prop="id" />
-        <el-table-column label="客户端id" align="center" prop="clientId" />
-        <el-table-column label="客户端key" align="center" prop="clientKey" />
-        <el-table-column label="客户端秘钥" align="center" prop="clientSecret" />
-        <el-table-column label="授权类型" align="center">
+        <el-table-column :label="$t('common.clientId')" align="center" prop="clientId" />
+        <el-table-column :label="$t('common.clientKey')" align="center" prop="clientKey" />
+        <el-table-column :label="$t('common.clientSecret')" align="center" prop="clientSecret" />
+        <el-table-column :label="$t('common.grantType')" align="center">
           <template #default="scope">
             <dict-tag class="grant-type-tag" :options="sys_grant_type" :value="scope.row.grantTypeList" />
           </template>
         </el-table-column>
-        <el-table-column label="设备类型" align="center">
+        <el-table-column :label="$t('common.deviceType')" align="center">
           <template #default="scope">
             <dict-tag :options="sys_device_type" :value="scope.row.deviceType" />
           </template>
         </el-table-column>
-        <el-table-column label="白名单路径" align="center">
+        <el-table-column :label="$t('common.whitelistPath')" align="center">
           <template #default="scope">
             <div class="rule-tag-list">
               <el-tag
@@ -114,7 +114,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="白名单IP" align="center">
+        <el-table-column :label="$t('common.whitelistIp')" align="center">
           <template #default="scope">
             <div class="rule-tag-list">
               <el-tag
@@ -134,7 +134,7 @@
         </el-table-column>
         <el-table-column label="Token活跃超时时间" align="center" prop="activeTimeout" />
         <el-table-column label="Token固定超时时间" align="center" prop="timeout" />
-        <el-table-column key="status" label="状态" align="center">
+        <el-table-column key="status" :label="$t('common.status')" align="center">
           <template #default="scope">
             <el-switch
               v-model="scope.row.status"
@@ -144,9 +144,9 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip content="修改" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
               <el-button
                 v-hasPermi="['system:client:edit']"
                 link
@@ -155,7 +155,7 @@
                 @click="handleUpdate(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
               <el-button
                 v-hasPermi="['system:client:remove']"
                 link
@@ -179,14 +179,14 @@
     <!-- 添加或修改客户端管理对话框 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="760px" append-to-body>
       <el-form ref="clientFormRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="客户端key" prop="clientKey">
-          <el-input v-model="form.clientKey" :disabled="form.id != null" placeholder="请输入客户端key" />
+        <el-form-item :label="$t('common.clientKey')" prop="clientKey">
+          <el-input v-model="form.clientKey" :disabled="form.id != null" :placeholder="$t('common.placeholderInputClientKey')" />
         </el-form-item>
-        <el-form-item label="客户端秘钥" prop="clientSecret">
-          <el-input v-model="form.clientSecret" :disabled="form.id != null" placeholder="请输入客户端秘钥" />
+        <el-form-item :label="$t('common.clientSecret')" prop="clientSecret">
+          <el-input v-model="form.clientSecret" :disabled="form.id != null" :placeholder="$t('common.placeholderInputSecretKey')" />
         </el-form-item>
-        <el-form-item label="授权类型" prop="grantTypeList">
-          <el-select v-model="form.grantTypeList" multiple placeholder="请输入授权类型">
+        <el-form-item :label="$t('common.grantType')" prop="grantTypeList">
+          <el-select v-model="form.grantTypeList" multiple :placeholder="$t('common.placeholderInputGrantType')">
             <el-option
               v-for="dict in sys_grant_type"
               :key="dict.value"
@@ -195,8 +195,8 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="设备类型" prop="deviceType">
-          <el-select v-model="form.deviceType" placeholder="请输入设备类型">
+        <el-form-item :label="$t('common.deviceType')" prop="deviceType">
+          <el-select v-model="form.deviceType" :placeholder="$t('common.placeholderInputDeviceType')">
             <el-option
               v-for="dict in sys_device_type"
               :key="dict.value"
@@ -214,7 +214,7 @@
               允许访问路径
             </span>
           </template>
-          <el-input v-model="form.accessPath" type="textarea" :rows="4" placeholder="示例：/app/**" />
+          <el-input v-model="form.accessPath" type="textarea" :rows="4" :placeholder="$t('common.placeholderExampleAccessPath')" />
         </el-form-item>
         <el-form-item prop="ipWhitelist" label-width="auto">
           <template #label>
@@ -232,7 +232,7 @@
             v-model="form.ipWhitelist"
             type="textarea"
             :rows="4"
-            placeholder="示例：127.0.0.1&#10;192.168.*.*&#10;10.0.0.0/24"
+            :placeholder="$t('common.placeholderExampleIpWhitelist')"
           />
         </el-form-item>
         <el-form-item prop="activeTimeout" label-width="auto">
@@ -244,7 +244,7 @@
               Token活跃超时时间
             </span>
           </template>
-          <el-input v-model="form.activeTimeout" placeholder="请输入Token活跃超时时间" />
+          <el-input v-model="form.activeTimeout" :placeholder="$t('common.placeholderInputActiveTimeout')" />
         </el-form-item>
         <el-form-item prop="timeout" label-width="auto">
           <template #label>
@@ -255,9 +255,9 @@
               Token固定超时时间
             </span>
           </template>
-          <el-input v-model="form.timeout" placeholder="请输入Token固定超时时间" />
+          <el-input v-model="form.timeout" :placeholder="$t('common.placeholderInputTimeout')" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="$t('common.status')">
           <el-radio-group v-model="form.status">
             <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
               {{ dict.label }}
@@ -267,8 +267,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -277,6 +277,8 @@
 
 <script setup name="Client" lang="ts">
 import { listClient, getClient, delClient, addClient, updateClient, changeStatus } from '@/api/system/client';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 import { ClientVO, ClientQuery, ClientForm } from '@/api/system/client/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
@@ -416,7 +418,7 @@ const submitForm = () => {
           await addClient(form.value);
         }
       });
-      modal.msgSuccess('修改成功');
+      modal.msgSuccess(t('common.msgEditSuccess'));
       closeDialog();
       await getList();
     }
@@ -426,9 +428,9 @@ const submitForm = () => {
 /** 删除按钮操作 */
 const handleDelete = async (row?: Partial<ClientVO>) => {
   const clientIds = row?.id || ids.value;
-  await modal.confirm('是否确认删除客户端管理编号为"' + clientIds + '"的数据项？');
+  await modal.confirm(t('common.msgboxConfirmDeleteClient', { ids: clientIds }));
   await delClient(clientIds);
-  modal.msgSuccess('删除成功');
+  modal.msgSuccess(t('common.msgDeleteSuccess'));
   await getList();
 };
 
@@ -445,11 +447,11 @@ const handleExport = () => {
 
 /** 状态修改  */
 const handleStatusChange = async (row: Partial<ClientVO>) => {
-  const text = row.status === '0' ? '启用' : '停用';
+  const text = row.status === '0' ? t('common.tagEnabled') : t('common.tagDisabled');
   try {
-    await modal.confirm('确认要"' + text + '"吗?');
+    await modal.confirm(t('common.msgboxConfirmStatusChange', { action: text, name: '' }));
     await changeStatus(row.clientId, row.status);
-    modal.msgSuccess(text + '成功');
+    modal.msgSuccess(t('common.msgStatusChangeSuccess'));
   } catch (err) {
     row.status = row.status === '0' ? '1' : '0';
   }

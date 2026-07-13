@@ -6,8 +6,8 @@
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
-                <h3>缓存概览</h3>
-                <p>Redis 运行状态、资源消耗与实时统计。</p>
+                <h3>{{ $t('common.sectionCacheOverview') }}</h3>
+                <p>{{ $t('common.cacheMonitorDesc') }}</p>
               </div>
             </div>
           </template>
@@ -17,13 +17,13 @@
               <tbody>
                 <tr>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">Redis版本</div>
+                    <div class="cell">{{ $t('common.redisVersion') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">{{ cache.info.redis_version }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">运行模式</div>
+                    <div class="cell">{{ $t('common.runMode') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">
@@ -31,13 +31,13 @@
                     </div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">端口</div>
+                    <div class="cell">{{ $t('common.port') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">{{ cache.info.tcp_port }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">客户端数</div>
+                    <div class="cell">{{ $t('common.clientCount') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">{{ cache.info.connected_clients }}</div>
@@ -45,19 +45,19 @@
                 </tr>
                 <tr>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">运行时间(天)</div>
+                    <div class="cell">{{ $t('common.uptimeDays') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">{{ cache.info.uptime_in_days }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">使用内存</div>
+                    <div class="cell">{{ $t('common.usedMemory') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">{{ cache.info.used_memory_human }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">使用CPU</div>
+                    <div class="cell">{{ $t('common.usedCpu') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">
@@ -65,7 +65,7 @@
                     </div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">内存配置</div>
+                    <div class="cell">{{ $t('common.memoryConfig') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">{{ cache.info.maxmemory_human }}</div>
@@ -73,7 +73,7 @@
                 </tr>
                 <tr>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">AOF是否开启</div>
+                    <div class="cell">{{ $t('common.aofEnabled') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">
@@ -81,7 +81,7 @@
                     </div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">RDB是否成功</div>
+                    <div class="cell">{{ $t('common.rdbSuccess') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">
@@ -89,13 +89,13 @@
                     </div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">Key数量</div>
+                    <div class="cell">{{ $t('common.keyCount') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.dbSize" class="cell">{{ cache.dbSize }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
-                    <div class="cell">网络入口/出口</div>
+                    <div class="cell">{{ $t('common.networkInOut') }}</div>
                   </td>
                   <td class="el-table__cell is-leaf">
                     <div v-if="cache.info" class="cell">
@@ -114,7 +114,7 @@
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
-                <h3>命令统计</h3>
+                <h3>{{ $t('common.sectionCommandStats') }}</h3>
               </div>
             </div>
           </template>
@@ -129,7 +129,7 @@
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
-                <h3>内存信息</h3>
+                <h3>{{ $t('common.sectionMemoryInfo') }}</h3>
               </div>
             </div>
           </template>

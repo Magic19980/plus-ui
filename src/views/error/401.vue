@@ -1,14 +1,14 @@
 <template>
   <div class="errPage-container">
-    <el-button icon="arrow-left" class="pan-back-btn" @click="back">返回</el-button>
+    <el-button icon="arrow-left" class="pan-back-btn" @click="back">{{ $t('common.btnBack') }}</el-button>
     <div class="err-content">
       <div class="err-text">
-        <h1 class="text-jumbo">401错误!</h1>
-        <h2>您没有访问权限！</h2>
-        <h6>对不起，您没有访问权限，请不要进行非法操作！您可以返回主页面</h6>
+        <h1 class="text-jumbo">{{ $t('common.error401') }}</h1>
+        <h2>{{ $t('common.noAccessPermission') }}</h2>
+        <h6>{{ $t('common.noAccessPermissionDesc') }}</h6>
         <ul class="list-unstyled">
           <li class="link-type">
-            <router-link to="/">回首页</router-link>
+            <router-link to="/">{{ $t('common.backHome') }}</router-link>
           </li>
         </ul>
       </div>
