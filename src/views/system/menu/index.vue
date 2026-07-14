@@ -150,9 +150,9 @@
           <el-col :span="24">
             <el-form-item :label="$t('common.menuType')" prop="menuType">
               <el-radio-group v-model="form.menuType">
-                <el-radio value="M">{{ $t('common.menuType') }}</el-radio>
-                <el-radio value="C">{{ $t('common.menuType') }}</el-radio>
-                <el-radio value="F">{{ $t('common.menuType') }}</el-radio>
+                <el-radio value="M">{{ $t('common.menuTypeDirectory') }}</el-radio>
+                <el-radio value="C">{{ $t('common.menuTypeMenu') }}</el-radio>
+                <el-radio value="F">{{ $t('common.menuTypeButton') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>

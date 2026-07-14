@@ -88,7 +88,7 @@
               icon="Refresh"
               @click="handleRefreshCache"
             >
-              刷新缓存
+              {{ $t('common.refreshCache') }}
             </el-button>
           </div>
 
@@ -344,10 +344,10 @@
         <el-form-item prop="dictType">
           <template #label>
             <span>
-              <el-tooltip content="数据存储中的Key值，如：sys_user_gender" placement="top">
+              <el-tooltip :content="$t('common.dictTooltipTypeKey')" placement="top">
                 <i class="el-icon-question"></i>
               </el-tooltip>
-              字典类型
+              {{ $t('common.dictType') }}
             </span>
           </template>
           <el-input v-model="typeForm.dictType" :placeholder="$t('common.placeholderInputDictType')" maxlength="100" />
@@ -453,8 +453,8 @@ const typeState = reactive<PageData<DictTypeForm, DictTypeQuery>>({
     dictType: ''
   },
   rules: {
-    dictName: [{ required: true, message: '字典名称不能为空', trigger: 'blur' }],
-    dictType: [{ required: true, message: '字典类型不能为空', trigger: 'blur' }]
+    dictName: [{ required: true, message: t('common.msgDictNameRequired'), trigger: 'blur' }],
+    dictType: [{ required: true, message: t('common.msgDictTypeRequired'), trigger: 'blur' }]
   }
 });
 
@@ -463,7 +463,7 @@ const { queryParams: typeQueryParams, form: typeForm, rules: typeRules } = toRef
 const currentDict = ref<DictTypeVO | null>(null);
 const hasCurrentDict = computed(() => !!currentDict.value);
 const currentDictLabel = computed(() => {
-  if (!currentDict.value) return '请先选择字典';
+  if (!currentDict.value) return t('common.selectDictFirst');
   return `${currentDict.value.dictName} / ${currentDict.value.dictType}`;
 });
 
@@ -512,9 +512,9 @@ const dataState = reactive<PageData<DictDataForm, DictDataQuery>>({
     dictLabel: ''
   },
   rules: {
-    dictLabel: [{ required: true, message: '数据标签不能为空', trigger: 'blur' }],
-    dictValue: [{ required: true, message: '数据键值不能为空', trigger: 'blur' }],
-    dictSort: [{ required: true, message: '数据顺序不能为空', trigger: 'blur' }]
+    dictLabel: [{ required: true, message: t('common.msgDictLabelRequired'), trigger: 'blur' }],
+    dictValue: [{ required: true, message: t('common.msgDictValueRequired'), trigger: 'blur' }],
+    dictSort: [{ required: true, message: t('common.msgDictSortRequired'), trigger: 'blur' }]
   }
 });
 
@@ -580,7 +580,7 @@ const handleTypeResetQuery = () => {
 const handleTypeAdd = () => {
   resetTypeForm();
   typeDialog.visible = true;
-  typeDialog.title = '添加字典类型';
+  typeDialog.title = t('common.addDictType');
 };
 
 const handleTypeSelectionChange = (selection: DictTypeVO[]) => {
@@ -595,7 +595,7 @@ const handleTypeUpdate = async (row?: Partial<DictTypeVO>) => {
   const res = await getType(dictId);
   Object.assign(typeForm.value, res.data);
   typeDialog.visible = true;
-  typeDialog.title = '修改字典类型';
+  typeDialog.title = t('common.editDictType');
 };
 
 const submitTypeForm = () => {
@@ -629,7 +629,7 @@ const handleTypeExport = () => {
 
 const handleRefreshCache = async () => {
   await refreshCache();
-  modal.msgSuccess('刷新成功');
+  modal.msgSuccess(t('common.refreshSuccess'));
   useDictStore().cleanDict();
 };
 
@@ -671,13 +671,13 @@ const handleDataResetQuery = () => {
 
 const handleDataAdd = () => {
   if (!currentDict.value) {
-    modal.msgWarning('请先选择字典');
+    modal.msgWarning(t('common.selectDictFirst'));
     return;
   }
   resetDataForm();
   dataForm.value.dictType = currentDict.value.dictType;
   dataDialog.visible = true;
-  dataDialog.title = '添加字典数据';
+  dataDialog.title = t('common.addDictData');
 };
 
 const handleDataSelectionChange = (selection: DictDataVO[]) => {
@@ -688,7 +688,7 @@ const handleDataSelectionChange = (selection: DictDataVO[]) => {
 
 const handleDataUpdate = async (row?: Partial<DictDataVO>) => {
   if (!currentDict.value) {
-    modal.msgWarning('请先选择字典');
+    modal.msgWarning(t('common.selectDictFirst'));
     return;
   }
   resetDataForm();
@@ -696,7 +696,7 @@ const handleDataUpdate = async (row?: Partial<DictDataVO>) => {
   const res = await getData(dictCode);
   Object.assign(dataForm.value, res.data);
   dataDialog.visible = true;
-  dataDialog.title = '修改字典数据';
+  dataDialog.title = t('common.editDictData');
 };
 
 const submitDataForm = () => {
@@ -713,7 +713,7 @@ const submitDataForm = () => {
 
 const handleDataDelete = async (row?: Partial<DictDataVO>) => {
   if (!currentDict.value) {
-    modal.msgWarning('请先选择字典');
+    modal.msgWarning(t('common.selectDictFirst'));
     return;
   }
   const dictCodes = row?.dictCode || dataIds.value;
@@ -726,7 +726,7 @@ const handleDataDelete = async (row?: Partial<DictDataVO>) => {
 
 const handleDataExport = () => {
   if (!currentDict.value) {
-    modal.msgWarning('请先选择字典');
+    modal.msgWarning(t('common.selectDictFirst'));
     return;
   }
   requestDownload(

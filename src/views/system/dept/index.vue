@@ -122,6 +122,7 @@
           <el-col v-if="form.parentId !== 0" :span="24">
             <el-form-item :label="$t('common.parentDept')" prop="parentId">
               <el-tree-select
+                id="parentId"
                 v-model="form.parentId"
                 :data="deptOptions"
                 :props="{ value: 'deptId', label: 'deptName', children: 'children' } as any"
@@ -148,7 +149,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.leader')" prop="leader">
-              <el-select v-model="form.leader" :placeholder="$t('common.placeholderSelectLeader')">
+              <el-select id="leader" v-model="form.leader" :placeholder="$t('common.placeholderSelectLeader')">
                 <el-option
                   v-for="item in deptUserList"
                   :key="item.userId"
@@ -169,7 +170,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('common.deptStatus')">
+            <el-form-item :label="$t('common.deptStatus')" prop="status">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
                   {{ dict.label }}
