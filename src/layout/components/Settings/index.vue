@@ -7,9 +7,9 @@
     size="300px"
     close-on-click-modal
   >
-    <h3 class="drawer-title">{{ t('settingMenuNavigation') }}</h3>
+    <h3 class="drawer-title">{{ t('common.settingMenuNavigation') }}</h3>
     <div class="nav-wrap">
-      <el-tooltip :content="t('settingLeftMenu')" placement="bottom">
+      <el-tooltip :content="t('common.settingLeftMenu')" placement="bottom">
         <div
           class="item left"
           @click="handleNavType(NavTypeEnum.LEFT)"
@@ -21,7 +21,7 @@
         </div>
       </el-tooltip>
 
-      <el-tooltip :content="t('settingMixedMenu')" placement="bottom">
+      <el-tooltip :content="t('common.settingMixedMenu')" placement="bottom">
         <div
           class="item mix"
           @click="handleNavType(NavTypeEnum.MIX)"
@@ -32,7 +32,7 @@
           <b></b>
         </div>
       </el-tooltip>
-      <el-tooltip :content="t('settingTopMenu')" placement="bottom">
+      <el-tooltip :content="t('common.settingTopMenu')" placement="bottom">
         <div
           class="item top"
           @click="handleNavType(NavTypeEnum.TOP)"
@@ -45,7 +45,7 @@
       </el-tooltip>
     </div>
 
-    <h3 class="drawer-title">{{ t('settingThemeStyle') }}</h3>
+    <h3 class="drawer-title">{{ t('common.settingThemeStyle') }}</h3>
 
     <div class="setting-drawer-block-checbox">
       <div class="setting-drawer-block-checbox-item" @click="handleTheme(SideThemeEnum.DARK)">
@@ -90,19 +90,19 @@
       </div>
     </div>
     <div class="drawer-item">
-      <span>{{ t('settingThemeColor') }}</span>
+      <span>{{ t('common.settingThemeColor') }}</span>
       <span class="comp-style">
         <el-color-picker v-model="theme" :predefine="predefineColors" @change="themeChange" />
       </span>
     </div>
     <div class="drawer-item">
-      <span>{{ t('settingDarkMode') }}</span>
+      <span>{{ t('common.settingDarkMode') }}</span>
       <span class="comp-style">
         <el-switch v-model="isDark" class="drawer-switch" />
       </span>
     </div>
     <div class="drawer-item">
-      <span>{{ t('settingPageRadius') }}</span>
+      <span>{{ t('common.settingPageRadius') }}</span>
       <span class="comp-style">
         <el-slider v-model="radiusBase" :min="0" :max="32" :step="2" style="width: 120px" @change="radiusBaseChange" />
       </span>
@@ -110,52 +110,52 @@
 
     <el-divider />
 
-    <h3 class="drawer-title">{{ t('settingLayoutConfig') }}</h3>
+    <h3 class="drawer-title">{{ t('common.settingLayoutConfig') }}</h3>
 
     <div class="drawer-item">
-      <span>{{ t('settingEnableTagsView') }}</span>
+      <span>{{ t('common.settingEnableTagsView') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>{{ t('settingPersistTagsView') }}</span>
+      <span>{{ t('common.settingPersistTagsView') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsViewPersist" :disabled="!settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>{{ t('settingShowTagsIcon') }}</span>
+      <span>{{ t('common.settingShowTagsIcon') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.tagsIcon" :disabled="!settingsStore.tagsView" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>{{ t('settingFixedHeader') }}</span>
+      <span>{{ t('common.settingFixedHeader') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.fixedHeader" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>{{ t('settingShowLogo') }}</span>
+      <span>{{ t('common.settingShowLogo') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.sidebarLogo" class="drawer-switch" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>{{ t('settingDynamicTitle') }}</span>
+      <span>{{ t('common.settingDynamicTitle') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.dynamicTitle" class="drawer-switch" @change="dynamicTitleChange" />
       </span>
     </div>
 
     <div class="drawer-item">
-      <span>{{ t('settingFullHeightTable') }}</span>
+      <span>{{ t('common.settingFullHeightTable') }}</span>
       <span class="comp-style">
         <el-switch v-model="settingsStore.fullHeightTable" class="drawer-switch" />
       </span>
@@ -163,8 +163,8 @@
 
     <el-divider />
 
-    <el-button type="primary" plain icon="DocumentAdd" @click="saveSetting">{{ t('settingSaveConfig') }}</el-button>
-    <el-button plain icon="Refresh" @click="resetSetting">{{ t('settingResetConfig') }}</el-button>
+    <el-button type="primary" plain icon="DocumentAdd" @click="saveSetting">{{ t('common.settingSaveConfig') }}</el-button>
+    <el-button plain icon="Refresh" @click="resetSetting">{{ t('common.settingResetConfig') }}</el-button>
   </el-drawer>
 </template>
 
@@ -258,7 +258,7 @@ const handleTheme = (val: string) => {
   settingsStore.sideTheme = val;
 };
 const saveSetting = () => {
-  modal.loading(t('settingSaving'));
+  modal.loading(t('common.settingSaving'));
   const settings = useStorage<LayoutSetting>('layout-setting', defaultSettings);
   if (!storeSettings.value.tagsViewPersist) {
     localStorage.removeItem('tags-view-visited');
@@ -279,7 +279,7 @@ const saveSetting = () => {
   }, 1000);
 };
 const resetSetting = () => {
-  modal.loading(t('settingClearCacheAndRefresh'));
+  modal.loading(t('common.settingClearCacheAndRefresh'));
   localStorage.removeItem('tags-view-visited');
   useStorage<any>('layout-setting', null).value = null;
   setTimeout('window.location.reload()', 1000);
