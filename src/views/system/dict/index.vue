@@ -774,19 +774,17 @@ onMounted(() => {
   overflow: hidden;
   max-height: 240px;
   opacity: 1;
-  margin: -2px 0 10px;
-  padding: 2px;
+  margin-bottom: 12px;
   transition:
     max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.24s ease,
-    margin 0.24s ease;
+    margin-bottom 0.24s ease;
 }
 
 .dict-search.is-collapsed {
   max-height: 0;
   opacity: 0;
-  margin: 0;
-  padding: 0;
+  margin-bottom: 0;
   pointer-events: none;
 }
 

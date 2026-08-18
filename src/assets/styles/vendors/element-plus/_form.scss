@@ -40,7 +40,7 @@
 .el-select__wrapper.is-focus,
 .el-date-editor.is-focus,
 .el-range-editor.is-focus {
-  box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
+  box-shadow: inset 0 0 0 2px var(--el-color-primary-light-8);
 }
 
 .el-button {
