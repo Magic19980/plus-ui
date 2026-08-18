@@ -168,6 +168,45 @@
   border-radius: var(--app-radius-md);
 }
 
+/* el-switch 暗色美化：提升轨道质感、滑块立体感与开启状态发光反馈 */
+html.dark .el-switch {
+  --el-switch-on-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.85);
+  --el-switch-off-color: rgba(148, 163, 184, 0.16);
+  --el-switch-border-color: rgba(148, 163, 184, 0.35);
+
+  .el-switch__core {
+    border-color: var(--el-switch-border-color);
+    box-shadow:
+      inset 0 1px 3px rgba(0, 0, 0, 0.35),
+      0 1px 0 rgba(255, 255, 255, 0.04);
+
+    .el-switch__action {
+      background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  &.is-checked .el-switch__core {
+    border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.65);
+    box-shadow:
+      0 0 10px rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.45),
+      inset 0 1px 3px rgba(0, 0, 0, 0.2);
+
+    .el-switch__action {
+      background: linear-gradient(180deg, #ffffff 0%, #bfdbfe 100%);
+      box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.35),
+        0 0 8px rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.55);
+    }
+  }
+
+  &.is-disabled {
+    opacity: 0.5;
+  }
+}
+
 .el-radio-button__inner,
 .el-checkbox-button__inner {
   border-radius: var(--app-radius-md) !important;
