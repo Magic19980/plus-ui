@@ -25,9 +25,7 @@
 .el-select__wrapper,
 .el-date-editor,
 .el-range-editor,
-.el-input-number,
-.el-input-number__decrease,
-.el-input-number__increase {
+.el-input-number {
   border-radius: var(--app-radius-md);
   transition:
     box-shadow 0.2s ease,
@@ -41,6 +39,117 @@
 .el-date-editor.is-focus,
 .el-range-editor.is-focus {
   box-shadow: inset 0 0 0 2px var(--el-color-primary-light-8);
+}
+
+/* el-input-number 美化：统一容器边框，按钮悬浮在右侧，focus 与普通输入框一致的内部光环 */
+.el-input-number {
+  display: inline-flex;
+  align-items: stretch;
+  vertical-align: middle;
+  background-color: var(--el-fill-color-blank);
+  border-radius: var(--app-radius-md);
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px var(--el-border-color);
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: inset 0 0 0 1px var(--el-border-color-hover, var(--el-border-color));
+  }
+
+  &:focus-within {
+    box-shadow: inset 0 0 0 2px var(--el-color-primary-light-8);
+  }
+
+  &.is-disabled {
+    background-color: var(--el-disabled-bg-color);
+    box-shadow: inset 0 0 0 1px var(--el-disabled-border-color);
+  }
+
+  .el-input {
+    width: 100%;
+  }
+
+  .el-input__wrapper {
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding-left: 15px !important;
+    padding-right: 42px !important;
+
+    &.is-focus {
+      box-shadow: none !important;
+    }
+  }
+
+  &__decrease,
+  &__increase {
+    position: absolute;
+    z-index: 1;
+    right: 1px;
+    width: 32px;
+    background: transparent;
+    border: 0;
+    color: var(--el-text-color-secondary);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+
+    &:hover {
+      color: var(--el-color-primary);
+      background-color: var(--el-fill-color-light);
+    }
+
+    &.is-disabled,
+    &.is-disabled:hover {
+      color: var(--el-disabled-text-color);
+      background: transparent;
+      cursor: not-allowed;
+    }
+  }
+
+  /* 右侧上下堆叠按钮：去掉 Element Plus 默认的 border-left/border-bottom */
+  &.is-controls-right &__increase,
+  &.is-controls-right &__decrease {
+    --el-input-number-controls-height: calc((100% - 2px) / 2);
+
+    height: var(--el-input-number-controls-height);
+    line-height: var(--el-input-number-controls-height);
+    left: auto;
+    border-radius: 0;
+    border: 0;
+  }
+
+  &.is-controls-right &__increase {
+    top: 1px;
+    border-radius: 0 var(--app-radius-md) 0 0;
+  }
+
+  &.is-controls-right &__decrease {
+    top: auto;
+    bottom: 1px;
+    border-radius: 0 0 var(--app-radius-md) 0;
+  }
+
+  /* 大号/小号尺寸适配 */
+  &--large .el-input__wrapper {
+    padding-right: 47px !important;
+  }
+
+  &--large.is-controls-right &__increase,
+  &--large.is-controls-right &__decrease {
+    width: 40px;
+    --el-input-number-controls-height: calc((100% - 2px) / 2);
+  }
+
+  &--small .el-input__wrapper {
+    padding-right: 31px !important;
+  }
+
+  &--small.is-controls-right &__increase,
+  &--small.is-controls-right &__decrease {
+    width: 24px;
+    --el-input-number-controls-height: calc((100% - 2px) / 2);
+  }
 }
 
 .el-button {
