@@ -413,6 +413,7 @@ export default {
     settingThemeStyle: 'Theme Style',
     settingThemeColor: 'Theme Color',
     settingDarkMode: 'Dark Mode',
+    settingLightMode: 'Light Mode',
     settingPageRadius: 'Page Radius',
     settingLayoutConfig: 'Layout Config',
     settingEnableTagsView: 'Enable Tags-View',

@@ -9,84 +9,73 @@
   >
     <h3 class="drawer-title">{{ t('common.settingMenuNavigation') }}</h3>
     <div class="nav-wrap">
-      <el-tooltip :content="t('common.settingLeftMenu')" placement="bottom">
-        <div
-          class="item left"
-          @click="handleNavType(NavTypeEnum.LEFT)"
-          :style="{ '--theme': theme }"
-          :class="{ activeItem: navType == NavTypeEnum.LEFT }"
-        >
-          <b></b>
-          <b></b>
-        </div>
-      </el-tooltip>
+      <div
+        class="item left"
+        @click="handleNavType(NavTypeEnum.LEFT)"
+        :style="{ '--theme': theme }"
+        :class="{ activeItem: navType == NavTypeEnum.LEFT }"
+      >
+        <span class="item-preview"><b></b><b></b></span>
+        <span class="item-label">{{ t('common.settingLeftMenu') }}</span>
+        <span v-if="navType == NavTypeEnum.LEFT" class="check-badge">
+          <el-icon><Check /></el-icon>
+        </span>
+      </div>
 
-      <el-tooltip :content="t('common.settingMixedMenu')" placement="bottom">
-        <div
-          class="item mix"
-          @click="handleNavType(NavTypeEnum.MIX)"
-          :style="{ '--theme': theme }"
-          :class="{ activeItem: navType == NavTypeEnum.MIX }"
-        >
-          <b></b>
-          <b></b>
-        </div>
-      </el-tooltip>
-      <el-tooltip :content="t('common.settingTopMenu')" placement="bottom">
-        <div
-          class="item top"
-          @click="handleNavType(NavTypeEnum.TOP)"
-          :style="{ '--theme': theme }"
-          :class="{ activeItem: navType == NavTypeEnum.TOP }"
-        >
-          <b></b>
-          <b></b>
-        </div>
-      </el-tooltip>
+      <div
+        class="item mix"
+        @click="handleNavType(NavTypeEnum.MIX)"
+        :style="{ '--theme': theme }"
+        :class="{ activeItem: navType == NavTypeEnum.MIX }"
+      >
+        <span class="item-preview"><b></b><b></b></span>
+        <span class="item-label">{{ t('common.settingMixedMenu') }}</span>
+        <span v-if="navType == NavTypeEnum.MIX" class="check-badge">
+          <el-icon><Check /></el-icon>
+        </span>
+      </div>
+
+      <div
+        class="item top"
+        @click="handleNavType(NavTypeEnum.TOP)"
+        :style="{ '--theme': theme }"
+        :class="{ activeItem: navType == NavTypeEnum.TOP }"
+      >
+        <span class="item-preview"><b></b><b></b></span>
+        <span class="item-label">{{ t('common.settingTopMenu') }}</span>
+        <span v-if="navType == NavTypeEnum.TOP" class="check-badge">
+          <el-icon><Check /></el-icon>
+        </span>
+      </div>
     </div>
 
     <h3 class="drawer-title">{{ t('common.settingThemeStyle') }}</h3>
 
     <div class="setting-drawer-block-checbox">
-      <div class="setting-drawer-block-checbox-item" @click="handleTheme(SideThemeEnum.DARK)">
-        <img src="@/assets/images/dark.svg" alt="dark" />
-        <div v-if="sideTheme === 'theme-dark'" class="setting-drawer-block-checbox-selectIcon" style="display: block">
-          <i aria-label="图标: check" class="anticon anticon-check">
-            <svg
-              viewBox="64 64 896 896"
-              data-icon="check"
-              width="1em"
-              height="1em"
-              :fill="theme"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path
-                d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 0 0-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z"
-              />
-            </svg>
-          </i>
-        </div>
+      <div
+        class="setting-drawer-block-checbox-item"
+        :style="{ '--theme': theme }"
+        :class="{ activeItem: sideTheme === SideThemeEnum.DARK }"
+        @click="handleTheme(SideThemeEnum.DARK)"
+      >
+        <span class="item-preview"><img src="@/assets/images/dark.svg" alt="dark" /></span>
+        <span class="item-label">{{ t('common.settingDarkMode') }}</span>
+        <span v-if="sideTheme === SideThemeEnum.DARK" class="check-badge">
+          <el-icon><Check /></el-icon>
+        </span>
       </div>
-      <div class="setting-drawer-block-checbox-item" @click="handleTheme(SideThemeEnum.LIGHT)">
-        <img src="@/assets/images/light.svg" alt="light" />
-        <div v-if="sideTheme === 'theme-light'" class="setting-drawer-block-checbox-selectIcon" style="display: block">
-          <i aria-label="图标: check" class="anticon anticon-check">
-            <svg
-              viewBox="64 64 896 896"
-              data-icon="check"
-              width="1em"
-              height="1em"
-              :fill="theme"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path
-                d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 0 0-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z"
-              />
-            </svg>
-          </i>
-        </div>
+
+      <div
+        class="setting-drawer-block-checbox-item"
+        :style="{ '--theme': theme }"
+        :class="{ activeItem: sideTheme === SideThemeEnum.LIGHT }"
+        @click="handleTheme(SideThemeEnum.LIGHT)"
+      >
+        <span class="item-preview"><img src="@/assets/images/light.svg" alt="light" /></span>
+        <span class="item-label">{{ t('common.settingLightMode') }}</span>
+        <span v-if="sideTheme === SideThemeEnum.LIGHT" class="check-badge">
+          <el-icon><Check /></el-icon>
+        </span>
       </div>
     </div>
     <div class="drawer-item">
@@ -169,6 +158,7 @@
 </template>
 
 <script setup lang="ts">
+import { Check } from '@element-plus/icons-vue';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
 import { SideThemeEnum } from '@/enums/SideThemeEnum';
 import modal from '@/plugins/modal';
@@ -316,51 +306,82 @@ defineExpose({
     font-size: 14px;
   }
 }
+// 统一的选中勾选徽章
+.check-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--theme);
+  color: #fff;
+  font-size: 12px;
+  box-shadow: 0 0 0 2px var(--el-bg-color);
+}
+
+// 主题风格设置
 .setting-drawer-block-checbox {
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: stretch;
+  gap: 12px;
   margin-top: 10px;
   margin-bottom: 20px;
 
   .setting-drawer-block-checbox-item {
     position: relative;
-    margin-right: 16px;
-    border-radius: 12px;
+    flex: 1;
+    max-width: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 4px 4px;
+    border-radius: var(--app-radius-md);
     cursor: pointer;
-    overflow: hidden;
-    border: 1px solid var(--app-surface-border);
+    background: var(--app-elevated-soft-bg);
+    border: 2px solid transparent;
     transition:
+      transform 0.2s ease,
       border-color 0.2s ease,
-      transform 0.2s ease;
+      box-shadow 0.2s ease;
 
     &:hover {
-      border-color: rgba(14, 165, 233, 0.28);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      border-color: rgba(14, 165, 233, 0.45);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    img {
-      width: 48px;
-      height: 48px;
+    &.activeItem {
+      border-color: var(--theme);
+      box-shadow: 0 0 0 3px var(--el-color-primary-light-8);
+    }
+
+    .item-preview {
       display: block;
-    }
-
-    .custom-img {
-      width: 48px;
-      height: 38px;
-      border-radius: 5px;
-      box-shadow: 1px 1px 2px #898484;
-    }
-
-    .setting-drawer-block-checbox-selectIcon {
-      position: absolute;
-      top: 0;
-      right: 0;
       width: 100%;
-      height: 100%;
-      padding-top: 15px;
-      padding-left: 24px;
-      color: var(--app-accent-strong);
+      height: 36px;
+      border-radius: calc(var(--app-radius-md) - 2px);
+      overflow: hidden;
+
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .item-label {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.2;
+      color: var(--el-text-color-secondary);
+      white-space: nowrap;
     }
   }
 }
@@ -381,72 +402,109 @@ defineExpose({
 .nav-wrap {
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: stretch;
+  gap: 12px;
   margin-top: 10px;
   margin-bottom: 20px;
 
-  .activeItem {
-    border: 2px solid #{'var(--theme)'} !important;
-  }
-
   .item {
     position: relative;
-    margin-right: 16px;
+    flex: 1;
+    max-width: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 4px 4px;
+    border-radius: var(--app-radius-md);
     cursor: pointer;
-    width: 56px;
-    height: 48px;
-    border-radius: 12px;
     background: var(--app-elevated-soft-bg);
     border: 2px solid transparent;
     transition:
       transform 0.2s ease,
-      border-color 0.2s ease;
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
 
     &:hover {
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      border-color: rgba(14, 165, 233, 0.45);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    &.activeItem {
+      border-color: var(--theme);
+      box-shadow: 0 0 0 3px var(--el-color-primary-light-8);
+    }
+
+    .item-preview {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 36px;
+      border-radius: calc(var(--app-radius-md) - 2px);
+      background: var(--el-fill-color-blank);
+      overflow: hidden;
+    }
+
+    .item-label {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.2;
+      color: var(--el-text-color-secondary);
+      white-space: nowrap;
+    }
+
+    b {
+      position: absolute;
+      background: var(--el-text-color-primary);
     }
   }
 
-  .left {
+  // 左侧菜单：顶部横条 + 左侧侧边栏
+  .left .item-preview {
     b:first-child {
-      display: block;
-      height: 30%;
-      background: #fff;
-    }
-
-    b:last-child {
-      width: 30%;
-      background: #1b2a47;
-      position: absolute;
-      height: 100%;
       top: 0;
-      border-radius: 4px 0 0 4px;
-    }
-  }
-
-  .mix {
-    b:first-child {
-      border-radius: 4px 4px 0 0;
-      display: block;
-      height: 30%;
-      background: #1b2a47;
+      left: 0;
+      right: 0;
+      height: 22%;
+      border-radius: 3px 3px 0 0;
     }
 
     b:last-child {
-      width: 30%;
-      background: #1b2a47;
-      position: absolute;
-      height: 70%;
-      border-radius: 0 0 0 4px;
+      top: 22%;
+      left: 0;
+      bottom: 0;
+      width: 28%;
+      border-radius: 0 0 0 3px;
     }
   }
 
-  .top {
+  // 混合菜单：顶部横条 + 中部左侧侧边栏
+  .mix .item-preview {
     b:first-child {
-      display: block;
-      height: 30%;
-      background: #1b2a47;
-      border-radius: 4px 4px 0 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 22%;
+      border-radius: 3px 3px 0 0;
+    }
+
+    b:last-child {
+      top: 22%;
+      left: 0;
+      height: 55%;
+      width: 28%;
+      border-radius: 0 0 0 3px;
+    }
+  }
+
+  // 顶部菜单：仅顶部横条
+  .top .item-preview {
+    b:first-child {
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 22%;
+      border-radius: 3px 3px 0 0;
     }
 
     b:last-child {

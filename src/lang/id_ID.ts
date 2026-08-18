@@ -413,6 +413,7 @@ export default {
     settingThemeStyle: 'Gaya Tema',
     settingThemeColor: 'Warna Tema',
     settingDarkMode: 'Mode Gelap',
+    settingLightMode: 'Mode Terang',
     settingPageRadius: 'Radius Halaman',
     settingLayoutConfig: 'Konfigurasi Layout',
     settingEnableTagsView: 'Aktifkan Tags-View',

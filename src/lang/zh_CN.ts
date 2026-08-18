@@ -413,6 +413,7 @@ export default {
     settingThemeStyle: '主题风格设置',
     settingThemeColor: '主题颜色',
     settingDarkMode: '深色模式',
+    settingLightMode: '浅色模式',
     settingPageRadius: '页面圆角',
     settingLayoutConfig: '系统布局配置',
     settingEnableTagsView: '开启 Tags-Views',
