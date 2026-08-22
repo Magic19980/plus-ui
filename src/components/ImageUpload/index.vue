@@ -50,6 +50,7 @@ import type { OssVO, SysOssExt } from '@/api/system/oss/types';
 import modal from '@/plugins/modal';
 import { propTypes } from '@/utils/propTypes';
 import { globalHeaders } from '@/utils/request';
+import { getToken } from '@/utils/auth';
 
 const props = defineProps({
   modelValue: {
@@ -91,10 +92,27 @@ const baseUrl = import.meta.env.VITE_APP_BASE_API;
 const uploadImgUrl = ref(baseUrl + '/resource/oss/upload'); // 上传的图片服务器地址
 const headers = computed(() => globalHeaders());
 
+// 图片标签无法添加 Authorization 请求头，改由后端预览接口转发图片内容。
+const buildPreviewUrl = (ossId: string | number) => {
+  const query = new URLSearchParams({
+    Authorization: `Bearer ${getToken()}`,
+    clientid: import.meta.env.VITE_APP_CLIENT_ID
+  });
+  return `${baseUrl}/resource/oss/preview/${ossId}?${query.toString()}`;
+};
+
+const resolvePreviewUrl = (item: OssVO | { url?: string; ossId?: string | number } | string) => {
+  if (typeof item === 'string') return item;
+  if (item.ossId !== undefined && item.ossId !== null) return buildPreviewUrl(item.ossId);
+  return item.url;
+};
+
 const fileList = ref<any[]>([]);
 const showTip = computed(() => props.isShowTip && (props.fileType || props.fileSize));
 
 const imageUploadRef = ref<ElUploadInstance>();
+// 防止删除/清空后，之前发出的 listByIds 请求返回旧数据又把图片恢复出来。
+const modelValueVersion = ref(0);
 
 // 上传附加数据（ossExt 扩展属性）
 const uploadData = computed(() => {
@@ -109,31 +127,43 @@ const fileAccept = computed(() => props.fileType.map(type => `.${type}`).join(',
 
 watch(
   () => props.modelValue,
-  async (val: string) => {
-    if (val) {
-      // 首先将值转为数组
-      let list: OssVO[] = [];
+  async (val: unknown) => {
+    const currentVersion = ++modelValueVersion.value;
+    // 先清空当前显示，避免旧图片在异步查询期间继续留在界面上。
+    fileList.value = [];
+    if (!val) return;
+
+    let list: OssVO[] = [];
+    try {
       if (Array.isArray(val)) {
         list = val as OssVO[];
-      } else {
+      } else if (typeof val === 'object') {
+        list = [val as OssVO];
+      } else if (typeof val === 'string' || typeof val === 'number') {
         const res = await listByIds(val);
-        list = res.data;
+        list = Array.isArray(res.data) ? res.data : [];
       }
-      // 然后将数组转为对象数组
-      fileList.value = list.map(item => {
-        // 字符串回显处理 如果此处存的是url可直接回显 如果存的是id需要调用接口查出来
-        let itemData;
-        if (typeof item === 'string') {
-          itemData = { name: item, url: item };
-        } else {
-          // 此处name使用ossId 防止删除出现重名
-          itemData = { name: item.ossId, url: item.url, ossId: item.ossId };
-        }
-        return itemData;
-      });
-    } else {
-      fileList.value = [];
-      return [];
+    } catch {
+      // 查询失败时不恢复旧文件，保留当前绑定值，避免网络抖动导致错误清空。
+      return;
+    }
+
+    // 只有最后一次值对应的请求可以更新列表，避免旧请求覆盖删除结果。
+    if (currentVersion !== modelValueVersion.value) return;
+
+    // 然后将数组转为对象数组
+    fileList.value = list.map(item => {
+      // 字符串回显处理 如果此处存的是url可直接回显 如果存的是id需要调用接口查出来
+      if (typeof item === 'string') {
+        return { name: item, url: item };
+      }
+      // 此处name使用ossId 防止删除出现重名
+      return { name: item.ossId, url: resolvePreviewUrl(item), ossId: item.ossId };
+    });
+
+    // OSS 记录已不存在时，清除表单中的失效关联，避免保存时再次带回破图。
+    if (list.length === 0 && props.modelValue === val) {
+      emit('update:modelValue', '');
     }
   },
   { deep: true, immediate: true }
@@ -192,7 +222,7 @@ const handleUploadSuccess = (res: any, file: UploadFile) => {
   if (res.code === 200) {
     uploadList.value.push({
       name: res.data.fileName,
-      url: res.data.url,
+      url: buildPreviewUrl(res.data.ossId),
       ossId: res.data.ossId
     });
     uploadedSuccessfully();
@@ -208,12 +238,14 @@ const handleUploadSuccess = (res: any, file: UploadFile) => {
 // 删除图片
 const handleDelete = (file: UploadFile): boolean => {
   const findex = fileList.value.map(f => f.name).indexOf(file.name);
-  if (findex > -1 && uploadList.value.length === number.value) {
-    const ossId = fileList.value[findex].ossId;
-    delOss(ossId);
-    fileList.value.splice(findex, 1);
+  if (findex > -1) {
+    const ossId = fileList.value[findex]?.ossId;
+    // 返回 true 让 Element Plus 同步移除内部文件项；这里同步更新受控列表和 v-model。
+    fileList.value = fileList.value.filter((_, index) => index !== findex);
     emit('update:modelValue', listToString(fileList.value));
-    return false;
+    if (ossId !== undefined && ossId !== null) {
+      void delOss(ossId).catch(() => modal.msgError('图片文件删除失败，请稍后重试'));
+    }
   }
   return true;
 };
@@ -246,7 +278,7 @@ const listToString = (list: any[], separator?: string) => {
   let strs = '';
   separator = separator || ',';
   for (const i in list) {
-    if (undefined !== list[i].ossId && list[i].url.indexOf('blob:') !== 0) {
+    if (list[i]?.ossId !== undefined && list[i]?.ossId !== null && (!list[i].url || !String(list[i].url).startsWith('blob:'))) {
       strs += list[i].ossId + separator;
     }
   }

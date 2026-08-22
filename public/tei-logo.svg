@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision">
+  <title>TEI</title>
+  <defs>
+    <linearGradient id="tei-bg" x1="8" y1="6" x2="57" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123B63" />
+      <stop offset="1" stop-color="#087C91" />
+    </linearGradient>
+    <linearGradient id="tei-highlight" x1="14" y1="10" x2="47" y2="51" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.18" />
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="17" fill="url(#tei-bg)" />
+  <path d="M19 4H45C54.389 4 62 11.611 62 21V26C49.85 18.05 36.27 13.07 19 12.5V4Z" fill="url(#tei-highlight)" />
+  <text x="32" y="40" text-anchor="middle" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="800" letter-spacing="-1.4">TEI</text>
+  <path d="M16 49H48" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" />
+  <circle cx="51" cy="49" r="1.5" fill="#FDE68A" />
+</svg>

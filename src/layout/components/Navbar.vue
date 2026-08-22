@@ -10,7 +10,7 @@
         />
       </div>
       <router-link v-else-if="showLogo" to="/" class="navtop-logo-shell">
-        <img :src="appLogo" class="navtop-logo-icon" alt="logo" />
+        <img :src="appLogo" class="navtop-logo-icon" :class="{ 'dark-glow': isDarkTheme }" alt="TEI" />
       </router-link>
 
       <div class="nav-context">
@@ -99,7 +99,7 @@
 <script setup lang="ts">
 import type { ElMessageBoxOptions } from 'element-plus';
 import { CaretBottom } from '@element-plus/icons-vue';
-import appLogo from '@/assets/logo/logo.png';
+import appLogo from '@/assets/logo/tei-logo.svg';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
 import tab from '@/plugins/tab';
 import router from '@/router';
@@ -118,6 +118,9 @@ const noticeStore = storeToRefs(useNoticeStore());
 
 const navType = computed(() => settingsStore.navType);
 const showLogo = computed(() => settingsStore.sidebarLogo);
+const isDarkTheme = computed(
+  () => settingsStore.dark || (navType.value !== NavTypeEnum.TOP && settingsStore.sideTheme === 'theme-dark')
+);
 const displayName = computed(() => userStore.nickname || '管理员');
 
 // 搜索菜单
@@ -202,6 +205,10 @@ const handleCommand = (command: string) => {
     height: 32px;
     display: block;
     border-radius: 11px;
+
+    &.dark-glow {
+      animation: tei-nav-logo-breathe 3.2s ease-in-out infinite;
+    }
   }
 
   .topbar-container {
@@ -213,6 +220,24 @@ const handleCommand = (command: string) => {
     background: var(--app-surface-bg);
     border: 1px solid var(--app-surface-border);
     box-shadow: var(--app-shadow-sm);
+  }
+}
+
+@keyframes tei-nav-logo-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 1px rgba(45, 212, 191, 0.14)) drop-shadow(0 0 2px rgba(59, 130, 246, 0.08));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 5px rgba(45, 212, 191, 0.84)) drop-shadow(0 0 13px rgba(59, 130, 246, 0.52));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar.navtop .navtop-logo-icon.dark-glow {
+    animation: none;
+    filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.48));
   }
 }
 
