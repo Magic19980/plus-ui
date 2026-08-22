@@ -82,6 +82,13 @@ export const getDailyCalendarConfig = (): AxiosPromise<DailyCalendarConfigVO> =>
   });
 };
 
+export const listDailyCalendarConfigs = (): AxiosPromise<DailyCalendarConfigVO[]> => {
+  return request({
+    url: '/department/dailyReport/calendar/config/list',
+    method: 'get'
+  });
+};
+
 export const saveDailyCalendarConfig = (data: DailyCalendarConfigForm) => {
   return request({
     url: '/department/dailyReport/calendar/config',
@@ -162,6 +169,7 @@ export default {
   delDailyReportAttachment,
   getDailyCalendar,
   getDailyCalendarConfig,
+  listDailyCalendarConfigs,
   saveDailyCalendarConfig,
   listDailyCalendarOverrides,
   addDailyCalendarOverride,
