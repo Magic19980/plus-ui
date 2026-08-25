@@ -26,14 +26,9 @@
 
     <el-card shadow="hover" class="table-panel mt-2">
       <template #header>
-        <div class="toolbar-shell">
-          <div class="table-heading">
-            <span class="panel-kicker">Department Projects</span>
-            <h3>项目管理</h3>
-            <p>维护科室负责的项目主数据，运维工作记录需绑定到启用项目。</p>
-          </div>
+        <DepartmentPanelHeader kicker="Department Projects" title="项目管理" description="维护科室负责的项目主数据，运维工作记录需绑定到启用项目。">
           <el-button v-hasPermi="['department:project:add']" type="primary" plain icon="Plus" @click="handleAdd">新增项目</el-button>
-        </div>
+        </DepartmentPanelHeader>
       </template>
 
       <el-table v-loading="loading" border :data="projectList">
@@ -99,6 +94,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { addDepartmentProject, delDepartmentProject, getDepartmentProject, listDepartmentProject, updateDepartmentProject } from '@/api/department/project';
 import type { DepartmentProjectForm, DepartmentProjectQuery, DepartmentProjectVO } from '@/api/department/project/types';
+import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 
@@ -179,12 +175,3 @@ const handleDelete = async (row: DepartmentProjectVO) => {
 
 onMounted(getList);
 </script>
-
-<style scoped lang="scss">
-.department-project-page {
-  .toolbar-shell { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .table-heading h3 { margin: 4px 0; }
-  .table-heading p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
-  @media (max-width: 700px) { .toolbar-shell { align-items: flex-start; flex-direction: column; } }
-}
-</style>

@@ -11,6 +11,15 @@ export const listDept = (query?: DeptQuery) => {
   });
 };
 
+// 按父部门查询直属子部门（部门管理树懒加载）
+export const listDeptChildren = (parentId: string | number = 0): AxiosPromise<DeptVO[]> => {
+  return request({
+    url: '/system/dept/children',
+    method: 'get',
+    params: { parentId }
+  });
+};
+
 /**
  * 通过deptIds查询部门
  * @param deptIds

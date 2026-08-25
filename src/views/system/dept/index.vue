@@ -66,6 +66,8 @@
         :data="deptList"
         row-key="deptId"
         border
+        :lazy="!isSearchActive"
+        :load="loadDeptChildren"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         :default-expand-all="isExpandAll"
       >
@@ -191,7 +193,7 @@
 </template>
 
 <script setup name="Dept" lang="ts">
-import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from '@/api/system/dept';
+import { listDept, listDeptChildren, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from '@/api/system/dept';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { DeptForm, DeptQuery, DeptVO } from '@/api/system/dept/types';
@@ -214,7 +216,8 @@ interface DeptOptionsType {
 
 const { sys_normal_disable } = toRefs<any>(useDict('sys_normal_disable'));
 
-const deptList = ref<DeptVO[]>([]);
+// 部门数据量较大，避免 Vue 首次递归代理整棵部门树。
+const deptList = shallowRef<DeptVO[]>([]);
 const { loading, withLoading } = useLoading(true);
 const { showSearch } = useSearchToggle();
 const deptOptions = ref<DeptOptionsType[]>([]);
@@ -225,7 +228,8 @@ const queryFormRef = ref<ElFormInstance>();
 const deptFormRef = ref<ElFormInstance>();
 const { isExpandAll, handleToggleExpandAll } = useTreeTableExpand<DeptVO>({
   tableRef: deptTableRef,
-  data: deptList
+  data: deptList,
+  initialExpandAll: false
 });
 
 const initFormData: DeptForm = {
@@ -272,16 +276,29 @@ const data = reactive<PageData<DeptForm, DeptQuery>>(initData);
 
 const { queryParams, form, rules } = toRefs<PageData<DeptForm, DeptQuery>>(data);
 const { dialog, openDialog, closeDialog, setTitle } = useDialogState();
+const isSearchActive = computed(
+  () => {
+    const status = queryParams.value.status as number | string | undefined;
+    return Boolean(queryParams.value.deptName || queryParams.value.deptCategory) || (status !== undefined && status !== null && status !== '');
+  }
+);
 
 /** 查询菜单列表 */
 const getList = async () => {
   await withLoading(async () => {
-    const res = await listDept(queryParams.value);
-    const data = handleTree<DeptVO>(res.data, 'deptId');
-    if (data) {
-      deptList.value = data;
-    }
+    const res = isSearchActive.value ? await listDept(queryParams.value) : await listDeptChildren(0);
+    deptList.value = isSearchActive.value ? handleTree<DeptVO>(res.data, 'deptId') : res.data;
   });
+};
+
+/** 懒加载部门直属子节点 */
+const loadDeptChildren = async (row: DeptVO, _treeNode: unknown, resolve: (data: DeptVO[]) => void) => {
+  try {
+    const res = await listDeptChildren(row.deptId);
+    resolve(res.data || []);
+  } catch {
+    resolve([]);
+  }
 };
 
 /** 查询当前部门的所有用户 */

@@ -27,36 +27,26 @@
 
     <el-card v-loading="summaryLoading" shadow="hover" class="summary-panel mt-2">
       <template #header>
-        <div class="toolbar-shell">
-          <div class="table-heading">
-            <span class="panel-kicker">Weekly Department Report</span>
-            <h3>{{ summary?.weekStart || weekStart }} 至 {{ summary?.weekEnd || '—' }}</h3>
-            <p>运维指标与周报快照</p>
-          </div>
-        </div>
+        <DepartmentPanelHeader kicker="Weekly Department Report" :title="`${summary?.weekStart || weekStart} 至 ${summary?.weekEnd || '—'}`" description="运维指标与周报快照" />
       </template>
 
       <el-divider content-position="left">运维指标</el-divider>
-      <div v-if="summary?.operationSummary" class="metric-grid work-order-grid">
-        <div class="metric-card blue"><strong>{{ summary.operationSummary.totalCount }}</strong><span>运维总量</span></div>
-        <div class="metric-card green"><strong>{{ summary.operationSummary.resolvedCount }}</strong><span>已解决记录</span></div>
-        <div class="metric-card teal"><strong>{{ summary.operationSummary.resolutionRate }}%</strong><span>运维解决率</span></div>
-        <div class="metric-card orange"><strong>{{ summary.operationSummary.averageProcessingMinutes }}分钟</strong><span>平均处理时长</span></div>
-        <div class="metric-card red"><strong>{{ summary.operationSummary.onlineRate }}%</strong><span>系统在线率</span></div>
-      </div>
+      <DepartmentMetricGrid v-if="summary?.operationSummary" :columns="5">
+        <DepartmentMetricCard :value="summary.operationSummary.totalCount" label="运维总量" tone="blue" />
+        <DepartmentMetricCard :value="summary.operationSummary.resolvedCount" label="已解决记录" tone="green" />
+        <DepartmentMetricCard :value="`${summary.operationSummary.resolutionRate}%`" label="运维解决率" tone="teal" />
+        <DepartmentMetricCard :value="`${summary.operationSummary.averageProcessingMinutes}分钟`" label="平均处理时长" tone="orange" />
+        <DepartmentMetricCard :value="`${summary.operationSummary.onlineRate}%`" label="系统在线率" tone="red" />
+      </DepartmentMetricGrid>
 
       <el-empty v-if="!summary" description="请选择日期获取周报汇总" />
     </el-card>
 
     <el-card shadow="hover" class="history-panel mt-2">
       <template #header>
-        <div class="toolbar-shell">
-          <div class="table-heading">
-            <h3>周报快照历史</h3>
-            <p>快照用于保证历史周报不随台账后续修改而漂移</p>
-          </div>
+        <DepartmentPanelHeader title="周报快照历史" description="快照用于保证历史周报不随台账后续修改而漂移">
           <el-button icon="Refresh" @click="getList">刷新</el-button>
-        </div>
+        </DepartmentPanelHeader>
       </template>
       <el-table v-loading="loading" border :data="reportList">
         <el-table-column label="周报周期" min-width="220" align="center">
@@ -79,6 +69,9 @@
 import { onMounted, ref, reactive } from 'vue';
 import type { WeeklyReportSummaryVO, WeeklyReportVO } from '@/api/department/weeklyReport/types';
 import { generateWeeklyReport, getWeeklyReportSummary, listWeeklyReport } from '@/api/department/weeklyReport';
+import DepartmentMetricCard from '@/components/Department/MetricCard.vue';
+import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
+import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload } from '@/utils/request';
@@ -158,23 +151,8 @@ onMounted(() => {
   .week-date-picker { width: 180px; }
   .week-date-hint { color: var(--el-text-color-secondary); font-size: 13px; white-space: nowrap; }
   .query-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-left: auto; }
-  .toolbar-shell { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .table-heading h3 { margin: 4px 0; }
-  .table-heading p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
-  .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-  .metric-card { padding: 16px 18px; border-left: 6px solid; border-radius: 6px; background: var(--el-fill-color-light); }
-  .metric-card strong, .metric-card span { display: block; }
-  .metric-card strong { font-size: 28px; line-height: 1.15; }
-  .metric-card span { margin-top: 8px; color: var(--el-text-color-regular); }
-  .metric-card.blue { border-color: #2671c5; color: #2671c5; }
-  .metric-card.teal { border-color: #159a9c; color: #159a9c; }
-  .metric-card.green { border-color: #2ea45f; color: #2ea45f; }
-  .metric-card.orange { border-color: #ed8b20; color: #ed8b20; }
-  .metric-card.red { border-color: #da4154; color: #da4154; }
-  .work-order-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 8px; }
-  @media (max-width: 1100px) { .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  :deep(.department-metric-grid) { margin-bottom: 8px; }
   @media (max-width: 700px) {
-    .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .week-date-control { flex-wrap: wrap; }
     .week-date-hint { flex-basis: 100%; margin-left: 0; }
   }

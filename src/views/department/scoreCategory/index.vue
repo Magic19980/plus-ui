@@ -2,14 +2,9 @@
   <div class="p-2 app-container department-score-category-page">
     <el-card shadow="hover" class="table-panel">
       <template #header>
-        <div class="toolbar-shell">
-          <div class="table-heading">
-            <span class="panel-kicker">SCORE CATEGORY</span>
-            <h3>SCORE分类配置</h3>
-            <p>所有科室共用同一套提案大类和小类，停用分类不会影响历史提案。</p>
-          </div>
+        <DepartmentPanelHeader kicker="SCORE CATEGORY" title="SCORE分类配置" description="所有科室共用同一套提案大类和小类，停用分类不会影响历史提案。">
           <el-button v-hasPermi="['department:scoreCategory:add']" type="primary" icon="Plus" @click="handleAddMain">新增提案大类</el-button>
-        </div>
+        </DepartmentPanelHeader>
       </template>
 
       <el-table v-loading="loading" row-key="id" border :data="categoryTree" default-expand-all>
@@ -53,6 +48,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { addScoreCategory, delScoreCategory, listScoreCategory, updateScoreCategory } from '@/api/department/scoreCategory';
 import type { ScoreCategoryForm, ScoreCategoryVO } from '@/api/department/scoreCategory/types';
+import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 
@@ -128,12 +124,3 @@ const handleDelete = async (row: ScoreCategoryVO) => {
 
 onMounted(getList);
 </script>
-
-<style scoped lang="scss">
-.department-score-category-page {
-  .toolbar-shell { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .table-heading h3 { margin: 4px 0; }
-  .table-heading p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
-  @media (max-width: 700px) { .toolbar-shell { align-items: flex-start; flex-direction: column; } }
-}
-</style>

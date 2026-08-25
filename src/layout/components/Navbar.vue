@@ -67,6 +67,42 @@
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip>
       </template>
+      <div v-if="departmentContexts.length" class="department-context-container">
+        <el-dropdown
+          v-if="departmentContexts.length > 1"
+          class="department-context-dropdown"
+          trigger="click"
+          placement="bottom-end"
+          popper-class="department-context-popper"
+          :teleported="true"
+          @command="handleDepartmentCommand"
+        >
+          <div class="department-context-wrapper">
+            <span class="department-context-label">当前科室</span>
+            <span class="department-context-name">{{ currentDepartmentName }}</span>
+            <el-icon class="department-context-arrow"><caret-bottom /></el-icon>
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                v-for="department in departmentContexts"
+                :key="department.deptId"
+                :command="String(department.deptId)"
+                :disabled="department.current"
+              >
+                <span class="department-context-option-name">{{ department.deptName }}</span>
+                <el-tag v-if="department.memberType === 'TEMP'" size="small" type="warning" class="department-context-tag">
+                  临时协作
+                </el-tag>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <div v-else class="department-context-wrapper department-context-static">
+          <span class="department-context-label">当前科室</span>
+          <span class="department-context-name">{{ currentDepartmentName }}</span>
+        </div>
+      </div>
       <div class="avatar-container">
         <el-dropdown class="avatar-dropdown" trigger="click" @command="handleCommand">
           <div class="avatar-wrapper">
@@ -99,6 +135,8 @@
 <script setup lang="ts">
 import type { ElMessageBoxOptions } from 'element-plus';
 import { CaretBottom } from '@element-plus/icons-vue';
+import { listMyDepartmentContexts, switchMyDepartment } from '@/api/department/person';
+import type { PersonDepartmentContextVO } from '@/api/department/person/types';
 import appLogo from '@/assets/logo/tei-logo.svg';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
 import tab from '@/plugins/tab';
@@ -122,6 +160,28 @@ const isDarkTheme = computed(
   () => settingsStore.dark || (navType.value !== NavTypeEnum.TOP && settingsStore.sideTheme === 'theme-dark')
 );
 const displayName = computed(() => userStore.nickname || '管理员');
+const departmentContexts = ref<PersonDepartmentContextVO[]>([]);
+const currentDepartmentName = computed(() => {
+  const current = departmentContexts.value.find((item) => item.current);
+  return current?.deptName || departmentContexts.value[0]?.deptName || '未选择';
+});
+
+const loadDepartmentContexts = async () => {
+  try {
+    const res = await listMyDepartmentContexts();
+    departmentContexts.value = res.data || [];
+  } catch {
+    departmentContexts.value = [];
+  }
+};
+
+const handleDepartmentCommand = async (command: string) => {
+  const target = departmentContexts.value.find((item) => String(item.deptId) === command);
+  if (!target || target.current) return;
+  await switchMyDepartment(target.deptId);
+  ElMessage.success(`已切换到${target.deptName}`);
+  window.location.reload();
+};
 
 // 搜索菜单
 const searchMenuRef = ref<InstanceType<typeof SearchMenu>>();
@@ -166,6 +226,8 @@ const handleCommand = (command: string) => {
     commandMap[command]();
   }
 };
+
+onMounted(loadDepartmentContexts);
 </script>
 
 <style lang="scss" scoped>
@@ -473,7 +535,94 @@ const handleCommand = (command: string) => {
         }
       }
     }
+
+    .department-context-container {
+      margin-left: 4px;
+      flex-shrink: 0;
+
+      .department-context-dropdown {
+        display: block;
+      }
+
+      .department-context-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        max-width: 180px;
+        min-height: 30px;
+        padding: 3px 9px;
+        border: 1px solid var(--app-surface-border);
+        border-radius: 10px;
+        background: var(--app-surface-bg);
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease;
+
+        &:hover {
+          background: var(--app-accent-soft);
+          border-color: rgba(14, 165, 233, 0.18);
+        }
+      }
+
+      .department-context-static {
+        cursor: default;
+
+        &:hover {
+          background: var(--app-surface-bg);
+          border-color: var(--app-surface-border);
+        }
+      }
+
+      .department-context-label {
+        color: var(--app-text-muted);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      .department-context-name {
+        max-width: 92px;
+        overflow: hidden;
+        color: var(--app-text-title);
+        font-size: 12px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .department-context-arrow {
+        color: var(--app-text-muted);
+        font-size: 11px;
+      }
+
+      .department-context-tag {
+        margin-left: 8px;
+      }
+    }
   }
+}
+
+:global(.department-context-popper.el-dropdown__popper) {
+  z-index: 3000 !important;
+  min-width: 190px;
+  max-width: 280px;
+}
+
+:global(.department-context-popper .el-dropdown-menu) {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+:global(.department-context-popper .el-dropdown-menu__item) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+:global(.department-context-option-name) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html.dark {

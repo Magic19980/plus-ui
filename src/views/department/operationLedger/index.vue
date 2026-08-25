@@ -23,30 +23,24 @@
 
     <el-card shadow="hover" class="summary-panel mt-2">
       <template #header>
-        <div class="toolbar-shell">
-          <div><span class="panel-kicker">Operation Ledger</span><h3>运维指标</h3></div>
-          <span class="summary-tip">指标来自运维工作记录与系统在线率台账</span>
-        </div>
+        <DepartmentPanelHeader kicker="Operation Ledger" title="运维指标" description="指标来自运维工作记录与系统在线率台账" />
       </template>
-      <div class="metric-grid">
-        <div class="metric-card blue"><strong>{{ summary.totalCount }}</strong><span>运维总量</span></div>
-        <div class="metric-card green"><strong>{{ summary.resolvedCount }}</strong><span>已解决记录</span></div>
-        <div class="metric-card teal"><strong>{{ summary.resolutionRate }}%</strong><span>运维解决率</span></div>
-        <div class="metric-card orange"><strong>{{ summary.averageProcessingMinutes }}分钟</strong><span>平均处理时长</span></div>
-        <div class="metric-card red"><strong>{{ summary.onlineRate }}%</strong><span>系统在线率</span></div>
-      </div>
+      <DepartmentMetricGrid :columns="5">
+        <DepartmentMetricCard :value="summary.totalCount" label="运维总量" tone="blue" />
+        <DepartmentMetricCard :value="summary.resolvedCount" label="已解决记录" tone="green" />
+        <DepartmentMetricCard :value="`${summary.resolutionRate}%`" label="运维解决率" tone="teal" />
+        <DepartmentMetricCard :value="`${summary.averageProcessingMinutes}分钟`" label="平均处理时长" tone="orange" />
+        <DepartmentMetricCard :value="`${summary.onlineRate}%`" label="系统在线率" tone="red" />
+      </DepartmentMetricGrid>
     </el-card>
 
     <el-card shadow="hover" class="table-panel mt-2">
       <template #header>
-        <div class="toolbar-shell">
-          <div><h3>运维台账</h3><p>工作记录来源于《物流系统科日常管理表》；系统在线率单独维护并参与周报/PPT统计。</p></div>
-          <div class="toolbar-actions">
+        <DepartmentPanelHeader title="运维台账" description="工作记录来源于《物流系统科日常管理表》；系统在线率单独维护并参与周报/PPT统计。">
             <el-button v-hasPermi="['department:operationLedger:add']" type="primary" plain icon="Plus" @click="handleAddRecord">手动新增</el-button>
             <el-button v-hasPermi="['department:operationLedger:import']" type="info" plain icon="Upload" @click="openRecordUpload">导入工作记录</el-button>
             <el-button v-hasPermi="['department:operationLedger:export']" type="warning" plain icon="Download" @click="handleExportRecords">导出台账</el-button>
-          </div>
-        </div>
+        </DepartmentPanelHeader>
       </template>
 
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
@@ -160,8 +154,6 @@
           </el-col>
           <el-col :span="12"><el-form-item label="系统名称"><el-input v-model="systemForm.systemName" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="负责人"><el-input v-model="systemForm.responsiblePerson" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="服务器名称"><el-input v-model="systemForm.serverName" /></el-form-item></el-col>
-          <el-col :span="24"><el-form-item label="服务器IP"><el-input v-model="systemForm.serverIp" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="在线时长(天)"><el-input-number v-model="systemForm.onlineDays" :min="0" :precision="2" style="width: 100%" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="停机时间(分钟)"><el-input-number v-model="systemForm.downtimeMinutes" :min="0" style="width: 100%" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="系统在线率(%)"><el-input-number v-model="systemForm.onlineRate" :min="0" :max="100" :precision="2" style="width: 100%" /></el-form-item></el-col>
@@ -193,6 +185,9 @@
 
 <script setup name="DepartmentOperationLedger" lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import DepartmentMetricCard from '@/components/Department/MetricCard.vue';
+import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
+import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload, globalHeaders } from '@/utils/request';
@@ -298,7 +293,7 @@ const handleUpdateRecord = async (row: OperationRecordVO) => { const res = await
 const submitRecord = async () => { if (!recordForm.projectId) return modal.msgWarning('请选择项目'); buttonLoading.value = true; try { if (recordForm.id) await updateOperationRecord(recordForm); else await addOperationRecord(recordForm); modal.msgSuccess('运维记录保存成功'); recordDialog.visible = false; await Promise.all([getRecordList(), getSummary()]); } finally { buttonLoading.value = false; } };
 const handleDeleteRecord = async (row: OperationRecordVO) => { await modal.confirm(`确认删除 ${row.requestTime || row.businessDescription || '该运维记录'} 吗？`); await delOperationRecord(row.id); modal.msgSuccess('删除成功'); await Promise.all([getRecordList(), getSummary()]); };
 
-const resetSystemForm = () => Object.assign(systemForm, { id: undefined, projectId: undefined, statDate: getCurrentMonday(), systemName: undefined, responsiblePerson: undefined, serverName: undefined, serverIp: undefined, onlineDays: undefined, downtimeMinutes: undefined, onlineRate: undefined, remark: undefined });
+const resetSystemForm = () => Object.assign(systemForm, { id: undefined, projectId: undefined, statDate: getCurrentMonday(), systemName: undefined, responsiblePerson: undefined, onlineDays: undefined, downtimeMinutes: undefined, onlineRate: undefined, remark: undefined });
 const handleAddSystem = () => { resetSystemForm(); systemDialog.title = '新增系统在线率'; systemDialog.visible = true; };
 const handleUpdateSystem = async (row: OperationSystemVO) => { const res = await getOperationSystem(row.id); Object.assign(systemForm, res.data); systemDialog.title = '编辑系统在线率'; systemDialog.visible = true; };
 const submitSystem = async () => { if (!systemForm.statDate || !systemForm.projectId || !systemForm.systemName) return modal.msgWarning('统计日期、项目和系统名称不能为空'); buttonLoading.value = true; try { if (systemForm.id) await updateOperationSystem(systemForm); else await addOperationSystem(systemForm); modal.msgSuccess('系统在线率保存成功'); systemDialog.visible = false; await Promise.all([getSystemList(), getSummary()]); } finally { buttonLoading.value = false; } };
@@ -328,22 +323,11 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .department-operation-ledger-page {
-  .toolbar-shell, .sub-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .sub-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .sub-toolbar { margin-bottom: 12px; color: var(--el-text-color-secondary); font-size: 13px; }
   h3 { margin: 4px 0; }
   p, .summary-tip { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
   .toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-  .metric-card { padding: 16px 18px; border-left: 6px solid; border-radius: 6px; background: var(--el-fill-color-light); }
-  .metric-card strong, .metric-card span { display: block; }
-  .metric-card strong { font-size: 28px; line-height: 1.15; }
-  .metric-card span { margin-top: 8px; color: var(--el-text-color-regular); }
-  .blue { border-color: #2671c5; color: #2671c5; }
-  .green { border-color: #2ea45f; color: #2ea45f; }
-  .teal { border-color: #159a9c; color: #159a9c; }
-  .orange { border-color: #ed8b20; color: #ed8b20; }
-  .red { border-color: #da4154; color: #da4154; }
-  @media (max-width: 1200px) { .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  @media (max-width: 700px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .toolbar-shell, .sub-toolbar { align-items: flex-start; flex-direction: column; } }
+  @media (max-width: 700px) { .sub-toolbar { align-items: flex-start; flex-direction: column; } }
 }
 </style>

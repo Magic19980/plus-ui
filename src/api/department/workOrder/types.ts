@@ -4,8 +4,6 @@ export interface WorkOrderQuery extends PageQuery {
   ticketNo?: string;
   systemName?: string;
   faultType?: string;
-  status?: string;
-  reviewStatus?: string;
   sourceType?: string;
   keyword?: string;
 }
@@ -31,10 +29,8 @@ export interface WorkOrderVO {
   quantity?: number;
   responsiblePerson?: string;
   handler?: string;
-  status: string;
   resolutionMinutes?: number;
   feedbackChannel?: string;
-  reviewStatus: string;
   sourceType: string;
   sourceBatchId?: string | number;
   sourceFileName?: string;
@@ -104,10 +100,8 @@ export interface WorkOrderForm {
   quantity?: number;
   responsiblePerson?: string;
   handler?: string;
-  status?: string;
   resolutionMinutes?: number;
   feedbackChannel?: string;
-  reviewStatus?: string;
   remark?: string;
 }
 
@@ -130,7 +124,6 @@ export interface WorkOrderSummaryVO {
   resolutionRate: number;
   averageResolutionMinutes: number;
   unattributedCount: number;
-  pendingReviewCount: number;
   bySystem: WorkOrderDimensionVO[];
   byFaultType: WorkOrderDimensionVO[];
 }

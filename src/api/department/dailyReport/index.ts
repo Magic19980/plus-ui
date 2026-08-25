@@ -2,13 +2,9 @@ import type { PageResult } from '@/api/types';
 import type { AxiosPromise } from '@/utils/api-types';
 import request from '@/utils/request';
 import type {
-  DailyCalendarConfigForm,
-  DailyCalendarConfigVO,
   DailyCalendarOverrideForm,
   DailyCalendarOverrideVO,
   DailyCalendarVO,
-  DailyLeaveForm,
-  DailyLeaveVO,
   DailyReportAttachmentVO,
   DailyReportForm,
   DailyReportQuery,
@@ -75,28 +71,6 @@ export const getDailyCalendar = (month?: string): AxiosPromise<DailyCalendarVO> 
   });
 };
 
-export const getDailyCalendarConfig = (): AxiosPromise<DailyCalendarConfigVO> => {
-  return request({
-    url: '/department/dailyReport/calendar/config',
-    method: 'get'
-  });
-};
-
-export const listDailyCalendarConfigs = (): AxiosPromise<DailyCalendarConfigVO[]> => {
-  return request({
-    url: '/department/dailyReport/calendar/config/list',
-    method: 'get'
-  });
-};
-
-export const saveDailyCalendarConfig = (data: DailyCalendarConfigForm) => {
-  return request({
-    url: '/department/dailyReport/calendar/config',
-    method: 'put',
-    data
-  });
-};
-
 export const listDailyCalendarOverrides = (beginDate: string, endDate: string): AxiosPromise<DailyCalendarOverrideVO[]> => {
   return request({
     url: '/department/dailyReport/calendar/override/list',
@@ -128,37 +102,6 @@ export const delDailyCalendarOverride = (ids: Array<string | number> | string | 
   });
 };
 
-export const listDailyLeaves = (beginDate: string, endDate: string, userId?: string | number): AxiosPromise<DailyLeaveVO[]> => {
-  return request({
-    url: '/department/dailyReport/calendar/leave/list',
-    method: 'get',
-    params: { beginDate, endDate, userId }
-  });
-};
-
-export const addDailyLeave = (data: DailyLeaveForm) => {
-  return request({
-    url: '/department/dailyReport/calendar/leave',
-    method: 'post',
-    data
-  });
-};
-
-export const updateDailyLeave = (data: DailyLeaveForm) => {
-  return request({
-    url: '/department/dailyReport/calendar/leave',
-    method: 'put',
-    data
-  });
-};
-
-export const delDailyLeave = (ids: Array<string | number> | string | number) => {
-  return request({
-    url: '/department/dailyReport/calendar/leave/' + ids,
-    method: 'delete'
-  });
-};
-
 export default {
   listDailyReport,
   getDailyReport,
@@ -168,15 +111,8 @@ export default {
   listDailyReportAttachments,
   delDailyReportAttachment,
   getDailyCalendar,
-  getDailyCalendarConfig,
-  listDailyCalendarConfigs,
-  saveDailyCalendarConfig,
   listDailyCalendarOverrides,
   addDailyCalendarOverride,
   updateDailyCalendarOverride,
-  delDailyCalendarOverride,
-  listDailyLeaves,
-  addDailyLeave,
-  updateDailyLeave,
-  delDailyLeave
+  delDailyCalendarOverride
 };

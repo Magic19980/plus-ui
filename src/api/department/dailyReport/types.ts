@@ -71,6 +71,7 @@ export interface DailyCalendarMemberVO {
   userName?: string;
   nickName?: string;
   jobTitle?: string;
+  sourceDeptName?: string;
   cells: DailyCalendarCellVO[];
 }
 
@@ -86,20 +87,6 @@ export interface DailyCalendarVO {
   filledCount: number;
   missingCount: number;
   leaveCount: number;
-}
-
-export interface DailyCalendarConfigVO {
-  id?: string | number;
-  deptId?: string | number;
-  userId?: string | number;
-  workDays: string;
-  remark?: string;
-}
-
-export interface DailyCalendarConfigForm {
-  userId?: string | number;
-  workDays: string;
-  remark?: string;
 }
 
 export interface DailyCalendarOverrideVO {
@@ -118,26 +105,4 @@ export interface DailyCalendarOverrideForm {
   calendarDate?: string;
   dayType?: 'WORKDAY' | 'REST';
   remark?: string;
-}
-
-export interface DailyLeaveVO {
-  id: string | number;
-  deptId?: string | number;
-  userId: string | number;
-  userName?: string;
-  nickName?: string;
-  startDate: string;
-  endDate: string;
-  leaveType?: string;
-  reason?: string;
-  status?: string;
-}
-
-export interface DailyLeaveForm {
-  id?: string | number;
-  userId?: string | number;
-  startDate?: string;
-  endDate?: string;
-  leaveType?: string;
-  reason?: string;
 }

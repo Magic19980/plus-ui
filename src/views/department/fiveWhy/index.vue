@@ -16,7 +16,9 @@
 
     <el-card shadow="hover" class="mt-2">
       <template #header>
-        <div class="toolbar-shell"><div><span class="panel-kicker">5 WHY ANALYSIS</span><h3>5WHY分析管理</h3><p>填写分析内容后，系统按现有《5WHY分析表》模板生成 DOCX。</p></div><el-button v-hasPermi="['department:fiveWhy:add']" type="primary" icon="Plus" @click="handleAdd">新增分析</el-button></div>
+        <DepartmentPanelHeader kicker="5 WHY ANALYSIS" title="5WHY分析管理" description="填写分析内容后，系统按现有《5WHY分析表》模板生成 DOCX。">
+          <el-button v-hasPermi="['department:fiveWhy:add']" type="primary" icon="Plus" @click="handleAdd">新增分析</el-button>
+        </DepartmentPanelHeader>
       </template>
       <el-table v-loading="loading" border :data="list">
         <el-table-column label="分析日期" prop="analysisDate" width="120" align="center" />
@@ -84,6 +86,7 @@
 <script setup name="DepartmentFiveWhy" lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import ImageUpload from '@/components/ImageUpload/index.vue';
+import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { addFiveWhy, delFiveWhy, exportFiveWhy, listFiveWhy, reviewFiveWhy, updateFiveWhy } from '@/api/department/fiveWhy';
 import type { FiveWhyForm, FiveWhyQuery, FiveWhyVO, ReviewForm } from '@/api/department/fiveWhy/types';
 import { useLoading } from '@/hooks/async/useLoading';
@@ -122,7 +125,3 @@ const handleExport = (row: any) => requestDownload(exportFiveWhy(row.id), {}, `5
 
 onMounted(getList);
 </script>
-
-<style scoped lang="scss">
-.department-analysis-page { .toolbar-shell { display: flex; align-items: center; justify-content: space-between; gap: 16px; } h3 { margin: 4px 0; } p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; } }
-</style>

@@ -132,7 +132,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" destroy-on-close append-to-bod width="800px">
+    <el-dialog v-model="dialog.visible" :title="dialog.title" destroy-on-close append-to-body width="800px">
       <el-form ref="menuFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
@@ -180,21 +180,19 @@
                   <span class="i18n-card-badge" :class="`i18n-badge--${i18nCompletionTagType}`">{{ i18nCompletionText }}</span>
                   <el-icon class="i18n-card-arrow"><arrow-right /></el-icon>
                 </div>
-                <el-collapse-transition>
-                  <div v-show="i18nExpanded" class="i18n-card-body">
-                    <p class="i18n-card-hint">{{ $t('common.descI18nHint') }}</p>
-                    <div class="i18n-card-grid">
-                      <div v-for="cfg in LOCALE_CONFIG" :key="cfg.locale" class="i18n-card-field">
-                        <label class="i18n-card-label">{{ cfg.label }}</label>
-                        <el-input
-                          v-model="i18nForm[cfg.locale]"
-                          :placeholder="cfg.placeholder"
-                          clearable
-                        />
-                      </div>
+                <div v-if="i18nExpanded" class="i18n-card-body">
+                  <p class="i18n-card-hint">{{ $t('common.descI18nHint') }}</p>
+                  <div class="i18n-card-grid">
+                    <div v-for="cfg in LOCALE_CONFIG" :key="cfg.locale" class="i18n-card-field">
+                      <label class="i18n-card-label">{{ cfg.label }}</label>
+                      <el-input
+                        v-model="i18nForm[cfg.locale]"
+                        :placeholder="cfg.placeholder"
+                        clearable
+                      />
                     </div>
                   </div>
-                </el-collapse-transition>
+                </div>
               </div>
             </el-col>
           </template>
@@ -354,7 +352,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="deleteDialog.visible" :title="deleteDialog.title" destroy-on-close append-to-bod width="750px">
+    <el-dialog v-model="deleteDialog.visible" :title="deleteDialog.title" destroy-on-close append-to-body width="750px">
       <el-tree
         ref="menuTreeRef"
         class="tree-border"
@@ -600,7 +598,7 @@ const cancel = () => {
 };
 /** 表单重置 */
 const reset = () => {
-  form.value = { ...initFormData };
+  Object.assign(form.value, initFormData, { i18nList: undefined });
   Object.assign(i18nForm, initI18nForm());
   i18nExpanded.value = false;
   menuFormRef.value?.resetFields();
@@ -631,7 +629,11 @@ const handleUpdate = async (row: Partial<MenuVO>) => {
   await getTreeselect();
   if (row.menuId) {
     const { data } = await getMenu(row.menuId);
-    form.value = data;
+    if (!data) {
+      modal.msgError(t('common.msgOperateFailed'));
+      return;
+    }
+    Object.assign(form.value, data);
     // 回填国际化数据
     const parsed = parseI18nList(data.i18nList);
     Object.assign(i18nForm, parsed);

@@ -41,8 +41,6 @@ export interface WeeklyReportSummaryVO {
   coordinationNotes: string[];
   manualOrderSummary: WorkOrderSummaryVO;
   operationSummary: OperationSummaryVO;
-  /** 兼容历史快照。 */
-  workOrderSummary: WorkOrderSummaryVO;
 }
 
 export interface WorkOrderDimensionVO {
@@ -64,7 +62,6 @@ export interface WorkOrderSummaryVO {
   resolutionRate: number;
   averageResolutionMinutes: number;
   unattributedCount: number;
-  pendingReviewCount: number;
   bySystem: WorkOrderDimensionVO[];
   byFaultType: WorkOrderDimensionVO[];
 }

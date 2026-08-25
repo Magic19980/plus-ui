@@ -22,7 +22,9 @@
 
     <el-card shadow="hover" class="mt-2">
       <template #header>
-        <div class="toolbar-shell"><div><span class="panel-kicker">SCORE PROPOSAL</span><h3>SCORE提案管理</h3><p>系统按现有 EIP 企业改进提案表模板填入并生成 XLSX，不采集签字、固化清单和推广清单。</p></div><el-button v-hasPermi="['department:scoreProposal:add']" type="primary" icon="Plus" @click="handleAdd">新增提案</el-button></div>
+        <DepartmentPanelHeader kicker="SCORE PROPOSAL" title="SCORE提案管理" description="系统按现有 EIP 企业改进提案表模板填入并生成 XLSX，不采集签字、固化清单和推广清单。">
+          <el-button v-hasPermi="['department:scoreProposal:add']" type="primary" icon="Plus" @click="handleAdd">新增提案</el-button>
+        </DepartmentPanelHeader>
       </template>
       <el-table v-loading="loading" border :data="list">
         <el-table-column label="开始日期" prop="startDate" width="120" align="center" />
@@ -99,6 +101,7 @@
 <script setup name="DepartmentScoreProposal" lang="ts">
 import { computed, onMounted, reactive, ref, toRefs } from 'vue';
 import ImageUpload from '@/components/ImageUpload/index.vue';
+import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { listScoreCategoryOptions } from '@/api/department/scoreCategory';
 import type { ScoreCategoryVO } from '@/api/department/scoreCategory/types';
 import { addScoreProposal, delScoreProposal, exportScoreProposal, listScoreProposal, reviewScoreProposal, updateScoreProposal } from '@/api/department/scoreProposal';
@@ -197,7 +200,3 @@ onMounted(async () => {
   await Promise.all([getList(), getCategoryOptions()]);
 });
 </script>
-
-<style scoped lang="scss">
-.department-analysis-page { .toolbar-shell { display: flex; align-items: center; justify-content: space-between; gap: 16px; } h3 { margin: 4px 0; } p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; } }
-</style>

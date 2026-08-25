@@ -193,6 +193,15 @@
             />
             <el-table-column
               v-if="columns[3].visible"
+              key="employeeNo"
+              :label="$t('common.employeeNo')"
+              align="center"
+              prop="employeeNo"
+              width="130"
+              :show-overflow-tooltip="true"
+            />
+            <el-table-column
+              v-if="columns[4].visible"
               key="deptName"
               :label="$t('common.dept')"
               align="center"
@@ -200,14 +209,14 @@
               :show-overflow-tooltip="true"
             />
             <el-table-column
-              v-if="columns[4].visible"
+              v-if="columns[5].visible"
               key="phoneNumber"
               :label="$t('common.phoneNumber')"
               align="center"
               prop="phoneNumber"
               width="120"
             />
-            <el-table-column v-if="columns[5].visible" key="status" :label="$t('common.status')" align="center">
+            <el-table-column v-if="columns[6].visible" key="status" :label="$t('common.status')" align="center">
               <template #default="scope">
                 <el-switch
                   v-model="scope.row.status"
@@ -218,7 +227,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column v-if="columns[6].visible" :label="$t('common.createTime')" align="center" prop="createTime" width="160">
+            <el-table-column v-if="columns[7].visible" :label="$t('common.createTime')" align="center" prop="createTime" width="160">
               <template #default="scope">
                 <span>{{ scope.row.createTime }}</span>
               </template>
@@ -284,11 +293,18 @@
       ref="formDialogRef"
       v-model="dialog.visible"
       :title="dialog.title"
-      width="600px"
+      width="680px"
+      class="user-form-dialog"
       append-to-body
       @close="closeDialog"
     >
-      <el-form ref="userFormRef" :model="form" :rules="rules" label-width="80px">
+      <el-form
+        ref="userFormRef"
+        v-loading="userDialogLoading"
+        :model="form"
+        :rules="rules"
+        label-width="80px"
+      >
         <el-row>
           <el-col :span="12">
             <el-form-item :label="$t('common.nickName')" prop="nickName">
@@ -297,15 +313,67 @@
           </el-col>
           <el-col :span="12" v-if="form.userId == null || form.userId != useUserStore().userId">
             <el-form-item :label="$t('common.dept')" prop="deptId">
-              <el-tree-select
-                v-model="form.deptId"
-                :data="enabledDeptOptions"
-                :props="{ value: 'id', label: 'label', children: 'children' } as any"
-                value-key="id"
-                :placeholder="$t('common.placeholderSelectDept')"
-                check-strictly
-                @change="handleDeptChange"
-              />
+              <el-popover
+                v-model:visible="deptPickerVisible"
+                placement="bottom-start"
+                :width="560"
+                trigger="click"
+                :persistent="false"
+                popper-class="user-dept-tree-popper"
+                @show="handleDeptPickerShow"
+              >
+                <template #reference>
+                  <el-input
+                    :model-value="selectedDeptPath"
+                    :placeholder="$t('common.placeholderSelectDept')"
+                    readonly
+                    clearable
+                    class="dept-tree-input"
+                    @clear="handleDeptClear"
+                  >
+                    <template #suffix>
+                      <el-icon><ArrowDown /></el-icon>
+                    </template>
+                  </el-input>
+                </template>
+                <div class="dept-picker-panel">
+                  <el-input
+                    v-model="deptSearchKeyword"
+                    :placeholder="$t('common.placeholderInputDeptName')"
+                    clearable
+                    class="dept-picker-search"
+                  />
+                  <el-tree-v2
+                    ref="deptTreeRef"
+                    :data="deptTreeVisibleOptions"
+                    :props="deptTreeProps"
+                    :height="340"
+                    :item-size="36"
+                    :default-expanded-keys="deptTreeExpandedKeys"
+                    :current-node-key="form.deptId"
+                    highlight-current
+                    :expand-on-click-node="false"
+                    @node-click="handleDeptTreeNodeClick"
+                  >
+                    <template #default="{ data }">
+                      <div class="dept-tree-node" :title="data.path">
+                        <span class="dept-tree-node__label">{{ data.label }}</span>
+                      </div>
+                    </template>
+                  </el-tree-v2>
+                </div>
+              </el-popover>
+              <div v-if="selectedDeptPath" class="dept-selected-summary">
+                <span class="dept-selected-summary__label">{{ $t('common.selectedDept') }}</span>
+                <span class="dept-selected-summary__path">{{ selectedDeptPath }}</span>
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item :label="$t('common.employeeNo')" prop="employeeNo">
+              <el-input v-model="form.employeeNo" placeholder="请输入工号" maxlength="64" clearable />
             </el-form-item>
           </el-col>
         </el-row>
@@ -400,7 +468,9 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button type="primary" :disabled="userDialogLoading" @click="submitForm">
+            {{ $t('common.btnConfirm') }}
+          </el-button>
           <el-button @click="cancel()">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
@@ -515,6 +585,68 @@ const activeFilters = computed(() => {
   return filters;
 });
 const enabledDeptOptions = ref<DeptTreeVO[]>([]);
+type DeptTreeOption = Omit<DeptTreeVO, 'children'> & {
+  children: DeptTreeOption[];
+  path: string;
+};
+
+const deptPickerVisible = ref(false);
+const deptSearchKeyword = ref('');
+const deptTreeRef = ref<{ setCurrentKey: (key: number | string | undefined) => void }>();
+const deptTreeProps = {
+  value: 'id',
+  label: 'label',
+  children: 'children',
+  disabled: 'disabled'
+};
+
+const buildDeptTreeOptions = (nodes: DeptTreeVO[], parentPath = ''): DeptTreeOption[] => {
+  return nodes.map(dept => {
+    const path = parentPath ? `${parentPath} / ${dept.label}` : dept.label;
+    return {
+      ...dept,
+      path,
+      children: buildDeptTreeOptions(dept.children ?? [], path)
+    };
+  });
+};
+
+const deptTreeOptions = computed<DeptTreeOption[]>(() => buildDeptTreeOptions(enabledDeptOptions.value));
+
+const deptTreeVisibleOptions = computed<DeptTreeOption[]>(() => {
+  const keyword = deptSearchKeyword.value.trim().toLocaleLowerCase();
+  if (!keyword) return deptTreeOptions.value;
+
+  const filterNodes = (nodes: DeptTreeOption[]): DeptTreeOption[] => {
+    return nodes.reduce<DeptTreeOption[]>((result, node) => {
+      const children = filterNodes(node.children);
+      const matched = node.label.toLocaleLowerCase().includes(keyword) || node.path.toLocaleLowerCase().includes(keyword);
+      if (matched || children.length) result.push({ ...node, children });
+      return result;
+    }, []);
+  };
+
+  return filterNodes(deptTreeOptions.value);
+});
+
+const deptTreeExpandedKeys = computed<(number | string)[]>(() => {
+  const expandedKeys: (number | string)[] = [];
+  const collectExpandedKeys = (nodes: DeptTreeOption[]) => {
+    nodes.forEach(node => {
+      if (node.children.length) {
+        expandedKeys.push(node.id);
+        collectExpandedKeys(node.children);
+      }
+    });
+  };
+
+  if (deptSearchKeyword.value.trim()) {
+    collectExpandedKeys(deptTreeVisibleOptions.value);
+  } else {
+    expandedKeys.push(...deptTreeOptions.value.map(node => node.id));
+  }
+  return expandedKeys;
+});
 const initPassword = ref<string>('');
 const postOptions = ref<PostVO[]>([]);
 const roleOptions = ref<RoleVO[]>([]);
@@ -538,10 +670,11 @@ const columns = ref<FieldOption[]>([
   { key: 0, label: t('common.userId'), visible: false, children: [] },
   { key: 1, label: t('common.userName'), visible: true, children: [] },
   { key: 2, label: t('common.nickName'), visible: true, children: [] },
-  { key: 3, label: t('common.dept'), visible: true, children: [] },
-  { key: 4, label: t('common.phoneNumber'), visible: true, children: [] },
-  { key: 5, label: t('common.status'), visible: true, children: [] },
-  { key: 6, label: t('common.createTime'), visible: true, children: [] }
+  { key: 3, label: t('common.employeeNo'), visible: true, children: [] },
+  { key: 4, label: t('common.dept'), visible: true, children: [] },
+  { key: 5, label: t('common.phoneNumber'), visible: true, children: [] },
+  { key: 6, label: t('common.status'), visible: true, children: [] },
+  { key: 7, label: t('common.createTime'), visible: true, children: [] }
 ]);
 
 // 语言切换时更新列标签
@@ -549,10 +682,11 @@ watch(locale, () => {
   columns.value[0].label = t('common.userId');
   columns.value[1].label = t('common.userName');
   columns.value[2].label = t('common.nickName');
-  columns.value[3].label = t('common.dept');
-  columns.value[4].label = t('common.phoneNumber');
-  columns.value[5].label = t('common.status');
-  columns.value[6].label = t('common.createTime');
+  columns.value[3].label = t('common.employeeNo');
+  columns.value[4].label = t('common.dept');
+  columns.value[5].label = t('common.phoneNumber');
+  columns.value[6].label = t('common.status');
+  columns.value[7].label = t('common.createTime');
 });
 
 const treePanelRef = ref<InstanceType<typeof TreePanel>>();
@@ -567,6 +701,7 @@ const initFormData: UserForm = {
   deptId: undefined,
   userName: '',
   nickName: undefined,
+  employeeNo: undefined,
   password: '',
   phoneNumber: undefined,
   email: undefined,
@@ -635,6 +770,8 @@ const data = reactive<PageData<UserForm, UserQuery>>(initData);
 const { queryParams, form, rules } = toRefs<PageData<UserForm, UserQuery>>(data);
 const { ids, single, multiple, handleSelectionChange } = useTableSelection<UserVO>(item => item.userId);
 const { dialog, openDialog: openUserDialog, closeDialog: closeUserDialog, setTitle: setDialogTitle } = useDialogState();
+const userDialogLoading = ref(false);
+let userDialogRequestId = 0;
 
 /** 查询用户列表 */
 const getList = async () => {
@@ -664,6 +801,42 @@ const filterDisabledDept = (deptList: DeptTreeVO[]): DeptTreeVO[] => {
     });
     return result;
   }, []);
+};
+
+/** 获取当前部门完整路径，避免级联输入框省略长名称后无法确认选择结果 */
+const findDeptPath = (deptList: DeptTreeVO[], deptId: number | string | null | undefined, parentPath: string[] = []): string[] => {
+  if (deptId === undefined || deptId === null || deptId === '') return [];
+
+  for (const dept of deptList) {
+    const currentPath = [...parentPath, dept.label];
+    if (String(dept.id) === String(deptId)) return currentPath;
+    if (dept.children?.length) {
+      const childPath = findDeptPath(dept.children, deptId, currentPath);
+      if (childPath.length) return childPath;
+    }
+  }
+
+  return [];
+};
+
+const selectedDeptPath = computed(() => findDeptPath(deptOptions.value, form.value.deptId).join(' / '));
+
+const handleDeptPickerShow = () => {
+  deptSearchKeyword.value = '';
+  deptTreeRef.value?.setCurrentKey(form.value.deptId);
+};
+
+const handleDeptTreeNodeClick = (data: DeptTreeOption) => {
+  if (data.disabled) return;
+  form.value.deptId = data.id;
+  deptPickerVisible.value = false;
+  deptSearchKeyword.value = '';
+  handleDeptChange(data.id);
+};
+
+const handleDeptClear = () => {
+  form.value.deptId = undefined;
+  handleDeptChange(undefined);
 };
 
 /** 节点单击事件 */
@@ -811,36 +984,54 @@ const reset = () => {
 };
 /** 取消按钮 */
 const cancel = () => {
+  userDialogRequestId++;
+  userDialogLoading.value = false;
   closeUserDialog();
   reset();
 };
 
 /** 新增按钮操作 */
 const handleAdd = async () => {
+  const requestId = ++userDialogRequestId;
   reset();
-  const { data } = await api.getUser();
+  postOptions.value = [];
+  roleOptions.value = [];
   setDialogTitle(t('common.dialogAddUser'));
   openUserDialog();
-  postOptions.value = data.posts;
-  roleOptions.value = data.roles;
   form.value.password = initPassword.value.toString();
+  userDialogLoading.value = true;
+  try {
+    const { data } = await api.getUser();
+    if (requestId !== userDialogRequestId) return;
+    postOptions.value = data.posts;
+    roleOptions.value = data.roles;
+  } finally {
+    if (requestId === userDialogRequestId) userDialogLoading.value = false;
+  }
 };
 
 /** 修改按钮操作 */
 const handleUpdate = async (row?: Partial<UserForm>) => {
+  const requestId = ++userDialogRequestId;
   reset();
   const userId = row?.userId || ids.value[0];
-  const { data } = await api.getUser(userId);
   setDialogTitle(t('common.dialogEditUser'));
   openUserDialog();
-  Object.assign(form.value, data.user);
-  postOptions.value = data.posts;
-  roleOptions.value = Array.from(
-    new Map([...data.roles, ...data.user.roles].map(role => [role.roleId, role])).values()
-  );
-  form.value.postIds = data.postIds;
-  form.value.roleIds = data.roleIds;
-  form.value.password = '';
+  userDialogLoading.value = true;
+  try {
+    const { data } = await api.getUser(userId);
+    if (requestId !== userDialogRequestId) return;
+    Object.assign(form.value, data.user);
+    postOptions.value = data.posts;
+    roleOptions.value = Array.from(
+      new Map([...data.roles, ...data.user.roles].map(role => [role.roleId, role])).values()
+    );
+    form.value.postIds = data.postIds;
+    form.value.roleIds = data.roleIds;
+    form.value.password = '';
+  } finally {
+    if (requestId === userDialogRequestId) userDialogLoading.value = false;
+  }
 };
 
 /** 提交按钮 */
@@ -869,6 +1060,8 @@ const submitForm = () => {
  * 关闭用户弹窗
  */
 const closeDialog = () => {
+  userDialogRequestId++;
+  userDialogLoading.value = false;
   closeUserDialog();
   resetForm();
 };
@@ -891,7 +1084,13 @@ onMounted(() => {
   });
 });
 
-async function handleDeptChange(value: number | string) {
+async function handleDeptChange(value: number | string | null | undefined) {
+  if (value === undefined || value === null || value === '') {
+    postOptions.value = [];
+    form.value.postIds = [];
+    return;
+  }
+
   const response = await optionselect(value);
   postOptions.value = response.data;
   form.value.postIds = [];
@@ -910,5 +1109,90 @@ async function handleDeptChange(value: number | string) {
   padding: 10px 20px 0;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+:deep(.dept-tree-input) {
+  width: 100%;
+}
+
+.dept-selected-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.dept-selected-summary__label {
+  flex: none;
+  color: var(--el-text-color-regular);
+  font-weight: 600;
+}
+
+.dept-selected-summary__path {
+  min-width: 0;
+  color: var(--el-color-primary);
+  overflow-wrap: anywhere;
+}
+
+:global(.user-dept-tree-popper) {
+  width: min(560px, calc(100vw - 24px));
+  min-width: min(560px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  padding: 0;
+}
+
+:global(.user-dept-tree-popper .dept-picker-panel) {
+  padding: 12px;
+}
+
+:global(.user-dept-tree-popper .dept-picker-search) {
+  margin-bottom: 8px;
+}
+
+:global(.user-dept-tree-popper .el-tree) {
+  --el-tree-node-content-height: 36px;
+  background: transparent;
+}
+
+:global(.user-dept-tree-popper .el-tree-node__content) {
+  box-sizing: border-box;
+  height: 36px;
+  border-radius: 6px;
+  padding-right: 8px;
+}
+
+:global(.user-dept-tree-popper .dept-tree-node) {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  height: 100%;
+}
+
+:global(.user-dept-tree-popper .dept-tree-node__label) {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--el-text-color-regular);
+  font-size: 14px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  :global(.user-dept-tree-popper) {
+    width: calc(100vw - 24px);
+    min-width: calc(100vw - 24px);
+  }
 }
 </style>

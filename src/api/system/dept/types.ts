@@ -15,6 +15,7 @@ export interface DeptVO extends BaseEntity {
   parentName: string;
   parentId: number | string;
   children: DeptVO[];
+  hasChildren?: boolean;
   deptId: number | string;
   deptName: string;
   deptCategory: string;

@@ -53,8 +53,6 @@ export interface OperationSystemVO {
   statDate?: string;
   systemName: string;
   responsiblePerson?: string;
-  serverName?: string;
-  serverIp?: string;
   onlineDays?: number;
   downtimeMinutes?: number;
   onlineRate?: number;
