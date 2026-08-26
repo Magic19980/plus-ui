@@ -44,6 +44,14 @@
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
+              <el-form-item :label="$t('common.indonesianName')" prop="indonesianName">
+                <el-input
+                  v-model="queryParams.indonesianName"
+                  :placeholder="$t('common.placeholderInputIndonesianName')"
+                  clearable
+                  @keyup.enter="handleQuery"
+                />
+              </el-form-item>
               <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
                 <el-input
                   v-model="queryParams.phoneNumber"
@@ -193,6 +201,14 @@
             />
             <el-table-column
               v-if="columns[3].visible"
+              key="indonesianName"
+              :label="$t('common.indonesianName')"
+              align="center"
+              prop="indonesianName"
+              :show-overflow-tooltip="true"
+            />
+            <el-table-column
+              v-if="columns[4].visible"
               key="employeeNo"
               :label="$t('common.employeeNo')"
               align="center"
@@ -201,7 +217,7 @@
               :show-overflow-tooltip="true"
             />
             <el-table-column
-              v-if="columns[4].visible"
+              v-if="columns[5].visible"
               key="deptName"
               :label="$t('common.dept')"
               align="center"
@@ -209,14 +225,14 @@
               :show-overflow-tooltip="true"
             />
             <el-table-column
-              v-if="columns[5].visible"
+              v-if="columns[6].visible"
               key="phoneNumber"
               :label="$t('common.phoneNumber')"
               align="center"
               prop="phoneNumber"
               width="120"
             />
-            <el-table-column v-if="columns[6].visible" key="status" :label="$t('common.status')" align="center">
+            <el-table-column v-if="columns[7].visible" key="status" :label="$t('common.status')" align="center">
               <template #default="scope">
                 <el-switch
                   v-model="scope.row.status"
@@ -227,7 +243,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column v-if="columns[7].visible" :label="$t('common.createTime')" align="center" prop="createTime" width="160">
+            <el-table-column v-if="columns[8].visible" :label="$t('common.createTime')" align="center" prop="createTime" width="160">
               <template #default="scope">
                 <span>{{ scope.row.createTime }}</span>
               </template>
@@ -293,7 +309,7 @@
       ref="formDialogRef"
       v-model="dialog.visible"
       :title="dialog.title"
-      width="680px"
+      width="min(820px, calc(100vw - 32px))"
       class="user-form-dialog"
       append-to-body
       @close="closeDialog"
@@ -303,15 +319,29 @@
         v-loading="userDialogLoading"
         :model="form"
         :rules="rules"
-        label-width="80px"
+        label-width="108px"
+        label-position="right"
+        class="user-form"
       >
-        <el-row>
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.nickName')" prop="nickName">
               <el-input v-model="form.nickName" :placeholder="$t('common.placeholderInputNickName')" maxlength="30" />
             </el-form-item>
           </el-col>
-          <el-col :span="12" v-if="form.userId == null || form.userId != useUserStore().userId">
+          <el-col :span="12">
+            <el-form-item :label="$t('common.indonesianName')" prop="indonesianName">
+              <el-input
+                v-model="form.indonesianName"
+                :placeholder="$t('common.placeholderInputIndonesianName')"
+                maxlength="100"
+                clearable
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
             <el-form-item :label="$t('common.dept')" prop="deptId">
               <el-popover
                 v-model:visible="deptPickerVisible"
@@ -324,10 +354,10 @@
               >
                 <template #reference>
                   <el-input
-                    :model-value="selectedDeptPath"
-                    :placeholder="$t('common.placeholderSelectDept')"
-                    readonly
+                    v-model="deptPickerInput"
+                    :placeholder="$t('common.placeholderInputDeptName')"
                     clearable
+                    prefix-icon="Search"
                     class="dept-tree-input"
                     @clear="handleDeptClear"
                   >
@@ -337,12 +367,6 @@
                   </el-input>
                 </template>
                 <div class="dept-picker-panel">
-                  <el-input
-                    v-model="deptSearchKeyword"
-                    :placeholder="$t('common.placeholderInputDeptName')"
-                    clearable
-                    class="dept-picker-search"
-                  />
                   <el-tree-v2
                     ref="deptTreeRef"
                     :data="deptTreeVisibleOptions"
@@ -369,15 +393,13 @@
               </div>
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row>
           <el-col :span="12">
             <el-form-item :label="$t('common.employeeNo')" prop="employeeNo">
               <el-input v-model="form.employeeNo" placeholder="请输入工号" maxlength="64" clearable />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
               <el-input v-model="form.phoneNumber" :placeholder="$t('common.placeholderInputPhone')" maxlength="11" />
@@ -389,7 +411,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item v-if="form.userId == undefined" :label="$t('common.userName')" prop="userName">
               <el-input v-model="form.userName" :placeholder="$t('common.placeholderInputUserName')" maxlength="30" />
@@ -407,7 +429,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.gender')">
               <el-select v-model="form.gender" :placeholder="$t('common.placeholderSelect')">
@@ -430,10 +452,19 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
-          <el-col :span="12" v-if="form.userId == null || form.userId != useUserStore().userId">
+        <el-row :gutter="20">
+          <el-col :span="12">
             <el-form-item :label="$t('common.post')">
-              <el-select v-model="form.postIds" multiple :placeholder="$t('common.placeholderSelect')">
+              <el-select
+                v-model="form.postIds"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :max-collapse-tags="1"
+                :placeholder="$t('common.placeholderSelect')"
+              >
                 <el-option
                   v-for="item in postOptions"
                   :key="item.postId"
@@ -444,9 +475,18 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12" v-if="form.userId == null || form.userId != useUserStore().userId">
+          <el-col :span="12">
             <el-form-item :label="$t('common.role')" prop="roleIds">
-              <el-select v-model="form.roleIds" filterable multiple :placeholder="$t('common.placeholderSelect')">
+              <el-select
+                v-model="form.roleIds"
+                filterable
+                multiple
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :max-collapse-tags="1"
+                :placeholder="$t('common.placeholderSelect')"
+              >
                 <el-option
                   v-for="item in roleOptions"
                   :key="item.roleId"
@@ -458,7 +498,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+        <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item :label="$t('common.remark')">
               <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')"></el-input>
@@ -553,7 +593,6 @@ import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import { useTableSelection } from '@/hooks/table/useTableSelection';
 import { useTreeCollapsed } from '@/hooks/tree/useTreeCollapsed';
 import modal from '@/plugins/modal';
-import { useUserStore } from '@/store/modules/user';
 import { useDict } from '@/utils/dict';
 import { checkPermi } from '@/utils/permission';
 import { globalHeaders } from '@/utils/request';
@@ -576,6 +615,7 @@ const activeFilters = computed(() => {
   const qp = queryParams.value;
   if (qp.userName) filters.push({ label: t('common.userName'), value: qp.userName, onRemove: () => { qp.userName = undefined; handleQuery(); } });
   if (qp.nickName) filters.push({ label: t('common.nickName'), value: qp.nickName, onRemove: () => { qp.nickName = undefined; handleQuery(); } });
+  if (qp.indonesianName) filters.push({ label: t('common.indonesianName'), value: qp.indonesianName, onRemove: () => { qp.indonesianName = undefined; handleQuery(); } });
   if (qp.phoneNumber) filters.push({ label: t('common.phoneNumber'), value: qp.phoneNumber, onRemove: () => { qp.phoneNumber = undefined; handleQuery(); } });
   if (qp.status !== undefined && qp.status !== null && qp.status !== '') filters.push({ label: t('common.status'), value: qp.status, onRemove: () => { qp.status = undefined; handleQuery(); } });
   if (dateRange.value?.length) {
@@ -670,11 +710,12 @@ const columns = ref<FieldOption[]>([
   { key: 0, label: t('common.userId'), visible: false, children: [] },
   { key: 1, label: t('common.userName'), visible: true, children: [] },
   { key: 2, label: t('common.nickName'), visible: true, children: [] },
-  { key: 3, label: t('common.employeeNo'), visible: true, children: [] },
-  { key: 4, label: t('common.dept'), visible: true, children: [] },
-  { key: 5, label: t('common.phoneNumber'), visible: true, children: [] },
-  { key: 6, label: t('common.status'), visible: true, children: [] },
-  { key: 7, label: t('common.createTime'), visible: true, children: [] }
+  { key: 3, label: t('common.indonesianName'), visible: true, children: [] },
+  { key: 4, label: t('common.employeeNo'), visible: true, children: [] },
+  { key: 5, label: t('common.dept'), visible: true, children: [] },
+  { key: 6, label: t('common.phoneNumber'), visible: true, children: [] },
+  { key: 7, label: t('common.status'), visible: true, children: [] },
+  { key: 8, label: t('common.createTime'), visible: true, children: [] }
 ]);
 
 // 语言切换时更新列标签
@@ -682,11 +723,12 @@ watch(locale, () => {
   columns.value[0].label = t('common.userId');
   columns.value[1].label = t('common.userName');
   columns.value[2].label = t('common.nickName');
-  columns.value[3].label = t('common.employeeNo');
-  columns.value[4].label = t('common.dept');
-  columns.value[5].label = t('common.phoneNumber');
-  columns.value[6].label = t('common.status');
-  columns.value[7].label = t('common.createTime');
+  columns.value[3].label = t('common.indonesianName');
+  columns.value[4].label = t('common.employeeNo');
+  columns.value[5].label = t('common.dept');
+  columns.value[6].label = t('common.phoneNumber');
+  columns.value[7].label = t('common.status');
+  columns.value[8].label = t('common.createTime');
 });
 
 const treePanelRef = ref<InstanceType<typeof TreePanel>>();
@@ -701,6 +743,7 @@ const initFormData: UserForm = {
   deptId: undefined,
   userName: '',
   nickName: undefined,
+  indonesianName: undefined,
   employeeNo: undefined,
   password: '',
   phoneNumber: undefined,
@@ -820,6 +863,12 @@ const findDeptPath = (deptList: DeptTreeVO[], deptId: number | string | null | u
 };
 
 const selectedDeptPath = computed(() => findDeptPath(deptOptions.value, form.value.deptId).join(' / '));
+const deptPickerInput = computed({
+  get: () => (deptPickerVisible.value ? deptSearchKeyword.value : selectedDeptPath.value),
+  set: value => {
+    deptSearchKeyword.value = value;
+  }
+});
 
 const handleDeptPickerShow = () => {
   deptSearchKeyword.value = '';
@@ -1039,12 +1088,6 @@ const submitForm = () => {
   userFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       if (form.value.userId) {
-        // 自己编辑自己的情况下 不允许编辑角色部门岗位
-        if (form.value.userId == useUserStore().userId) {
-          form.value.roleIds = null;
-          form.value.deptId = null;
-          form.value.postIds = null;
-        }
         await api.updateUser(form.value);
       } else {
         await api.addUser(form.value);
@@ -1121,19 +1164,22 @@ async function handleDeptChange(value: number | string | null | undefined) {
   gap: 8px;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 8px;
-  padding: 7px 10px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
-  background: var(--el-fill-color-lighter);
+  margin-top: 7px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--app-accent-strong) 28%, var(--el-border-color-lighter));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--app-accent-strong) 9%, var(--app-surface-bg));
   color: var(--el-text-color-secondary);
   font-size: 12px;
-  line-height: 20px;
+  line-height: 18px;
 }
 
 .dept-selected-summary__label {
   flex: none;
-  color: var(--el-text-color-regular);
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg));
+  color: var(--app-accent-strong);
   font-weight: 600;
 }
 
@@ -1141,6 +1187,83 @@ async function handleDeptChange(value: number | string | null | undefined) {
   min-width: 0;
   color: var(--el-color-primary);
   overflow-wrap: anywhere;
+}
+
+.user-form {
+  --user-form-control-height: 38px;
+}
+
+.user-form > .el-row {
+  margin-bottom: 2px;
+}
+
+.user-form :deep(.el-form-item) {
+  margin-bottom: 16px;
+}
+
+.user-form :deep(.el-form-item__label) {
+  color: var(--app-text-muted);
+  font-weight: 600;
+  line-height: var(--user-form-control-height);
+}
+
+.user-form :deep(.el-form-item.is-required > .el-form-item__label) {
+  color: var(--app-text-title);
+}
+
+.user-form :deep(.el-input__wrapper),
+.user-form :deep(.el-select__wrapper) {
+  min-height: var(--user-form-control-height);
+  border-radius: 9px;
+}
+
+.user-form :deep(.el-select) {
+  width: 100%;
+}
+
+.user-form :deep(.el-textarea__inner) {
+  min-height: 92px !important;
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+.user-form :deep(.el-radio-group) {
+  display: flex;
+  align-items: center;
+  min-height: var(--user-form-control-height);
+  gap: 8px;
+}
+
+.user-form :deep(.el-radio) {
+  margin-right: 4px;
+}
+
+:global(.user-form-dialog) {
+  max-width: calc(100vw - 32px);
+}
+
+:global(.user-form-dialog .el-dialog__header) {
+  padding: 20px 28px 16px;
+}
+
+:global(.user-form-dialog .el-dialog__body) {
+  padding: 24px 28px 10px !important;
+}
+
+:global(.user-form-dialog .el-dialog__footer) {
+  padding: 16px 28px 24px;
+}
+
+:global(.user-form-dialog .dialog-footer .el-button) {
+  min-width: 88px;
+  height: 38px;
+  border-radius: 9px;
+}
+
+@media (max-width: 760px) {
+  .user-form :deep(.el-form-item__label) {
+    padding-right: 8px;
+  }
 }
 
 :global(.user-dept-tree-popper) {
@@ -1152,10 +1275,6 @@ async function handleDeptChange(value: number | string | null | undefined) {
 
 :global(.user-dept-tree-popper .dept-picker-panel) {
   padding: 12px;
-}
-
-:global(.user-dept-tree-popper .dept-picker-search) {
-  margin-bottom: 8px;
 }
 
 :global(.user-dept-tree-popper .el-tree) {

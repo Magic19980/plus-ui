@@ -17,8 +17,8 @@
 
     <el-card shadow="never" class="filter-card mt-2">
       <el-form :model="queryParams" :inline="true" class="query-form" @submit.prevent>
-        <el-form-item label="部门名称">
-          <el-input v-model="queryParams.deptName" clearable placeholder="请输入部门名称" @keyup.enter="handleQuery" />
+        <el-form-item label="部门/科室名称">
+          <el-input v-model="queryParams.deptName" clearable placeholder="请输入中文或印尼语名称" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" clearable placeholder="全部状态" style="width: 130px">
@@ -113,10 +113,10 @@
           >
             <template #reference>
               <el-input
-                :model-value="selectedDeptPath"
-                :placeholder="dialog.edit ? '系统部门不可更换' : '请选择系统部门'"
-                readonly
+                v-model="deptPickerInput"
+                :placeholder="dialog.edit ? '系统部门不可更换' : '输入部门名称搜索'"
                 :disabled="dialog.edit"
+                prefix-icon="Search"
                 class="dept-tree-input"
               >
                 <template #suffix>
@@ -125,7 +125,6 @@
               </el-input>
             </template>
             <div class="dept-picker-panel">
-              <el-input v-model="deptSearchKeyword" placeholder="请输入部门名称" clearable class="dept-picker-search" />
               <el-tree-v2
                 ref="deptTreeRef"
                 :data="deptTreeVisibleOptions"
@@ -263,6 +262,12 @@ const findDeptPath = (nodes: DeptTreeVO[], deptId: number | string | null | unde
 };
 
 const selectedDeptPath = computed(() => findDeptPath(deptOptions.value, form.deptId).join(' / ') || form.deptName || '');
+const deptPickerInput = computed({
+  get: () => (deptPickerVisible.value ? deptSearchKeyword.value : selectedDeptPath.value),
+  set: value => {
+    deptSearchKeyword.value = value;
+  }
+});
 const deptTreeVisibleOptions = computed<DeptTreeOption[]>(() => {
   const keyword = deptSearchKeyword.value.trim().toLocaleLowerCase();
   if (!keyword) return availableDeptTree.value;
@@ -557,10 +562,6 @@ onMounted(getList);
 
 :global(.department-config-dept-popper .dept-picker-panel) {
   padding: 12px;
-}
-
-:global(.department-config-dept-popper .dept-picker-search) {
-  margin-bottom: 8px;
 }
 
 :global(.department-config-dept-popper .el-tree) {

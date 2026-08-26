@@ -49,6 +49,65 @@ html.dark {
   }
 }
 
+// Element Plus 新版使用 sticky 固定列，默认的 background: inherit 会让右侧操作列透视底层数据。
+// 同时覆盖旧版 fixed 容器，保证不同表格结构下固定列都使用不透明背景。
+.el-table {
+  .el-table-fixed-column--left,
+  .el-table-fixed-column--right {
+    background-color: var(--el-table-tr-bg-color) !important;
+  }
+
+  th.el-table-fixed-column--left,
+  th.el-table-fixed-column--right {
+    background-color: $table-header-bg !important;
+  }
+
+  .el-table__fixed,
+  .el-table__fixed-right {
+    background-color: var(--el-table-bg-color);
+
+    .el-table__cell {
+      background-color: var(--el-table-tr-bg-color) !important;
+    }
+
+    th.el-table__cell {
+      background-color: $table-header-bg !important;
+    }
+  }
+}
+
+// sticky 固定列的 hover 状态需要单独覆盖：Element Plus 会给固定单元格设置
+// `background: inherit`，行悬停时可能再次透出滚动区域下方的普通列内容。
+.el-table {
+  .el-table__body tr:hover > td.el-table-fixed-column--left,
+  .el-table__body tr:hover > td.el-table-fixed-column--right,
+  .el-table__body tr.hover-row > td.el-table-fixed-column--left,
+  .el-table__body tr.hover-row > td.el-table-fixed-column--right,
+  .el-table__body tr.hover-row.current-row > td.el-table-fixed-column--left,
+  .el-table__body tr.hover-row.current-row > td.el-table-fixed-column--right {
+    background: var(--el-table-row-hover-bg-color) !important;
+    background-color: var(--el-table-row-hover-bg-color) !important;
+  }
+
+  // 兼容仍使用独立 fixed-right 表格的 Element Plus 渲染结构。
+  .el-table__fixed-right .el-table__body tr:hover > td.el-table__cell,
+  .el-table__fixed-right .el-table__body tr.hover-row > td.el-table__cell,
+  .el-table__fixed-right .el-table__body tr.current-row > td.el-table__cell {
+    background: var(--el-table-row-hover-bg-color) !important;
+    background-color: var(--el-table-row-hover-bg-color) !important;
+  }
+
+  // 旧版 fixed 容器本身也保持实体背景，避免固定列单元格状态切换时透视。
+  .el-table__fixed,
+  .el-table__fixed-left,
+  .el-table__fixed-right,
+  .el-table__fixed-body-wrapper,
+  .el-table__fixed-left-body-wrapper,
+  .el-table__fixed-right-body-wrapper {
+    background-color: var(--el-table-bg-color) !important;
+  }
+}
+
 // 去掉额外的表格边线，使用表格border
 .el-table--border:after,
 .el-table--border:before,

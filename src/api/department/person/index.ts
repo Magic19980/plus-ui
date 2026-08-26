@@ -1,4 +1,5 @@
 import type { PageResult } from '@/api/types';
+import type { DeptTreeVO } from '@/api/system/dept/types';
 import type { AxiosPromise } from '@/utils/api-types';
 import request from '@/utils/request';
 import type {
@@ -9,6 +10,7 @@ import type {
   PersonDepartmentContextVO,
   PersonLeaveForm,
   PersonLeaveVO,
+  PersonProfileBatchForm,
   PersonUserOptionQuery,
   PersonUserOptionVO
 } from './types';
@@ -40,6 +42,13 @@ export const listPersonUserOptionsPage = (query: PersonUserOptionQuery): AxiosPr
     url: '/department/person/userOptions/page',
     method: 'get',
     params: query
+  });
+};
+
+export const listPersonUserOptionDeptTree = (): AxiosPromise<DeptTreeVO[]> => {
+  return request({
+    url: '/department/person/userOptions/deptTree',
+    method: 'get'
   });
 };
 
@@ -89,6 +98,14 @@ export const addPersonProfile = (data: PersonProfileForm) => {
   });
 };
 
+export const addPersonProfiles = (data: PersonProfileBatchForm) => {
+  return request({
+    url: '/department/person/batch',
+    method: 'post',
+    data
+  });
+};
+
 export const updatePersonProfile = (data: PersonProfileForm) => {
   return request({
     url: '/department/person',
@@ -129,12 +146,14 @@ export default {
   getPersonProfile,
   listPersonUserOptions,
   listPersonUserOptionsPage,
+  listPersonUserOptionDeptTree,
   listPersonMemberOptions,
   listPersonLeaves,
   addPersonLeave,
   updatePersonLeave,
   delPersonLeave,
   addPersonProfile,
+  addPersonProfiles,
   updatePersonProfile,
   delPersonProfile,
   endPersonProfile,

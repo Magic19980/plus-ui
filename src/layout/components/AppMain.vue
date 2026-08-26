@@ -3,7 +3,7 @@
     <router-view v-slot="{ Component, route }">
       <transition :enter-active-class="animate" mode="out-in">
         <keep-alive :include="tagsViewStore.cachedViews">
-          <component :is="Component" v-if="!route.meta.link" :key="route.path" />
+          <component :is="Component" v-if="!route.meta.link" :key="`${route.path}:${departmentStore.switchRevision}`" />
         </keep-alive>
       </transition>
     </router-view>
@@ -14,12 +14,14 @@
 <script setup name="AppMain" lang="ts">
 import animateConfig from '@/animate';
 import { useFullHeightTable } from '@/hooks/table/useFullHeightTable';
+import { useDepartmentStore } from '@/store/modules/department';
 import { useSettingsStore } from '@/store/modules/settings';
 import { useTagsViewStore } from '@/store/modules/tagsView';
 import IframeToggle from './IframeToggle/index.vue';
 
 const route = useRoute();
 const tagsViewStore = useTagsViewStore();
+const departmentStore = useDepartmentStore();
 useFullHeightTable();
 
 // 随机动画集合

@@ -3,7 +3,7 @@ export interface PostVO extends BaseEntity {
   deptId: number | string;
   postCode: string;
   postName: string;
-  postCategory: string;
+  postIndonesianName?: string;
   deptName: string;
   postSort: number;
   status: string;
@@ -15,7 +15,7 @@ export interface PostForm {
   deptId: number | string | undefined;
   postCode: string;
   postName: string;
-  postCategory: string;
+  postIndonesianName?: string;
   postSort: number;
   status: string;
   remark: string;
@@ -26,6 +26,6 @@ export interface PostQuery extends PageQuery {
   belongDeptId: number | string;
   postCode: string;
   postName: string;
-  postCategory: string;
+  postIndonesianName: string;
   status: string;
 }

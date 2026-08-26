@@ -20,11 +20,13 @@ export interface ScoreProposalVO {
   deptName?: string;
   mainCategoryId?: string | number;
   subCategoryId?: string | number;
+  proposerUserId?: string | number;
   mainCategory?: string;
   subCategory?: string;
   problemDescription?: string;
   improvementMeasure?: string;
   implementerSupervisor?: string;
+  implementerUserIds?: Array<string | number>;
   beforeOssId?: string | number;
   afterOssId?: string | number;
   startDate?: string;
@@ -39,6 +41,17 @@ export interface ScoreProposalVO {
 }
 
 export type ScoreProposalForm = Omit<ScoreProposalVO, 'id' | 'deptId' | 'reviewStatus' | 'reviewComment' | 'createTime' | 'updateTime' | 'beforeOssId' | 'afterOssId'> & { id?: string | number; beforeOssId?: string; afterOssId?: string };
+
+/** 岗位是用户管理中的实时派生字段，不随提案提交。 */
+export type ScoreProposalPayload = Omit<ScoreProposalForm, 'proposerRole'>;
+
+export interface ScoreProposalMemberOptionVO {
+  userId: string | number;
+  userName: string;
+  nickName?: string;
+  employeeNo?: string;
+  jobTitle?: string;
+}
 
 export interface ReviewForm {
   id: string | number;

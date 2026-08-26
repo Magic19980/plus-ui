@@ -16,6 +16,7 @@ export interface UserInfo {
 export interface UserQuery extends PageQuery {
   userName?: string;
   nickName?: string;
+  indonesianName?: string;
   phoneNumber?: string;
   status?: string;
   deptId?: string | number;
@@ -32,6 +33,7 @@ export interface UserVO extends BaseEntity {
   deptId: number;
   userName: string;
   nickName: string;
+  indonesianName?: string;
   employeeNo?: string;
   userType: string;
   email: string;
@@ -63,6 +65,7 @@ export interface UserForm {
   deptId?: number;
   userName: string;
   nickName?: string;
+  indonesianName?: string;
   employeeNo?: string;
   password: string;
   phoneNumber?: string;
@@ -80,6 +83,7 @@ export interface UserForm {
  */
 export interface UserProfileForm {
   nickName?: string;
+  indonesianName?: string;
   phoneNumber?: string;
   email?: string;
   gender?: string;

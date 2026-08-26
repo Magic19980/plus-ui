@@ -11,6 +11,9 @@ export const getWorkOrder = (id: string | number): AxiosPromise<WorkOrderVO> => 
   return request({ url: '/department/workOrder/' + id, method: 'get' });
 };
 
+export const previewWorkOrderPdf = (id: string | number): Promise<Blob> =>
+  request({ url: '/department/workOrder/' + id + '/sourcePdf', method: 'get', responseType: 'blob' });
+
 export const getWorkOrderDetails = (id: string | number): AxiosPromise<WorkOrderDetailVO[]> => {
   return request({ url: '/department/workOrder/' + id + '/details', method: 'get' });
 };
@@ -36,6 +39,7 @@ export const getWorkOrderSummary = (beginDate: string, endDate: string): AxiosPr
 export default {
   listWorkOrder,
   getWorkOrder,
+  previewWorkOrderPdf,
   getWorkOrderDetails,
   updateWorkOrderDetail,
   delWorkOrderDetail,

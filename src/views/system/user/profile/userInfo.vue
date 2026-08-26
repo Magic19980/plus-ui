@@ -3,6 +3,9 @@
     <el-form-item :label="$t('common.nickName')" prop="nickName">
       <el-input v-model="userForm.nickName" maxlength="30" />
     </el-form-item>
+    <el-form-item :label="$t('common.indonesianName')" prop="indonesianName">
+      <el-input v-model="userForm.indonesianName" maxlength="100" />
+    </el-form-item>
     <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
       <el-input v-model="userForm.phoneNumber" maxlength="11" />
     </el-form-item>
@@ -71,6 +74,7 @@ const submit = () => {
     if (valid) {
       const profile: UserProfileForm = {
         nickName: props.user.nickName,
+        indonesianName: props.user.indonesianName,
         phoneNumber: props.user.phoneNumber,
         email: props.user.email,
         gender: props.user.gender

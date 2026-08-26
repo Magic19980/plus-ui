@@ -51,11 +51,17 @@
         <el-row :gutter="18">
           <el-col :span="12"><el-form-item label="企业名称"><el-input v-model="form.companyName" placeholder="模板表头企业名称" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="EIT小组成员"><el-input v-model="form.teamMembers" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="提议人工号"><el-input v-model="form.employeeNo" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="提议者姓名" prop="proposerName"><el-input v-model="form.proposerName" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="提议者岗位"><el-input v-model="form.proposerRole" /></el-form-item></el-col>
+          <el-col :span="8">
+            <el-form-item label="提议人姓名" prop="proposerUserId">
+              <el-select v-model="form.proposerUserId" clearable filterable style="width: 100%" placeholder="请选择提议人" @change="handleProposerChange">
+                <el-option v-for="item in departmentMembers" :key="item.userId" :label="memberLabel(item)" :value="item.userId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8"><el-form-item label="提议人工号"><el-input v-model="form.employeeNo" readonly placeholder="选择提议人后自动带出" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="提议人岗位"><el-input v-model="form.proposerRole" readonly placeholder="选择提议人后自动带出" /></el-form-item></el-col>
           <el-col :span="8"><el-form-item label="职位层级"><el-select v-model="form.proposerLevel" clearable filterable placeholder="请选择职位层级" style="width: 100%"><el-option v-for="item in dm_score_job" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="车间/部门"><el-input v-model="form.deptName" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="车间/部门"><el-input v-model="form.deptName" readonly placeholder="当前登录科室" /></el-form-item></el-col>
           <el-col :span="8">
             <el-form-item label="提案大类" prop="mainCategoryId">
               <el-select v-model="form.mainCategoryId" clearable filterable style="width: 100%" placeholder="请选择提案大类" @change="handleMainCategoryChange">
@@ -74,7 +80,22 @@
         <el-alert v-if="categoryTree.length === 0" title="当前还没有启用的SCORE分类，请先在“分类配置”中维护提案大类和小类。" type="warning" :closable="false" class="mb-4" />
         <el-form-item label="问题描述"><el-input v-model="form.problemDescription" type="textarea" :rows="4" /></el-form-item>
         <el-form-item label="改进措施"><el-input v-model="form.improvementMeasure" type="textarea" :rows="4" /></el-form-item>
-        <el-form-item label="实施人/监督人"><el-input v-model="form.implementerSupervisor" /></el-form-item>
+        <el-form-item label="实施人/监督人">
+          <el-select
+            v-model="form.implementerUserIds"
+            multiple
+            clearable
+            filterable
+            collapse-tags
+            collapse-tags-tooltip
+            style="width: 100%"
+            placeholder="请选择实施人或监督人，可多选"
+            no-data-text="当前科室暂无有效人员档案"
+            @change="syncImplementerNames"
+          >
+            <el-option v-for="item in departmentMembers" :key="item.userId" :label="memberLabel(item)" :value="item.userId" />
+          </el-select>
+        </el-form-item>
         <el-row :gutter="18">
           <el-col :span="8"><el-form-item label="开始日期"><el-date-picker v-model="form.startDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
           <el-col :span="8"><el-form-item label="计划完成日期"><el-date-picker v-model="form.plannedCompletionDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
@@ -104,11 +125,13 @@ import ImageUpload from '@/components/ImageUpload/index.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { listScoreCategoryOptions } from '@/api/department/scoreCategory';
 import type { ScoreCategoryVO } from '@/api/department/scoreCategory/types';
-import { addScoreProposal, delScoreProposal, exportScoreProposal, listScoreProposal, reviewScoreProposal, updateScoreProposal } from '@/api/department/scoreProposal';
-import type { ReviewForm, ScoreProposalForm, ScoreProposalQuery, ScoreProposalVO } from '@/api/department/scoreProposal/types';
+import { addScoreProposal, delScoreProposal, exportScoreProposal, listScoreProposal, listScoreProposalMemberOptions, reviewScoreProposal, updateScoreProposal } from '@/api/department/scoreProposal';
+import type { ReviewForm, ScoreProposalForm, ScoreProposalMemberOptionVO, ScoreProposalPayload, ScoreProposalQuery, ScoreProposalVO } from '@/api/department/scoreProposal/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload } from '@/utils/request';
+import { useDepartmentStore } from '@/store/modules/department';
+import { useUserStore } from '@/store/modules/user';
 import { useDict } from '@/utils/dict';
 
 const { loading, withLoading } = useLoading(true);
@@ -118,13 +141,16 @@ const buttonLoading = ref(false);
 const formRef = ref<ElFormInstance>();
 const dateRange = ref<string[]>([]);
 const categoryTree = ref<ScoreCategoryVO[]>([]);
+const departmentMembers = ref<ScoreProposalMemberOptionVO[]>([]);
 const { dm_score_job } = toRefs<any>(useDict('dm_score_job'));
 const queryParams = reactive<ScoreProposalQuery>({ pageNum: 1, pageSize: 10 });
-const form = reactive<ScoreProposalForm>({ proposerName: '', proposerLevel: '', completionStatus: '进行中' });
+const form = reactive<ScoreProposalForm>({ proposerUserId: undefined, proposerName: '', proposerLevel: '', completionStatus: '进行中' });
 const dialog = reactive({ visible: false, title: '' });
 const reviewDialog = reactive({ visible: false, loading: false, id: undefined as string | number | undefined, status: 'APPROVED' as ReviewForm['reviewStatus'], comment: '' });
+const departmentStore = useDepartmentStore();
+const userStore = useUserStore();
 const rules = {
-  proposerName: [{ required: true, message: '提议者姓名不能为空', trigger: 'blur' }],
+  proposerUserId: [{ required: true, message: '请选择提议人', trigger: 'change' }],
   mainCategoryId: [{ required: true, message: '请选择提案大类', trigger: 'change' }],
   subCategoryId: [{ required: true, message: '请选择提案小类', trigger: 'change' }]
 };
@@ -135,6 +161,32 @@ const querySubCategoryOptions = computed(() => categoryTree.value.find((item) =>
 const statusLabel = (value: any) => ({ PENDING: '待审核', APPROVED: '已通过', REJECTED: '已驳回' })[value] || value;
 const statusType = (value: any) => ({ PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' } as Record<string, any>)[value] || 'info';
 const imageExt = (refType: string) => ({ bizType: 'DEPARTMENT_SCORE', source: 'userUpload', refType });
+const memberLabel = (item: ScoreProposalMemberOptionVO) => item.nickName || item.userName;
+const loadDepartmentMembers = async () => {
+  const res = await listScoreProposalMemberOptions();
+  departmentMembers.value = res.data || [];
+};
+const syncCurrentDepartment = async () => {
+  await departmentStore.load();
+  form.deptName = departmentStore.currentDepartmentName;
+};
+const applyProposer = (userId?: string | number) => {
+  const member = departmentMembers.value.find((item) => String(item.userId) === String(userId));
+  form.proposerUserId = member?.userId;
+  form.proposerName = member ? memberLabel(member) : '';
+  form.employeeNo = member?.employeeNo || '';
+  form.proposerRole = member?.jobTitle || '';
+};
+const handleProposerChange = (userId?: string | number) => applyProposer(userId);
+const setDefaultProposer = () => applyProposer(userStore.userId);
+const syncImplementerNames = () => {
+  const selectedIds = form.implementerUserIds || [];
+  form.implementerSupervisor = selectedIds
+    .map((userId) => departmentMembers.value.find((item) => String(item.userId) === String(userId)))
+    .filter((item): item is ScoreProposalMemberOptionVO => Boolean(item))
+    .map(memberLabel)
+    .join('、');
+};
 
 const getList = async () => withLoading(async () => { const res = await listScoreProposal(queryParams); list.value = res.data?.rows || []; total.value = res.data?.total || 0; });
 const handleQuery = () => { queryParams.beginDate = dateRange.value?.[0]; queryParams.endDate = dateRange.value?.[1]; queryParams.pageNum = 1; getList(); };
@@ -149,10 +201,30 @@ const normalizeProposerLevel = (value?: string) => {
   const legacy = options.find((item: DictDataOption) => String(item.label) === String(value) || String(item.label).includes(String(value)));
   return legacy?.value || value;
 };
-const resetForm = () => Object.assign(form, { id: undefined, companyName: '', teamMembers: '', employeeNo: '', proposerName: '', proposerRole: '', proposerLevel: defaultProposerLevel(), deptName: '', mainCategoryId: undefined, subCategoryId: undefined, mainCategory: '', subCategory: '', problemDescription: '', improvementMeasure: '', implementerSupervisor: '', beforeOssId: undefined, afterOssId: undefined, startDate: '', plannedCompletionDate: '', actualCompletionDate: '', completionStatus: '进行中', remark: '' });
-const handleAdd = () => { resetForm(); dialog.title = '新增SCORE提案'; dialog.visible = true; };
-const handleUpdate = (row: any) => {
+const resetForm = () => Object.assign(form, { id: undefined, proposerUserId: undefined, companyName: '', teamMembers: '', employeeNo: '', proposerName: '', proposerRole: '', proposerLevel: defaultProposerLevel(), deptName: '', mainCategoryId: undefined, subCategoryId: undefined, mainCategory: '', subCategory: '', problemDescription: '', improvementMeasure: '', implementerSupervisor: '', implementerUserIds: [], beforeOssId: undefined, afterOssId: undefined, startDate: '', plannedCompletionDate: '', actualCompletionDate: '', completionStatus: '进行中', remark: '' });
+const handleAdd = async () => {
+  resetForm();
+  await Promise.all([loadDepartmentMembers(), syncCurrentDepartment()]);
+  setDefaultProposer();
+  dialog.title = '新增SCORE提案';
+  dialog.visible = true;
+};
+const handleUpdate = async (row: any) => {
+  await Promise.all([loadDepartmentMembers(), syncCurrentDepartment()]);
   Object.assign(form, { ...row });
+  if (form.proposerUserId && !departmentMembers.value.some((item) => String(item.userId) === String(form.proposerUserId))) {
+    departmentMembers.value.push({ userId: form.proposerUserId, userName: form.proposerName, nickName: form.proposerName, employeeNo: form.employeeNo });
+  }
+  const implementerNames = (form.implementerSupervisor || '').split(/[、,，]/).map((item) => item.trim()).filter(Boolean);
+  form.implementerUserIds = (form.implementerUserIds || []).map((userId, index) => {
+    if (!departmentMembers.value.some((item) => String(item.userId) === String(userId))) {
+      const name = implementerNames[index] || `已离开成员（${userId}）`;
+      departmentMembers.value.push({ userId, userName: name, nickName: name });
+    }
+    return userId;
+  });
+  if (form.proposerUserId) applyProposer(form.proposerUserId);
+  syncImplementerNames();
   form.proposerLevel = normalizeProposerLevel(form.proposerLevel);
   if (!form.mainCategoryId && form.mainCategory) {
     const main = categoryTree.value.find((item) => item.categoryName === form.mainCategory);
@@ -180,10 +252,11 @@ const getCategoryOptions = async () => {
 const submitForm = async () => {
   await formRef.value?.validate();
   syncCategoryNames();
+  const { proposerRole: _proposerRole, ...payload } = form;
   buttonLoading.value = true;
   try {
-    if (form.id) await updateScoreProposal(form as ScoreProposalForm & { id: string | number });
-    else await addScoreProposal(form);
+    if (form.id) await updateScoreProposal(payload as ScoreProposalPayload & { id: string | number });
+    else await addScoreProposal(payload as ScoreProposalPayload);
     modal.msgSuccess('保存成功，记录已进入待审核');
     dialog.visible = false;
     await getList();

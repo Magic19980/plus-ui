@@ -18,6 +18,15 @@ export interface PersonProfileVO {
 export interface PersonProfileForm {
   id?: string | number;
   userId?: string | number;
+  userIds?: Array<string | number>;
+  joinDate?: string;
+  leaveDate?: string;
+  memberType?: string;
+  remark?: string;
+}
+
+export interface PersonProfileBatchForm {
+  userIds: Array<string | number>;
   joinDate?: string;
   leaveDate?: string;
   memberType?: string;
@@ -56,6 +65,7 @@ export interface PersonUserOptionVO {
 /** 分页选择系统用户时使用的筛选条件。 */
 export interface PersonUserOptionQuery extends PageQuery {
   keyword?: string;
+  deptId?: string | number;
 }
 
 export interface PersonLeaveVO {

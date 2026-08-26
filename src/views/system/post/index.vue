@@ -36,15 +36,6 @@
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
-              <el-form-item :label="$t('common.categoryCode')" prop="postCategory">
-                <el-input
-                  v-model="queryParams.postCategory"
-                  :placeholder="$t('common.placeholderInputPostCategory')"
-                  clearable
-                  style="width: 200px"
-                  @keyup.enter="handleQuery"
-                />
-              </el-form-item>
               <el-form-item :label="$t('common.postName')" prop="postName">
                 <el-input
                   v-model="queryParams.postName"
@@ -53,12 +44,18 @@
                   @keyup.enter="handleQuery"
                 />
               </el-form-item>
+              <el-form-item :label="$t('common.postIndonesianName')" prop="postIndonesianName">
+                <el-input
+                  v-model="queryParams.postIndonesianName"
+                  :placeholder="$t('common.placeholderInputPostIndonesianName')"
+                  clearable
+                  @keyup.enter="handleQuery"
+                />
+              </el-form-item>
               <el-form-item :label="$t('common.dept')" prop="deptId">
-                <el-tree-select
+                <DeptTreeSelect
                   v-model="queryParams.deptId"
                   :data="deptOptions"
-                  :props="{ value: 'id', label: 'label', children: 'children' } as any"
-                  value-key="id"
                   :placeholder="$t('common.placeholderSelectDept')"
                   check-strictly
                 />
@@ -135,8 +132,8 @@
             <el-table-column type="selection" width="55" align="center" />
             <el-table-column v-if="false" :label="$t('common.postId')" align="center" prop="postId" />
             <el-table-column :label="$t('common.postCode')" align="center" prop="postCode" />
-            <el-table-column :label="$t('common.categoryCode')" align="center" prop="postCategory" />
             <el-table-column :label="$t('common.postName')" align="center" prop="postName" />
+            <el-table-column :label="$t('common.postIndonesianName')" align="center" prop="postIndonesianName" />
             <el-table-column :label="$t('common.dept')" align="center" prop="deptName" />
             <el-table-column :label="$t('common.sort')" align="center" prop="postSort" />
             <el-table-column :label="$t('common.status')" align="center" prop="status">
@@ -188,21 +185,25 @@
             <el-form-item :label="$t('common.postName')" prop="postName">
               <el-input v-model="form.postName" :placeholder="$t('common.placeholderInputPostName')" />
             </el-form-item>
+            <el-form-item :label="$t('common.postIndonesianName')" prop="postIndonesianName">
+              <el-input
+                v-model="form.postIndonesianName"
+                :placeholder="$t('common.placeholderInputPostIndonesianName')"
+                maxlength="100"
+                show-word-limit
+                clearable
+              />
+            </el-form-item>
             <el-form-item :label="$t('common.dept')" prop="deptId">
-              <el-tree-select
+              <DeptTreeSelect
                 v-model="form.deptId"
                 :data="deptOptions"
-                :props="{ value: 'id', label: 'label', children: 'children' } as any"
-                value-key="id"
                 :placeholder="$t('common.placeholderSelectDept')"
                 check-strictly
               />
             </el-form-item>
             <el-form-item :label="$t('common.postCode')" prop="postCode">
               <el-input v-model="form.postCode" :placeholder="$t('common.placeholderInputPostCodeName')" />
-            </el-form-item>
-            <el-form-item :label="$t('common.categoryCode')" prop="postCategory">
-              <el-input v-model="form.postCategory" :placeholder="$t('common.placeholderInputPostCategory')" />
             </el-form-item>
             <el-form-item :label="$t('common.postSort')" prop="postSort">
               <el-input-number v-model="form.postSort" controls-position="right" :min="0" />
@@ -236,6 +237,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { listPost, addPost, delPost, getPost, updatePost, deptTreeSelect } from '@/api/system/post';
 import { PostForm, PostQuery, PostVO } from '@/api/system/post/types';
+import DeptTreeSelect from '@/components/DeptTreeSelect/index.vue';
 import TreePanel from '@/components/TreePanel/index.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
@@ -266,7 +268,7 @@ const initFormData: PostForm = {
   deptId: undefined,
   postCode: '',
   postName: '',
-  postCategory: '',
+  postIndonesianName: '',
   postSort: 0,
   status: '0',
   remark: ''
@@ -281,7 +283,7 @@ const data = reactive<PageData<PostForm, PostQuery>>({
     belongDeptId: undefined,
     postCode: '',
     postName: '',
-    postCategory: '',
+    postIndonesianName: '',
     status: ''
   },
   rules: {
@@ -352,6 +354,8 @@ const handleQuery = () => {
 /** 新增按钮操作 */
 const handleAdd = () => {
   openDialog('添加岗位');
+  // 从左侧部门结构进入新增岗位时，默认带入当前选中的部门；也兼容筛选条件中的部门选择。
+  form.value.deptId = queryParams.value.belongDeptId || queryParams.value.deptId;
 };
 
 /** 修改按钮操作 */

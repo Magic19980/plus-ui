@@ -89,231 +89,29 @@
       </el-tabs>
     </el-card>
 
-    <el-dialog v-model="ruleDialog.visible" :title="ruleDialog.title" width="720px" class="task-rule-dialog" append-to-body>
-      <el-form ref="ruleFormRef" :model="ruleForm" :rules="ruleRules" label-width="98px" class="rule-form">
-        <section class="rule-form__section">
-          <div class="rule-form__section-heading">
-            <span class="rule-form__section-index">01</span>
-            <div>
-              <h4>基础信息</h4>
-              <p>定义任务名称和执行类型</p>
-            </div>
-          </div>
-          <el-row :gutter="18">
-            <el-col :xs="24" :sm="14">
-              <el-form-item label="任务名称" prop="taskName">
-                <el-input v-model="ruleForm.taskName" maxlength="100" placeholder="例如：每日提交工作日报" />
-              </el-form-item>
-            </el-col>
-            <el-col :xs="24" :sm="10">
-              <el-form-item label="任务类型" prop="taskType">
-                <el-select v-model="ruleForm.taskType" style="width: 100%" @change="onTaskTypeChange">
-                  <el-option label="SCORE提案" value="SCORE_PROPOSAL" />
-                  <el-option label="5WHY分析" value="FIVE_WHY" />
-                  <el-option label="日报" value="DAILY_REPORT" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </section>
+    <TaskRuleDialog
+      v-model="ruleDialog.visible"
+      :title="ruleDialog.title"
+      :form="ruleForm"
+      :loading="buttonLoading"
+      @task-type-change="onTaskTypeChange"
+      @save="saveRule"
+    />
 
-        <template v-if="ruleForm.taskType === 'DAILY_REPORT'">
-          <section class="daily-rule-panel">
-            <div class="daily-rule-panel__heading">
-              <span class="daily-rule-panel__icon"><el-icon><Calendar /></el-icon></span>
-              <div class="daily-rule-panel__title-wrap">
-                <div class="daily-rule-panel__title">日报执行规则</div>
-                <div class="daily-rule-panel__subtitle">按成员个人工作日逐日检查完成情况</div>
-              </div>
-              <el-tag type="success" effect="light">按成员执行</el-tag>
-            </div>
-            <div class="daily-rule-grid">
-              <div>
-                <span>执行频率</span>
-                <strong>每个工作日</strong>
-              </div>
-              <div>
-                <span>完成要求</span>
-                <strong>1 条日报</strong>
-              </div>
-              <div>
-                <span>工作日</span>
-                <strong>成员独立配置</strong>
-              </div>
-              <div>
-                <span>提醒时间</span>
-                <strong>成员独立配置</strong>
-              </div>
-            </div>
-            <div class="daily-rule-panel__note">
-              <el-icon><InfoFilled /></el-icon>
-              <span>休息日不会产生日报要求，未分配成员也不会计入提醒和缺报。</span>
-            </div>
-          </section>
-        </template>
-
-        <template v-else>
-          <section class="rule-form__section">
-            <div class="rule-form__section-heading">
-              <span class="rule-form__section-index">02</span>
-              <div>
-                <h4>执行规则</h4>
-                <p>设置任务周期、统计口径和提醒方式</p>
-              </div>
-            </div>
-            <el-row :gutter="18">
-              <el-col :xs="24" :sm="12">
-                <el-form-item label="周期" prop="cycleType">
-                  <el-select v-model="ruleForm.cycleType" style="width: 100%">
-                    <el-option label="每周" value="WEEK" />
-                    <el-option label="每月" value="MONTH" />
-                    <el-option label="每季度" value="QUARTER" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :sm="12">
-                <el-form-item label="要求次数" prop="requiredCount">
-                  <el-input-number v-model="ruleForm.requiredCount" :min="1" :max="999" controls-position="right" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="18">
-              <el-col :xs="24" :sm="12">
-                <el-form-item label="截止日">
-                  <el-input-number v-model="ruleForm.deadlineDay" :min="0" :max="31" controls-position="right" style="width: 100%" />
-                  <div class="form-help">0 表示周期最后一天；每月可填 1-31。</div>
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :sm="12">
-                <el-form-item label="截止时间">
-                  <el-time-picker v-model="ruleForm.deadlineTime" value-format="HH:mm:ss" placeholder="18:00:00" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="18">
-              <el-col :xs="24" :sm="12">
-                <el-form-item label="完成口径">
-                  <el-select v-model="ruleForm.countMode" style="width: 100%">
-                    <el-option label="已提交" value="SUBMITTED" />
-                    <el-option label="审核通过" value="APPROVED" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :xs="24" :sm="12">
-                <el-form-item label="提前提醒(小时)">
-                  <el-input-number v-model="ruleForm.remindHours" :min="0" :max="720" controls-position="right" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </section>
-        </template>
-
-        <section class="rule-form__section rule-form__section--last">
-          <div class="rule-form__section-heading">
-            <span class="rule-form__section-index">{{ ruleForm.taskType === 'DAILY_REPORT' ? '02' : '03' }}</span>
-            <div>
-              <h4>生效与状态</h4>
-              <p>控制规则生效范围，并补充必要说明</p>
-            </div>
-          </div>
-          <el-row :gutter="18">
-            <el-col :xs="24" :sm="12">
-              <el-form-item label="生效开始">
-                <el-date-picker v-model="ruleForm.effectiveStart" type="date" value-format="YYYY-MM-DD" placeholder="不填则立即生效" clearable style="width: 100%" />
-              </el-form-item>
-            </el-col>
-            <el-col :xs="24" :sm="12">
-              <el-form-item label="生效结束">
-                <el-date-picker v-model="ruleForm.effectiveEnd" type="date" value-format="YYYY-MM-DD" placeholder="不填则长期有效" clearable style="width: 100%" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item label="状态" class="rule-status-item">
-            <el-radio-group v-model="ruleForm.status">
-              <el-radio label="ENABLED">启用</el-radio>
-              <el-radio label="DISABLED">停用</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="备注">
-            <el-input v-model="ruleForm.remark" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="补充任务执行要求或特殊说明" />
-          </el-form-item>
-        </section>
-      </el-form>
-      <template #footer>
-        <div class="rule-dialog-footer">
-          <el-button @click="ruleDialog.visible = false">取消</el-button>
-          <el-button type="primary" :loading="buttonLoading" @click="saveRule">保存规则</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="assignmentDialog.visible" :title="`成员分配：${selectedRule?.taskName || ''}`" width="820px" class="task-assignment-dialog" append-to-body>
-      <div class="assignment-dialog">
-        <div class="assignment-dialog__intro">
-          <span class="assignment-dialog__intro-icon"><el-icon><UserFilled /></el-icon></span>
-          <div class="assignment-dialog__intro-content">
-            <strong>只为已分配成员生成任务要求</strong>
-            <p v-if="selectedRule?.taskType === 'DAILY_REPORT'">日报成员还需单独配置工作日和每日提醒时间，休息日不会产生日报要求。</p>
-            <p v-else>成员分配后才会纳入任务统计、提醒和完成情况。</p>
-          </div>
-          <el-tag type="info" effect="plain">已分配 {{ assignments.length }} 人</el-tag>
-        </div>
-
-        <div class="assignment-form-card">
-          <div class="assignment-block-heading">
-            <div>
-              <h4>添加成员</h4>
-              <p>设置成员的任务生效时间{{ selectedRule?.taskType === 'DAILY_REPORT' ? '、工作日和提醒时间' : '' }}</p>
-            </div>
-            <span class="assignment-block-heading__step">STEP 01</span>
-          </div>
-          <el-form :model="assignmentForm" label-width="76px" class="assignment-form">
-            <div class="assignment-form__grid">
-              <el-form-item label="成员" class="assignment-field assignment-field--member">
-                <el-select v-model="assignmentForm.userId" filterable clearable placeholder="选择成员" style="width: 100%">
-                  <el-option v-for="item in userOptions" :key="item.userId" :label="`${item.nickName || item.userName}（${item.userName}）`" :value="item.userId" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="生效开始" class="assignment-field assignment-field--start">
-                <el-date-picker v-model="assignmentForm.effectiveStart" type="date" value-format="YYYY-MM-DD" placeholder="立即生效" clearable style="width: 100%" />
-              </el-form-item>
-              <template v-if="selectedRule?.taskType === 'DAILY_REPORT'">
-                <el-form-item label="工作日" class="assignment-field assignment-field--days">
-                  <el-checkbox-group v-model="assignmentWorkDays" class="assignment-workdays">
-                    <el-checkbox v-for="item in weekOptions" :key="item.value" :label="item.value">{{ item.label }}</el-checkbox>
-                  </el-checkbox-group>
-                </el-form-item>
-                <el-form-item label="提醒时间" class="assignment-field assignment-field--time">
-                  <el-time-picker v-model="assignmentForm.reminderTime" value-format="HH:mm:ss" placeholder="18:00:00" style="width: 100%" />
-                </el-form-item>
-              </template>
-              <div class="assignment-form__action">
-                <el-button type="primary" icon="Plus" @click="saveAssignment">添加分配</el-button>
-              </div>
-            </div>
-          </el-form>
-        </div>
-
-        <div class="assignment-list">
-          <div class="assignment-block-heading assignment-list__heading">
-            <div>
-              <h4>已分配成员</h4>
-              <p>可在下方查看成员的生效范围和日报执行配置</p>
-            </div>
-            <span class="assignment-block-heading__step">STEP 02</span>
-          </div>
-          <el-table v-loading="assignmentLoading" :data="assignments" border class="assignment-table">
-            <el-table-column label="成员" min-width="170"><template #default="scope"><span class="assignment-member-name">{{ scope.row.nickName || scope.row.userName }}</span></template></el-table-column>
-            <el-table-column label="账号" prop="userName" width="145" />
-            <el-table-column label="生效时间" min-width="205" align="center"><template #default="scope">{{ scope.row.effectiveStart || '立即' }} 至 {{ scope.row.effectiveEnd || '长期' }}</template></el-table-column>
-            <el-table-column v-if="selectedRule?.taskType === 'DAILY_REPORT'" label="工作日 / 提醒" min-width="165" align="center"><template #default="scope">{{ workDayLabel(scope.row.workDays) }} / {{ scope.row.reminderTime || '18:00:00' }}</template></el-table-column>
-            <el-table-column label="状态" width="90" align="center"><template #default="scope"><el-tag :type="scope.row.status === 'DISABLED' ? 'info' : 'success'">{{ scope.row.status === 'DISABLED' ? '停用' : '启用' }}</el-tag></template></el-table-column>
-            <el-table-column label="操作" width="72" align="center"><template #default="scope"><el-button v-hasPermi="['department:task:edit']" link type="danger" icon="Delete" @click="removeAssignment(scope.row)" /></template></el-table-column>
-          </el-table>
-        </div>
-      </div>
-      <template #footer><el-button @click="assignmentDialog.visible = false">关闭</el-button></template>
-    </el-dialog>
+    <TaskAssignmentDialog
+      v-model="assignmentDialog.visible"
+      :selected-rule="selectedRule"
+      :user-options="userOptions"
+      :assignments="assignments"
+      :loading="assignmentLoading"
+      :form="assignmentForm"
+      :work-days="assignmentWorkDays"
+      :week-options="weekOptions"
+      :work-day-label="workDayLabel"
+      @update:work-days="updateAssignmentWorkDays"
+      @save="saveAssignment"
+      @remove="removeAssignment"
+    />
 
     <el-dialog v-model="reviewDialog.visible" :title="reviewDialog.title" width="560px" append-to-body>
       <el-form ref="reviewFormRef" :model="reviewForm" :rules="reviewRulesForm" label-width="110px">
@@ -334,8 +132,9 @@
 
 <script setup name="DepartmentTask" lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { Calendar, InfoFilled, UserFilled } from '@element-plus/icons-vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import TaskAssignmentDialog from './components/TaskAssignmentDialog.vue';
+import TaskRuleDialog from './components/TaskRuleDialog.vue';
 import { addDepartmentReviewRule, addDepartmentTaskAssignment, addDepartmentTaskRule, delDepartmentReviewRule, delDepartmentTaskAssignment, delDepartmentTaskRule, listDepartmentReviewRules, listDepartmentTaskAssignments, listDepartmentTaskRules, listMyDepartmentTasks, updateDepartmentReviewRule, updateDepartmentTaskRule } from '@/api/department/task';
 import type { DepartmentReviewRuleForm, DepartmentReviewRuleVO, DepartmentTaskAssignmentForm, DepartmentTaskAssignmentVO, DepartmentTaskProgressVO, DepartmentTaskRuleForm, DepartmentTaskRuleVO } from '@/api/department/task/types';
 import { listPersonMemberOptions } from '@/api/department/person';
@@ -355,7 +154,6 @@ const assignmentLoading = ref(false);
 const { loading: myLoading, withLoading: withMyLoading } = useLoading(true);
 const { loading: ruleLoading, withLoading: withRuleLoading } = useLoading(true);
 const { loading: reviewLoading, withLoading: withReviewLoading } = useLoading(true);
-const ruleFormRef = ref<ElFormInstance>();
 const reviewFormRef = ref<ElFormInstance>();
 const ruleDialog = reactive({ visible: false, title: '' });
 const assignmentDialog = reactive({ visible: false });
@@ -365,7 +163,6 @@ const assignmentForm = reactive<DepartmentTaskAssignmentForm>({ userId: undefine
 const assignmentWorkDays = ref<string[]>(['1', '2', '3', '4', '5']);
 const weekOptions = [{ value: '1', label: '周一' }, { value: '2', label: '周二' }, { value: '3', label: '周三' }, { value: '4', label: '周四' }, { value: '5', label: '周五' }, { value: '6', label: '周六' }, { value: '7', label: '周日' }];
 const reviewForm = reactive<DepartmentReviewRuleForm>({ taskType: 'SCORE_PROPOSAL', reviewerUserId: undefined, backupReviewerUserId: undefined, status: 'ENABLED' });
-const ruleRules = { taskName: [{ required: true, message: '请输入任务名称', trigger: 'blur' }], taskType: [{ required: true, message: '请选择任务类型', trigger: 'change' }], cycleType: [{ required: true, message: '请选择周期', trigger: 'change' }], requiredCount: [{ required: true, message: '请输入要求次数', trigger: 'change' }] };
 const reviewRulesForm = { taskType: [{ required: true, message: '请选择业务类型', trigger: 'change' }], reviewerUserId: [{ required: true, message: '请选择主审核人', trigger: 'change' }] };
 
 const taskTypeLabel = (value?: string) => ({ SCORE_PROPOSAL: 'SCORE提案', FIVE_WHY: '5WHY分析', DAILY_REPORT: '日报' })[value || ''] || value || '—';
@@ -378,6 +175,7 @@ const ruleExecutionLabel = (row: any) => { const rule = row as DepartmentTaskRul
 const deadlineLabel = (row: any) => { const rule = row as DepartmentTaskRuleVO; return rule.taskType === 'DAILY_REPORT' ? '成员每日提醒时间' : `${rule.deadlineDay ? `每周期第${rule.deadlineDay}日` : '周期最后一天'} ${rule.deadlineTime || '18:00:00'}`; };
 const countModeLabel = (row: any) => { const rule = row as DepartmentTaskRuleVO; return rule.taskType === 'DAILY_REPORT' ? '每日有无日报' : rule.countMode === 'APPROVED' ? '审核通过' : '已提交'; };
 const workDayLabel = (value?: string) => (value || '1,2,3,4,5').split(',').map(item => weekOptions.find(day => day.value === item)?.label || item).join('、');
+const updateAssignmentWorkDays = (value: string[]) => { assignmentWorkDays.value = value; };
 
 const loadMyTasks = async () => {
   await withMyLoading(async () => {
@@ -402,7 +200,7 @@ const loadUsers = async () => {
   userOptions.value = res.data || [];
 };
 
-const resetRuleForm = () => { Object.assign(ruleForm, { id: undefined, taskName: '', taskType: 'SCORE_PROPOSAL', cycleType: 'MONTH', requiredCount: 1, deadlineDay: 0, deadlineTime: '18:00:00', countMode: 'SUBMITTED', remindHours: 24, effectiveStart: undefined, effectiveEnd: undefined, status: 'ENABLED', remark: undefined }); ruleFormRef.value?.resetFields(); };
+const resetRuleForm = () => { Object.assign(ruleForm, { id: undefined, taskName: '', taskType: 'SCORE_PROPOSAL', cycleType: 'MONTH', requiredCount: 1, deadlineDay: 0, deadlineTime: '18:00:00', countMode: 'SUBMITTED', remindHours: 24, effectiveStart: undefined, effectiveEnd: undefined, status: 'ENABLED', remark: undefined }); };
 const openRuleAdd = () => { resetRuleForm(); ruleDialog.title = '新增任务规则'; ruleDialog.visible = true; };
 const onTaskTypeChange = () => {
   if (ruleForm.taskType === 'DAILY_REPORT') {
@@ -412,7 +210,7 @@ const onTaskTypeChange = () => {
   }
 };
 const openRuleEdit = (row: any) => { const rule = row as DepartmentTaskRuleVO; resetRuleForm(); Object.assign(ruleForm, rule); onTaskTypeChange(); ruleDialog.title = '编辑任务规则'; ruleDialog.visible = true; };
-const saveRule = () => { onTaskTypeChange(); ruleFormRef.value?.validate(async (valid) => { if (!valid) return; buttonLoading.value = true; try { if (ruleForm.id) await updateDepartmentTaskRule(ruleForm); else await addDepartmentTaskRule(ruleForm); modal.msgSuccess('保存成功'); ruleDialog.visible = false; await loadRules(); } finally { buttonLoading.value = false; } }); };
+const saveRule = async () => { onTaskTypeChange(); buttonLoading.value = true; try { if (ruleForm.id) await updateDepartmentTaskRule(ruleForm); else await addDepartmentTaskRule(ruleForm); modal.msgSuccess('保存成功'); ruleDialog.visible = false; await loadRules(); } finally { buttonLoading.value = false; } };
 const removeRule = async (row: any) => { const rule = row as DepartmentTaskRuleVO; await modal.confirm(`确认删除任务规则“${rule.taskName}”吗？`); await delDepartmentTaskRule(rule.id); modal.msgSuccess('删除成功'); await loadRules(); };
 
 const openAssignmentDialog = async (row: any) => { const rule = row as DepartmentTaskRuleVO; selectedRule.value = rule; assignmentWorkDays.value = ['1', '2', '3', '4', '5']; Object.assign(assignmentForm, { id: undefined, ruleId: rule.id, userId: undefined, effectiveStart: undefined, effectiveEnd: undefined, workDays: undefined, reminderTime: rule.taskType === 'DAILY_REPORT' ? '18:00:00' : undefined, status: 'ENABLED', remark: undefined }); assignmentDialog.visible = true; await loadAssignments(); };

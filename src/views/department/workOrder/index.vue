@@ -44,7 +44,17 @@
         <el-table-column label="发生年月" prop="occurDate" width="115" align="center">
           <template #default="scope">{{ formatMonth(scope.row.occurDate) }}</template>
         </el-table-column>
-        <el-table-column label="人工单编号" prop="ticketNo" width="180" show-overflow-tooltip />
+        <el-table-column label="来源" width="100" align="center">
+          <template #default="scope">{{ scope.row.sourceType === 'PDF' ? 'PDF导入' : '手动' }}</template>
+        </el-table-column>
+        <el-table-column label="来源文件" min-width="220" show-overflow-tooltip>
+          <template #default="scope">
+            <el-button v-if="scope.row.sourceType === 'PDF' && scope.row.sourceFileName" link type="primary" @click="handlePreview(scope.row)">
+              {{ scope.row.sourceFileName }}
+            </el-button>
+            <span v-else>—</span>
+          </template>
+        </el-table-column>
         <el-table-column label="项目名称" prop="systemName" width="180" show-overflow-tooltip />
         <el-table-column label="项目特征" prop="title" min-width="260" show-overflow-tooltip />
         <el-table-column label="安装车间" prop="installDepartment" width="140" show-overflow-tooltip />
@@ -52,9 +62,6 @@
         <el-table-column label="申请部门" prop="requestDept" width="140" show-overflow-tooltip />
         <el-table-column label="结算单位" prop="settlementUnit" width="140" show-overflow-tooltip />
         <el-table-column label="项目负责人" prop="projectOwner" width="120" show-overflow-tooltip />
-        <el-table-column label="来源" width="100" align="center">
-          <template #default="scope">{{ scope.row.sourceType === 'PDF' ? 'PDF导入' : '手动' }}</template>
-        </el-table-column>
         <el-table-column label="操作" fixed="right" width="280" align="center">
           <template #default="scope">
             <el-button v-if="scope.row.detailCount" link type="primary" @click="handleDetails(scope.row)">人工统计明细({{ scope.row.detailCount }})</el-button>
@@ -70,7 +77,6 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="125px">
         <el-row :gutter="18">
           <el-col :span="12"><el-form-item label="发生年月" prop="occurDate"><el-date-picker v-model="form.occurDate" type="month" value-format="YYYY-MM" placeholder="选择发生年月" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="人工单编号"><el-input v-model="form.ticketNo" placeholder="PDF导入自动生成" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="项目名称" prop="systemName"><el-input v-model="form.systemName" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="安装车间"><el-input v-model="form.installDepartment" /></el-form-item></el-col>
           <el-col :span="12"><el-form-item label="安装班组"><el-input v-model="form.installTeam" /></el-form-item></el-col>
@@ -142,17 +148,25 @@
         <div class="el-upload__text">拖拽 PDF 到此处，或点击选择</div>
         <template #tip><div class="el-upload__tip">支持当前“工程量统计明细/人工单”文字版 PDF；扫描件需后续接入 OCR。</div></template>
       </el-upload>
-      <template #footer><el-button type="primary" :loading="upload.isUploading" @click="submitUpload">开始解析</el-button><el-button @click="upload.open = false">取消</el-button></template>
+      <template #footer><el-button type="primary" :loading="upload.isUploading" @click="submitUpload">开始解析</el-button><el-button @click="closeUpload">取消</el-button></template>
+    </el-dialog>
+
+    <el-dialog v-model="previewDialog.visible" class="work-order-pdf-dialog" :title="previewDialog.title" width="min(1200px, 92vw)" append-to-body destroy-on-close @closed="clearPreview">
+      <div v-loading="previewDialog.loading" class="work-order-pdf-preview-shell">
+        <iframe v-if="previewUrl" :src="previewUrl" class="work-order-pdf-preview" title="人工单 PDF 预览" />
+        <el-empty v-else-if="!previewDialog.loading" description="PDF 预览内容为空" />
+      </div>
+      <template #footer><el-button @click="previewDialog.visible = false">关闭</el-button></template>
     </el-dialog>
   </div>
 </template>
 
 <script setup name="DepartmentWorkOrder" lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import DepartmentMetricCard from '@/components/Department/MetricCard.vue';
 import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
-import { addWorkOrder, delWorkOrder, delWorkOrderDetail, getWorkOrderDetails, listWorkOrder, updateWorkOrder, updateWorkOrderDetail, getWorkOrderSummary } from '@/api/department/workOrder';
+import { addWorkOrder, delWorkOrder, delWorkOrderDetail, getWorkOrderDetails, listWorkOrder, previewWorkOrderPdf, updateWorkOrder, updateWorkOrderDetail, getWorkOrderSummary } from '@/api/department/workOrder';
 import type { WorkOrderDetailForm, WorkOrderDetailVO, WorkOrderForm, WorkOrderQuery, WorkOrderSummaryVO, WorkOrderVO } from '@/api/department/workOrder/types';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
@@ -178,6 +192,8 @@ const detailEditDialog = reactive({ visible: false, title: '编辑人工统计�
 const detailParentId = ref<string | number>();
 const detailForm = reactive<WorkOrderDetailForm>({});
 const upload = reactive({ open: false, isUploading: false, url: import.meta.env.VITE_APP_BASE_API + '/department/workOrder/importPdf' });
+const previewUrl = ref('');
+const previewDialog = reactive({ visible: false, loading: false, title: '' });
 const rules = { systemName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }] };
 const detailRules = { projectName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }] };
 
@@ -264,8 +280,30 @@ const submitForm = async () => {
 const handleDelete = async (row: WorkOrderVO) => { await modal.confirm(`确认删除人工单 ${row.ticketNo || row.title || row.id} 吗？`); await delWorkOrder(row.id); modal.msgSuccess('删除成功'); await Promise.all([getList(), loadSummary()]); };
 const handleExport = () => requestDownload('department/workOrder/export', queryParams, '人工单台账.xlsx');
 const submitUpload = () => { upload.isUploading = true; uploadRef.value?.submit(); };
-const handleUploadSuccess = (response: any) => { upload.isUploading = false; upload.open = false; modal.msgSuccess(response?.data?.message || response?.msg || 'PDF解析完成'); getList(); loadSummary(); };
-const handleUploadError = () => { upload.isUploading = false; modal.msgError('PDF导入失败，请确认文件是文字版人工单'); };
+const closeUpload = () => { upload.isUploading = false; upload.open = false; uploadRef.value?.clearFiles(); };
+const handleUploadSuccess = (response: any) => { closeUpload(); modal.msgSuccess(response?.data?.message || response?.msg || 'PDF解析完成'); getList(); loadSummary(); };
+const handleUploadError = () => { upload.isUploading = false; uploadRef.value?.clearFiles(); modal.msgError('PDF导入失败，请确认文件是文字版人工单'); };
+const clearPreview = () => {
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  previewUrl.value = '';
+  previewDialog.loading = false;
+};
+const handlePreview = async (row: WorkOrderVO) => {
+  if (!row.id || row.sourceType !== 'PDF' || !row.sourceFileName) return;
+  clearPreview();
+  previewDialog.title = `预览：${row.sourceFileName}`;
+  previewDialog.visible = true;
+  previewDialog.loading = true;
+  try {
+    const blob = await previewWorkOrderPdf(row.id);
+    previewUrl.value = URL.createObjectURL(blob);
+  } catch {
+    previewDialog.visible = false;
+    modal.msgError('PDF预览失败，请检查文件是否仍保存在 MinIO');
+  } finally {
+    previewDialog.loading = false;
+  }
+};
 
 function formatDate(date: Date) {
   const pad = (value: number) => String(value).padStart(2, '0');
@@ -294,6 +332,8 @@ onMounted(() => {
   getList();
   loadSummary();
 });
+
+onBeforeUnmount(clearPreview);
 </script>
 
 <style scoped lang="scss">
@@ -301,4 +341,9 @@ onMounted(() => {
   h3 { margin: 4px 0; }
   p, .summary-tip { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
 }
+
+/* 预览弹窗 append-to-body 后不再处于页面根节点下，样式必须脱离页面容器作用域。 */
+:global(.work-order-pdf-dialog .el-dialog__body) { padding: 0 !important; overflow: hidden; }
+.work-order-pdf-preview-shell { display: block; width: 100%; height: min(72vh, 760px); min-height: 520px; overflow: hidden; background: var(--el-fill-color-light); }
+.work-order-pdf-preview { display: block; width: 100%; height: 100%; min-height: 520px; border: 0; background: #fff; }
 </style>

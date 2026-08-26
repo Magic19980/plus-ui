@@ -56,7 +56,7 @@ export interface DailyCalendarCellVO {
   workday?: boolean;
   dayType?: 'WORKDAY' | 'REST';
   label?: string;
-  state: 'FILLED' | 'MISSING' | 'REST' | 'LEAVE';
+  state: 'FILLED' | 'MISSING' | 'REST' | 'LEAVE' | 'UNAVAILABLE';
   reportId?: string | number;
   sourceType?: string;
   todayWork?: string;

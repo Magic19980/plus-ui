@@ -51,9 +51,10 @@
 html.dark .el-table {
   --el-table-tr-bg-color: var(--app-surface-bg);
   --el-table-bg-color: var(--app-surface-bg);
-  --el-table-row-hover-bg-color: rgba(14, 165, 233, 0.12);
-  --el-table-current-row-bg-color: rgba(14, 165, 233, 0.16);
-  --el-color-primary-light-9: rgba(14, 165, 233, 0.16);
+  // hover/current 必须是实体颜色；透明色会让 fixed 操作列透出底层数据文字。
+  --el-table-row-hover-bg-color: color-mix(in srgb, var(--app-accent-strong) 12%, var(--app-surface-bg));
+  --el-table-current-row-bg-color: color-mix(in srgb, var(--app-accent-strong) 16%, var(--app-surface-bg));
+  --el-color-primary-light-9: color-mix(in srgb, var(--app-accent-strong) 16%, var(--app-surface-bg));
   background: var(--app-surface-bg);
 }
 

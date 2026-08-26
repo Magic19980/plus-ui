@@ -80,15 +80,27 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
         <el-form-item label="系统用户" prop="userId">
           <div class="selected-user-field">
-            <div v-if="selectedUser" class="selected-user-card">
-              <div class="selected-user-name">{{ selectedUser.nickName || selectedUser.userName }}</div>
-              <div class="selected-user-meta">
-                {{ selectedUser.userName }} · {{ selectedUser.deptName || '未分配部门' }}
-                <span v-if="selectedUser.employeeNo"> · 工号 {{ selectedUser.employeeNo }}</span>
+            <div v-if="selectedUsers.length" class="selected-user-list">
+              <div v-for="user in selectedUsers" :key="String(user.userId)" class="selected-user-card">
+                <div class="selected-user-card-main">
+                  <div class="selected-user-name">{{ user.nickName || user.userName }}</div>
+                  <div class="selected-user-meta">
+                    {{ user.userName }} · {{ user.deptName || '未分配部门' }}
+                    <span v-if="user.employeeNo"> · 工号 {{ user.employeeNo }}</span>
+                  </div>
+                </div>
+                <el-button
+                  v-if="dialog.mode === 'add'"
+                  link
+                  type="danger"
+                  icon="Close"
+                  title="移除"
+                  @click="removeSelectedUser(user.userId)"
+                />
               </div>
             </div>
-            <el-button v-if="dialog.mode === 'add' && !selectedUser" type="primary" plain icon="Search" @click="openUserPicker">选择系统用户</el-button>
-            <el-button v-if="dialog.mode === 'add' && selectedUser" link type="primary" @click="openUserPicker">更换</el-button>
+            <el-button v-if="dialog.mode === 'add' && !selectedUsers.length" type="primary" plain icon="Search" @click="openUserPicker">选择系统用户</el-button>
+            <el-button v-if="dialog.mode === 'add' && selectedUsers.length" link type="primary" @click="openUserPicker">重新选择</el-button>
           </div>
         </el-form-item>
         <el-form-item label="加入日期" prop="joinDate">
@@ -144,30 +156,54 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="leaveDialog.visible" title="人员休假安排" width="860px" append-to-body>
-      <div class="leave-toolbar">
-        <div>
-          <div class="leave-toolbar-title">按人员维护休假记录</div>
-          <div class="leave-toolbar-text">休假期间，工作日会自动生成“休假”日报；周末及休息日不生成日报。</div>
+    <el-dialog v-model="leaveDialog.visible" title="人员休假安排" width="900px" class="leave-manager-dialog" append-to-body>
+      <div class="leave-dialog-summary">
+        <div class="leave-dialog-summary-main">
+          <div class="leave-dialog-summary-icon"><el-icon><Calendar /></el-icon></div>
+          <div>
+            <div class="leave-dialog-summary-title">维护科室成员休假</div>
+            <div class="leave-dialog-summary-text">休假期间，工作日自动生成“休假”日报；周末及休息日无需填写。</div>
+          </div>
         </div>
-        <el-button v-hasPermi="['department:person:add']" type="primary" icon="Plus" @click="openLeaveForm()">新增休假</el-button>
+        <div class="leave-dialog-summary-actions">
+          <span class="leave-record-count">{{ leaves.length }} 条记录</span>
+          <el-button v-hasPermi="['department:person:add']" type="primary" icon="Plus" @click="openLeaveForm()">新增休假</el-button>
+        </div>
       </div>
-      <el-table v-loading="leaveLoading" :data="leaves" border max-height="360" class="leave-table">
-        <template #empty><empty-state description="当前科室暂无休假安排" /></template>
-        <el-table-column label="人员" min-width="150">
-          <template #default="scope">{{ scope.row.nickName || scope.row.userName }}<span class="leave-user-account">（{{ scope.row.userName }}）</span></template>
-        </el-table-column>
-        <el-table-column label="休假日期" width="230" align="center"><template #default="scope">{{ scope.row.startDate }} 至 {{ scope.row.endDate }}</template></el-table-column>
-        <el-table-column prop="leaveType" label="类型" width="120" align="center" />
-        <el-table-column prop="reason" label="说明" min-width="180" show-overflow-tooltip />
-        <el-table-column label="操作" width="130" align="center">
-          <template #default="scope">
-            <el-button v-hasPermi="['department:person:edit']" link type="primary" @click="openLeaveForm(scope.row)">编辑</el-button>
-            <el-button v-hasPermi="['department:person:remove']" link type="danger" @click="removeLeave(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <template #footer><el-button @click="leaveDialog.visible = false">关闭</el-button></template>
+
+      <div class="leave-dialog-hint">
+        <el-icon><InfoFilled /></el-icon>
+        <span>休假日期包含开始日和结束日；保存后会自动补齐对应工作日的休假日报。</span>
+      </div>
+
+      <div v-if="leaves.length" v-loading="leaveLoading" class="leave-table-shell">
+        <el-table :data="leaves" border size="small" class="leave-table">
+          <el-table-column label="人员" min-width="180">
+            <template #default="scope">{{ scope.row.nickName || scope.row.userName }}<span class="leave-user-account">（{{ scope.row.userName }}）</span></template>
+          </el-table-column>
+          <el-table-column label="休假日期" width="230" align="center"><template #default="scope">{{ scope.row.startDate }} 至 {{ scope.row.endDate }}</template></el-table-column>
+          <el-table-column prop="leaveType" label="类型" width="120" align="center" />
+          <el-table-column prop="reason" label="说明" min-width="220" show-overflow-tooltip />
+          <el-table-column label="操作" width="140" align="center">
+            <template #default="scope">
+              <el-button v-hasPermi="['department:person:edit']" link type="primary" @click="openLeaveForm(scope.row)">编辑</el-button>
+              <el-button v-hasPermi="['department:person:remove']" link type="danger" @click="removeLeave(scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div v-else v-loading="leaveLoading" class="leave-empty-state">
+        <div class="leave-empty-icon"><el-icon><Calendar /></el-icon></div>
+        <div class="leave-empty-title">暂无休假安排</div>
+        <div class="leave-empty-text">为科室成员新增休假后，系统会自动生成对应的休假日报。</div>
+        <el-button v-hasPermi="['department:person:add']" type="primary" plain icon="Plus" @click="openLeaveForm()">新增第一条休假</el-button>
+      </div>
+      <template #footer>
+        <div class="leave-dialog-footer">
+          <span>休假记录仅影响日报生成，不会删除历史数据。</span>
+          <el-button @click="leaveDialog.visible = false">关闭</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <el-dialog v-model="leaveFormDialog.visible" :title="leaveForm.id ? '编辑休假' : '新增休假'" width="560px" append-to-body>
@@ -188,22 +224,46 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="userPicker.visible" title="选择系统用户" width="760px" append-to-body>
+    <el-dialog v-model="userPicker.visible" title="选择系统用户" width="min(980px, calc(100vw - 32px))" class="person-user-picker-dialog" append-to-body>
       <div class="user-picker-dialog">
         <el-form :inline="true" @submit.prevent="handleUserPickerQuery">
           <el-form-item label="搜索人员">
             <el-input
               v-model="userPicker.keyword"
               clearable
-              placeholder="账号、姓名、工号或部门"
-              style="width: 320px"
+              placeholder="账号、姓名或工号"
+              style="width: 260px"
               @keyup.enter="handleUserPickerQuery"
+            />
+          </el-form-item>
+          <el-form-item label="所属部门">
+            <DeptTreeSelect
+              v-model="userPicker.deptId"
+              :data="deptOptions"
+              check-strictly
+              clearable
+              placeholder="全部部门"
+              style="width: 230px"
+              @change="handleUserPickerQuery"
             />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="handleUserPickerQuery">查询</el-button>
           </el-form-item>
         </el-form>
+        <div class="user-picker-selection">
+          <div class="user-picker-selection-heading">
+            <span>已选用户</span>
+            <el-tag type="primary" size="small">{{ pickerSelectedUsers.length }} 人</el-tag>
+            <el-button v-if="pickerSelectedUsers.length" link type="primary" @click="clearPickerSelection">清空</el-button>
+          </div>
+          <div v-if="pickerSelectedUsers.length" class="user-picker-selection-tags">
+            <el-tag v-for="user in pickerSelectedUsers" :key="String(user.userId)" closable @close="removePickerUser(user.userId)">
+              {{ user.nickName || user.userName }}（{{ user.userName }}）
+            </el-tag>
+          </div>
+          <span v-else class="user-picker-selection-empty">请从下方列表勾选需要纳入当前科室的人员，可跨页保留选择</span>
+        </div>
         <el-table
           v-loading="userPicker.loading"
           :data="userPickerOptions"
@@ -213,10 +273,19 @@
         >
           <template #empty><empty-state description="没有可加入当前科室的系统用户" /></template>
           <el-table-column width="58" align="center">
+            <template #header>
+              <el-checkbox
+                :model-value="isPickerPageAllSelected"
+                :indeterminate="isPickerPageIndeterminate"
+                @change="togglePickerPage"
+              />
+            </template>
             <template #default="scope">
-              <el-radio :model-value="pickerSelectedUser?.userId" :label="scope.row.userId" @click.stop="handleUserRowClick(scope.row)">
-                <span class="sr-only">选择</span>
-              </el-radio>
+              <el-checkbox
+                :model-value="isPickerUserSelected(scope.row)"
+                @click.stop
+                @change="handlePickerCheckboxChange(scope.row, $event)"
+              />
             </template>
           </el-table-column>
           <el-table-column label="账号" prop="userName" min-width="150" />
@@ -233,7 +302,8 @@
         />
       </div>
       <template #footer>
-        <el-button type="primary" :disabled="!pickerSelectedUser" @click="confirmUserPicker">确定选择</el-button>
+        <div class="user-picker-footer-summary">已选择 {{ pickerSelectedUsers.length }} 人，翻页或筛选不会清除已选项</div>
+        <el-button type="primary" :disabled="!pickerSelectedUsers.length" @click="confirmUserPicker">确定选择</el-button>
         <el-button @click="userPicker.visible = false">取消</el-button>
       </template>
     </el-dialog>
@@ -264,15 +334,16 @@
 </template>
 
 <script setup name="DepartmentPerson" lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import {
-  addPersonProfile,
+  addPersonProfiles,
   addPersonLeave,
   endPersonProfile,
   delPersonLeave,
   listPersonProfile,
   listPersonLeaves,
   listPersonMemberOptions,
+  listPersonUserOptionDeptTree,
   listPersonUserOptionsPage,
   updatePersonLeave,
   updatePersonProfile
@@ -280,12 +351,15 @@ import {
 import type {
   PersonLeaveForm,
   PersonLeaveVO,
+  PersonProfileBatchForm,
   PersonProfileForm,
   PersonProfileQuery,
   PersonProfileVO,
   PersonUserOptionQuery,
   PersonUserOptionVO
 } from '@/api/department/person/types';
+import type { DeptTreeVO } from '@/api/system/dept/types';
+import DeptTreeSelect from '@/components/DeptTreeSelect/index.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
@@ -294,8 +368,9 @@ import { download as requestDownload, globalHeaders } from '@/utils/request';
 const { loading, withLoading } = useLoading(true);
 const personList = ref<PersonProfileVO[]>([]);
 const userPickerOptions = ref<PersonUserOptionVO[]>([]);
-const selectedUser = ref<PersonUserOptionVO>();
-const pickerSelectedUser = ref<PersonUserOptionVO>();
+const selectedUsers = ref<PersonUserOptionVO[]>([]);
+const pickerSelectedUsers = ref<PersonUserOptionVO[]>([]);
+const deptOptions = ref<DeptTreeVO[]>([]);
 const leaves = ref<PersonLeaveVO[]>([]);
 const leaveMembers = ref<PersonUserOptionVO[]>([]);
 const total = ref(0);
@@ -327,7 +402,8 @@ const userPicker = reactive<PersonUserOptionQuery & { visible: boolean; loading:
   total: 0,
   pageNum: 1,
   pageSize: 8,
-  keyword: undefined
+  keyword: undefined,
+  deptId: undefined
 });
 const upload = reactive({
   open: false,
@@ -377,9 +453,9 @@ const resetQuery = () => {
 };
 
 const resetForm = () => {
-  Object.assign(form, { id: undefined, userId: undefined, joinDate: undefined, memberType: 'FULL', leaveDate: undefined, remark: '' });
-  selectedUser.value = undefined;
-  pickerSelectedUser.value = undefined;
+  Object.assign(form, { id: undefined, userId: undefined, userIds: undefined, joinDate: undefined, memberType: 'FULL', leaveDate: undefined, remark: '' });
+  selectedUsers.value = [];
+  pickerSelectedUsers.value = [];
   formRef.value?.resetFields();
   form.joinDate = today();
 };
@@ -396,19 +472,19 @@ const handleEdit = (row: unknown) => {
   Object.assign(form, {
     id: person.id,
     userId: person.userId,
+    userIds: undefined,
     joinDate: person.joinDate,
     leaveDate: person.leaveDate,
     memberType: person.memberType || 'FULL',
     remark: person.remark || ''
   });
-  selectedUser.value = {
+  selectedUsers.value = [{
     userId: person.userId,
     userName: person.userName || '',
     nickName: person.nickName,
     deptName: person.deptName,
     employeeNo: person.employeeNo
-  };
-  pickerSelectedUser.value = selectedUser.value;
+  }];
   dialog.mode = 'edit';
   dialog.title = '编辑人员档案';
   dialog.visible = true;
@@ -420,7 +496,8 @@ const loadUserPicker = async () => {
     const res = await listPersonUserOptionsPage({
       pageNum: userPicker.pageNum,
       pageSize: userPicker.pageSize,
-      keyword: userPicker.keyword
+      keyword: userPicker.keyword,
+      deptId: userPicker.deptId
     });
     userPickerOptions.value = res.data?.rows || [];
     userPicker.total = res.data?.total || 0;
@@ -429,11 +506,33 @@ const loadUserPicker = async () => {
   }
 };
 
+const loadDeptOptions = async () => {
+  const res = await listPersonUserOptionDeptTree();
+  deptOptions.value = res.data || [];
+};
+
+const userKey = (user: PersonUserOptionVO) => String(user.userId);
+
+const isPickerUserSelected = (user: PersonUserOptionVO) => {
+  return pickerSelectedUsers.value.some(item => userKey(item) === userKey(user));
+};
+
+const isPickerPageAllSelected = computed(() => {
+  return userPickerOptions.value.length > 0 && userPickerOptions.value.every(isPickerUserSelected);
+});
+
+const isPickerPageIndeterminate = computed(() => {
+  const selectedCount = userPickerOptions.value.filter(isPickerUserSelected).length;
+  return selectedCount > 0 && selectedCount < userPickerOptions.value.length;
+});
+
 const openUserPicker = async () => {
-  pickerSelectedUser.value = selectedUser.value;
+  pickerSelectedUsers.value = [...selectedUsers.value];
   userPicker.pageNum = 1;
+  userPicker.keyword = undefined;
+  userPicker.deptId = undefined;
   userPicker.visible = true;
-  await loadUserPicker();
+  await Promise.all([loadDeptOptions(), loadUserPicker()]);
 };
 
 const handleUserPickerQuery = () => {
@@ -441,16 +540,49 @@ const handleUserPickerQuery = () => {
   loadUserPicker();
 };
 
+const removePickerUser = (userId: string | number) => {
+  pickerSelectedUsers.value = pickerSelectedUsers.value.filter(user => userKey(user) !== String(userId));
+};
+
+const clearPickerSelection = () => {
+  pickerSelectedUsers.value = [];
+};
+
+const togglePickerUser = (row: PersonUserOptionVO, checked?: boolean) => {
+  const exists = isPickerUserSelected(row);
+  const shouldSelect = checked === undefined ? !exists : checked;
+  if (shouldSelect && !exists) {
+    pickerSelectedUsers.value.push(row);
+  } else if (!shouldSelect && exists) {
+    removePickerUser(row.userId);
+  }
+};
+
+const handlePickerCheckboxChange = (row: PersonUserOptionVO, checked: boolean | string | number) => {
+  togglePickerUser(row, Boolean(checked));
+};
+
 const handleUserRowClick = (row: unknown) => {
-  pickerSelectedUser.value = row as PersonUserOptionVO;
+  togglePickerUser(row as PersonUserOptionVO);
+};
+
+const togglePickerPage = (checked: boolean) => {
+  userPickerOptions.value.forEach(row => togglePickerUser(row, checked));
 };
 
 const confirmUserPicker = () => {
-  if (!pickerSelectedUser.value) return;
-  selectedUser.value = pickerSelectedUser.value;
-  form.userId = pickerSelectedUser.value.userId;
+  if (!pickerSelectedUsers.value.length) return;
+  selectedUsers.value = [...pickerSelectedUsers.value];
+  form.userId = pickerSelectedUsers.value[0].userId;
+  form.userIds = pickerSelectedUsers.value.map(user => user.userId);
   userPicker.visible = false;
   formRef.value?.clearValidate('userId');
+};
+
+const removeSelectedUser = (userId: string | number) => {
+  selectedUsers.value = selectedUsers.value.filter(user => userKey(user) !== String(userId));
+  form.userIds = selectedUsers.value.map(user => user.userId);
+  form.userId = selectedUsers.value[0]?.userId;
 };
 
 const submitForm = () => {
@@ -462,8 +594,15 @@ const submitForm = () => {
         await updatePersonProfile(form);
         modal.msgSuccess('人员档案已更新');
       } else {
-        await addPersonProfile(form);
-        modal.msgSuccess('已加入当前科室');
+        const batchForm: PersonProfileBatchForm = {
+          userIds: selectedUsers.value.map(user => user.userId),
+          joinDate: form.joinDate,
+          leaveDate: form.leaveDate,
+          memberType: form.memberType,
+          remark: form.remark
+        };
+        await addPersonProfiles(batchForm);
+        modal.msgSuccess(`已加入当前科室（${batchForm.userIds.length}人）`);
       }
       dialog.visible = false;
       await getList();
@@ -603,13 +742,29 @@ onMounted(() => {
     width: 100%;
   }
 
-  .selected-user-card {
+  .selected-user-list {
+    display: flex;
     flex: 1;
+    min-width: 0;
+    max-height: 190px;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .selected-user-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     min-width: 0;
     padding: 10px 12px;
     border: 1px solid var(--el-color-primary-light-5);
     border-radius: 8px;
     background: var(--el-color-primary-light-9);
+  }
+
+  .selected-user-card-main {
+    min-width: 0;
   }
 
   .selected-user-name {
@@ -636,28 +791,85 @@ onMounted(() => {
     }
   }
 
-  .leave-toolbar {
+  .leave-dialog-summary {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    margin-bottom: 14px;
-    padding: 13px 16px;
-    border: 1px solid var(--el-border-color-extra-light);
-    border-radius: 10px;
-    background: var(--el-fill-color-lighter);
+    padding: 14px 16px;
+    border: 1px solid var(--el-color-primary-light-8);
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-fill-color-blank));
   }
 
-  .leave-toolbar-title {
+  .leave-dialog-summary-main,
+  .leave-dialog-summary-actions,
+  .leave-dialog-footer {
+    display: flex;
+    align-items: center;
+  }
+
+  .leave-dialog-summary-main {
+    min-width: 0;
+    gap: 12px;
+  }
+
+  .leave-dialog-summary-icon {
+    display: flex;
+    flex: 0 0 36px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-8);
+    font-size: 20px;
+  }
+
+  .leave-dialog-summary-title {
     color: var(--el-text-color-primary);
     font-size: 14px;
     font-weight: 600;
   }
 
-  .leave-toolbar-text {
+  .leave-dialog-summary-text {
     margin-top: 4px;
     color: var(--el-text-color-secondary);
     font-size: 12px;
+  }
+
+  .leave-dialog-summary-actions {
+    flex: 0 0 auto;
+    gap: 12px;
+  }
+
+  .leave-record-count {
+    padding: 5px 10px;
+    border-radius: 999px;
+    color: var(--el-text-color-secondary);
+    background: var(--el-fill-color-blank);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .leave-dialog-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 14px 2px 12px;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+
+  .leave-dialog-hint .el-icon {
+    color: var(--el-color-primary);
+  }
+
+  .leave-table-shell {
+    overflow: hidden;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 10px;
   }
 
   .leave-user-account {
@@ -666,7 +878,62 @@ onMounted(() => {
   }
 
   .leave-table {
-    margin-bottom: 4px;
+    width: 100%;
+
+    :deep(.el-table__header th) {
+      background: var(--el-fill-color-lighter);
+      color: var(--el-text-color-secondary);
+      font-weight: 600;
+    }
+
+    :deep(.el-table__cell) {
+      padding: 11px 0;
+    }
+  }
+
+  .leave-empty-state {
+    display: flex;
+    min-height: 220px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 10px;
+    background: var(--el-fill-color-lighter);
+  }
+
+  .leave-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 2px;
+    border-radius: 50%;
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    font-size: 25px;
+  }
+
+  .leave-empty-title {
+    color: var(--el-text-color-primary);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .leave-empty-text {
+    margin-bottom: 6px;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+
+  .leave-dialog-footer {
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
   }
 
   .upload-template-link {
@@ -677,9 +944,312 @@ onMounted(() => {
 }
 
 @media (max-width: 700px) {
-  .department-person-page .leave-toolbar {
+  .department-person-page .leave-dialog-summary {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .department-person-page .leave-dialog-summary-actions,
+  .department-person-page .leave-dialog-footer {
+    width: 100%;
+  }
+
+  .department-person-page .leave-dialog-summary-actions {
+    justify-content: space-between;
+  }
+
+  .department-person-page .leave-dialog-footer {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+}
+</style>
+
+<style lang="scss">
+/* el-dialog 使用 append-to-body 后不再处于页面组件作用域内，弹窗样式需要单独作用于全局弹窗节点。 */
+.leave-manager-dialog {
+  .el-dialog__body {
+    padding: 18px 24px 12px;
+  }
+
+  .el-dialog__footer {
+    padding: 14px 24px 20px;
+  }
+
+  .leave-dialog-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--el-color-primary-light-8);
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-fill-color-blank));
+  }
+
+  .leave-dialog-summary-main,
+  .leave-dialog-summary-actions,
+  .leave-dialog-footer {
+    display: flex;
+    align-items: center;
+  }
+
+  .leave-dialog-summary-main {
+    min-width: 0;
+    gap: 12px;
+  }
+
+  .leave-dialog-summary-icon {
+    display: flex;
+    flex: 0 0 36px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-8);
+    font-size: 20px;
+  }
+
+  .leave-dialog-summary-title {
+    color: var(--el-text-color-primary);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .leave-dialog-summary-text {
+    margin-top: 4px;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+
+  .leave-dialog-summary-actions {
+    flex: 0 0 auto;
+    gap: 12px;
+  }
+
+  .leave-record-count {
+    padding: 5px 10px;
+    border-radius: 999px;
+    color: var(--el-text-color-secondary);
+    background: var(--el-fill-color-blank);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .leave-dialog-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 14px 2px 12px;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+
+  .leave-dialog-hint .el-icon {
+    color: var(--el-color-primary);
+  }
+
+  .leave-table-shell {
+    overflow: hidden;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 10px;
+  }
+
+  .leave-table {
+    width: 100%;
+
+    .el-table__header th {
+      background: var(--el-fill-color-lighter);
+      color: var(--el-text-color-secondary);
+      font-weight: 600;
+    }
+
+    .el-table__cell {
+      padding: 11px 0;
+    }
+  }
+
+  .leave-user-account {
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+
+  .leave-empty-state {
+    display: flex;
+    min-height: 220px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 10px;
+    background: var(--el-fill-color-lighter);
+  }
+
+  .leave-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 2px;
+    border-radius: 50%;
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    font-size: 25px;
+  }
+
+  .leave-empty-title {
+    color: var(--el-text-color-primary);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .leave-empty-text {
+    margin-bottom: 6px;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+
+  .leave-dialog-footer {
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+}
+
+.person-user-picker-dialog {
+  .el-dialog__body {
+    padding: 18px 24px 12px;
+  }
+
+  .el-dialog__footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px 20px;
+  }
+
+  .user-picker-dialog {
+    .el-form {
+      margin-bottom: 14px;
+      padding: 14px 16px 2px;
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 10px;
+      background: var(--el-fill-color-lighter);
+    }
+
+    .el-form-item {
+      margin-bottom: 12px;
+    }
+
+    .user-picker-selection {
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--el-color-primary-light-8);
+      border-radius: 10px;
+      background: var(--el-color-primary-light-9);
+    }
+
+    .user-picker-selection-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--el-text-color-primary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .user-picker-selection-heading .el-button {
+      margin-left: auto;
+    }
+
+    .user-picker-selection-tags {
+      display: flex;
+      max-height: 72px;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+      overflow-y: auto;
+    }
+
+    .user-picker-selection-empty {
+      display: block;
+      margin-top: 7px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    .el-table {
+      .el-table__header th {
+        background: var(--el-fill-color-lighter);
+        color: var(--el-text-color-secondary);
+        font-weight: 600;
+      }
+
+      .el-table__cell {
+        padding: 10px 0;
+      }
+    }
+
+    .el-pagination {
+      margin-top: 12px;
+    }
+  }
+
+  .user-picker-footer-summary {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .person-user-picker-dialog {
+    width: calc(100% - 24px) !important;
+
+    .el-dialog__footer {
+      flex-wrap: wrap;
+    }
+
+    .user-picker-footer-summary {
+      flex-basis: 100%;
+      order: 3;
+      text-align: left;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .leave-manager-dialog {
+    width: calc(100% - 24px) !important;
+
+    .leave-dialog-summary {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .leave-dialog-summary-actions,
+    .leave-dialog-footer {
+      width: 100%;
+    }
+
+    .leave-dialog-summary-actions {
+      justify-content: space-between;
+    }
+
+    .leave-dialog-footer {
+      align-items: flex-end;
+      flex-direction: column;
+    }
   }
 }
 </style>

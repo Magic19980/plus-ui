@@ -135,13 +135,12 @@
 <script setup lang="ts">
 import type { ElMessageBoxOptions } from 'element-plus';
 import { CaretBottom } from '@element-plus/icons-vue';
-import { listMyDepartmentContexts, switchMyDepartment } from '@/api/department/person';
-import type { PersonDepartmentContextVO } from '@/api/department/person/types';
 import appLogo from '@/assets/logo/tei-logo.svg';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
 import tab from '@/plugins/tab';
 import router from '@/router';
 import { useAppStore } from '@/store/modules/app';
+import { useDepartmentStore } from '@/store/modules/department';
 import { useNoticeStore } from '@/store/modules/notice';
 import { useSettingsStore } from '@/store/modules/settings';
 import { useUserStore } from '@/store/modules/user';
@@ -153,6 +152,7 @@ const appStore = useAppStore();
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
 const noticeStore = storeToRefs(useNoticeStore());
+const departmentStore = useDepartmentStore();
 
 const navType = computed(() => settingsStore.navType);
 const showLogo = computed(() => settingsStore.sidebarLogo);
@@ -160,27 +160,22 @@ const isDarkTheme = computed(
   () => settingsStore.dark || (navType.value !== NavTypeEnum.TOP && settingsStore.sideTheme === 'theme-dark')
 );
 const displayName = computed(() => userStore.nickname || '管理员');
-const departmentContexts = ref<PersonDepartmentContextVO[]>([]);
-const currentDepartmentName = computed(() => {
-  const current = departmentContexts.value.find((item) => item.current);
-  return current?.deptName || departmentContexts.value[0]?.deptName || '未选择';
-});
+const departmentContexts = computed(() => departmentStore.contexts);
+const currentDepartmentName = computed(() => departmentStore.currentDepartmentName);
 
 const loadDepartmentContexts = async () => {
   try {
-    const res = await listMyDepartmentContexts();
-    departmentContexts.value = res.data || [];
+    await departmentStore.load();
   } catch {
-    departmentContexts.value = [];
+    departmentStore.clear();
   }
 };
 
 const handleDepartmentCommand = async (command: string) => {
-  const target = departmentContexts.value.find((item) => String(item.deptId) === command);
+  const target = departmentContexts.value.find(item => String(item.deptId) === command);
   if (!target || target.current) return;
-  await switchMyDepartment(target.deptId);
+  await departmentStore.switchDepartment(target.deptId);
   ElMessage.success(`已切换到${target.deptName}`);
-  window.location.reload();
 };
 
 // 搜索菜单
@@ -200,6 +195,7 @@ const logout = async () => {
     cancelButtonText: '取消',
     type: 'warning'
   } as ElMessageBoxOptions);
+  departmentStore.clear();
   userStore.logout().then(() => {
     router.replace({
       path: '/login',

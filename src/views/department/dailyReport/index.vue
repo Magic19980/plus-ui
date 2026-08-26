@@ -15,7 +15,7 @@
           <el-button v-hasPermi="['department:dailyReport:import']" plain icon="Upload" @click="handleImport">导入明细</el-button>
         </div>
       </div>
-      <div class="toolbar-hint">日历按本部门人员档案展示；只有在任务中心分配了“日报”任务的成员才需要填写。工作日和个人调休在日报任务中配置，休假请在人事档案中维护。</div>
+      <div class="toolbar-hint">日历仅展示当前科室已分配“日报”任务的成员；工作日和个人调休在日报任务中配置，休假请在人事档案中维护。</div>
     </el-card>
 
     <el-card v-loading="loading" shadow="never" class="calendar-card mt-2">
@@ -26,7 +26,7 @@
             <h3>{{ monthTitle }} 日报日历</h3>
             <p>成员：{{ calendar.members.length }} 人 · 工作日按日报任务分配计算</p>
           </div>
-          <div class="legend"><span><i class="legend-dot filled" />已填</span><span><i class="legend-dot missing" />未填</span><span><i class="legend-dot leave" />休假</span><span><i class="legend-dot rest" />休息日</span></div>
+          <div class="legend"><span><i class="legend-dot filled" />已填</span><span><i class="legend-dot missing" />未填</span><span><i class="legend-dot leave" />休假</span><span><i class="legend-dot rest" />休息日</span><span><i class="legend-dot unavailable" />未服务</span></div>
         </div>
       </template>
 
@@ -52,6 +52,7 @@
                 <template v-if="getCell(scope.row, day.date).state === 'FILLED'"><el-icon><Check /></el-icon><span>已填</span></template>
                 <template v-else-if="getCell(scope.row, day.date).state === 'LEAVE'"><el-icon><CoffeeCup /></el-icon><span>休假</span></template>
                 <template v-else-if="getCell(scope.row, day.date).state === 'MISSING'"><el-icon><Warning /></el-icon><span>未填</span></template>
+                <template v-else-if="getCell(scope.row, day.date).state === 'UNAVAILABLE'"><span>—</span><small>未服务</small></template>
                 <template v-else><el-icon><Minus /></el-icon><span>休息</span></template>
               </div>
             </template>
@@ -177,7 +178,7 @@ const goCurrentMonth = () => { selectedMonth.value = formatMonth(new Date()); ge
 const getCell = (member: any, date: string) => (member.cells || []).find((item: DailyCalendarCellVO) => item.date === date) || ({ date, state: 'REST', workday: false } as DailyCalendarCellVO);
 const isUnavailableDate = (date: Date) => { const current = new Date(); if (date > current) return true; const dateText = formatDate(date); const day = calendar.days.find((item) => item.date === dateText); const currentMember = calendar.members.find((item) => String(item.userId) === String(userStore.userId)); const cell = currentMember ? getCell(currentMember, dateText) : undefined; return Boolean(cell ? !cell.workday : day && !day.workday); };
 const isMine = (row: DailyReportVO) => String(row.userId) === String(userStore.userId);
-const cellTitle = (member: any, cell: DailyCalendarCellVO, day: DailyCalendarDayVO) => cell.state === 'FILLED' ? `${member.nickName || member.userName}：点击查看日报` : cell.state === 'LEAVE' ? `${member.nickName || member.userName}：${cell.leaveType || '休假'}，点击查看自动日报` : cell.state === 'MISSING' ? `${member.nickName || member.userName}：${cell.label || '工作日'}未填写日报` : `${day.date}为${cell.label || day.label || '休息日'}，无需填写`;
+const cellTitle = (member: any, cell: DailyCalendarCellVO, day: DailyCalendarDayVO) => cell.state === 'FILLED' ? `${member.nickName || member.userName}：点击查看日报` : cell.state === 'LEAVE' ? `${member.nickName || member.userName}：${cell.leaveType || '休假'}，点击查看自动日报` : cell.state === 'MISSING' ? `${member.nickName || member.userName}：${cell.label || '工作日'}未填写日报` : cell.state === 'UNAVAILABLE' ? `${member.nickName || member.userName}：不在当前科室服务期内，无日报要求` : `${day.date}为${cell.label || day.label || '休息日'}，无需填写`;
 const resetReportForm = () => { Object.assign(form, { id: undefined, reportDate: undefined, todayWork: undefined, tomorrowPlan: undefined, coordinationNote: undefined }); attachments.value = []; formRef.value?.resetFields(); };
 const handleAdd = (date?: string) => { resetReportForm(); form.reportDate = date || (selectedMonth.value === formatMonth(new Date()) ? today : `${selectedMonth.value}-01`); dialog.title = '新增日报'; dialog.visible = true; };
 const handleCellClick = async (member: any, cell: DailyCalendarCellVO, day: DailyCalendarDayVO) => { if (cell.reportId) { const row = { id: cell.reportId, reportDate: cell.date, userId: member.userId } as DailyReportVO; if (String(member.userId) === String(userStore.userId)) await handleUpdate(row); else await handleView(row); } else if (cell.state === 'MISSING') { if (String(member.userId) === String(userStore.userId)) handleAdd(day.date); else modal.msgWarning('该成员的日报需要由本人填写'); } };
@@ -217,16 +218,20 @@ onMounted(getCalendar);
   .calendar-heading h3 { margin: 4px 0 0; color: var(--el-text-color-primary); }
   .legend { color: var(--el-text-color-secondary); font-size: 12px; flex-wrap: wrap; }
   .legend-dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; }
-  .legend-dot.filled { background: #67c23a; } .legend-dot.missing { background: #f56c6c; } .legend-dot.leave { background: #409eff; } .legend-dot.rest { background: #c0c4cc; }
+  .legend-dot.filled { background: #67c23a; } .legend-dot.missing { background: #f56c6c; } .legend-dot.leave { background: #409eff; } .legend-dot.rest { background: #c0c4cc; } .legend-dot.unavailable { background: var(--el-text-color-placeholder); }
   .summary-grid { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px; }
   .summary-item { min-height: 70px; padding: 12px 16px; background: var(--el-fill-color-light); border-left: 4px solid; border-radius: 8px; }
   .summary-item strong, .summary-item span { display: block; } .summary-item strong { font-size: 24px; line-height: 1.2; } .summary-item span { margin-top: 4px; color: var(--el-text-color-secondary); font-size: 12px; }
   .summary-item.blue { border-color: #409eff; color: #337ecc; } .summary-item.green { border-color: #67c23a; color: #529b2e; } .summary-item.orange { border-color: #e6a23c; color: #b88230; } .summary-item.red { border-color: #f56c6c; color: #c45656; } .summary-item.teal { border-color: #20a0a8; color: #198f96; }
-  .calendar-scroll { overflow-x: auto; padding-bottom: 4px; } .calendar-table { min-width: 1900px; }
+  // 横向滚动交给 Element Plus 表格自身处理。外层再设置 overflow-x 会与表格 body-wrapper
+  // 生成两根滚动条，且两根滚动条的滚动位置不同步，导致日报日期列难以操作。
+  .calendar-scroll { overflow: hidden; }
+  .calendar-table { width: 100%; min-width: 0; }
+  .calendar-table :deep(.el-table__body-wrapper) { overflow-x: auto; }
   .member-cell { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; text-align: left; } .member-name { font-weight: 600; } .member-account, .member-title, .member-dept { color: var(--el-text-color-secondary); font-size: 11px; } .member-dept { color: var(--el-color-warning); }
   .day-header { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px 0; line-height: 1.3; } .day-header strong { font-size: 14px; } .day-header span { color: var(--el-text-color-secondary); font-size: 11px; } .day-header em { color: var(--el-color-primary); font-size: 10px; font-style: normal; white-space: nowrap; }
   .day-header.is-rest { background: var(--el-fill-color); color: var(--el-text-color-secondary); } .day-header.is-rest em { color: var(--el-text-color-secondary); } .day-header.is-today { color: var(--el-color-primary); }
-  .report-cell { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 46px; margin: -7px; cursor: pointer; font-size: 12px; transition: background .15s; } .report-cell:hover { background: var(--el-fill-color-light); } .report-cell.state-filled { color: #529b2e; } .report-cell.state-leave { color: #337ecc; } .report-cell.state-missing { color: #c45656; background: #fef0f0; } .report-cell.state-rest { color: #a8abb2; background: var(--el-fill-color-lighter); cursor: default; }
+  .report-cell { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 46px; margin: -7px; cursor: pointer; font-size: 12px; transition: background .15s; } .report-cell:hover { background: var(--el-fill-color-light); } .report-cell.state-filled { color: #529b2e; } .report-cell.state-leave { color: #337ecc; } .report-cell.state-missing { color: #c45656; background: #fef0f0; } .report-cell.state-rest { color: #a8abb2; background: var(--el-fill-color-lighter); cursor: default; } .report-cell.state-unavailable { flex-direction: column; gap: 0; color: var(--el-text-color-placeholder); background: transparent; cursor: default; } .report-cell.state-unavailable small { font-size: 10px; line-height: 1.2; }
   .empty-calendar { padding: 70px 0; color: var(--el-text-color-secondary); text-align: center; }
   .settings-alert { margin-bottom: 18px; }
   .settings-section { padding: 18px 20px; border: 1px solid var(--el-border-color-lighter); border-radius: 12px; background: var(--el-bg-color); }

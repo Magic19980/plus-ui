@@ -132,6 +132,7 @@ export interface WorkOrderImportResultVO {
   batch: {
     id: string | number;
     sourceFileName: string;
+    ossId?: string | number;
     pageCount: number;
     recordCount: number;
     parsedRecordCount: number;

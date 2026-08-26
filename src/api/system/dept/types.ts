@@ -18,6 +18,7 @@ export interface DeptVO extends BaseEntity {
   hasChildren?: boolean;
   deptId: number | string;
   deptName: string;
+  indonesianName?: string;
   deptCategory: string;
   orderNum: number;
   leader: string;
@@ -50,6 +51,7 @@ export interface DeptForm {
   children?: DeptForm[];
   deptId?: number | string;
   deptName?: string;
+  indonesianName?: string;
   deptCategory?: string;
   orderNum?: number;
   leader?: string;

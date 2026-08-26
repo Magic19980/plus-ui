@@ -22,6 +22,20 @@
               </li>
               <li class="list-group-item">
                 <div class="profile-item-label">
+                  <svg-icon icon-class="user" />
+                  <span>{{ $t('common.nickName') }}</span>
+                </div>
+                <span class="profile-item-value">{{ state.user.nickName || '-' }}</span>
+              </li>
+              <li v-if="state.user.indonesianName" class="list-group-item">
+                <div class="profile-item-label">
+                  <svg-icon icon-class="user" />
+                  <span>{{ $t('common.indonesianName') }}</span>
+                </div>
+                <span class="profile-item-value">{{ state.user.indonesianName }}</span>
+              </li>
+              <li class="list-group-item">
+                <div class="profile-item-label">
                   <svg-icon icon-class="phone" />
                   <span>{{ $t('common.phoneNumber') }}</span>
                 </div>

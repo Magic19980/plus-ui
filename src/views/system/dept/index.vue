@@ -19,7 +19,7 @@
               @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item :label="$t('common.categoryCode')" prop="deptCategory">
+          <el-form-item :label="$t('common.deptCategoryCode')" prop="deptCategory">
             <el-input
               v-model="queryParams.deptCategory"
               :placeholder="$t('common.placeholderInputPostCategory')"
@@ -69,10 +69,15 @@
         :lazy="!isSearchActive"
         :load="loadDeptChildren"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        :default-expand-all="isExpandAll"
+        :default-expand-all="isExpandAll || isSearchActive"
       >
         <el-table-column prop="deptName" :label="$t('common.deptName')" width="260"></el-table-column>
-        <el-table-column prop="deptCategory" align="center" :label="$t('common.categoryCode')" width="200"></el-table-column>
+        <el-table-column prop="indonesianName" :label="$t('common.deptIndonesianName')" min-width="220" show-overflow-tooltip>
+          <template #default="scope">
+            <span>{{ scope.row.indonesianName || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="deptCategory" align="center" :label="$t('common.deptCategoryCode')" width="200"></el-table-column>
         <el-table-column prop="orderNum" align="center" :label="$t('common.sort')" width="200"></el-table-column>
         <el-table-column prop="status" align="center" :label="$t('common.status')" width="100">
           <template #default="scope">
@@ -118,17 +123,23 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" destroy-on-close append-to-body width="600px">
-      <el-form ref="deptFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-row>
+    <el-dialog
+      v-model="dialog.visible"
+      :title="dialog.title"
+      destroy-on-close
+      append-to-body
+      width="min(760px, calc(100vw - 32px))"
+      class="dept-form-dialog"
+    >
+      <el-form ref="deptFormRef" :model="form" :rules="rules" label-width="112px" class="dept-form">
+        <el-row :gutter="20">
           <el-col v-if="form.parentId !== 0" :span="24">
             <el-form-item :label="$t('common.parentDept')" prop="parentId">
-              <el-tree-select
+              <DeptTreeSelect
                 id="parentId"
                 v-model="form.parentId"
                 :data="deptOptions"
-                :props="{ value: 'deptId', label: 'deptName', children: 'children' } as any"
-                value-key="deptId"
+                :tree-props="{ value: 'deptId', label: 'deptName', children: 'children' }"
                 :placeholder="$t('common.placeholderSelectParentDept')"
                 check-strictly
               />
@@ -140,7 +151,12 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('common.categoryCode')" prop="deptCategory">
+            <el-form-item :label="$t('common.deptIndonesianName')" prop="indonesianName">
+              <el-input v-model="form.indonesianName" :placeholder="$t('common.placeholderInputDeptIndonesianName')" maxlength="100" show-word-limit clearable />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$t('common.deptCategoryCode')" prop="deptCategory">
               <el-input v-model="form.deptCategory" :placeholder="$t('common.placeholderInputPostCategory')" />
             </el-form-item>
           </el-col>
@@ -199,6 +215,7 @@ const { t } = useI18n();
 import { DeptForm, DeptQuery, DeptVO } from '@/api/system/dept/types';
 import { listUserByDeptId } from '@/api/system/user';
 import { UserVO } from '@/api/system/user/types';
+import DeptTreeSelect from '@/components/DeptTreeSelect/index.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDialogState } from '@/hooks/dialog/useDialogState';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
@@ -236,6 +253,7 @@ const initFormData: DeptForm = {
   deptId: undefined,
   parentId: undefined,
   deptName: undefined,
+  indonesianName: undefined,
   deptCategory: undefined,
   orderNum: 0,
   leader: undefined,
@@ -283,11 +301,62 @@ const isSearchActive = computed(
   }
 );
 
+/**
+ * 在完整部门列表中筛选，并保留命中节点的父级和下级。
+ * 搜索场景使用非懒加载数据，确保筛选结果可以直接展开显示。
+ */
+const buildSearchTree = (rows: DeptVO[], query: DeptQuery): DeptVO[] => {
+  const name = String(query.deptName || '').trim().toLocaleLowerCase();
+  const category = String(query.deptCategory || '').trim().toLocaleLowerCase();
+  const status = query.status === undefined || query.status === null || query.status === '' ? '' : String(query.status);
+  const byId = new Map(rows.map((row) => [String(row.deptId), row]));
+  const includedIds = new Set<string>();
+  const descendantIds = new Set<string>();
+
+  const isMatch = (row: DeptVO) => {
+    const matchesName = !name || String(row.deptName || '').toLocaleLowerCase().includes(name);
+    const matchesCategory = !category || String(row.deptCategory || '').toLocaleLowerCase().includes(category);
+    const matchesStatus = !status || String(row.status) === status;
+    return matchesName && matchesCategory && matchesStatus;
+  };
+
+  const matchedRows = rows.filter(isMatch);
+  matchedRows.forEach((row) => {
+    descendantIds.add(String(row.deptId));
+    let current: DeptVO | undefined = row;
+    while (current && !includedIds.has(String(current.deptId))) {
+      includedIds.add(String(current.deptId));
+      current = byId.get(String(current.parentId));
+    }
+  });
+
+  // 只从直接命中节点向下补齐，不能从其祖先向下扩散，否则会把同根的所有兄弟部门都带回来。
+  let changed: boolean;
+  do {
+    changed = false;
+    rows.forEach((row) => {
+      const deptId = String(row.deptId);
+      if (descendantIds.has(String(row.parentId)) && !descendantIds.has(deptId)) {
+        descendantIds.add(deptId);
+        includedIds.add(deptId);
+        changed = true;
+      }
+    });
+  } while (changed);
+
+  return handleTree<DeptVO>(
+    rows
+      .filter((row) => includedIds.has(String(row.deptId)))
+      .map((row) => ({ ...row, children: [] })),
+    'deptId'
+  );
+};
+
 /** 查询菜单列表 */
 const getList = async () => {
   await withLoading(async () => {
-    const res = isSearchActive.value ? await listDept(queryParams.value) : await listDeptChildren(0);
-    deptList.value = isSearchActive.value ? handleTree<DeptVO>(res.data, 'deptId') : res.data;
+    const res = isSearchActive.value ? await listDept() : await listDeptChildren(0);
+    deptList.value = isSearchActive.value ? buildSearchTree(res.data || [], queryParams.value) : res.data;
   });
 };
 
@@ -398,4 +467,43 @@ onMounted(() => {
 @use '@/assets/styles/components/page-shell' as pageShell;
 
 @include pageShell.table-crud-page;
+
+:global(.dept-form-dialog .el-dialog__body) {
+  padding: 24px 28px 12px;
+}
+
+:global(.dept-form-dialog .dept-form .el-form-item) {
+  margin-bottom: 20px;
+}
+
+:global(.dept-form-dialog .dept-form .el-form-item__label) {
+  padding-right: 14px;
+  white-space: nowrap;
+}
+
+:global(.dept-form-dialog .dept-form .el-input),
+:global(.dept-form-dialog .dept-form .el-select),
+:global(.dept-form-dialog .dept-form .el-tree-select),
+:global(.dept-form-dialog .dept-form .el-input-number) {
+  width: 100%;
+}
+
+:global(.dept-form-dialog .dept-form .el-radio-group) {
+  min-height: 32px;
+  align-items: center;
+}
+
+:global(.dept-form-dialog .dept-form .el-form-item__error) {
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  :global(.dept-form-dialog .el-dialog__body) {
+    padding: 20px 18px 8px;
+  }
+
+  :global(.dept-form-dialog .dept-form .el-form-item__label) {
+    padding-right: 10px;
+  }
+}
 </style>
