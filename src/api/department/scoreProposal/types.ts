@@ -8,11 +8,32 @@ export interface ScoreProposalQuery extends PageQuery {
   endDate?: string;
 }
 
+/** 企业参与人员弹窗的分页筛选条件。 */
+export interface ScoreProposalUserOptionQuery extends PageQuery {
+  keyword?: string;
+  deptId?: string | number;
+  jobTitle?: string;
+}
+
+export interface ScoreProposalMetricVO {
+  month: string;
+  memberCount: number;
+  monthlyTarget: number;
+  approvedCount: number;
+  totalCount: number;
+  statusApprovedCount: number;
+  pendingCount: number;
+  pendingConfirmCount: number;
+  rejectedCount: number;
+  completionRate?: number;
+  score: number;
+}
+
 export interface ScoreProposalVO {
   id: string | number;
   deptId?: string | number;
   companyName?: string;
-  teamMembers?: string;
+  teamMemberUserIds?: Array<string | number>;
   employeeNo?: string;
   proposerName: string;
   proposerRole?: string;
@@ -36,11 +57,20 @@ export interface ScoreProposalVO {
   remark?: string;
   reviewStatus: string;
   reviewComment?: string;
+  reviewedAt?: string;
+  reviewFileOssId?: string | number;
+  reviewFileName?: string;
+  revisionNo?: number;
+  submittedAt?: string;
+  submittedBy?: string | number;
+  confirmComment?: string;
+  confirmerUserId?: string | number;
+  confirmedAt?: string;
   createTime?: string;
   updateTime?: string;
 }
 
-export type ScoreProposalForm = Omit<ScoreProposalVO, 'id' | 'deptId' | 'reviewStatus' | 'reviewComment' | 'createTime' | 'updateTime' | 'beforeOssId' | 'afterOssId'> & { id?: string | number; beforeOssId?: string; afterOssId?: string };
+export type ScoreProposalForm = Omit<ScoreProposalVO, 'id' | 'deptId' | 'reviewStatus' | 'reviewComment' | 'createTime' | 'updateTime' | 'beforeOssId' | 'afterOssId'> & { id?: string | number; beforeOssId?: string; afterOssId?: string; saveMode?: 'DRAFT' | 'SUBMIT' };
 
 /** 岗位是用户管理中的实时派生字段，不随提案提交。 */
 export type ScoreProposalPayload = Omit<ScoreProposalForm, 'proposerRole'>;
@@ -49,12 +79,16 @@ export interface ScoreProposalMemberOptionVO {
   userId: string | number;
   userName: string;
   nickName?: string;
+  indonesianName?: string;
+  deptName?: string;
+  deptIndonesianName?: string;
   employeeNo?: string;
   jobTitle?: string;
+  jobTitleIndonesianName?: string;
 }
 
 export interface ReviewForm {
   id: string | number;
-  reviewStatus: 'APPROVED' | 'REJECTED';
+  action: 'REVIEW_APPROVE' | 'REVIEW_REJECT' | 'CONFIRM_APPROVE' | 'CONFIRM_REJECT';
   reviewComment?: string;
 }

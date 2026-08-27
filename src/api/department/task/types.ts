@@ -75,10 +75,29 @@ export interface DepartmentTaskProgressVO {
   deadline?: string;
   requiredCount: number;
   completedCount: number;
+  completedAt?: string;
   status: string;
   statusLabel?: string;
   reminderText?: string;
   instanceId?: string | number;
+}
+
+export interface ScoreProposalReviewTaskVO {
+  id: string | number;
+  proposalId: string | number;
+  deptId?: string | number;
+  revisionNo?: number;
+  stage: 'REVIEW' | 'CONFIRM';
+  stageLabel?: string;
+  assigneeUserId?: string | number;
+  status?: string;
+  deadline?: string;
+  proposerName?: string;
+  mainCategory?: string;
+  subCategory?: string;
+  taskTitle?: string;
+  path?: string;
+  createTime?: string;
 }
 
 export interface DepartmentReviewRuleVO {

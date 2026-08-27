@@ -1,6 +1,6 @@
 import type { AxiosPromise } from '@/utils/api-types';
 import request from '@/utils/request';
-import type { DepartmentReviewRuleForm, DepartmentReviewRuleVO, DepartmentTaskAssignmentForm, DepartmentTaskAssignmentVO, DepartmentTaskProgressVO, DepartmentTaskRuleForm, DepartmentTaskRuleVO } from './types';
+import type { DepartmentReviewRuleForm, DepartmentReviewRuleVO, DepartmentTaskAssignmentForm, DepartmentTaskAssignmentVO, DepartmentTaskProgressVO, DepartmentTaskRuleForm, DepartmentTaskRuleVO, ScoreProposalReviewTaskVO } from './types';
 
 export const listDepartmentTaskRules = (): AxiosPromise<DepartmentTaskRuleVO[]> => request({ url: '/department/task/rule/list', method: 'get' });
 export const getDepartmentTaskRule = (id: string | number): AxiosPromise<DepartmentTaskRuleVO> => request({ url: `/department/task/rule/${id}`, method: 'get' });
@@ -14,6 +14,7 @@ export const updateDepartmentTaskAssignment = (data: DepartmentTaskAssignmentFor
 export const delDepartmentTaskAssignment = (id: string | number) => request({ url: `/department/task/assignment/${id}`, method: 'delete' });
 
 export const listMyDepartmentTasks = (): AxiosPromise<DepartmentTaskProgressVO[]> => request({ url: '/department/task/my', method: 'get' });
+export const listMyScoreProposalReviewTasks = (): AxiosPromise<ScoreProposalReviewTaskVO[]> => request({ url: '/department/task/scoreProposal/review-my', method: 'get' });
 
 export const listDepartmentReviewRules = (): AxiosPromise<DepartmentReviewRuleVO[]> => request({ url: '/department/task/review/list', method: 'get' });
 export const addDepartmentReviewRule = (data: DepartmentReviewRuleForm) => request({ url: '/department/task/review', method: 'post', data });
@@ -31,6 +32,7 @@ export default {
   updateDepartmentTaskAssignment,
   delDepartmentTaskAssignment,
   listMyDepartmentTasks,
+  listMyScoreProposalReviewTasks,
   listDepartmentReviewRules,
   addDepartmentReviewRule,
   updateDepartmentReviewRule,

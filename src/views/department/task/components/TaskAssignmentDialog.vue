@@ -14,15 +14,15 @@
       <div class="assignment-form-card">
         <div class="assignment-block-heading">
           <div>
-            <h4>添加成员</h4>
-            <p>设置成员的任务生效时间{{ selectedRule?.taskType === 'DAILY_REPORT' ? '、工作日和提醒时间' : '' }}</p>
+            <h4>{{ isEditing ? '编辑成员配置' : '添加成员' }}</h4>
+            <p>{{ isEditing ? '修改成员的任务生效时间、状态及日报执行配置' : `设置成员的任务生效时间${selectedRule?.taskType === 'DAILY_REPORT' ? '、工作日和提醒时间' : ''}` }}</p>
           </div>
           <span class="assignment-block-heading__step">STEP 01</span>
         </div>
         <el-form :model="form" label-width="76px" class="assignment-form">
           <div class="assignment-form__grid">
             <el-form-item label="成员" class="assignment-field assignment-field--member">
-              <el-select v-model="form.userId" filterable clearable placeholder="选择成员" style="width: 100%">
+              <el-select v-model="form.userId" filterable clearable placeholder="选择成员" :disabled="isEditing" style="width: 100%">
                 <el-option v-for="item in userOptions" :key="item.userId" :label="`${item.nickName || item.userName}（${item.userName}）`" :value="item.userId" />
               </el-select>
             </el-form-item>
@@ -40,7 +40,8 @@
               </el-form-item>
             </template>
             <div class="assignment-form__action">
-              <el-button type="primary" icon="Plus" @click="emit('save')">添加分配</el-button>
+              <el-button type="primary" :icon="isEditing ? 'Check' : 'Plus'" @click="emit('save')">{{ isEditing ? '保存修改' : '添加分配' }}</el-button>
+              <el-button v-if="isEditing" @click="emit('cancel-edit')">取消编辑</el-button>
             </div>
           </div>
         </el-form>
@@ -60,7 +61,12 @@
           <el-table-column label="生效时间" min-width="205" align="center"><template #default="scope">{{ scope.row.effectiveStart || '立即' }} 至 {{ scope.row.effectiveEnd || '长期' }}</template></el-table-column>
           <el-table-column v-if="selectedRule?.taskType === 'DAILY_REPORT'" label="工作日 / 提醒" min-width="165" align="center"><template #default="scope">{{ workDayLabel(scope.row.workDays) }} / {{ scope.row.reminderTime || '18:00:00' }}</template></el-table-column>
           <el-table-column label="状态" width="90" align="center"><template #default="scope"><el-tag :type="scope.row.status === 'DISABLED' ? 'info' : 'success'">{{ scope.row.status === 'DISABLED' ? '停用' : '启用' }}</el-tag></template></el-table-column>
-          <el-table-column label="操作" width="72" align="center"><template #default="scope"><el-button v-hasPermi="['department:task:edit']" link type="danger" icon="Delete" @click="removeRow(scope.row)" /></template></el-table-column>
+          <el-table-column label="操作" width="116" align="center">
+            <template #default="scope">
+              <el-button v-hasPermi="['department:task:edit']" link type="primary" icon="Edit" @click="editRow(scope.row)">编辑</el-button>
+              <el-button v-hasPermi="['department:task:edit']" link type="danger" icon="Delete" @click="removeRow(scope.row)" />
+            </template>
+          </el-table-column>
         </el-table>
       </div>
     </div>
@@ -95,6 +101,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean];
   'update:workDays': [value: string[]];
   save: [];
+  'cancel-edit': [];
+  edit: [row: DepartmentTaskAssignmentVO];
   remove: [row: DepartmentTaskAssignmentVO];
 }>();
 
@@ -104,6 +112,8 @@ const visible = computed({
 });
 
 const { selectedRule, userOptions, assignments, loading, form, workDays, weekOptions, workDayLabel } = toRefs(props);
+const isEditing = computed(() => Boolean(props.form.id));
 const updateWorkDays = (value: string[] | number[]) => emit('update:workDays', value.map(String));
+const editRow = (row: unknown) => emit('edit', row as DepartmentTaskAssignmentVO);
 const removeRow = (row: unknown) => emit('remove', row as DepartmentTaskAssignmentVO);
 </script>

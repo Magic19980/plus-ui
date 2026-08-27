@@ -15,9 +15,34 @@
                <p>只显示分配给当前登录人的任务；日报按今天的个人工作日判断，未分配任务不计入提醒和缺报。</p>
             </div>
             <div class="tab-heading__actions">
-              <el-button icon="Refresh" @click="loadMyTasks">刷新</el-button>
+              <el-button icon="Refresh" @click="refreshMyTasks">刷新</el-button>
             </div>
           </div>
+          <section v-if="reviewTasks.length" class="review-tasks" aria-label="待处理的 SCORE 提案">
+            <div class="review-tasks__header">
+              <div class="review-tasks__heading">
+                <span class="review-tasks__eyebrow">待处理事项</span>
+                <h4>SCORE 提案审核</h4>
+                <p>需要你处理的提案会集中显示在这里，完成后任务将自动更新。</p>
+              </div>
+              <el-tag type="warning" effect="plain" round>{{ reviewTasks.length }} 项待处理</el-tag>
+            </div>
+            <div v-loading="reviewTaskLoading" class="review-tasks__list">
+              <div v-for="task in reviewTasks" :key="task.id" class="review-task-item">
+                <div class="review-task-item__icon"><el-icon><DocumentChecked /></el-icon></div>
+                <div class="review-task-item__content">
+                  <div class="review-task-item__title">{{ task.proposerName || task.taskTitle || '未命名提案' }}</div>
+                  <div class="review-task-item__meta">
+                    <el-tag size="small" :type="task.stage === 'CONFIRM' ? 'success' : 'warning'" effect="light">{{ task.stageLabel }}</el-tag>
+                    <span>版本 V{{ task.revisionNo }}</span>
+                    <span>{{ task.mainCategory || '未分类' }}</span>
+                    <span>{{ formatReviewTaskTime(task.createTime) }}</span>
+                  </div>
+                </div>
+                <el-button type="primary" plain @click="openScoreReviewTask(task)">处理</el-button>
+              </div>
+            </div>
+          </section>
           <el-table v-loading="myLoading" :data="myTasks" border>
             <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
             <el-table-column label="任务类型" width="130" align="center"><template #default="scope">{{ taskTypeLabel(scope.row.taskType) }}</template></el-table-column>
@@ -110,6 +135,8 @@
       :work-day-label="workDayLabel"
       @update:work-days="updateAssignmentWorkDays"
       @save="saveAssignment"
+      @cancel-edit="cancelAssignmentEdit"
+      @edit="editAssignment"
       @remove="removeAssignment"
     />
 
@@ -132,11 +159,13 @@
 
 <script setup name="DepartmentTask" lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { DocumentChecked } from '@element-plus/icons-vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import TaskAssignmentDialog from './components/TaskAssignmentDialog.vue';
 import TaskRuleDialog from './components/TaskRuleDialog.vue';
-import { addDepartmentReviewRule, addDepartmentTaskAssignment, addDepartmentTaskRule, delDepartmentReviewRule, delDepartmentTaskAssignment, delDepartmentTaskRule, listDepartmentReviewRules, listDepartmentTaskAssignments, listDepartmentTaskRules, listMyDepartmentTasks, updateDepartmentReviewRule, updateDepartmentTaskRule } from '@/api/department/task';
-import type { DepartmentReviewRuleForm, DepartmentReviewRuleVO, DepartmentTaskAssignmentForm, DepartmentTaskAssignmentVO, DepartmentTaskProgressVO, DepartmentTaskRuleForm, DepartmentTaskRuleVO } from '@/api/department/task/types';
+import { addDepartmentReviewRule, addDepartmentTaskAssignment, addDepartmentTaskRule, delDepartmentReviewRule, delDepartmentTaskAssignment, delDepartmentTaskRule, listDepartmentReviewRules, listDepartmentTaskAssignments, listDepartmentTaskRules, listMyDepartmentTasks, listMyScoreProposalReviewTasks, updateDepartmentReviewRule, updateDepartmentTaskAssignment, updateDepartmentTaskRule } from '@/api/department/task';
+import type { DepartmentReviewRuleForm, DepartmentReviewRuleVO, DepartmentTaskAssignmentForm, DepartmentTaskAssignmentVO, DepartmentTaskProgressVO, DepartmentTaskRuleForm, DepartmentTaskRuleVO, ScoreProposalReviewTaskVO } from '@/api/department/task/types';
 import { listPersonMemberOptions } from '@/api/department/person';
 import type { PersonUserOptionVO } from '@/api/department/person/types';
 import { useLoading } from '@/hooks/async/useLoading';
@@ -144,6 +173,7 @@ import modal from '@/plugins/modal';
 
 const activeTab = ref('my');
 const myTasks = ref<DepartmentTaskProgressVO[]>([]);
+const reviewTasks = ref<ScoreProposalReviewTaskVO[]>([]);
 const taskRules = ref<DepartmentTaskRuleVO[]>([]);
 const reviewRules = ref<DepartmentReviewRuleVO[]>([]);
 const userOptions = ref<PersonUserOptionVO[]>([]);
@@ -152,6 +182,7 @@ const selectedRule = ref<DepartmentTaskRuleVO>();
 const buttonLoading = ref(false);
 const assignmentLoading = ref(false);
 const { loading: myLoading, withLoading: withMyLoading } = useLoading(true);
+const reviewTaskLoading = ref(false);
 const { loading: ruleLoading, withLoading: withRuleLoading } = useLoading(true);
 const { loading: reviewLoading, withLoading: withReviewLoading } = useLoading(true);
 const reviewFormRef = ref<ElFormInstance>();
@@ -183,6 +214,19 @@ const loadMyTasks = async () => {
     myTasks.value = res.data || [];
   });
 };
+const loadReviewTasks = async () => {
+  reviewTaskLoading.value = true;
+  try {
+    const res = await listMyScoreProposalReviewTasks();
+    reviewTasks.value = res.data || [];
+  } finally {
+    reviewTaskLoading.value = false;
+  }
+};
+const refreshMyTasks = async () => {
+  await Promise.all([loadMyTasks(), loadReviewTasks()]);
+};
+const formatReviewTaskTime = (value?: string) => value ? value.replace('T', ' ').slice(0, 16) : '刚刚创建';
 const loadRules = async () => {
   await withRuleLoading(async () => {
     const res = await listDepartmentTaskRules();
@@ -213,10 +257,74 @@ const openRuleEdit = (row: any) => { const rule = row as DepartmentTaskRuleVO; r
 const saveRule = async () => { onTaskTypeChange(); buttonLoading.value = true; try { if (ruleForm.id) await updateDepartmentTaskRule(ruleForm); else await addDepartmentTaskRule(ruleForm); modal.msgSuccess('保存成功'); ruleDialog.visible = false; await loadRules(); } finally { buttonLoading.value = false; } };
 const removeRule = async (row: any) => { const rule = row as DepartmentTaskRuleVO; await modal.confirm(`确认删除任务规则“${rule.taskName}”吗？`); await delDepartmentTaskRule(rule.id); modal.msgSuccess('删除成功'); await loadRules(); };
 
-const openAssignmentDialog = async (row: any) => { const rule = row as DepartmentTaskRuleVO; selectedRule.value = rule; assignmentWorkDays.value = ['1', '2', '3', '4', '5']; Object.assign(assignmentForm, { id: undefined, ruleId: rule.id, userId: undefined, effectiveStart: undefined, effectiveEnd: undefined, workDays: undefined, reminderTime: rule.taskType === 'DAILY_REPORT' ? '18:00:00' : undefined, status: 'ENABLED', remark: undefined }); assignmentDialog.visible = true; await loadAssignments(); };
+const resetAssignmentForm = (rule = selectedRule.value) => {
+  assignmentWorkDays.value = ['1', '2', '3', '4', '5'];
+  Object.assign(assignmentForm, {
+    id: undefined,
+    ruleId: rule?.id,
+    userId: undefined,
+    effectiveStart: undefined,
+    effectiveEnd: undefined,
+    workDays: undefined,
+    reminderTime: rule?.taskType === 'DAILY_REPORT' ? '18:00:00' : undefined,
+    status: 'ENABLED',
+    remark: undefined
+  });
+};
+const openAssignmentDialog = async (row: any) => {
+  const rule = row as DepartmentTaskRuleVO;
+  selectedRule.value = rule;
+  resetAssignmentForm(rule);
+  assignmentDialog.visible = true;
+  await loadAssignments();
+};
 const loadAssignments = async () => { if (!selectedRule.value) return; assignmentLoading.value = true; try { const res = await listDepartmentTaskAssignments(selectedRule.value.id); assignments.value = res.data || []; } finally { assignmentLoading.value = false; } };
-const saveAssignment = async () => { if (!assignmentForm.userId || !assignmentForm.ruleId) return modal.msgWarning('请选择要分配的成员'); if (selectedRule.value?.taskType === 'DAILY_REPORT') { if (!assignmentWorkDays.value.length) return modal.msgWarning('至少选择一个工作日'); assignmentForm.workDays = assignmentWorkDays.value.toSorted((left, right) => Number(left) - Number(right)).join(','); } await addDepartmentTaskAssignment(assignmentForm); modal.msgSuccess('分配成功'); assignmentForm.userId = undefined; await loadAssignments(); await loadRules(); };
-const removeAssignment = async (row: any) => { const assignment = row as DepartmentTaskAssignmentVO; await modal.confirm(`确认取消成员“${assignment.nickName || assignment.userName}”的任务分配吗？`); await delDepartmentTaskAssignment(assignment.id); modal.msgSuccess('已取消分配'); await loadAssignments(); await loadRules(); };
+const editAssignment = (row: any) => {
+  const assignment = row as DepartmentTaskAssignmentVO;
+  Object.assign(assignmentForm, {
+    id: assignment.id,
+    ruleId: assignment.ruleId,
+    userId: assignment.userId,
+    effectiveStart: assignment.effectiveStart,
+    effectiveEnd: assignment.effectiveEnd,
+    workDays: assignment.workDays,
+    reminderTime: assignment.reminderTime || '18:00:00',
+    status: assignment.status || 'ENABLED',
+    remark: assignment.remark
+  });
+  assignmentWorkDays.value = assignment.workDays?.split(',').filter(Boolean) || ['1', '2', '3', '4', '5'];
+};
+const cancelAssignmentEdit = () => resetAssignmentForm();
+const saveAssignment = async () => {
+  if (!assignmentForm.userId || !assignmentForm.ruleId) return modal.msgWarning('请选择要分配的成员');
+  const isDailyReport = selectedRule.value?.taskType === 'DAILY_REPORT';
+  if (isDailyReport) {
+    if (!assignmentWorkDays.value.length) return modal.msgWarning('至少选择一个工作日');
+    assignmentForm.workDays = assignmentWorkDays.value.toSorted((left, right) => Number(left) - Number(right)).join(',');
+  } else {
+    assignmentForm.workDays = undefined;
+    assignmentForm.reminderTime = undefined;
+  }
+  const isEditing = Boolean(assignmentForm.id);
+  if (isEditing) {
+    await updateDepartmentTaskAssignment(assignmentForm);
+  } else {
+    await addDepartmentTaskAssignment(assignmentForm);
+  }
+  modal.msgSuccess(isEditing ? '修改成功' : '分配成功');
+  resetAssignmentForm();
+  await loadAssignments();
+  await loadRules();
+};
+const removeAssignment = async (row: any) => {
+  const assignment = row as DepartmentTaskAssignmentVO;
+  await modal.confirm(`确认取消成员“${assignment.nickName || assignment.userName}”的任务分配吗？`);
+  await delDepartmentTaskAssignment(assignment.id);
+  if (assignmentForm.id === assignment.id) resetAssignmentForm();
+  modal.msgSuccess('已取消分配');
+  await loadAssignments();
+  await loadRules();
+};
 
 const resetReviewForm = () => { Object.assign(reviewForm, { id: undefined, taskType: 'SCORE_PROPOSAL', reviewerUserId: undefined, backupReviewerUserId: undefined, effectiveStart: undefined, effectiveEnd: undefined, status: 'ENABLED', remark: undefined }); reviewFormRef.value?.resetFields(); };
 const openReviewAdd = () => { resetReviewForm(); reviewDialog.title = '新增审核人配置'; reviewDialog.visible = true; };
@@ -224,7 +332,18 @@ const openReviewEdit = (row: any) => { const review = row as DepartmentReviewRul
 const saveReview = () => { reviewFormRef.value?.validate(async (valid) => { if (!valid) return; buttonLoading.value = true; try { if (reviewForm.id) await updateDepartmentReviewRule(reviewForm); else await addDepartmentReviewRule(reviewForm); modal.msgSuccess('保存成功'); reviewDialog.visible = false; await loadReviews(); } finally { buttonLoading.value = false; } }); };
 const removeReview = async (row: any) => { const review = row as DepartmentReviewRuleVO; await modal.confirm(`确认删除“${taskTypeLabel(review.taskType)}”审核人配置吗？`); await delDepartmentReviewRule(review.id); modal.msgSuccess('删除成功'); await loadReviews(); };
 
-onMounted(async () => { await loadUsers(); await Promise.all([loadMyTasks(), loadRules(), loadReviews()]); });
+const router = useRouter();
+const openScoreReviewTask = (task: ScoreProposalReviewTaskVO) => {
+  // SCORE 提案页面的实际菜单地址包含 department 前缀。
+  const proposalRoute = router.getRoutes().find((route) => route.path === '/department/scoreProposal/proposal');
+  if (!proposalRoute) {
+    modal.msgError('提案页面路由未加载，请刷新页面后重试');
+    return;
+  }
+  router.push({ name: proposalRoute.name as string, query: { id: String(task.proposalId), mode: 'review', stage: task.stage } });
+};
+
+onMounted(async () => { await loadUsers(); await Promise.all([loadMyTasks(), loadReviewTasks(), loadRules(), loadReviews()]); });
 </script>
 
 <style scoped lang="scss">
@@ -249,6 +368,26 @@ onMounted(async () => { await loadUsers(); await Promise.all([loadMyTasks(), loa
   }
   .tab-heading h4 { margin: 0 0 4px; color: var(--el-text-color-primary); font-size: 15px; line-height: 1.4; }
   .tab-heading p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; line-height: 1.5; }
+  .review-tasks {
+    margin: 0 0 20px;
+    padding: 18px;
+    border: 1px solid var(--el-color-warning-light-7);
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--el-color-warning-light-9), var(--el-fill-color-blank) 72%);
+  }
+  .review-tasks__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .review-tasks__heading { min-width: 0; }
+  .review-tasks__eyebrow { display: block; margin-bottom: 4px; color: var(--el-color-warning-dark-2); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+  .review-tasks__heading h4 { margin: 0 0 4px; color: var(--el-text-color-primary); font-size: 15px; line-height: 1.4; }
+  .review-tasks__heading p { margin: 0; color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.5; }
+  .review-tasks__list { display: grid; gap: 10px; margin-top: 14px; }
+  .review-task-item { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 14px; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; background: var(--el-fill-color-blank); transition: border-color 0.2s, box-shadow 0.2s; }
+  .review-task-item:hover { border-color: var(--el-color-primary-light-5); box-shadow: 0 4px 12px rgb(30 80 120 / 7%); }
+  .review-task-item__icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; color: var(--el-color-warning-dark-2); background: var(--el-color-warning-light-8); font-size: 17px; }
+  .review-task-item__content { min-width: 0; flex: 1; }
+  .review-task-item__title { overflow: hidden; color: var(--el-text-color-primary); font-size: 14px; font-weight: 600; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+  .review-task-item__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 6px; color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.4; }
+  .review-task-item__meta span { white-space: nowrap; }
   .form-help { color: var(--el-text-color-secondary); font-size: 12px; line-height: 18px; }
   .rule-form { padding: 4px 4px 0; }
   .rule-form__section { margin-bottom: 24px; }
@@ -328,6 +467,8 @@ onMounted(async () => { await loadUsers(); await Promise.all([loadMyTasks(), loa
     .daily-rule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .daily-rule-grid > div:nth-child(2) { border-right: 0; }
     .daily-rule-grid > div:nth-child(-n + 2) { border-bottom: 1px solid var(--el-border-color-lighter); }
+    .review-task-item { align-items: flex-start; flex-wrap: wrap; }
+    .review-task-item > .el-button { margin-left: 46px; }
   }
   @media (max-width: 520px) {
     .rule-form { padding: 0; }
