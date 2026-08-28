@@ -45,8 +45,7 @@ export interface DailyCalendarDayVO {
   dayOfWeek: number;
   weekLabel: string;
   workday: boolean;
-  departmentRest?: boolean;
-  dayType: 'WORKDAY' | 'REST';
+  dayType?: string;
   label: string;
   remark?: string;
 }
@@ -54,9 +53,9 @@ export interface DailyCalendarDayVO {
 export interface DailyCalendarCellVO {
   date: string;
   workday?: boolean;
-  dayType?: 'WORKDAY' | 'REST';
+  dayType?: string;
   label?: string;
-  state: 'FILLED' | 'MISSING' | 'REST' | 'LEAVE' | 'UNAVAILABLE';
+  state: 'FILLED' | 'MISSING' | 'REST' | 'LEAVE' | 'EXCEPTION' | 'UNAVAILABLE';
   reportId?: string | number;
   sourceType?: string;
   todayWork?: string;
@@ -95,7 +94,8 @@ export interface DailyCalendarOverrideVO {
   userName?: string;
   nickName?: string;
   calendarDate: string;
-  dayType: 'WORKDAY' | 'REST';
+  dayType: string;
+  needReport: boolean;
   remark?: string;
 }
 
@@ -103,6 +103,7 @@ export interface DailyCalendarOverrideForm {
   id?: string | number;
   userId?: string | number;
   calendarDate?: string;
-  dayType?: 'WORKDAY' | 'REST';
+  dayType?: string;
+  needReport?: boolean;
   remark?: string;
 }

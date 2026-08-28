@@ -50,15 +50,15 @@
         </article>
         <article class="metric-card metric-card--amber">
           <div class="metric-icon"><Timer /></div>
-          <span class="metric-label">临近截止任务</span>
-          <strong>{{ dueSoonCount }}</strong>
-          <small>未来 24 小时内到期</small>
+          <span class="metric-label">今日待填日报</span>
+          <strong>{{ departmentDueSoonCount }}</strong>
+          <small>当前科室今日待提交</small>
         </article>
         <article class="metric-card metric-card--red">
           <div class="metric-icon"><WarningFilled /></div>
-          <span class="metric-label">逾期任务</span>
-          <strong>{{ overdueCount }}</strong>
-          <small>需要尽快处理</small>
+          <span class="metric-label">逾期未填日报</span>
+          <strong>{{ departmentOverdueCount }}</strong>
+          <small>本月已过期工作日未提交</small>
         </article>
       </div>
 
@@ -203,20 +203,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, toRefs, watch } from 'vue';
 import { ArrowRight, Calendar, CircleCheck, List, OfficeBuilding, Refresh, Timer, User, WarningFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-import { getDailyCalendar } from '@/api/department/dailyReport';
+import { getDailyCalendar, getTodayDailyCalendar } from '@/api/department/dailyReport';
 import type { DailyCalendarMemberVO, DailyCalendarVO } from '@/api/department/dailyReport/types';
 import { getScoreProposalMetric } from '@/api/department/scoreProposal';
 import type { ScoreProposalMetricVO } from '@/api/department/scoreProposal/types';
 import { listMyDepartmentTasks } from '@/api/department/task';
 import type { DepartmentTaskProgressVO } from '@/api/department/task/types';
 import { useDepartmentStore } from '@/store/modules/department';
+import { useDict } from '@/utils/dict';
 
 const departmentStore = useDepartmentStore();
+const { dm_leave_type } = toRefs<any>(useDict('dm_leave_type'));
 const loading = ref(false);
 const calendar = ref<DailyCalendarVO>();
+const monthlyCalendar = ref<DailyCalendarVO>();
 const scoreMetric = ref<ScoreProposalMetricVO>();
 const myTasks = ref<DepartmentTaskProgressVO[]>([]);
 const lastUpdated = ref('--');
@@ -233,6 +236,8 @@ const leaveMembers = computed(() => todayMembers.value.filter(member => getToday
 const onDutyMembers = computed(() => todayMembers.value.filter(member => getTodayCell(member)?.state !== 'LEAVE'));
 const memberCount = computed(() => onDutyMembers.value.length);
 const reportRate = computed(() => { const required = calendar.value?.requiredCount || 0; return required ? Math.round(((calendar.value?.filledCount || 0) / required) * 100) : 0; });
+const departmentDueSoonCount = computed(() => calendar.value?.missingCount || 0);
+const departmentOverdueCount = computed(() => (monthlyCalendar.value?.members || []).reduce((count, member) => count + (member.cells || []).filter(cell => cell.state === 'MISSING' && cell.date < today).length, 0));
 const scoreLabel = computed(() => {
   if (!scoreMetric.value) return '等待同步';
   if (scoreMetric.value.score >= 2) return '优秀';
@@ -258,8 +263,8 @@ const personalOverdue = computed(() => overdueCount.value);
 const sortedTasks = computed(() => [...myTasks.value].sort((a, b) => { const score = (task: DepartmentTaskProgressVO) => task.status === 'COMPLETED' ? 3 : isOverdue(task) ? 0 : isWithinHours(task.deadline) ? 1 : 2; return score(a) - score(b) || String(a.deadline || '').localeCompare(String(b.deadline || '')); }));
 const departmentRisks = computed(() => {
   const risks: Array<{ title: string; detail: string; label: string; level: 'danger' | 'warning' }> = [];
-  if (overdueCount.value) risks.push({ title: `${overdueCount.value} 项任务已经逾期`, detail: '请进入“我的任务”查看并完成处理。', label: '高风险', level: 'danger' });
-  if (calendar.value?.missingCount) risks.push({ title: `${calendar.value.missingCount} 条日报尚未提交`, detail: '建议提醒相关成员在工作日结束前补齐。', label: '需关注', level: 'warning' });
+  if (departmentOverdueCount.value) risks.push({ title: `${departmentOverdueCount.value} 条日报已经逾期`, detail: '请提醒相关成员补齐已过期工作日的日报。', label: '高风险', level: 'danger' });
+  if (departmentDueSoonCount.value) risks.push({ title: `${departmentDueSoonCount.value} 条日报尚未提交`, detail: '建议提醒相关成员在今日工作日结束前补齐。', label: '需关注', level: 'warning' });
   if (scoreMetric.value && scoreMetric.value.score < 0) risks.push({ title: '精益评分需要改善', detail: '当前已通过提案数量不足，请关注本月提案推进。', label: '需关注', level: 'warning' });
   return risks;
 });
@@ -271,7 +276,10 @@ function statusBarWidth(value?: number) { const total = scoreMetric.value?.total
 function getTodayCell(member: DailyCalendarMemberVO) { return member.cells?.find(cell => cell.date === today); }
 function memberDisplayName(member: DailyCalendarMemberVO) { return member.nickName || member.userName || '未命名成员'; }
 function memberInitial(member: DailyCalendarMemberVO) { return memberDisplayName(member).slice(0, 1); }
-function leaveType(member: DailyCalendarMemberVO) { return getTodayCell(member)?.leaveType || getTodayCell(member)?.label || '休假'; }
+function leaveType(member: DailyCalendarMemberVO) {
+  const value = getTodayCell(member)?.leaveType;
+  return dm_leave_type.value?.find((item: DictDataOption) => String(item.value) === String(value))?.label || value || getTodayCell(member)?.label || '休假';
+}
 function openMemberDrawer(type: 'onDuty' | 'leave') { memberDrawer.type = type; memberDrawer.visible = true; }
 function taskTypeLabel(type: string) { return ({ DAILY_REPORT: '日报', FIVE_WHY: '5WHY', SCORE_PROPOSAL: 'SCORE' } as Record<string, string>)[type] || type; }
 function statusLabel(status: string) { return ({ COMPLETED: '已完成', OVERDUE: '已逾期', IN_PROGRESS: '进行中', NOT_STARTED: '未开始' } as Record<string, string>)[status] || status; }
@@ -282,11 +290,13 @@ async function loadDashboard() {
   loading.value = true;
   try {
     try { await departmentStore.load(); } catch { /* 无科室上下文时仍让页面保留空态 */ }
-    const responses = await Promise.allSettled([getDailyCalendar(`${currentMonth}-01`), getScoreProposalMetric(currentMonth), listMyDepartmentTasks()]);
+    const responses = await Promise.allSettled([getTodayDailyCalendar(), getDailyCalendar(`${currentMonth}-01`), getScoreProposalMetric(currentMonth), listMyDepartmentTasks()]);
     const calendarRes = responses[0];
-    const metricRes = responses[1];
-    const taskRes = responses[2];
+    const monthCalendarRes = responses[1];
+    const metricRes = responses[2];
+    const taskRes = responses[3];
     calendar.value = calendarRes.status === 'fulfilled' ? calendarRes.value.data : undefined;
+    monthlyCalendar.value = monthCalendarRes.status === 'fulfilled' ? monthCalendarRes.value.data : undefined;
     scoreMetric.value = metricRes.status === 'fulfilled' ? metricRes.value.data : undefined;
     myTasks.value = taskRes.status === 'fulfilled' ? taskRes.value.data || [] : [];
     if (responses.every(response => response.status === 'rejected')) ElMessage.error('看板数据暂不可用，请检查当前科室或权限配置');

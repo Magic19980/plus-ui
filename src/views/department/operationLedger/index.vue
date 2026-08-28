@@ -163,8 +163,8 @@
       <template #footer><el-button type="primary" :loading="buttonLoading" @click="submitSystem">保存</el-button><el-button @click="systemDialog.visible = false">取消</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="recordUpload.open" title="导入工作记录" width="520px" append-to-body>
-      <el-upload ref="recordUploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="recordUpload.headers" :action="recordUpload.url" :auto-upload="false" :disabled="recordUpload.isUploading" :on-success="handleRecordUploadSuccess">
+    <el-dialog v-model="recordUpload.open" title="导入工作记录" width="520px" append-to-body @closed="resetRecordUpload">
+      <el-upload ref="recordUploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="recordUpload.headers" :action="recordUpload.url" :auto-upload="false" :disabled="recordUpload.isUploading" :on-change="handleRecordUploadChange" :on-remove="handleRecordUploadRemove" :on-success="handleRecordUploadSuccess" :on-error="handleRecordUploadError">
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
         <div class="el-upload__text">上传《物流系统科日常管理表》或“工作记录”工作表</div>
         <template #tip><div class="el-upload__tip">系统会按工作记录表头读取数据，响应耗时和处理耗时优先按时间自动计算。</div></template>
@@ -172,8 +172,8 @@
       <template #footer><el-button type="primary" :loading="recordUpload.isUploading" @click="submitRecordUpload">开始导入</el-button><el-button @click="recordUpload.open = false">取消</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="systemUpload.open" title="导入系统运维报告" width="520px" append-to-body>
-      <el-upload ref="systemUploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="systemUpload.headers" :action="systemUpload.url" :auto-upload="false" :disabled="systemUpload.isUploading" :on-success="handleSystemUploadSuccess">
+    <el-dialog v-model="systemUpload.open" title="导入系统运维报告" width="520px" append-to-body @closed="resetSystemUpload">
+      <el-upload ref="systemUploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="systemUpload.headers" :action="systemUpload.url" :auto-upload="false" :disabled="systemUpload.isUploading" :on-change="handleSystemUploadChange" :on-remove="handleSystemUploadRemove" :on-success="handleSystemUploadSuccess" :on-error="handleSystemUploadError">
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
         <div class="el-upload__text">上传包含“系统运维报告”工作表的 Excel</div>
         <template #tip><div class="el-upload__tip">导入文件建议包含“项目”列；统计日期默认使用本周周一，可在系统在线率页编辑。</div></template>
@@ -223,6 +223,8 @@ const systemTotal = ref(0);
 const buttonLoading = ref(false);
 const recordUploadRef = ref<any>();
 const systemUploadRef = ref<any>();
+const recordUploadFile = ref<any>();
+const systemUploadFile = ref<any>();
 const summary = reactive<OperationSummaryVO>({ totalCount: 0, resolvedCount: 0, resolutionRate: 0, averageProcessingMinutes: 0, onlineRate: 0, unattributedCount: 0, bySystem: [], byFaultType: [], byProcessMethod: [] });
 const queryParams = reactive<OperationRecordQuery>({ pageNum: 1, pageSize: 10, beginDate: undefined, endDate: undefined, customerUnit: undefined, projectId: undefined, systemName: undefined, processStatus: undefined, processMethod: undefined, keyword: undefined });
 const systemParams = reactive<OperationSystemQuery>({ pageNum: 1, pageSize: 10, beginDate: undefined, endDate: undefined, systemName: undefined });
@@ -299,12 +301,72 @@ const handleUpdateSystem = async (row: OperationSystemVO) => { const res = await
 const submitSystem = async () => { if (!systemForm.statDate || !systemForm.projectId || !systemForm.systemName) return modal.msgWarning('统计日期、项目和系统名称不能为空'); buttonLoading.value = true; try { if (systemForm.id) await updateOperationSystem(systemForm); else await addOperationSystem(systemForm); modal.msgSuccess('系统在线率保存成功'); systemDialog.visible = false; await Promise.all([getSystemList(), getSummary()]); } finally { buttonLoading.value = false; } };
 const handleDeleteSystem = async (row: OperationSystemVO) => { await modal.confirm(`确认删除 ${row.systemName} 的在线率记录吗？`); await delOperationSystem(row.id); modal.msgSuccess('删除成功'); await Promise.all([getSystemList(), getSummary()]); };
 
-const openRecordUpload = () => { recordUpload.open = true; recordUpload.isUploading = false; };
-const openSystemUpload = () => { systemUpload.open = true; systemUpload.isUploading = false; };
-const submitRecordUpload = () => { recordUpload.isUploading = true; recordUploadRef.value?.submit(); };
-const submitSystemUpload = () => { systemUpload.isUploading = true; systemUploadRef.value?.submit(); };
-const handleRecordUploadSuccess = (response: any) => { recordUpload.isUploading = false; recordUpload.open = false; modal.msgSuccess(response?.msg || '工作记录导入完成'); getRecordList(); getSummary(); };
-const handleSystemUploadSuccess = (response: any) => { systemUpload.isUploading = false; systemUpload.open = false; modal.msgSuccess(response?.msg || '系统运维报告导入完成'); getSystemList(); getSummary(); };
+const resetRecordUpload = () => { recordUpload.isUploading = false; recordUploadFile.value = undefined; recordUploadRef.value?.clearFiles(); };
+const resetSystemUpload = () => { systemUpload.isUploading = false; systemUploadFile.value = undefined; systemUploadRef.value?.clearFiles(); };
+const openRecordUpload = () => { resetRecordUpload(); recordUpload.open = true; };
+const openSystemUpload = () => { resetSystemUpload(); systemUpload.open = true; };
+const handleRecordUploadChange = (uploadFile: any, uploadFiles: any[]) => { recordUploadFile.value = uploadFiles.find(file => file.raw) || uploadFile; };
+const handleSystemUploadChange = (uploadFile: any, uploadFiles: any[]) => { systemUploadFile.value = uploadFiles.find(file => file.raw) || uploadFile; };
+const handleRecordUploadRemove = () => { recordUploadFile.value = undefined; recordUpload.isUploading = false; };
+const handleSystemUploadRemove = () => { systemUploadFile.value = undefined; systemUpload.isUploading = false; };
+const submitRecordUpload = () => {
+  const file = recordUploadFile.value;
+  if (!file?.raw) {
+    recordUpload.isUploading = false;
+    modal.msgWarning('请先选择要导入的 Excel 文件');
+    return;
+  }
+  recordUpload.isUploading = true;
+  recordUploadRef.value?.submit();
+};
+const submitSystemUpload = () => {
+  const file = systemUploadFile.value;
+  if (!file?.raw) {
+    systemUpload.isUploading = false;
+    modal.msgWarning('请先选择要导入的 Excel 文件');
+    return;
+  }
+  systemUpload.isUploading = true;
+  systemUploadRef.value?.submit();
+};
+const handleRecordUploadSuccess = (response: any) => {
+  recordUpload.isUploading = false;
+  if (response?.code !== undefined && response.code !== 200) {
+    recordUploadFile.value = undefined;
+    recordUploadRef.value?.clearFiles();
+    modal.msgError(response?.msg || '工作记录导入失败');
+    return;
+  }
+  recordUpload.open = false;
+  modal.msgSuccess(response?.msg || '工作记录导入完成');
+  getRecordList();
+  getSummary();
+};
+const handleSystemUploadSuccess = (response: any) => {
+  systemUpload.isUploading = false;
+  if (response?.code !== undefined && response.code !== 200) {
+    systemUploadFile.value = undefined;
+    systemUploadRef.value?.clearFiles();
+    modal.msgError(response?.msg || '系统运维报告导入失败');
+    return;
+  }
+  systemUpload.open = false;
+  modal.msgSuccess(response?.msg || '系统运维报告导入完成');
+  getSystemList();
+  getSummary();
+};
+const handleRecordUploadError = (error: Error) => {
+  recordUpload.isUploading = false;
+  recordUploadFile.value = undefined;
+  recordUploadRef.value?.clearFiles();
+  modal.msgError(error?.message || '工作记录导入失败');
+};
+const handleSystemUploadError = (error: Error) => {
+  systemUpload.isUploading = false;
+  systemUploadFile.value = undefined;
+  systemUploadRef.value?.clearFiles();
+  modal.msgError(error?.message || '系统运维报告导入失败');
+};
 const handleExportRecords = () => requestDownload('department/operationLedger/export', queryParams, `operation_ledger_${Date.now()}.xlsx`);
 const handleExportSystems = () => requestDownload('department/operationLedger/exportSystems', { beginDate: systemParams.beginDate, endDate: systemParams.endDate, systemName: systemParams.systemName }, `operation_system_${Date.now()}.xlsx`);
 

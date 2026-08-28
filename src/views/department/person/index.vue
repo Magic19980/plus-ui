@@ -182,7 +182,9 @@
             <template #default="scope">{{ scope.row.nickName || scope.row.userName }}<span class="leave-user-account">（{{ scope.row.userName }}）</span></template>
           </el-table-column>
           <el-table-column label="休假日期" width="230" align="center"><template #default="scope">{{ scope.row.startDate }} 至 {{ scope.row.endDate }}</template></el-table-column>
-          <el-table-column prop="leaveType" label="类型" width="120" align="center" />
+          <el-table-column label="类型" width="120" align="center">
+            <template #default="scope"><dict-tag :options="dm_leave_type" :value="scope.row.leaveType" /></template>
+          </el-table-column>
           <el-table-column prop="reason" label="说明" min-width="220" show-overflow-tooltip />
           <el-table-column label="操作" width="140" align="center">
             <template #default="scope">
@@ -215,7 +217,17 @@
         </el-form-item>
         <el-form-item label="开始日期" prop="startDate"><el-date-picker v-model="leaveForm.startDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
         <el-form-item label="结束日期" prop="endDate"><el-date-picker v-model="leaveForm.endDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
-        <el-form-item label="休假类型"><el-input v-model="leaveForm.leaveType" placeholder="例如：年假、病假，默认休假" /></el-form-item>
+        <el-form-item label="休假类型" prop="leaveType">
+          <el-select
+            v-model="leaveForm.leaveType"
+            :loading="!dm_leave_type.length"
+            :disabled="!dm_leave_type.length"
+            placeholder="请选择休假类型"
+            style="width: 100%"
+          >
+            <el-option v-for="item in dm_leave_type" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="休假说明"><el-input v-model="leaveForm.reason" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="补充休假原因或说明" /></el-form-item>
       </el-form>
       <template #footer>
@@ -334,7 +346,7 @@
 </template>
 
 <script setup name="DepartmentPerson" lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, toRefs } from 'vue';
 import {
   addPersonProfiles,
   addPersonLeave,
@@ -364,6 +376,7 @@ import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload, globalHeaders } from '@/utils/request';
+import { useDict } from '@/utils/dict';
 
 const { loading, withLoading } = useLoading(true);
 const personList = ref<PersonProfileVO[]>([]);
@@ -380,6 +393,7 @@ const leaveSaving = ref(false);
 const formRef = ref<ElFormInstance>();
 const leaveFormRef = ref<ElFormInstance>();
 const uploadRef = ref<ElUploadInstance>();
+const { dm_leave_type } = toRefs<any>(useDict('dm_leave_type'));
 const queryParams = reactive<PersonProfileQuery>({ pageNum: 1, pageSize: 10, userName: undefined, jobTitle: undefined, includeHistory: false });
 const form = reactive<PersonProfileForm>({
   id: undefined,
@@ -395,7 +409,7 @@ const endForm = reactive({ leaveDate: '', reason: '' });
 const endFormRef = ref<ElFormInstance>();
 const leaveDialog = reactive({ visible: false });
 const leaveFormDialog = reactive({ visible: false });
-const leaveForm = reactive<PersonLeaveForm>({ userId: undefined, startDate: undefined, endDate: undefined, leaveType: '休假', reason: '' });
+const leaveForm = reactive<PersonLeaveForm>({ userId: undefined, startDate: undefined, endDate: undefined, leaveType: '', reason: '' });
 const userPicker = reactive<PersonUserOptionQuery & { visible: boolean; loading: boolean; total: number }>({
   visible: false,
   loading: false,
@@ -422,7 +436,8 @@ const endRules = {
 const leaveRules = {
   userId: [{ required: true, message: '请选择休假人员', trigger: 'change' }],
   startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
-  endDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }]
+  endDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
+  leaveType: [{ required: true, message: '请选择休假类型', trigger: 'change' }]
 };
 
 const today = () => {
@@ -650,6 +665,11 @@ const loadLeaves = async () => {
   }
 };
 
+const defaultLeaveType = () => {
+  const options = dm_leave_type.value || [];
+  return options.find((item: DictDataOption) => item.label === '休假')?.value || options[0]?.value || '';
+};
+
 const openLeaveManager = async () => {
   await Promise.all([loadLeaveMembers(), loadLeaves()]);
   leaveDialog.visible = true;
@@ -665,10 +685,10 @@ const openLeaveForm = (row?: PersonLeaveVO) => {
           userId: row.userId,
           startDate: row.startDate,
           endDate: row.endDate,
-          leaveType: row.leaveType || '休假',
+          leaveType: row.leaveType || defaultLeaveType(),
           reason: row.reason || ''
         }
-      : { id: undefined, userId: leaveMembers.value[0]?.userId, startDate: today(), endDate: today(), leaveType: '休假', reason: '' }
+      : { id: undefined, userId: leaveMembers.value[0]?.userId, startDate: today(), endDate: today(), leaveType: defaultLeaveType(), reason: '' }
   );
   leaveFormDialog.visible = true;
 };

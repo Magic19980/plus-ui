@@ -56,7 +56,7 @@
           <el-empty v-if="!myLoading && myTasks.length === 0" description="当前没有分配给你的周期任务" />
         </el-tab-pane>
 
-        <el-tab-pane label="任务规则" name="rules">
+        <el-tab-pane label="任务规则" name="rules" lazy>
           <div class="tab-heading">
             <div class="tab-heading__content">
               <h4>任务规则与成员分配</h4>
@@ -85,7 +85,7 @@
           <el-empty v-if="!ruleLoading && taskRules.length === 0" description="暂无任务规则" />
         </el-tab-pane>
 
-        <el-tab-pane label="审核人配置" name="review">
+        <el-tab-pane label="审核人配置" name="review" lazy>
           <div class="tab-heading">
             <div class="tab-heading__content">
               <h4>业务审核人</h4>
@@ -158,7 +158,7 @@
 </template>
 
 <script setup name="DepartmentTask" lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { DocumentChecked } from '@element-plus/icons-vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
@@ -177,6 +177,8 @@ const reviewTasks = ref<ScoreProposalReviewTaskVO[]>([]);
 const taskRules = ref<DepartmentTaskRuleVO[]>([]);
 const reviewRules = ref<DepartmentReviewRuleVO[]>([]);
 const userOptions = ref<PersonUserOptionVO[]>([]);
+const userOptionsLoaded = ref(false);
+let userOptionsPromise: Promise<void> | undefined;
 const assignments = ref<DepartmentTaskAssignmentVO[]>([]);
 const selectedRule = ref<DepartmentTaskRuleVO>();
 const buttonLoading = ref(false);
@@ -189,6 +191,8 @@ const reviewFormRef = ref<ElFormInstance>();
 const ruleDialog = reactive({ visible: false, title: '' });
 const assignmentDialog = reactive({ visible: false });
 const reviewDialog = reactive({ visible: false, title: '' });
+const rulesLoaded = ref(false);
+const reviewsLoaded = ref(false);
 const ruleForm = reactive<DepartmentTaskRuleForm>({ taskName: '', taskType: 'SCORE_PROPOSAL', cycleType: 'MONTH', requiredCount: 1, deadlineDay: 0, deadlineTime: '18:00:00', countMode: 'SUBMITTED', remindHours: 24, status: 'ENABLED' });
 const assignmentForm = reactive<DepartmentTaskAssignmentForm>({ userId: undefined, effectiveStart: undefined, status: 'ENABLED' });
 const assignmentWorkDays = ref<string[]>(['1', '2', '3', '4', '5']);
@@ -231,17 +235,29 @@ const loadRules = async () => {
   await withRuleLoading(async () => {
     const res = await listDepartmentTaskRules();
     taskRules.value = res.data || [];
+    rulesLoaded.value = true;
   });
 };
 const loadReviews = async () => {
   await withReviewLoading(async () => {
     const res = await listDepartmentReviewRules();
     reviewRules.value = res.data || [];
+    reviewsLoaded.value = true;
   });
 };
 const loadUsers = async () => {
-  const res = await listPersonMemberOptions();
-  userOptions.value = res.data || [];
+  if (userOptionsLoaded.value) return;
+  if (userOptionsPromise) return userOptionsPromise;
+  userOptionsPromise = (async () => {
+    const res = await listPersonMemberOptions();
+    userOptions.value = res.data || [];
+    userOptionsLoaded.value = true;
+  })();
+  try {
+    await userOptionsPromise;
+  } finally {
+    userOptionsPromise = undefined;
+  }
 };
 
 const resetRuleForm = () => { Object.assign(ruleForm, { id: undefined, taskName: '', taskType: 'SCORE_PROPOSAL', cycleType: 'MONTH', requiredCount: 1, deadlineDay: 0, deadlineTime: '18:00:00', countMode: 'SUBMITTED', remindHours: 24, effectiveStart: undefined, effectiveEnd: undefined, status: 'ENABLED', remark: undefined }); };
@@ -276,7 +292,7 @@ const openAssignmentDialog = async (row: any) => {
   selectedRule.value = rule;
   resetAssignmentForm(rule);
   assignmentDialog.visible = true;
-  await loadAssignments();
+  await Promise.all([loadUsers(), loadAssignments()]);
 };
 const loadAssignments = async () => { if (!selectedRule.value) return; assignmentLoading.value = true; try { const res = await listDepartmentTaskAssignments(selectedRule.value.id); assignments.value = res.data || []; } finally { assignmentLoading.value = false; } };
 const editAssignment = (row: any) => {
@@ -343,7 +359,15 @@ const openScoreReviewTask = (task: ScoreProposalReviewTaskVO) => {
   router.push({ name: proposalRoute.name as string, query: { id: String(task.proposalId), mode: 'review', stage: task.stage } });
 };
 
-onMounted(async () => { await loadUsers(); await Promise.all([loadMyTasks(), loadReviewTasks(), loadRules(), loadReviews()]); });
+watch(activeTab, async (tab) => {
+  if (tab === 'rules' && !rulesLoaded.value) {
+    await Promise.all([loadRules(), loadUsers()]);
+  } else if (tab === 'review' && !reviewsLoaded.value) {
+    await Promise.all([loadReviews(), loadUsers()]);
+  }
+});
+
+onMounted(async () => { await Promise.all([loadMyTasks(), loadReviewTasks()]); });
 </script>
 
 <style scoped lang="scss">

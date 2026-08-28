@@ -71,6 +71,14 @@ export const getDailyCalendar = (month?: string): AxiosPromise<DailyCalendarVO> 
   });
 };
 
+/** 首页只展示今日成员状态，使用轻量接口避免加载整月日历。 */
+export const getTodayDailyCalendar = (): AxiosPromise<DailyCalendarVO> => {
+  return request({
+    url: '/department/dailyReport/calendar/today',
+    method: 'get'
+  });
+};
+
 export const listDailyCalendarOverrides = (beginDate: string, endDate: string): AxiosPromise<DailyCalendarOverrideVO[]> => {
   return request({
     url: '/department/dailyReport/calendar/override/list',
@@ -111,6 +119,7 @@ export default {
   listDailyReportAttachments,
   delDailyReportAttachment,
   getDailyCalendar,
+  getTodayDailyCalendar,
   listDailyCalendarOverrides,
   addDailyCalendarOverride,
   updateDailyCalendarOverride,
