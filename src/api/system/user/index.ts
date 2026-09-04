@@ -209,6 +209,24 @@ export const deptTreeSelect = (): AxiosPromise<DeptTreeVO[]> => {
   });
 };
 
+/** 查询泛微同步组织的直属子节点，供大数据量用户选择器懒加载。 */
+export const deptChildren = (parentId: string | number = 0) => {
+  return request({
+    url: '/system/user/deptChildren',
+    method: 'get',
+    params: { parentId }
+  });
+};
+
+/** 搜索泛微同步组织，返回命中节点及其上级路径。 */
+export const searchDept = (deptName: string) => {
+  return request({
+    url: '/system/user/deptSearch',
+    method: 'get',
+    params: { deptName }
+  });
+};
+
 export default {
   listUser,
   getUser,
@@ -225,5 +243,7 @@ export default {
   getAuthRole,
   updateAuthRole,
   deptTreeSelect,
+  deptChildren,
+  searchDept,
   listUserByDeptId
 };

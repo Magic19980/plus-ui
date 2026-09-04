@@ -28,7 +28,7 @@
         </DepartmentPanelHeader>
       </template>
 
-      <el-table v-loading="loading" border :data="personList">
+      <DepartmentDataTable v-loading="loading" border :data="personList">
         <el-table-column label="账号" prop="userName" width="140" />
         <el-table-column label="姓名" prop="nickName" width="120" />
         <el-table-column label="部门" prop="deptName" min-width="160" show-overflow-tooltip />
@@ -41,7 +41,7 @@
         <el-table-column label="成员类型" prop="memberType" width="100">
           <template #default="scope">{{ scope.row.memberType === 'TEMP' ? '临时协作' : '正式成员' }}</template>
         </el-table-column>
-        <el-table-column label="服务状态" prop="memberStatus" width="100">
+        <el-table-column label="服务状态" prop="memberStatus" width="120" class-name="person-status-column">
           <template #default="scope">
             <el-tag :type="scope.row.memberStatus === 'ENDED' ? 'info' : 'success'" size="small">
               {{ scope.row.memberStatus === 'ENDED' ? '已结束' : '服务中' }}
@@ -51,21 +51,23 @@
         <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip />
         <el-table-column label="操作" fixed="right" width="210" align="center">
           <template #default="scope">
-            <el-button v-hasPermi="['department:person:edit']" link type="primary" icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button
-              v-if="scope.row.memberStatus !== 'ENDED'"
-              v-hasPermi="['department:person:remove']"
-              link
-              type="danger"
-              icon="CircleClose"
-              @click="handleDelete(scope.row)"
-            >
-              结束服务
-            </el-button>
-            <span v-else class="text-secondary">已结束</span>
+            <DepartmentTableActions>
+              <el-button v-hasPermi="['department:person:edit']" link type="primary" icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
+              <el-button
+                v-if="scope.row.memberStatus !== 'ENDED'"
+                v-hasPermi="['department:person:remove']"
+                link
+                type="danger"
+                icon="CircleClose"
+                @click="handleDelete(scope.row)"
+              >
+                结束服务
+              </el-button>
+              <span v-else class="text-secondary">已结束</span>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
       <pagination
         v-show="total > 0"
@@ -373,6 +375,8 @@ import type {
 import type { DeptTreeVO } from '@/api/system/dept/types';
 import DeptTreeSelect from '@/components/DeptTreeSelect/index.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload, globalHeaders } from '@/utils/request';
@@ -755,6 +759,22 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .department-person-page {
+  :deep(.person-status-column .cell) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+
+  :deep(.person-status-column .el-tag) {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    margin: 0;
+  }
+
   .selected-user-field {
     display: flex;
     align-items: center;
@@ -1271,5 +1291,55 @@ onMounted(() => {
       flex-direction: column;
     }
   }
+}
+
+html.dark .leave-manager-dialog .leave-dialog-summary {
+  border-color: color-mix(in srgb, var(--app-accent-strong) 34%, var(--app-surface-border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--app-accent-strong) 15%, var(--app-surface-bg)),
+    var(--app-surface-bg)
+  );
+}
+
+html.dark .leave-manager-dialog .leave-dialog-summary-icon {
+  background: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.18);
+  color: #9bdcff;
+}
+
+html.dark .leave-manager-dialog .leave-dialog-summary-title {
+  color: var(--app-text-title);
+}
+
+html.dark .leave-manager-dialog .leave-dialog-summary-text,
+html.dark .leave-manager-dialog .leave-record-count {
+  color: var(--app-text-muted);
+}
+
+html.dark .leave-manager-dialog .leave-record-count {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+html.dark .leave-manager-dialog .leave-empty-state {
+  border-color: var(--app-surface-border);
+  background: color-mix(in srgb, var(--app-surface-bg) 88%, #1e293b);
+}
+
+html.dark .leave-manager-dialog .leave-empty-icon {
+  background: color-mix(in srgb, var(--app-accent-strong) 16%, var(--app-surface-bg));
+  color: #9bdcff;
+}
+
+html.dark .person-user-picker-dialog .user-picker-selection {
+  border-color: color-mix(in srgb, var(--app-accent-strong) 34%, var(--app-surface-border));
+  background: color-mix(in srgb, var(--app-accent-strong) 14%, var(--app-surface-bg));
+}
+
+html.dark .person-user-picker-dialog .user-picker-selection-heading {
+  color: var(--app-text-title);
+}
+
+html.dark .person-user-picker-dialog .user-picker-selection-empty {
+  color: var(--app-text-muted);
 }
 </style>

@@ -256,22 +256,25 @@ service.interceptors.response.use(
   }
 );
 // 通用下载方法
-export function download(url: string, params: any, fileName: string) {
+export function download(url: string, params: any, fileName: string, method: 'get' | 'post' = 'post') {
   downloadLoadingInstance = ElLoading.service({
     text: '正在下载数据，请稍候',
     background: 'rgba(0, 0, 0, 0.7)'
   });
-  // prettier-ignore
-  return service
-		.post(url, params, {
-			transformRequest: [
-				(params: any) => {
-					return tansParams(params);
-				},
-			],
-			headers: { "Content-Type": "application/x-www-form-urlencoded" },
-			responseType: "blob",
-		})
+
+  const request = method === 'get'
+    ? service.get(url, { params, responseType: 'blob' })
+    : service.post(url, params, {
+        transformRequest: [
+          (requestParams: any) => {
+            return tansParams(requestParams);
+          }
+        ],
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        responseType: 'blob'
+      });
+
+  return request
 		.then(async (resp: any) => {
 			const isLogin = blobValidate(resp);
 			if (isLogin) {

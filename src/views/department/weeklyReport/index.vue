@@ -48,18 +48,21 @@
           <el-button icon="Refresh" @click="getList">刷新</el-button>
         </DepartmentPanelHeader>
       </template>
-      <el-table v-loading="loading" border :data="reportList">
+      <DepartmentDataTable v-loading="loading" border :data="reportList">
         <el-table-column label="周报周期" min-width="220" align="center">
           <template #default="scope">{{ scope.row.weekStart }} 至 {{ scope.row.weekEnd }}</template>
         </el-table-column>
         <el-table-column label="标题" prop="title" min-width="260" show-overflow-tooltip />
         <el-table-column label="生成时间" prop="createTime" width="180" align="center" />
-        <el-table-column label="操作" fixed="right" width="130" align="center">
+        <el-table-column label="操作" fixed="right" width="190" align="center">
           <template #default="scope">
-            <el-button v-hasPermi="['department:weeklyReport:export']" link type="primary" icon="Download" @click="handleExport(scope.row)">导出 PPT</el-button>
+            <DepartmentTableActions>
+              <el-button v-hasPermi="['department:weeklyReport:export']" link type="primary" icon="Download" @click="handleExport(scope.row)">导出 PPT</el-button>
+              <el-button v-hasPermi="['department:weeklyReport:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
   </div>
@@ -68,10 +71,12 @@
 <script setup name="DepartmentWeeklyReport" lang="ts">
 import { onMounted, ref, reactive } from 'vue';
 import type { WeeklyReportSummaryVO, WeeklyReportVO } from '@/api/department/weeklyReport/types';
-import { generateWeeklyReport, getWeeklyReportSummary, listWeeklyReport } from '@/api/department/weeklyReport';
+import { delWeeklyReport, generateWeeklyReport, getWeeklyReportSummary, listWeeklyReport } from '@/api/department/weeklyReport';
 import DepartmentMetricCard from '@/components/Department/MetricCard.vue';
 import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload } from '@/utils/request';
@@ -134,7 +139,17 @@ const handleGenerate = async () => {
 };
 
 const handleExport = (row: WeeklyReportVO) => {
-  requestDownload(`department/weeklyReport/export/${row.id}`, {}, `weekly_report_${row.weekStart.replaceAll('-', '')}.pptx`);
+  requestDownload(`department/weeklyReport/export/${row.id}`, {}, `weekly_report_${row.weekStart.replaceAll('-', '')}.pptx`, 'get');
+};
+
+const handleDelete = async (row: WeeklyReportVO) => {
+  await modal.confirm(`确认删除 ${row.weekStart} 至 ${row.weekEnd} 的周报快照吗？删除后不可恢复。`);
+  await delWeeklyReport(row.id);
+  modal.msgSuccess('周报快照删除成功');
+  if (reportList.value.length === 1 && queryParams.pageNum > 1) {
+    queryParams.pageNum -= 1;
+  }
+  await getList();
 };
 
 onMounted(() => {

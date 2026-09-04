@@ -21,17 +21,6 @@
 
 // --- CRUD / 树表页用混入（在 .vue 内 @use 后 @include） ---
 
-@mixin action-link-buttons($background: rgba(14, 165, 233, 0.08)) {
-  .data-table {
-    :deep(.el-button.is-link) {
-      width: 32px;
-      height: 32px;
-      border-radius: var(--app-radius-md);
-      background: $background;
-    }
-  }
-}
-
 @mixin toolbar-responsive($mobile-breakpoint: 900px) {
   @media (max-width: $mobile-breakpoint) {
     .toolbar-shell {
@@ -182,19 +171,17 @@
   }
 }
 
-@mixin table-crud-page($mobile-breakpoint: 900px, $background: rgba(14, 165, 233, 0.08)) {
-  @include action-link-buttons($background);
+@mixin table-crud-page($mobile-breakpoint: 900px) {
   @include toolbar-responsive($mobile-breakpoint);
 }
 
 @mixin tree-table-crud-page(
   $mobile-breakpoint: 900px,
   $gap: 12px,
-  $tree-padding-top: 6px,
-  $background: rgba(14, 165, 233, 0.08)
+  $tree-padding-top: 6px
 ) {
   @include content-stack($gap);
   @include dept-tree-panel($tree-padding-top);
   @include collapsible-tree-layout($mobile-breakpoint);
-  @include table-crud-page($mobile-breakpoint, $background);
+  @include table-crud-page($mobile-breakpoint);
 }

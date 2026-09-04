@@ -1,4 +1,4 @@
-export interface DepartmentDocumentCategoryQuery extends PageQuery {
+export interface DepartmentDocumentCategoryQuery {
   categoryName?: string;
   status?: string;
 }
@@ -17,4 +17,7 @@ export interface DepartmentDocumentCategoryVO {
   children?: DepartmentDocumentCategoryVO[];
 }
 
-export type DepartmentDocumentCategoryForm = Partial<Omit<DepartmentDocumentCategoryVO, 'id' | 'children'>> & { id?: string | number; parentId?: string | number };
+export type DepartmentDocumentCategoryForm = Partial<Omit<DepartmentDocumentCategoryVO, 'id' | 'parentId' | 'children'>> & {
+  id?: string | number;
+  parentId?: string | number;
+};

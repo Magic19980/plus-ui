@@ -20,7 +20,7 @@
           <el-button v-hasPermi="['department:fiveWhy:add']" type="primary" icon="Plus" @click="handleAdd">新增分析</el-button>
         </DepartmentPanelHeader>
       </template>
-      <el-table v-loading="loading" border :data="list">
+      <DepartmentDataTable v-loading="loading" border :data="list">
         <el-table-column label="分析日期" prop="analysisDate" width="120" align="center" />
         <el-table-column label="分析人" prop="analystName" width="120" />
         <el-table-column label="问题名称" prop="problemName" min-width="220" show-overflow-tooltip />
@@ -29,13 +29,15 @@
         <el-table-column label="审核意见" prop="reviewComment" min-width="160" show-overflow-tooltip />
         <el-table-column label="操作" fixed="right" width="260" align="center">
           <template #default="scope">
-            <el-button v-hasPermi="['department:fiveWhy:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
-            <el-button v-if="scope.row.reviewStatus === 'PENDING'" v-hasPermi="['department:fiveWhy:review']" link type="success" @click="openReview(scope.row)">审核</el-button>
-            <el-button v-hasPermi="['department:fiveWhy:export']" link type="warning" icon="Download" @click="handleExport(scope.row)">生成DOCX</el-button>
-            <el-button v-hasPermi="['department:fiveWhy:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            <DepartmentTableActions>
+              <el-button v-hasPermi="['department:fiveWhy:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+              <el-button v-if="scope.row.reviewStatus === 'PENDING'" v-hasPermi="['department:fiveWhy:review']" link type="success" @click="openReview(scope.row)">审核</el-button>
+              <el-button v-hasPermi="['department:fiveWhy:export']" link type="warning" icon="Download" @click="handleExport(scope.row)">生成DOCX</el-button>
+              <el-button v-hasPermi="['department:fiveWhy:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
 
@@ -87,6 +89,8 @@
 import { onMounted, reactive, ref } from 'vue';
 import ImageUpload from '@/components/ImageUpload/index.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { addFiveWhy, delFiveWhy, exportFiveWhy, listFiveWhy, reviewFiveWhy, updateFiveWhy } from '@/api/department/fiveWhy';
 import type { FiveWhyForm, FiveWhyQuery, FiveWhyVO, ReviewForm } from '@/api/department/fiveWhy/types';
 import { useLoading } from '@/hooks/async/useLoading';

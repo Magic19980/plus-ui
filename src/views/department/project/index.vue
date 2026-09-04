@@ -31,7 +31,7 @@
         </DepartmentPanelHeader>
       </template>
 
-      <el-table v-loading="loading" border :data="projectList">
+      <DepartmentDataTable v-loading="loading" border :data="projectList">
         <el-table-column label="项目编码" prop="projectCode" width="140" show-overflow-tooltip />
         <el-table-column label="项目名称" prop="projectName" min-width="180" show-overflow-tooltip />
         <el-table-column label="项目类型" prop="projectType" width="130" show-overflow-tooltip />
@@ -46,11 +46,13 @@
         <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip />
         <el-table-column label="操作" fixed="right" width="130" align="center">
           <template #default="scope">
-            <el-button v-hasPermi="['department:project:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
-            <el-button v-hasPermi="['department:project:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            <DepartmentTableActions>
+              <el-button v-hasPermi="['department:project:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+              <el-button v-hasPermi="['department:project:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
@@ -94,7 +96,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import { addDepartmentProject, delDepartmentProject, getDepartmentProject, listDepartmentProject, updateDepartmentProject } from '@/api/department/project';
 import type { DepartmentProjectForm, DepartmentProjectQuery, DepartmentProjectVO } from '@/api/department/project/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 

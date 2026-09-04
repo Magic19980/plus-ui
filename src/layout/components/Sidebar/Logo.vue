@@ -6,7 +6,10 @@
       </router-link>
       <router-link v-else key="expand" class="sidebar-logo-link" to="/">
         <img :src="logo" class="sidebar-logo" :class="{ 'dark-glow': isDarkTheme }" alt="TEI" />
-        <h1 class="sidebar-title">{{ title }}</h1>
+        <div class="sidebar-brand-copy">
+          <h1 class="sidebar-title">{{ title }}</h1>
+          <span class="sidebar-brand-caption">DEPARTMENT WORKSPACE</span>
+        </div>
       </router-link>
     </transition>
   </div>
@@ -31,8 +34,12 @@ const sideTheme = computed(() => settingsStore.sideTheme);
 const isTopNav = computed(() => settingsStore.navType === NavTypeEnum.TOP);
 const isDarkSide = computed(() => !isTopNav.value && sideTheme.value === 'theme-dark');
 const isDarkTheme = computed(() => settingsStore.dark || isDarkSide.value);
-const logoSurface = computed(() => (isDarkSide.value ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc'));
-const logoBorder = computed(() => (isDarkSide.value ? 'rgba(148, 163, 184, 0.12)' : '#e5e7eb'));
+const logoSurface = computed(() =>
+  isDarkSide.value
+    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025))'
+    : 'linear-gradient(135deg, #ffffff, #f3f7fb)'
+);
+const logoBorder = computed(() => (isDarkSide.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.2)'));
 const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-text-title)'));
 </script>
 
@@ -49,10 +56,10 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
 .sidebar-logo-container {
   position: relative;
   flex-shrink: 0;
-  height: 50px;
-  line-height: 50px;
-  padding: 0 8px;
-  margin-top: 8px;
+  height: 56px;
+  line-height: 56px;
+  padding: 0 2px;
+  margin-top: 0;
   background: transparent;
   text-align: center;
   overflow: hidden;
@@ -67,13 +74,32 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
     align-items: center;
     justify-content: center;
     gap: 8px;
-    border-radius: 14px;
+    position: relative;
+    border-radius: 15px;
     background: v-bind(logoSurface);
     border: 1px solid v-bind(logoBorder);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 8px 18px rgba(2, 6, 23, 0.14);
+    overflow: hidden;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      border-color: rgba(56, 189, 248, 0.38);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 10px 22px rgba(2, 6, 23, 0.18);
+      transform: translateY(-1px);
+    }
 
     & .sidebar-logo {
-      width: 30px;
-      height: 30px;
+      position: relative;
+      z-index: 1;
+      width: 31px;
+      height: 31px;
       display: block;
       flex-shrink: 0;
       object-fit: contain;
@@ -82,12 +108,14 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
       transition: filter 0.3s ease;
 
       &.dark-glow {
-        animation: tei-logo-breathe 3.2s ease-in-out infinite;
+        filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.22));
       }
     }
 
     & .sidebar-title {
-      display: inline-block;
+      position: relative;
+      z-index: 1;
+      display: block;
       flex: 0 0 auto;
       margin: 0;
       color: v-bind(logoTextColor);
@@ -98,33 +126,52 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
       font-family: 'MiSans', 'HarmonyOS Sans SC', 'PingFang SC', sans-serif;
       white-space: nowrap;
     }
+
+    & .sidebar-brand-copy {
+      position: relative;
+      z-index: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 4px;
+      overflow: hidden;
+      text-align: left;
+    }
+
+    & .sidebar-brand-caption {
+      display: block;
+      overflow: hidden;
+      max-width: 100%;
+      color: rgba(148, 163, 184, 0.82);
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &.collapse {
-    height: 46px;
-    line-height: 46px;
+    height: 50px;
+    line-height: 50px;
 
     .sidebar-logo-link {
       padding: 0;
+
+      .sidebar-logo {
+        width: 31px;
+        height: 31px;
+      }
     }
-  }
-}
-
-@keyframes tei-logo-breathe {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 1px rgba(45, 212, 191, 0.14)) drop-shadow(0 0 2px rgba(59, 130, 246, 0.08));
-  }
-
-  50% {
-    filter: drop-shadow(0 0 5px rgba(45, 212, 191, 0.84)) drop-shadow(0 0 13px rgba(59, 130, 246, 0.52));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar-logo-container .sidebar-logo.dark-glow {
-    animation: none;
-    filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.48));
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.22));
   }
 }
 </style>

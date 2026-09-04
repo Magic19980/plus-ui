@@ -41,7 +41,7 @@
       <div v-if="calendar.futureMonth" class="empty-calendar">该月份尚未开始，日报只统计到今天。</div>
       <div v-else-if="!calendar.members.length" class="empty-calendar">当前科室暂无分配日报任务的成员，请先在人事档案纳入成员，再到任务中心分配日报任务。</div>
       <div v-else class="calendar-scroll">
-        <el-table :data="visibleMembers" border class="calendar-table" row-key="userId">
+        <DepartmentDataTable :data="visibleMembers" border class="calendar-table" row-key="userId">
           <el-table-column fixed label="科室成员" width="178" align="left">
             <template #default="scope"><div class="member-cell"><span class="member-name">{{ scope.row.nickName || scope.row.userName }}</span><span class="member-account">{{ scope.row.userName }}</span><span v-if="scope.row.jobTitle" class="member-title">{{ scope.row.jobTitle }}</span><span v-if="scope.row.sourceDeptName" class="member-dept">部门：{{ scope.row.sourceDeptName }}</span></div></template>
           </el-table-column>
@@ -58,7 +58,7 @@
               </div>
             </template>
           </el-table-column>
-        </el-table>
+        </DepartmentDataTable>
         <div v-if="calendar.members.length > memberPageSize" class="calendar-pagination">
           <span>共 {{ calendar.members.length }} 位成员</span>
           <el-pagination
@@ -131,15 +131,15 @@
             <el-form-item class="override-action"><el-button type="primary" icon="Check" @click="saveOverride">保存例外</el-button></el-form-item>
           </div>
         </el-form>
-        <el-table class="override-table" :data="overrides" border stripe size="small" max-height="260">
+        <DepartmentDataTable class="override-table" :data="overrides" border stripe size="small" max-height="260">
           <el-table-column prop="calendarDate" label="日期" width="140" align="center" />
           <el-table-column label="类型" width="160" align="center"><template #default="scope"><dict-tag :options="dm_date_exception" :value="scope.row.dayType" /></template></el-table-column>
           <el-table-column label="填写日报" width="110" align="center"><template #default="scope"><el-tag :type="scope.row.needReport ? 'success' : 'info'">{{ scope.row.needReport ? '是' : '否' }}</el-tag></template></el-table-column>
           <el-table-column label="人员范围" width="220"><template #default="scope">{{ getOverrideUserLabel(scope.row) }}</template></el-table-column>
           <el-table-column prop="remark" label="说明" show-overflow-tooltip />
-          <el-table-column label="操作" width="90" align="center"><template #default="scope"><el-button link type="danger" @click="removeOverride(scope.row)">删除</el-button></template></el-table-column>
+          <el-table-column label="操作" width="90" align="center"><template #default="scope"><DepartmentTableActions><el-button link type="danger" @click="removeOverride(scope.row)">删除</el-button></DepartmentTableActions></template></el-table-column>
           <template #empty><div class="override-empty"><el-icon><Calendar /></el-icon><strong>暂无日期例外</strong><span>新增规则后会显示在这里</span></div></template>
-        </el-table>
+        </DepartmentDataTable>
       </section>
 
       <template #footer>
@@ -160,6 +160,8 @@ import { computed, onMounted, reactive, ref, toRefs, type Ref, watch } from 'vue
 import { addDailyCalendarOverride, addDailyReport, delDailyCalendarOverride, delDailyReportAttachment, getDailyCalendar, getDailyReport, listDailyCalendarOverrides, listDailyReportAttachments, updateDailyCalendarOverride, updateDailyReport } from '@/api/department/dailyReport';
 import type { DailyCalendarCellVO, DailyCalendarDayVO, DailyCalendarOverrideForm, DailyCalendarOverrideVO, DailyCalendarVO, DailyReportAttachmentVO, DailyReportForm, DailyReportVO } from '@/api/department/dailyReport/types';
 import type { PersonUserOptionVO } from '@/api/department/person/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { useUserStore } from '@/store/modules/user';
@@ -307,7 +309,7 @@ onMounted(getCalendar);
   .override-action { align-self: end; justify-self: end; }
   .override-action .el-button { min-width: 118px; }
   .override-table { margin-top: 14px; overflow: hidden; border-radius: 10px; }
-  .override-table :deep(.el-table__header th) { background: #f8fafc; color: var(--el-text-color-regular); font-weight: 600; }
+  .override-table :deep(.el-table__header th) { background: var(--tableHeaderBg, var(--el-fill-color-lighter)); color: var(--tableHeaderTextColor, var(--el-text-color-regular)); font-weight: 600; }
   .override-empty { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 92px; color: var(--el-text-color-secondary); }
   .override-empty .el-icon { color: var(--el-color-primary-light-3); font-size: 22px; }
   .override-empty strong { color: var(--el-text-color-regular); font-size: 13px; font-weight: 500; }
@@ -322,6 +324,9 @@ onMounted(getCalendar);
 
 <style lang="scss">
 .calendar-settings-dialog {
+  --tableHeaderBg: var(--el-fill-color-lighter);
+  --tableHeaderTextColor: var(--el-text-color-regular);
+
   &.el-dialog {
     overflow: hidden;
     border-radius: 14px;
@@ -338,7 +343,7 @@ onMounted(getCalendar);
     max-height: calc(100vh - 220px);
     overflow-y: auto;
     padding: 18px 24px 12px;
-    background: #f8fafc;
+    background: var(--el-bg-color-page);
   }
 
   .el-dialog__footer {
@@ -584,8 +589,8 @@ onMounted(getCalendar);
   }
 
   .override-table .el-table__header th {
-    background: #f8fafc;
-    color: var(--el-text-color-regular);
+    background: var(--tableHeaderBg);
+    color: var(--tableHeaderTextColor);
     font-weight: 600;
   }
 
@@ -617,6 +622,39 @@ onMounted(getCalendar);
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+  }
+}
+
+html.dark .calendar-settings-dialog {
+  --tableHeaderBg: #18263a;
+  --tableHeaderTextColor: #c2d0e4;
+
+  .el-dialog__body {
+    background: #0d1727;
+  }
+
+  .settings-note {
+    border-color: rgba(56, 168, 242, 0.32);
+    background: rgba(56, 168, 242, 0.12);
+  }
+
+  .settings-note strong {
+    color: #d8ecff;
+  }
+
+  .settings-section {
+    border-color: rgba(71, 85, 105, 0.62);
+    background: #111c2d;
+    box-shadow: 0 4px 18px rgb(0 0 0 / 18%);
+  }
+
+  .override-detail-row {
+    border-top-color: rgba(71, 85, 105, 0.52);
+  }
+
+  .override-table .el-table__header th {
+    background: var(--tableHeaderBg) !important;
+    color: var(--tableHeaderTextColor) !important;
   }
 }
 

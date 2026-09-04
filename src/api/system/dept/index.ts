@@ -11,6 +11,15 @@ export const listDept = (query?: DeptQuery) => {
   });
 };
 
+// 按条件搜索部门，仅返回命中节点及其上级路径
+export const searchDept = (query: DeptQuery) => {
+  return request({
+    url: '/system/dept/search',
+    method: 'get',
+    params: query
+  });
+};
+
 // 按父部门查询直属子部门（部门管理树懒加载）
 export const listDeptChildren = (parentId: string | number = 0): AxiosPromise<DeptVO[]> => {
   return request({

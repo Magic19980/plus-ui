@@ -7,7 +7,7 @@
         </DepartmentPanelHeader>
       </template>
 
-      <el-table v-loading="loading" row-key="id" border :data="categoryTree" default-expand-all>
+      <DepartmentDataTable v-loading="loading" row-key="id" border :data="categoryTree" default-expand-all>
         <el-table-column label="分类名称" prop="categoryName" min-width="240" show-overflow-tooltip />
         <el-table-column label="层级" width="100" align="center">
           <template #default="scope">{{ scope.row.categoryLevel === 1 ? '提案大类' : '提案小类' }}</template>
@@ -20,12 +20,14 @@
         <el-table-column label="备注" prop="remark" min-width="220" show-overflow-tooltip />
         <el-table-column label="操作" fixed="right" width="240" align="center">
           <template #default="scope">
-            <el-button v-if="scope.row.categoryLevel === 1" v-hasPermi="['department:scoreCategory:add']" link type="success" icon="Plus" @click="handleAddSub(scope.row)">新增小类</el-button>
-            <el-button v-hasPermi="['department:scoreCategory:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
-            <el-button v-hasPermi="['department:scoreCategory:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            <DepartmentTableActions>
+              <el-button v-if="scope.row.categoryLevel === 1" v-hasPermi="['department:scoreCategory:add']" link type="success" icon="Plus" @click="handleAddSub(scope.row)">新增小类</el-button>
+              <el-button v-hasPermi="['department:scoreCategory:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+              <el-button v-hasPermi="['department:scoreCategory:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
       <el-empty v-if="!loading && categoryTree.length === 0" description="暂无分类，请先新增提案大类" />
     </el-card>
 
@@ -48,7 +50,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import { addScoreCategory, delScoreCategory, listScoreCategory, updateScoreCategory } from '@/api/department/scoreCategory';
 import type { ScoreCategoryForm, ScoreCategoryVO } from '@/api/department/scoreCategory/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 

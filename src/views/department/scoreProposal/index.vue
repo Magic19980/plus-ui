@@ -44,7 +44,7 @@
           <el-button v-hasPermi="['department:scoreProposal:add']" type="primary" icon="Plus" @click="handleAdd">新增提案</el-button>
         </DepartmentPanelHeader>
       </template>
-      <el-table v-loading="loading" border :data="list">
+      <DepartmentDataTable v-loading="loading" border :data="list">
         <el-table-column label="开始日期" prop="startDate" width="120" align="center" />
         <el-table-column label="提议者" prop="proposerName" width="120" />
         <el-table-column label="部门" prop="deptName" width="140" show-overflow-tooltip />
@@ -54,14 +54,16 @@
         <el-table-column label="审核状态" prop="reviewStatus" width="105" align="center"><template #default="scope"><el-tag :type="statusType(scope.row.reviewStatus)">{{ statusLabel(scope.row.reviewStatus) }}</el-tag></template></el-table-column>
         <el-table-column label="操作" fixed="right" width="280" align="center">
           <template #default="scope">
-            <el-button v-if="['DRAFT', 'REJECTED'].includes(scope.row.reviewStatus)" v-hasPermi="['department:scoreProposal:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
-            <el-button v-if="['PENDING', 'PENDING_CONFIRM'].includes(scope.row.reviewStatus)" v-hasPermi="['department:scoreProposal:review']" link type="success" @click="openReview(scope.row)">{{ scope.row.reviewStatus === 'PENDING_CONFIRM' ? '现场确认' : '审核' }}</el-button>
-            <el-button v-if="scope.row.reviewFileOssId" v-hasPermi="['department:scoreProposal:query']" link type="success" icon="View" @click="handlePreview(scope.row)">预览</el-button>
-            <el-button v-hasPermi="['department:scoreProposal:export']" link type="warning" icon="Download" @click="handleExport(scope.row)">生成XLSX</el-button>
-            <el-button v-hasPermi="['department:scoreProposal:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            <DepartmentTableActions>
+              <el-button v-if="['DRAFT', 'REJECTED'].includes(scope.row.reviewStatus)" v-hasPermi="['department:scoreProposal:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+              <el-button v-if="['PENDING', 'PENDING_CONFIRM'].includes(scope.row.reviewStatus)" v-hasPermi="['department:scoreProposal:review']" link type="success" @click="openReview(scope.row)">{{ scope.row.reviewStatus === 'PENDING_CONFIRM' ? '现场确认' : '审核' }}</el-button>
+              <el-button v-if="scope.row.reviewFileOssId" v-hasPermi="['department:scoreProposal:query']" link type="success" icon="View" @click="handlePreview(scope.row)">预览</el-button>
+              <el-button v-hasPermi="['department:scoreProposal:export']" link type="warning" icon="Download" @click="handleExport(scope.row)">生成XLSX</el-button>
+              <el-button v-hasPermi="['department:scoreProposal:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
 
@@ -262,6 +264,8 @@
 import { computed, onMounted, reactive, ref, toRefs } from 'vue';
 import ImageUpload from '@/components/ImageUpload/index.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import DepartmentMetricCard from '@/components/Department/MetricCard.vue';
 import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
 import { listScoreCategoryOptions } from '@/api/department/scoreCategory';
@@ -789,5 +793,18 @@ onMounted(async () => {
     .el-table__header th { background: var(--el-fill-color-lighter); }
     .el-table__cell { padding: 10px 0; }
   }
+}
+
+html.dark .score-team-member-picker-dialog .team-member-picker-selection {
+  border-color: color-mix(in srgb, var(--app-accent-strong) 34%, var(--app-surface-border));
+  background: color-mix(in srgb, var(--app-accent-strong) 14%, var(--app-surface-bg));
+}
+
+html.dark .score-team-member-picker-dialog .team-member-picker-selection-heading {
+  color: var(--app-text-title);
+}
+
+html.dark .score-team-member-picker-dialog .team-member-picker-selection-empty {
+  color: var(--app-text-muted);
 }
 </style>

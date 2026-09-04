@@ -46,6 +46,9 @@ html.dark {
     --el-button-bg-color: var(--app-button-hover);
     --el-button-border-color: var(--app-accent-strong);
     --el-button-text-color: #eef4ff;
+    --el-button-disabled-bg-color: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg));
+    --el-button-disabled-border-color: color-mix(in srgb, var(--app-accent-strong) 34%, var(--app-surface-border));
+    --el-button-disabled-text-color: var(--app-text-muted);
     --el-button-hover-bg-color: var(--app-accent-strong);
     --el-button-hover-border-color: var(--app-accent-strong);
     --el-button-active-bg-color: var(--app-button-active);
@@ -62,6 +65,29 @@ html.dark {
     --el-button-active-text-color: #dbe8ff;
     --el-button-active-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.28);
     --el-button-active-border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.8);
+  }
+
+  // Element Plus 对 plain/text/link/dashed 按钮的禁用态使用直接颜色，
+  // 仅覆写上面的 disabled 变量仍会遗留浅色主题的浅蓝背景。
+  .el-button--primary.is-plain.is-disabled,
+  .el-button--primary.is-plain.is-disabled:hover,
+  .el-button--primary.is-plain.is-disabled:focus,
+  .el-button--primary.is-plain.is-disabled:active,
+  .el-button--primary.is-text.is-disabled,
+  .el-button--primary.is-text.is-disabled:hover,
+  .el-button--primary.is-text.is-disabled:focus,
+  .el-button--primary.is-text.is-disabled:active,
+  .el-button--primary.is-link.is-disabled,
+  .el-button--primary.is-link.is-disabled:hover,
+  .el-button--primary.is-link.is-disabled:focus,
+  .el-button--primary.is-link.is-disabled:active,
+  .el-button--primary.is-dashed.is-disabled,
+  .el-button--primary.is-dashed.is-disabled:hover,
+  .el-button--primary.is-dashed.is-disabled:focus,
+  .el-button--primary.is-dashed.is-disabled:active {
+    color: var(--app-text-muted);
+    background-color: color-mix(in srgb, var(--app-accent-strong) 12%, var(--app-surface-bg));
+    border-color: color-mix(in srgb, var(--app-accent-strong) 28%, var(--app-surface-border));
   }
 
   .el-button--success {
@@ -213,18 +239,34 @@ html.dark {
   --app-elevated-close-hover-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.18);
   --el-bg-color-page: var(--app-shell-bg);
 
-  // --- vxe-table 暗色（与 vxe 业务表并存） ---
-  --vxe-font-color: #98989e;
-  --vxe-primary-color: #0ea5e9;
-  --vxe-icon-background-color: #98989e;
-  --vxe-table-font-color: #98989e;
-  --vxe-table-resizable-color: #95969a;
-  --vxe-table-header-background-color: #28282a;
-  --vxe-table-body-background-color: #151518;
-  --vxe-table-background-color: #4a5663;
-  --vxe-table-border-width: 1px;
-  --vxe-table-border-color: #37373a;
-  --vxe-toolbar-background-color: #37373a;
+  // --- VXE 4.x 暗色表格变量 ---
+  // VXE 4.x 使用 vxe-ui 前缀，旧版 vxe-table-* 变量不会生效。
+  --vxe-ui-font-color: var(--app-text-title);
+  --vxe-ui-font-primary-color: var(--app-accent-strong);
+  --vxe-ui-font-lighten-color: var(--app-text-muted);
+  --vxe-ui-font-darken-color: var(--app-text-title);
+  --vxe-ui-font-disabled-color: color-mix(in srgb, var(--app-text-muted) 55%, var(--app-surface-bg));
+  --vxe-ui-base-popup-border-color: var(--app-surface-border);
+  --vxe-ui-base-popup-box-shadow: var(--app-shadow-md);
+  --vxe-ui-layout-background-color: var(--app-surface-bg);
+  --vxe-ui-input-border-color: var(--app-surface-border);
+  --vxe-ui-input-placeholder-color: var(--app-text-muted);
+  --vxe-ui-input-disabled-background-color: var(--app-elevated-soft-bg);
+  --vxe-ui-table-header-font-color: var(--tableHeaderTextColor);
+  --vxe-ui-table-header-background-color: var(--tableHeaderBg);
+  --vxe-ui-table-column-to-row-background-color: var(--tableHeaderBg);
+  --vxe-ui-table-column-hover-background-color: color-mix(in srgb, var(--app-accent-strong) 14%, var(--app-surface-bg));
+  --vxe-ui-table-column-current-background-color: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg));
+  --vxe-ui-table-column-hover-current-background-color: color-mix(in srgb, var(--app-accent-strong) 22%, var(--app-surface-bg));
+  --vxe-ui-table-border-color: var(--app-surface-border);
+  --vxe-ui-table-row-hover-background-color: color-mix(in srgb, var(--app-accent-strong) 10%, var(--app-surface-bg));
+  --vxe-ui-table-row-striped-background-color: var(--app-elevated-soft-bg);
+  --vxe-ui-table-row-hover-striped-background-color: color-mix(in srgb, var(--app-accent-strong) 10%, var(--app-surface-bg));
+  --vxe-ui-table-row-checkbox-checked-background-color: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg));
+  --vxe-ui-table-row-hover-checkbox-checked-background-color: color-mix(in srgb, var(--app-accent-strong) 24%, var(--app-surface-bg));
+  --vxe-ui-table-row-current-background-color: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg));
+  --vxe-ui-table-row-hover-current-background-color: color-mix(in srgb, var(--app-accent-strong) 24%, var(--app-surface-bg));
+  --vxe-ui-table-fixed-scrolling-box-shadow-color: rgba(0, 0, 0, 0.5);
 
   --brder-color: #37373a;
 }

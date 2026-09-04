@@ -109,9 +109,10 @@ const setLayout = () => {
   z-index: 9;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 12px 12px 0;
-  background: transparent;
+  gap: 7px;
+  padding: 11px 14px 0;
+  background: linear-gradient(180deg, rgba(247, 250, 253, 0.96) 0%, rgba(247, 250, 253, 0.78) 58%, transparent 100%);
+  backdrop-filter: blur(12px);
 }
 
 .fixed-header {
@@ -119,7 +120,7 @@ const setLayout = () => {
   top: 0;
   right: 0;
   width: calc(100% - #{$base-sidebar-width} - 12px);
-  transition: width 0.28s;
+  transition: width 0.28s, background-color 0.28s;
 }
 
 .hideSidebar .fixed-header {
@@ -133,5 +134,11 @@ const setLayout = () => {
 .mobile .fixed-header {
   width: 100%;
   top: 0;
+}
+</style>
+
+<style lang="scss">
+html.dark .layout-header {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94) 0%, rgba(15, 23, 42, 0.74) 58%, transparent 100%);
 }
 </style>

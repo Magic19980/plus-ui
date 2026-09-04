@@ -9,9 +9,9 @@
         </div>
         <el-button v-hasPermi="['department:department:add']" type="primary" icon="Plus" @click="handleAdd">新增科室</el-button>
       </div>
-      <div class="page-intro__notice">
-        <el-icon><InfoFilled /></el-icon>
-        <span>科室来源于系统部门。启用后，部门用户会自动建立正式服务关系；临时协作人员仍需在人员档案中单独纳入。</span>
+        <div class="page-intro__notice">
+          <el-icon><InfoFilled /></el-icon>
+          <span>科室来源于系统部门。泛微组织调整后，如原部门失效，可使用“迁移”将科室配置和业务数据转到新的有效部门。</span>
       </div>
     </el-card>
 
@@ -46,12 +46,13 @@
         </div>
       </div>
 
-      <el-table v-loading="loading" class="config-table" :data="configList" row-key="deptId">
-        <el-table-column label="系统部门" prop="deptName" min-width="240" show-overflow-tooltip>
-          <template #default="scope">
-            <div class="dept-name-cell">
-              <span class="dept-name-cell__icon"><el-icon><OfficeBuilding /></el-icon></span>
-              <span class="dept-name-cell__name" :title="scope.row.deptName">{{ scope.row.deptName }}</span>
+      <DepartmentDataTable v-loading="loading" class="config-table" :data="configList" row-key="deptId">
+          <el-table-column label="系统部门" prop="deptName" min-width="280" show-overflow-tooltip>
+            <template #default="scope">
+              <div class="dept-name-cell">
+                <span class="dept-name-cell__icon"><el-icon><OfficeBuilding /></el-icon></span>
+                <span class="dept-name-cell__name" :title="scope.row.deptName || '原系统部门已失效'">{{ scope.row.deptName || '原系统部门已失效' }}</span>
+                <el-tag v-if="scope.row.systemDeptAvailable === false" type="warning" effect="light">待迁移</el-tag>
             </div>
           </template>
         </el-table-column>
@@ -72,20 +73,30 @@
           </template>
         </el-table-column>
         <el-table-column label="更新时间" prop="updateTime" width="180" />
-        <el-table-column label="操作" fixed="right" width="150" align="center">
+        <el-table-column label="操作" fixed="right" width="220" align="center">
           <template #default="scope">
-            <el-button v-hasPermi="['department:department:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+            <DepartmentTableActions>
+              <el-button v-if="scope.row.systemDeptAvailable !== false" v-hasPermi="['department:department:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
             <el-button
-              v-if="scope.row.status === 'ENABLED'"
+              v-if="scope.row.systemDeptAvailable === false"
+              v-hasPermi="['department:department:edit']"
+              link
+              type="warning"
+              icon="Right"
+              @click="handleMigrate(scope.row)"
+            >迁移</el-button>
+            <el-button
+              v-if="scope.row.status === 'ENABLED' && scope.row.systemDeptAvailable !== false"
               v-hasPermi="['department:department:remove']"
               link
               type="danger"
               icon="SwitchButton"
               @click="handleDisable(scope.row)"
-            >停用</el-button>
+              >停用</el-button>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
@@ -101,57 +112,30 @@
       />
       <el-form ref="formRef" :model="form" :rules="rules" label-width="92px" class="config-form">
         <el-form-item label="系统部门" prop="deptId">
-          <el-popover
-            v-model:visible="deptPickerVisible"
-            placement="bottom-start"
-            :width="560"
-            trigger="click"
-            :persistent="false"
-            popper-class="department-config-dept-popper"
+          <DeptTreeSelect
+            v-model="form.deptId"
+            :data="deptOptions"
+            :tree-props="deptTreeProps"
             :disabled="dialog.edit"
-            @show="handleDeptPickerShow"
-          >
-            <template #reference>
-              <el-input
-                v-model="deptPickerInput"
-                :placeholder="dialog.edit ? '系统部门不可更换' : '输入部门名称搜索'"
-                :disabled="dialog.edit"
-                prefix-icon="Search"
-                class="dept-tree-input"
-              >
-                <template #suffix>
-                  <el-icon><ArrowDown /></el-icon>
-                </template>
-              </el-input>
-            </template>
-            <div class="dept-picker-panel">
-              <el-tree-v2
-                ref="deptTreeRef"
-                :data="deptTreeVisibleOptions"
-                :props="deptTreeProps"
-                :height="340"
-                :item-size="36"
-                :default-expanded-keys="deptTreeExpandedKeys"
-                :current-node-key="form.deptId"
-                highlight-current
-                :expand-on-click-node="false"
-                empty-text="暂无可配置的系统部门"
-                @node-click="handleDeptTreeNodeClick"
-              >
-                <template #default="{ data }">
-                  <div class="dept-tree-node" :class="{ 'is-disabled': data.disabled }" :title="data.path">
-                    <span class="dept-tree-node__label">{{ data.label }}</span>
-                    <span v-if="data.disabled" class="dept-tree-node__hint">已配置</span>
-                  </div>
-                </template>
-              </el-tree-v2>
-            </div>
-          </el-popover>
+            filterable
+            remote
+            :remote-method="searchAvailableDepartments"
+            :loading="deptSearchLoading"
+            lazy
+            :load="loadDepartmentChildren"
+            no-data-text="暂无可选部门"
+            no-match-text="未找到匹配的部门"
+            check-strictly
+            clearable
+            :render-after-expand="false"
+            :placeholder="dialog.edit ? '系统部门不可更换' : '选择组织部门或输入名称搜索'"
+            @change="handleDeptSelectionChange"
+          />
           <div v-if="selectedDeptPath" class="dept-selected-summary">
             <span class="dept-selected-summary__label">已选择</span>
             <span class="dept-selected-summary__path">{{ selectedDeptPath }}</span>
           </div>
-          <div v-else-if="!dialog.edit && availableDeptTree.length === 0" class="form-help">当前没有可新增的系统部门，请先检查部门状态或已有科室配置。</div>
+          <div v-else-if="!dialog.edit" class="form-help">可直接点击输入框浏览组织树，也可输入名称搜索；已配置科室的部门不可重复选择。</div>
           <div v-else-if="dialog.edit" class="form-help">科室主键来源于系统部门，编辑时不能更换；如需变更，请停用旧科室后新增配置。</div>
         </el-form-item>
         <el-form-item label="状态">
@@ -172,40 +156,89 @@
         <el-button @click="dialog.visible = false">取消</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="migrationDialog.visible" title="迁移科室配置" width="620px" append-to-body class="department-config-dialog">
+      <el-alert
+        title="迁移前请确认目标部门"
+        description="迁移会保留科室配置，并将人员服务关系、日报、休假、任务、资料、工单和其他业务数据统一转到目标部门。目标部门必须是泛微同步后的有效部门，已有科室配置或存在重复数据时不会执行。"
+        type="warning"
+        show-icon
+        :closable="false"
+        class="dialog-notice"
+      />
+      <div class="migration-path">
+        <span class="migration-path__label">原科室</span>
+        <span class="migration-path__value">{{ migrationSourceName || '原系统部门已失效' }}</span>
+        <el-icon><ArrowRight /></el-icon>
+        <span class="migration-path__label">目标部门</span>
+      </div>
+      <el-form label-width="92px" class="config-form">
+        <el-form-item label="目标部门" required>
+          <DeptTreeSelect
+            v-model="migrationForm.targetDeptId"
+            :data="deptOptions"
+            :tree-props="deptTreeProps"
+            filterable
+            remote
+            :remote-method="searchAvailableDepartments"
+            :loading="deptSearchLoading"
+            lazy
+            :load="loadDepartmentChildren"
+            no-data-text="暂无可选部门"
+            no-match-text="未找到匹配的部门"
+            check-strictly
+            clearable
+            :render-after-expand="false"
+            placeholder="浏览组织树或输入名称搜索并选择目标部门"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button :loading="migrationLoading" type="primary" @click="submitMigration">确认迁移</el-button>
+        <el-button @click="migrationDialog.visible = false">取消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="DepartmentConfig" lang="ts">
-import { ArrowDown, InfoFilled, OfficeBuilding } from '@element-plus/icons-vue';
+import { ArrowRight, InfoFilled, OfficeBuilding } from '@element-plus/icons-vue';
 import { computed, onMounted, reactive, ref } from 'vue';
-import { addDepartmentConfig, disableDepartmentConfig, getDepartmentConfig, listAvailableDepartments, listDepartmentConfig, updateDepartmentConfig } from '@/api/department/config';
-import type { DepartmentConfigForm, DepartmentConfigQuery, DepartmentConfigVO } from '@/api/department/config/types';
-import { deptTreeSelect } from '@/api/system/user';
-import type { DeptTreeVO } from '@/api/system/dept/types';
+import { addDepartmentConfig, disableDepartmentConfig, getDepartmentConfig, listAvailableDepartments, listDepartmentConfig, listOrganizationDepartmentChildren, migrateDepartmentConfig, updateDepartmentConfig } from '@/api/department/config';
+import type { DepartmentConfigForm, DepartmentConfigMigrationForm, DepartmentConfigQuery, DepartmentConfigVO } from '@/api/department/config/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import DeptTreeSelect from '@/components/DeptTreeSelect/index.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 
-type DeptTreeOption = Omit<DeptTreeVO, 'children'> & {
-  children: DeptTreeOption[];
+interface DeptSearchOption {
+  id: number | string;
+  label: string;
   path: string;
-};
+  disabled?: boolean;
+  hasChildren?: boolean;
+  children: DeptSearchOption[];
+}
 
 const { loading, withLoading } = useLoading(true);
 const configList = ref<DepartmentConfigVO[]>([]);
-const deptOptions = ref<DeptTreeVO[]>([]);
-const availableDeptTree = ref<DeptTreeOption[]>([]);
-const availableDeptIds = ref<Set<string>>(new Set());
+const deptOptions = ref<DeptSearchOption[]>([]);
 const total = ref(0);
 const buttonLoading = ref(false);
 const formRef = ref<ElFormInstance>();
-const deptTreeRef = ref<{ setCurrentKey: (key: number | string | undefined) => void }>();
-const deptPickerVisible = ref(false);
-const deptSearchKeyword = ref('');
+const deptSearchLoading = ref(false);
+const deptSearchRequestId = ref(0);
 const queryParams = reactive<DepartmentConfigQuery>({ pageNum: 1, pageSize: 10, deptName: undefined, status: undefined });
 const form = reactive<DepartmentConfigForm>({ deptId: undefined, status: 'ENABLED', sortNum: 0, remark: undefined });
 const dialog = reactive({ visible: false, title: '', edit: false });
+const migrationDialog = reactive({ visible: false });
+const migrationLoading = ref(false);
+const migrationSourceName = ref('');
+const migrationForm = reactive<DepartmentConfigMigrationForm>({ sourceDeptId: '', targetDeptId: '' });
 const rules = { deptId: [{ required: true, message: '请选择系统部门', trigger: 'change' }] };
-const deptTreeProps = { value: 'id', label: 'label', children: 'children', disabled: 'disabled' };
+const deptTreeProps = { value: 'id', label: 'path', children: 'children', disabled: 'disabled' };
 
 const enabledCount = computed(() => configList.value.filter(item => item.status === 'ENABLED').length);
 const disabledCount = computed(() => configList.value.filter(item => item.status === 'DISABLED').length);
@@ -232,103 +265,127 @@ const resetQuery = () => {
 
 const resetForm = () => {
   Object.assign(form, { id: undefined, deptId: undefined, deptName: undefined, status: 'ENABLED', sortNum: 0, remark: undefined });
-  deptPickerVisible.value = false;
-  deptSearchKeyword.value = '';
   formRef.value?.resetFields();
 };
 
-const filterAvailableDeptTree = (nodes: DeptTreeVO[], allowedIds: Set<string>, parentPath = ''): DeptTreeOption[] => {
-  return nodes.reduce<DeptTreeOption[]>((result, dept) => {
-    if (dept.disabled) return result;
-    const path = parentPath ? `${parentPath} / ${dept.label}` : dept.label;
-    const children = filterAvailableDeptTree(dept.children ?? [], allowedIds, path);
-    const selectable = allowedIds.has(String(dept.id));
-    if (selectable || children.length) {
-      result.push({ ...dept, disabled: !selectable, path, children });
+const selectedDeptPath = computed(() => {
+  const selected = deptOptions.value.find(item => String(item.id) === String(form.deptId));
+  return selected?.path || form.deptName || '';
+});
+
+const toDeptSearchOptions = (items: DepartmentConfigVO[]): DeptSearchOption[] =>
+  items
+    .filter(item => item.deptId !== undefined && item.deptId !== null && item.deptName)
+    .map(item => ({
+      id: item.deptId,
+      label: item.deptName as string,
+      path: item.deptName as string,
+      disabled: item.selectable === false,
+      hasChildren: item.hasChildren === true,
+      children: []
+    }));
+
+const loadDepartmentRoots = async (requestId = deptSearchRequestId.value) => {
+  deptSearchLoading.value = true;
+  try {
+    const res = await listOrganizationDepartmentChildren(0);
+    if (requestId === deptSearchRequestId.value) {
+      deptOptions.value = toDeptSearchOptions(res.data || []);
     }
-    return result;
-  }, []);
-};
-
-const findDeptPath = (nodes: DeptTreeVO[], deptId: number | string | null | undefined, parentPath: string[] = []): string[] => {
-  if (deptId === undefined || deptId === null || deptId === '') return [];
-  for (const dept of nodes) {
-    const currentPath = [...parentPath, dept.label];
-    if (String(dept.id) === String(deptId)) return currentPath;
-    const childPath = findDeptPath(dept.children ?? [], deptId, currentPath);
-    if (childPath.length) return childPath;
-  }
-  return [];
-};
-
-const selectedDeptPath = computed(() => findDeptPath(deptOptions.value, form.deptId).join(' / ') || form.deptName || '');
-const deptPickerInput = computed({
-  get: () => (deptPickerVisible.value ? deptSearchKeyword.value : selectedDeptPath.value),
-  set: value => {
-    deptSearchKeyword.value = value;
-  }
-});
-const deptTreeVisibleOptions = computed<DeptTreeOption[]>(() => {
-  const keyword = deptSearchKeyword.value.trim().toLocaleLowerCase();
-  if (!keyword) return availableDeptTree.value;
-
-  const filterNodes = (nodes: DeptTreeOption[]): DeptTreeOption[] => nodes.reduce<DeptTreeOption[]>((result, node) => {
-    const children = filterNodes(node.children);
-    const matched = node.label.toLocaleLowerCase().includes(keyword) || node.path.toLocaleLowerCase().includes(keyword);
-    if (matched || children.length) result.push({ ...node, children });
-    return result;
-  }, []);
-
-  return filterNodes(availableDeptTree.value);
-});
-const deptTreeExpandedKeys = computed<(number | string)[]>(() => {
-  const expandedKeys: (number | string)[] = [];
-  const collectKeys = (nodes: DeptTreeOption[]) => nodes.forEach(node => {
-    if (node.children.length) {
-      expandedKeys.push(node.id);
-      collectKeys(node.children);
+  } finally {
+    if (requestId === deptSearchRequestId.value) {
+      deptSearchLoading.value = false;
     }
-  });
-  collectKeys(deptTreeVisibleOptions.value);
-  return expandedKeys;
-});
-
-const loadDeptOptions = async () => {
-  const [treeRes, availableRes] = await Promise.all([deptTreeSelect(), listAvailableDepartments()]);
-  deptOptions.value = treeRes.data || [];
-  availableDeptIds.value = new Set((availableRes.data || []).map(item => String(item.deptId)));
-  availableDeptTree.value = filterAvailableDeptTree(deptOptions.value, availableDeptIds.value);
+  }
 };
 
-const handleDeptPickerShow = () => {
-  deptSearchKeyword.value = '';
-  deptTreeRef.value?.setCurrentKey(form.deptId);
+const loadDepartmentChildren = async (node: { data?: DeptSearchOption }, resolve: (data: DeptSearchOption[]) => void) => {
+  const parentId = node.data?.id;
+  if (parentId === undefined || parentId === null || parentId === '') {
+    resolve([]);
+    return;
+  }
+  try {
+    const res = await listOrganizationDepartmentChildren(parentId);
+    resolve(toDeptSearchOptions(res.data || []));
+  } catch {
+    resolve([]);
+  }
 };
 
-const handleDeptTreeNodeClick = (data: DeptTreeOption) => {
-  if (data.disabled || !availableDeptIds.value.has(String(data.id))) return;
-  form.deptId = data.id;
-  form.deptName = data.label;
-  deptPickerVisible.value = false;
-  deptSearchKeyword.value = '';
+const searchAvailableDepartments = async (keyword: string) => {
+  const normalizedKeyword = String(keyword || '').trim();
+  const requestId = ++deptSearchRequestId.value;
+  if (!normalizedKeyword) {
+    await loadDepartmentRoots(requestId);
+    return;
+  }
+
+  deptSearchLoading.value = true;
+  try {
+    const res = await listAvailableDepartments({ deptName: normalizedKeyword });
+    if (requestId === deptSearchRequestId.value) {
+      deptOptions.value = toDeptSearchOptions(res.data || []);
+    }
+  } finally {
+    if (requestId === deptSearchRequestId.value) {
+      deptSearchLoading.value = false;
+    }
+  }
+};
+
+const handleDeptSelectionChange = (value: number | string | undefined | null) => {
+  const selected = deptOptions.value.find(item => String(item.id) === String(value));
+  form.deptName = selected?.path || undefined;
 };
 
 const handleAdd = async () => {
   resetForm();
-  await loadDeptOptions();
+  deptSearchRequestId.value++;
+  deptOptions.value = [];
+  deptSearchLoading.value = false;
   dialog.title = '新增科室';
   dialog.edit = false;
   dialog.visible = true;
+  void loadDepartmentRoots();
 };
 
 const handleUpdate = async (row: DepartmentConfigVO) => {
   resetForm();
-  await loadDeptOptions();
   const res = await getDepartmentConfig(row.deptId);
   Object.assign(form, { ...res.data, id: res.data?.deptId });
+  deptSearchLoading.value = false;
+  deptOptions.value = res.data?.deptId && res.data?.deptName
+    ? [{ id: res.data.deptId, label: res.data.deptName, path: res.data.deptName, children: [] }]
+    : [];
   dialog.title = '编辑科室';
   dialog.edit = true;
   dialog.visible = true;
+};
+
+const handleMigrate = async (row: DepartmentConfigVO) => {
+  deptSearchRequestId.value++;
+  deptOptions.value = [];
+  deptSearchLoading.value = false;
+  migrationSourceName.value = row.deptName || '原系统部门已失效';
+  migrationForm.sourceDeptId = row.deptId;
+  migrationForm.targetDeptId = '';
+  migrationDialog.visible = true;
+  void loadDepartmentRoots();
+};
+
+const submitMigration = async () => {
+  if (!migrationForm.targetDeptId) return modal.msgWarning('请选择目标部门');
+  await modal.confirm(`确认将“${migrationSourceName.value}”的科室配置和业务数据迁移到所选部门吗？`);
+  migrationLoading.value = true;
+  try {
+    await migrateDepartmentConfig(migrationForm);
+    modal.msgSuccess('科室配置及业务数据迁移成功');
+    migrationDialog.visible = false;
+    await getList();
+  } finally {
+    migrationLoading.value = false;
+  }
 };
 
 const submitForm = () => {
@@ -497,6 +554,10 @@ onMounted(getList);
   white-space: nowrap;
 }
 
+.dept-name-cell :deep(.el-tag) {
+  flex: none;
+}
+
 .member-count {
   color: var(--el-color-primary);
   font-weight: 600;
@@ -512,10 +573,6 @@ onMounted(getList);
 
 .config-form :deep(.el-form-item) {
   margin-bottom: 20px;
-}
-
-.dept-tree-input {
-  width: 100%;
 }
 
 .dept-selected-summary {
@@ -553,57 +610,35 @@ onMounted(getList);
   margin-top: 7px;
 }
 
-:global(.department-config-dept-popper) {
-  width: min(560px, calc(100vw - 24px));
-  min-width: min(560px, calc(100vw - 24px));
-  max-width: calc(100vw - 24px);
-  padding: 0;
-}
-
-:global(.department-config-dept-popper .dept-picker-panel) {
-  padding: 12px;
-}
-
-:global(.department-config-dept-popper .el-tree) {
-  --el-tree-node-content-height: 36px;
-  background: transparent;
-}
-
-:global(.department-config-dept-popper .el-tree-node__content) {
-  box-sizing: border-box;
-  height: 36px;
-  border-radius: 6px;
-  padding-right: 8px;
-}
-
-:global(.department-config-dept-popper .dept-tree-node) {
+.migration-path {
   display: flex;
   align-items: center;
-  min-width: 0;
-  flex: 1;
-  height: 100%;
+  flex-wrap: wrap;
   gap: 8px;
+  margin: -4px 0 22px;
+  padding: 11px 13px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-fill-color-lighter);
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 
-:global(.department-config-dept-popper .dept-tree-node__label) {
-  display: block;
-  min-width: 0;
+.migration-path .el-icon {
+  color: var(--el-color-warning);
+}
+
+.migration-path__label {
+  color: var(--el-text-color-secondary);
+}
+
+.migration-path__value {
+  max-width: 220px;
   overflow: hidden;
-  color: var(--el-text-color-regular);
-  font-size: 14px;
-  line-height: 20px;
+  color: var(--el-text-color-primary);
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-:global(.department-config-dept-popper .dept-tree-node__hint) {
-  flex: none;
-  color: var(--el-text-color-placeholder);
-  font-size: 12px;
-}
-
-:global(.department-config-dept-popper .dept-tree-node.is-disabled .dept-tree-node__label) {
-  color: var(--el-text-color-placeholder);
 }
 
 @media (max-width: 700px) {

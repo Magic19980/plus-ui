@@ -318,38 +318,57 @@ onMounted(loadDepartmentContexts);
 }
 
 .navbar {
-  min-height: 52px;
+  min-height: 54px;
   overflow: hidden;
   position: relative;
-  background: var(--app-navbar-bg);
-  border: 1px solid var(--app-navbar-border);
-  box-shadow: var(--app-navbar-shadow);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+  border: 1px solid #e3ebf4;
+  box-shadow: 0 8px 22px rgba(38, 71, 105, 0.075), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-radius: var(--app-radius-base);
-  padding: 6px 12px;
+  border-radius: 17px;
+  padding: 7px 14px;
   box-sizing: border-box;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    right: 18%;
+    left: 18%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(83, 166, 228, 0.32), transparent);
+    content: '';
+    pointer-events: none;
+  }
 
   .navbar-left {
     display: flex;
     align-items: center;
     min-width: 0;
-    gap: 10px;
+    gap: 12px;
     flex: 1;
   }
 
   .hamburger-shell {
-    width: 36px;
-    height: 32px;
+    width: 38px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background: transparent;
+    border-radius: 11px;
+    background: #f4f8fc;
     color: var(--app-accent-strong);
     flex-shrink: 0;
-    border: 1px solid var(--app-surface-border);
+    border: 1px solid #e2ebf4;
+    box-shadow: inset 0 1px 0 #fff;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      background: #edf6ff;
+      border-color: #cfe5f8;
+      transform: translateY(-1px);
+    }
   }
 
   .hamburger-container {
@@ -378,6 +397,13 @@ onMounted(loadDepartmentContexts);
 
   .breadcrumb-container {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid #edf2f7;
+    border-radius: 11px;
+    background: #f7f9fc;
   }
 
   .topmenu-container {
@@ -415,14 +441,14 @@ onMounted(loadDepartmentContexts);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       font-size: 16px;
       color: var(--app-text-muted);
-      border-radius: 12px;
+      border-radius: 10px;
       vertical-align: text-bottom;
-      background: transparent;
-      border: 1px solid transparent;
+      background: #f7f9fc;
+      border: 1px solid #edf2f7;
       flex-shrink: 0;
 
       :deep(.svg-icon),
@@ -441,9 +467,11 @@ onMounted(loadDepartmentContexts);
           color 0.3s;
 
         &:hover {
-          background: var(--app-accent-soft);
+          background: #edf6ff;
           color: var(--app-accent-strong);
-          border-color: rgba(14, 165, 233, 0.16);
+          border-color: #cfe5f8;
+          box-shadow: 0 4px 10px rgba(49, 128, 190, 0.1);
+          transform: translateY(-1px);
         }
       }
     }
@@ -453,9 +481,11 @@ onMounted(loadDepartmentContexts);
     }
 
     .avatar-container {
-      margin-left: 6px;
+      margin-left: 8px;
       margin-right: 0;
       flex-shrink: 0;
+      padding-left: 10px;
+      border-left: 1px solid #e8eef5;
 
       .avatar-dropdown {
         display: block;
@@ -470,10 +500,10 @@ onMounted(loadDepartmentContexts);
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 4px 8px 4px 4px;
-        border-radius: var(--app-radius-base);
-        background: var(--app-surface-bg);
-        border: 1px solid var(--app-surface-border);
+        padding: 4px 10px 4px 5px;
+        border-radius: 13px;
+        background: #f8fafc;
+        border: 1px solid #e7eef5;
         min-width: 0;
         cursor: pointer;
         transition:
@@ -481,8 +511,9 @@ onMounted(loadDepartmentContexts);
           border-color 0.3s;
 
         &:hover {
-          background: var(--app-accent-soft);
-          border-color: rgba(14, 165, 233, 0.16);
+          background: #edf6ff;
+          border-color: #cfe5f8;
+          box-shadow: 0 4px 12px rgba(49, 128, 190, 0.08);
         }
 
         .user-avatar {
@@ -613,7 +644,44 @@ onMounted(loadDepartmentContexts);
   text-overflow: ellipsis;
 }
 
+/* 深色主题覆盖放在非 scoped 样式中，确保 html.dark 能命中组件节点。 */
+</style>
+
+<style lang="scss">
 html.dark {
+  .navbar {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.92) 100%);
+    border-color: rgba(71, 85, 105, 0.48);
+    box-shadow:
+      0 8px 22px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+    &::before {
+      background: linear-gradient(90deg, transparent, rgba(103, 190, 239, 0.46), transparent);
+    }
+
+    .hamburger-shell,
+    .breadcrumb-container,
+    .right-menu .right-menu-item,
+    .avatar-wrapper {
+      background: rgba(30, 41, 59, 0.76);
+      border-color: rgba(71, 85, 105, 0.48);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .hamburger-shell:hover,
+    .right-menu .right-menu-item:hover,
+    .avatar-wrapper:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: rgba(103, 190, 239, 0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
+
+    .avatar-container {
+      border-left-color: rgba(71, 85, 105, 0.48);
+    }
+  }
+
   .navbar.navtop .navtop-logo-shell {
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.82));
     border-color: rgba(71, 85, 105, 0.42);
@@ -634,6 +702,34 @@ html.dark {
   .navbar .right-menu .avatar-wrapper {
     background: var(--app-navbar-bg);
     border-color: var(--app-navbar-border);
+  }
+
+  /* Navbar.vue 的基础头像样式为 scoped，使用更高优先级确保深色覆盖生效。 */
+  #app .navbar .right-menu .avatar-container {
+    border-left-color: var(--app-navbar-border) !important;
+  }
+
+  #app .navbar .right-menu .avatar-container .avatar-wrapper {
+    background: var(--app-elevated-soft-bg) !important;
+    border-color: var(--app-navbar-border) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  }
+
+  #app .navbar .right-menu .avatar-container .avatar-wrapper:hover {
+    background: var(--app-elevated-close-bg) !important;
+    border-color: color-mix(in srgb, var(--el-color-primary) 55%, var(--app-navbar-border)) !important;
+    box-shadow: var(--app-shadow-sm) !important;
+  }
+
+  #app .navbar .right-menu .avatar-container .avatar-name,
+  #app .navbar .right-menu .avatar-container .avatar-role,
+  #app .navbar .right-menu .avatar-container .avatar-arrow {
+    color: var(--app-text-title) !important;
+  }
+
+  #app .navbar .right-menu .avatar-container .avatar-role,
+  #app .navbar .right-menu .avatar-container .avatar-arrow {
+    color: var(--app-text-muted) !important;
   }
 }
 </style>

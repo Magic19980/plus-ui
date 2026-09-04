@@ -1,26 +1,5 @@
 <template>
   <div class="p-2 app-container department-operation-ledger-page">
-    <el-card shadow="hover" class="search-panel">
-      <el-form :inline="true" class="query-form" @submit.prevent>
-        <el-form-item label="请求日期">
-          <el-date-picker v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable />
-        </el-form-item>
-        <el-form-item label="客户单位"><el-input v-model="queryParams.customerUnit" clearable placeholder="请输入客户单位" /></el-form-item>
-        <el-form-item label="项目">
-          <el-select v-model="queryParams.projectId" clearable filterable placeholder="全部项目" style="width: 170px">
-            <el-option v-for="item in projectOptions" :key="item.id" :label="item.projectName" :value="item.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="系统/项目关键字"><el-input v-model="queryParams.systemName" clearable placeholder="兼容历史文本" /></el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="queryParams.processStatus" clearable placeholder="全部状态" style="width: 130px">
-            <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item><el-button type="primary" icon="Search" @click="handleQuery">查询</el-button><el-button icon="Refresh" @click="resetQuery">重置</el-button></el-form-item>
-      </el-form>
-    </el-card>
-
     <el-card shadow="hover" class="summary-panel mt-2">
       <template #header>
         <DepartmentPanelHeader kicker="Operation Ledger" title="运维指标" description="指标来自运维工作记录与系统在线率台账" />
@@ -36,16 +15,45 @@
 
     <el-card shadow="hover" class="table-panel mt-2">
       <template #header>
-        <DepartmentPanelHeader title="运维台账" description="工作记录来源于《物流系统科日常管理表》；系统在线率单独维护并参与周报/PPT统计。">
-            <el-button v-hasPermi="['department:operationLedger:add']" type="primary" plain icon="Plus" @click="handleAddRecord">手动新增</el-button>
-            <el-button v-hasPermi="['department:operationLedger:import']" type="info" plain icon="Upload" @click="openRecordUpload">导入工作记录</el-button>
-            <el-button v-hasPermi="['department:operationLedger:export']" type="warning" plain icon="Download" @click="handleExportRecords">导出台账</el-button>
-        </DepartmentPanelHeader>
+        <DepartmentPanelHeader title="运维台账" description="工作记录与系统在线率分开维护，并参与周报/PPT统计。" />
       </template>
 
-      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <DepartmentPageTabs v-model="activeTab" @tab-change="handleTabChange">
         <el-tab-pane label="工作记录" name="records">
-          <el-table v-loading="recordLoading" border :data="recordList">
+          <div class="sub-toolbar record-toolbar">
+            <span>维护日常运维处理记录，支持手动新增或 Excel 批量导入。</span>
+            <div class="toolbar-actions">
+              <el-button v-hasPermi="['department:operationLedger:add']" type="primary" plain icon="Plus" @click="handleAddRecord">手动新增</el-button>
+              <el-button v-hasPermi="['department:operationLedger:import']" type="info" plain icon="Upload" @click="openRecordUpload">导入工作记录</el-button>
+              <el-button v-hasPermi="['department:operationLedger:export']" type="warning" plain icon="Download" @click="handleExportRecords">导出工作记录</el-button>
+            </div>
+          </div>
+          <el-card shadow="never" class="search-panel ledger-search-panel record-search-panel">
+            <el-form :inline="true" label-position="top" class="query-form" @submit.prevent>
+              <div class="query-form__fields">
+                <el-form-item label="请求日期" class="query-item query-item--date">
+                  <el-date-picker v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" clearable />
+                </el-form-item>
+                <el-form-item label="客户单位" class="query-item query-item--customer"><el-input v-model="queryParams.customerUnit" clearable placeholder="请输入客户单位" /></el-form-item>
+                <el-form-item label="项目" class="query-item query-item--project">
+                  <el-select v-model="queryParams.projectId" clearable filterable placeholder="全部项目">
+                    <el-option v-for="item in projectOptions" :key="item.id" :label="item.projectName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="系统 / 项目关键字" class="query-item query-item--keyword"><el-input v-model="queryParams.systemName" clearable placeholder="兼容历史文本" /></el-form-item>
+                <el-form-item label="处理状态" class="query-item query-item--status">
+                  <el-select v-model="queryParams.processStatus" clearable placeholder="全部状态">
+                    <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
+                  </el-select>
+                </el-form-item>
+              </div>
+              <div class="query-form__actions">
+                <el-button type="primary" class="query-primary-button" icon="Search" @click="handleQuery">查询</el-button>
+                <el-button class="query-reset-button" icon="Refresh" @click="resetQuery">重置</el-button>
+              </div>
+            </el-form>
+          </el-card>
+          <DepartmentDataTable v-loading="recordLoading" border :data="recordList">
             <el-table-column label="请求时间" prop="requestTime" width="165" align="center" />
             <el-table-column label="客户单位" prop="customerUnit" min-width="150" show-overflow-tooltip />
             <el-table-column label="项目" min-width="150" show-overflow-tooltip>
@@ -68,11 +76,13 @@
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="130" align="center">
               <template #default="scope">
-                <el-button v-hasPermi="['department:operationLedger:edit']" link type="primary" icon="Edit" @click="handleUpdateRecord(scope.row)">编辑</el-button>
-                <el-button v-hasPermi="['department:operationLedger:remove']" link type="danger" icon="Delete" @click="handleDeleteRecord(scope.row)" />
+                <DepartmentTableActions>
+                  <el-button v-hasPermi="['department:operationLedger:edit']" link type="primary" icon="Edit" @click="handleUpdateRecord(scope.row)">编辑</el-button>
+                  <el-button v-hasPermi="['department:operationLedger:remove']" link type="danger" icon="Delete" @click="handleDeleteRecord(scope.row)" />
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
+          </DepartmentDataTable>
           <pagination v-show="recordTotal > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="recordTotal" @pagination="getRecordList" />
         </el-tab-pane>
 
@@ -85,7 +95,7 @@
               <el-button v-hasPermi="['department:operationLedger:export']" type="warning" plain icon="Download" @click="handleExportSystems">导出在线率</el-button>
             </div>
           </div>
-          <el-table v-loading="systemLoading" border :data="systemList">
+          <DepartmentDataTable v-loading="systemLoading" border :data="systemList">
             <el-table-column label="统计日期" prop="statDate" width="115" align="center" />
             <el-table-column label="项目" prop="projectName" min-width="160" show-overflow-tooltip />
             <el-table-column label="系统名称" prop="systemName" min-width="160" show-overflow-tooltip />
@@ -95,14 +105,16 @@
             <el-table-column label="系统在线率" width="110" align="center"><template #default="scope">{{ scope.row.onlineRate == null ? '—' : `${scope.row.onlineRate}%` }}</template></el-table-column>
             <el-table-column label="操作" fixed="right" width="130" align="center">
               <template #default="scope">
-                <el-button v-hasPermi="['department:operationLedger:edit']" link type="primary" icon="Edit" @click="handleUpdateSystem(scope.row)">编辑</el-button>
-                <el-button v-hasPermi="['department:operationLedger:remove']" link type="danger" icon="Delete" @click="handleDeleteSystem(scope.row)" />
+                <DepartmentTableActions>
+                  <el-button v-hasPermi="['department:operationLedger:edit']" link type="primary" icon="Edit" @click="handleUpdateSystem(scope.row)">编辑</el-button>
+                  <el-button v-hasPermi="['department:operationLedger:remove']" link type="danger" icon="Delete" @click="handleDeleteSystem(scope.row)" />
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
+          </DepartmentDataTable>
           <pagination v-show="systemTotal > 0" v-model:page="systemParams.pageNum" v-model:limit="systemParams.pageSize" :total="systemTotal" @pagination="getSystemList" />
         </el-tab-pane>
-      </el-tabs>
+      </DepartmentPageTabs>
     </el-card>
 
     <el-dialog v-model="recordDialog.visible" :title="recordDialog.title" width="820px" append-to-body>
@@ -185,9 +197,12 @@
 
 <script setup name="DepartmentOperationLedger" lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import DepartmentPageTabs from '@/components/Department/PageTabs.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentMetricCard from '@/components/Department/MetricCard.vue';
 import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload, globalHeaders } from '@/utils/request';
@@ -235,7 +250,6 @@ const systemDialog = reactive({ visible: false, title: '' });
 const recordUpload = reactive({ open: false, isUploading: false, headers: globalHeaders(), url: import.meta.env.VITE_APP_BASE_API + '/department/operationLedger/importData' });
 const systemUpload = reactive({ open: false, isUploading: false, headers: globalHeaders(), url: import.meta.env.VITE_APP_BASE_API + '/department/operationLedger/importSystemData' });
 const statusOptions = [{ label: '处理中', value: 'PROCESSING' }, { label: '已完成', value: 'COMPLETED' }, { label: '已取消', value: 'CANCELLED' }];
-
 function getCurrentMonday() {
   const date = new Date();
   const day = date.getDay() || 7;
@@ -385,11 +399,194 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .department-operation-ledger-page {
-  .sub-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .sub-toolbar { margin-bottom: 12px; color: var(--el-text-color-secondary); font-size: 13px; }
-  h3 { margin: 4px 0; }
-  p, .summary-tip { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; }
-  .toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  @media (max-width: 700px) { .sub-toolbar { align-items: flex-start; flex-direction: column; } }
+  .ledger-search-panel,
+  .summary-panel,
+  .table-panel {
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgb(15 23 42 / 5%);
+  }
+
+  .ledger-search-panel {
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--el-bg-color) 0%, var(--el-fill-color-lighter) 100%);
+
+    :deep(.el-card__body) {
+      padding: 0 !important;
+    }
+  }
+
+  .record-search-panel {
+    margin: 0 0 18px;
+    box-shadow: 0 5px 16px rgb(15 23 42 / 4%);
+  }
+
+  .query-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    padding: 16px 22px 18px;
+  }
+
+  .query-form__fields {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(250px, 1.35fr) minmax(180px, 1fr) minmax(145px, .76fr) minmax(210px, 1.15fr) minmax(140px, .8fr);
+    gap: 12px 14px;
+    min-width: 0;
+  }
+
+  .query-item {
+    min-width: 0;
+    margin: 0;
+  }
+
+  :deep(.query-item .el-form-item__label) {
+    height: auto;
+    padding: 0 0 7px;
+    color: var(--el-text-color-regular);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 17px;
+  }
+
+  :deep(.query-item .el-form-item__content),
+  :deep(.query-item .el-date-editor),
+  :deep(.query-item .el-input),
+  :deep(.query-item .el-select) {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  :deep(.query-item .el-input__wrapper),
+  :deep(.query-item .el-select__wrapper) {
+    min-height: 40px;
+    border-radius: 11px;
+    background: var(--el-bg-color);
+    box-shadow: 0 0 0 1px var(--el-border-color) inset, 0 2px 5px rgb(15 23 42 / 3%);
+    transition: box-shadow .2s ease, background-color .2s ease, transform .2s ease;
+  }
+
+  :deep(.query-item .el-date-editor) {
+    min-height: 40px;
+    padding: 0 11px;
+    border-radius: 11px;
+    background: var(--el-bg-color);
+    box-shadow: 0 0 0 1px var(--el-border-color) inset, 0 2px 5px rgb(15 23 42 / 3%);
+    transition: box-shadow .2s ease, background-color .2s ease, transform .2s ease;
+  }
+
+  :deep(.query-item .el-input__wrapper:hover),
+  :deep(.query-item .el-select__wrapper:hover),
+  :deep(.query-item .el-date-editor:hover) {
+    box-shadow: 0 0 0 1px var(--el-color-primary-light-5) inset, 0 4px 10px rgb(64 158 255 / 10%);
+  }
+
+  :deep(.query-item .el-input__wrapper.is-focus),
+  :deep(.query-item .el-select__wrapper.is-focused),
+  :deep(.query-item .el-date-editor.is-active) {
+    box-shadow: 0 0 0 1px var(--el-color-primary) inset, 0 0 0 3px var(--el-color-primary-light-9);
+  }
+
+  .query-form__actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 0;
+  }
+
+  .query-form__actions :deep(.el-button) {
+    min-width: 78px;
+    height: 40px;
+    margin: 0;
+    border-radius: 11px;
+    font-weight: 600;
+  }
+
+  .query-primary-button {
+    box-shadow: 0 5px 12px rgb(64 158 255 / 20%);
+  }
+
+  .query-reset-button {
+    border-color: var(--el-border-color);
+    background: var(--el-bg-color);
+  }
+
+  .sub-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+    color: var(--el-text-color-secondary);
+    font-size: 13px;
+  }
+
+  .toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  :deep(.summary-panel .el-card__header),
+  :deep(.table-panel .el-card__header) {
+    border-bottom-color: var(--el-border-color-extra-light);
+  }
+
+  :deep(.table-panel .el-card__body) {
+    padding-top: 18px;
+  }
+
+  @media (max-width: 1500px) {
+    .query-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+    }
+
+    .query-form__actions {
+      justify-content: flex-end;
+      align-self: end;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .query-form__fields {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .query-form {
+      display: flex;
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .query-form {
+      padding: 14px 16px 16px;
+    }
+
+    .query-form__fields {
+      grid-template-columns: 1fr;
+    }
+
+    .query-form__actions {
+      justify-content: stretch;
+      width: 100%;
+
+      :deep(.el-button) {
+        flex: 1;
+      }
+    }
+
+    .sub-toolbar {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
 }
 </style>

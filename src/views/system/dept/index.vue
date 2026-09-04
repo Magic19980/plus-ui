@@ -209,7 +209,7 @@
 </template>
 
 <script setup name="Dept" lang="ts">
-import { listDept, listDeptChildren, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from '@/api/system/dept';
+import { listDept, listDeptChildren, searchDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from '@/api/system/dept';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { DeptForm, DeptQuery, DeptVO } from '@/api/system/dept/types';
@@ -302,52 +302,12 @@ const isSearchActive = computed(
 );
 
 /**
- * 在完整部门列表中筛选，并保留命中节点的父级和下级。
- * 搜索场景使用非懒加载数据，确保筛选结果可以直接展开显示。
+ * 将后端返回的命中节点及其上级路径组装为小型结果树。
+ * 搜索接口已经限制命中节点数量，不能在前端再次遍历完整组织树。
  */
-const buildSearchTree = (rows: DeptVO[], query: DeptQuery): DeptVO[] => {
-  const name = String(query.deptName || '').trim().toLocaleLowerCase();
-  const category = String(query.deptCategory || '').trim().toLocaleLowerCase();
-  const status = query.status === undefined || query.status === null || query.status === '' ? '' : String(query.status);
-  const byId = new Map(rows.map((row) => [String(row.deptId), row]));
-  const includedIds = new Set<string>();
-  const descendantIds = new Set<string>();
-
-  const isMatch = (row: DeptVO) => {
-    const matchesName = !name || String(row.deptName || '').toLocaleLowerCase().includes(name);
-    const matchesCategory = !category || String(row.deptCategory || '').toLocaleLowerCase().includes(category);
-    const matchesStatus = !status || String(row.status) === status;
-    return matchesName && matchesCategory && matchesStatus;
-  };
-
-  const matchedRows = rows.filter(isMatch);
-  matchedRows.forEach((row) => {
-    descendantIds.add(String(row.deptId));
-    let current: DeptVO | undefined = row;
-    while (current && !includedIds.has(String(current.deptId))) {
-      includedIds.add(String(current.deptId));
-      current = byId.get(String(current.parentId));
-    }
-  });
-
-  // 只从直接命中节点向下补齐，不能从其祖先向下扩散，否则会把同根的所有兄弟部门都带回来。
-  let changed: boolean;
-  do {
-    changed = false;
-    rows.forEach((row) => {
-      const deptId = String(row.deptId);
-      if (descendantIds.has(String(row.parentId)) && !descendantIds.has(deptId)) {
-        descendantIds.add(deptId);
-        includedIds.add(deptId);
-        changed = true;
-      }
-    });
-  } while (changed);
-
+const buildSearchTree = (rows: DeptVO[]): DeptVO[] => {
   return handleTree<DeptVO>(
-    rows
-      .filter((row) => includedIds.has(String(row.deptId)))
-      .map((row) => ({ ...row, children: [] })),
+    rows.map((row) => ({ ...row, children: [] })),
     'deptId'
   );
 };
@@ -355,8 +315,8 @@ const buildSearchTree = (rows: DeptVO[], query: DeptQuery): DeptVO[] => {
 /** 查询菜单列表 */
 const getList = async () => {
   await withLoading(async () => {
-    const res = isSearchActive.value ? await listDept() : await listDeptChildren(0);
-    deptList.value = isSearchActive.value ? buildSearchTree(res.data || [], queryParams.value) : res.data;
+    const res = isSearchActive.value ? await searchDept(queryParams.value) : await listDeptChildren(0);
+    deptList.value = isSearchActive.value ? buildSearchTree(res.data || []) : res.data;
   });
 };
 

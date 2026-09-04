@@ -7,7 +7,7 @@
     </el-card>
 
     <el-card shadow="never" class="task-card mt-2">
-      <el-tabs v-model="activeTab" class="task-tabs">
+      <DepartmentPageTabs v-model="activeTab">
         <el-tab-pane label="我的任务" name="my">
           <div class="tab-heading">
             <div class="tab-heading__content">
@@ -43,7 +43,7 @@
               </div>
             </div>
           </section>
-          <el-table v-loading="myLoading" :data="myTasks" border>
+          <DepartmentDataTable v-loading="myLoading" :data="myTasks" border>
             <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
             <el-table-column label="任务类型" width="130" align="center"><template #default="scope">{{ taskTypeLabel(scope.row.taskType) }}</template></el-table-column>
             <el-table-column label="执行方式" width="120" align="center"><template #default="scope">{{ cycleLabel(scope.row.cycleType, scope.row.taskType) }}</template></el-table-column>
@@ -52,7 +52,7 @@
             <el-table-column label="截止时间" width="180" align="center" prop="deadline" />
             <el-table-column label="状态" width="110" align="center"><template #default="scope"><el-tag :type="taskStatusType(scope.row.status)">{{ scope.row.statusLabel || taskStatusLabel(scope.row.status) }}</el-tag></template></el-table-column>
             <el-table-column label="提醒" min-width="160" show-overflow-tooltip><template #default="scope">{{ scope.row.reminderText || '—' }}</template></el-table-column>
-          </el-table>
+          </DepartmentDataTable>
           <el-empty v-if="!myLoading && myTasks.length === 0" description="当前没有分配给你的周期任务" />
         </el-tab-pane>
 
@@ -66,7 +66,7 @@
               <el-button v-hasPermi="['department:task:add']" type="primary" icon="Plus" @click="openRuleAdd">新增任务规则</el-button>
             </div>
           </div>
-          <el-table v-loading="ruleLoading" :data="taskRules" border>
+          <DepartmentDataTable v-loading="ruleLoading" :data="taskRules" border>
             <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
             <el-table-column label="任务类型" width="125" align="center"><template #default="scope">{{ taskTypeLabel(scope.row.taskType) }}</template></el-table-column>
             <el-table-column label="执行方式" width="150" align="center"><template #default="scope">{{ ruleExecutionLabel(scope.row) }}</template></el-table-column>
@@ -76,12 +76,14 @@
             <el-table-column label="状态" width="90" align="center"><template #default="scope"><el-tag :type="scope.row.status === 'DISABLED' ? 'info' : 'success'">{{ scope.row.status === 'DISABLED' ? '停用' : '启用' }}</el-tag></template></el-table-column>
             <el-table-column label="操作" fixed="right" width="220" align="center">
               <template #default="scope">
-                <el-button v-hasPermi="['department:task:edit']" link type="success" icon="User" @click="openAssignmentDialog(scope.row)">成员</el-button>
-                <el-button v-hasPermi="['department:task:edit']" link type="primary" icon="Edit" @click="openRuleEdit(scope.row)">编辑</el-button>
-                <el-button v-hasPermi="['department:task:remove']" link type="danger" icon="Delete" @click="removeRule(scope.row)" />
+                <DepartmentTableActions>
+                  <el-button v-hasPermi="['department:task:edit']" link type="success" icon="User" @click="openAssignmentDialog(scope.row)">成员</el-button>
+                  <el-button v-hasPermi="['department:task:edit']" link type="primary" icon="Edit" @click="openRuleEdit(scope.row)">编辑</el-button>
+                  <el-button v-hasPermi="['department:task:remove']" link type="danger" icon="Delete" @click="removeRule(scope.row)" />
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
+          </DepartmentDataTable>
           <el-empty v-if="!ruleLoading && taskRules.length === 0" description="暂无任务规则" />
         </el-tab-pane>
 
@@ -95,7 +97,7 @@
               <el-button v-hasPermi="['department:task:reviewConfig']" type="primary" icon="Plus" @click="openReviewAdd">新增审核配置</el-button>
             </div>
           </div>
-          <el-table v-loading="reviewLoading" :data="reviewRules" border>
+          <DepartmentDataTable v-loading="reviewLoading" :data="reviewRules" border>
             <el-table-column label="业务" width="150" align="center"><template #default="scope">{{ taskTypeLabel(scope.row.taskType) }}</template></el-table-column>
             <el-table-column label="主审核人" prop="reviewerName" min-width="160" />
             <el-table-column label="备用审核人" prop="backupReviewerName" min-width="160"><template #default="scope">{{ scope.row.backupReviewerName || '—' }}</template></el-table-column>
@@ -104,14 +106,16 @@
             <el-table-column label="备注" min-width="180" show-overflow-tooltip />
             <el-table-column label="操作" fixed="right" width="150" align="center">
               <template #default="scope">
-                <el-button v-hasPermi="['department:task:reviewConfig']" link type="primary" icon="Edit" @click="openReviewEdit(scope.row)">编辑</el-button>
-                <el-button v-hasPermi="['department:task:reviewConfig']" link type="danger" icon="Delete" @click="removeReview(scope.row)" />
+                <DepartmentTableActions>
+                  <el-button v-hasPermi="['department:task:reviewConfig']" link type="primary" icon="Edit" @click="openReviewEdit(scope.row)">编辑</el-button>
+                  <el-button v-hasPermi="['department:task:reviewConfig']" link type="danger" icon="Delete" @click="removeReview(scope.row)" />
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
+          </DepartmentDataTable>
           <el-empty v-if="!reviewLoading && reviewRules.length === 0" description="暂无审核人配置" />
         </el-tab-pane>
-      </el-tabs>
+      </DepartmentPageTabs>
     </el-card>
 
     <TaskRuleDialog
@@ -161,7 +165,10 @@
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { DocumentChecked } from '@element-plus/icons-vue';
+import DepartmentPageTabs from '@/components/Department/PageTabs.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import TaskAssignmentDialog from './components/TaskAssignmentDialog.vue';
 import TaskRuleDialog from './components/TaskRuleDialog.vue';
 import { addDepartmentReviewRule, addDepartmentTaskAssignment, addDepartmentTaskRule, delDepartmentReviewRule, delDepartmentTaskAssignment, delDepartmentTaskRule, listDepartmentReviewRules, listDepartmentTaskAssignments, listDepartmentTaskRules, listMyDepartmentTasks, listMyScoreProposalReviewTasks, updateDepartmentReviewRule, updateDepartmentTaskAssignment, updateDepartmentTaskRule } from '@/api/department/task';
@@ -482,7 +489,6 @@ onMounted(async () => { await Promise.all([loadMyTasks(), loadReviewTasks()]); }
   :deep(.rule-form .rule-status-item) { margin-bottom: 18px; }
   .assignment-tip { margin-bottom: 16px; padding: 10px 14px; border-radius: 8px; color: var(--el-color-warning); background: var(--el-color-warning-light-9); font-size: 13px; }
   .assignment-form { margin-bottom: 2px; }
-  :deep(.el-tabs__header) { margin-bottom: 16px; }
   :deep(.el-table .cell) { line-height: 22px; }
   @media (max-width: 760px) {
     .tab-heading { align-items: flex-start; flex-direction: column; gap: 12px; }

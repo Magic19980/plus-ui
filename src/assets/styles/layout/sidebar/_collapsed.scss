@@ -11,8 +11,8 @@
     }
 
     .sidebar-shell {
-      padding-left: 4px;
-      padding-right: 4px;
+      padding-left: 6px;
+      padding-right: 6px;
     }
 
     .submenu-title-noDropdown {
@@ -28,9 +28,11 @@
       box-sizing: border-box;
 
       &.is-active {
-        background-color: var(--side-menu-active-bg) !important;
+        background: var(--side-menu-active-bg) !important;
         color: var(--side-menu-active-text) !important;
-        box-shadow: inset 3px 0 0 var(--side-menu-active-line);
+        box-shadow:
+          inset 2px 0 0 var(--side-menu-active-line),
+          0 6px 16px rgba(2, 6, 23, 0.12);
       }
 
       .el-tooltip {
@@ -48,6 +50,8 @@
 
       .svg-icon {
         margin-right: 0 !important;
+        width: 19px;
+        height: 19px;
       }
     }
 
@@ -68,8 +72,9 @@
 
       &.is-active .el-sub-menu__title,
       &.is-active .el-sub-menu__title.el-tooltip__trigger {
-        background-color: var(--side-menu-active-bg) !important;
-        box-shadow: inset 3px 0 0 var(--side-menu-active-line);
+        background: var(--side-menu-parent-bg) !important;
+        border-color: var(--side-menu-active-border);
+        box-shadow: inset 2px 0 0 var(--side-menu-active-line);
       }
 
       & > .el-sub-menu__title {
@@ -96,6 +101,10 @@
 
       .is-active .svg-icon {
         fill: currentColor;
+      }
+
+      .sidebar-menu-badge {
+        display: none;
       }
 
       > div > .el-sub-menu > .el-sub-menu__title .svg-icon {

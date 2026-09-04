@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!item.hidden">
+  <div v-if="!item.hidden" class="sidebar-item">
     <template
       v-if="
         hasOneShowingChild(item, item.children) &&
@@ -12,6 +12,9 @@
           <svg-icon :icon-class="onlyOneChild.meta.icon || (item.meta && item.meta.icon)" />
           <template #title>
             <span class="menu-title" :title="hasTitle(te(onlyOneChild.meta.title) ? t(onlyOneChild.meta.title) : onlyOneChild.meta.title)">{{ te(onlyOneChild.meta.title) ? t(onlyOneChild.meta.title) : onlyOneChild.meta.title }}</span>
+            <span v-if="getBadgeCount(resolvePath(onlyOneChild.path))" class="sidebar-menu-badge">
+              {{ formatBadge(getBadgeCount(resolvePath(onlyOneChild.path))) }}
+            </span>
           </template>
         </el-menu-item>
       </app-link>
@@ -28,6 +31,9 @@
       <template v-if="item.meta" #title>
         <svg-icon :icon-class="item.meta ? item.meta.icon : ''" />
         <span class="menu-title" :title="hasTitle(te(item.meta?.title) ? t(item.meta?.title) : item.meta?.title)">{{ te(item.meta?.title) ? t(item.meta?.title) : item.meta?.title }}</span>
+        <span v-if="getBadgeCount(resolvePath(item.path))" class="sidebar-menu-badge">
+          {{ formatBadge(getBadgeCount(resolvePath(item.path))) }}
+        </span>
       </template>
 
       <sidebar-item
@@ -37,6 +43,7 @@
         :item="child"
         :popper-class="popperClass"
         :base-path="resolvePath(child.path)"
+        :badge-map="badgeMap"
         class="nest-menu"
       />
     </el-sub-menu>
@@ -68,6 +75,10 @@ const props = defineProps({
   popperClass: {
     type: String,
     default: ''
+  },
+  badgeMap: {
+    type: Object as PropType<Record<string, number>>,
+    default: () => ({})
   }
 });
 
@@ -122,4 +133,14 @@ const hasTitle = (title: string | undefined): string => {
   }
   return title;
 };
+
+const getBadgeCount = (resolvedPath: string | { path?: string } | undefined) => {
+  const path = typeof resolvedPath === 'string' ? resolvedPath : resolvedPath?.path;
+  if (!path) return 0;
+  if (props.badgeMap[path] !== undefined) return props.badgeMap[path];
+  const parentPath = Object.keys(props.badgeMap).find(key => path.startsWith(`${key}/`) || key.startsWith(`${path}/`));
+  return parentPath ? props.badgeMap[parentPath] || 0 : 0;
+};
+
+const formatBadge = (count: number) => (count > 99 ? '99+' : String(count));
 </script>

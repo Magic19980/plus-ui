@@ -1,4 +1,4 @@
-/* 侧栏外壳：固定定位宽度、主区左边距、滚动条与 el-menu 根级样式；与 _menu/_collapsed/_responsive 分工。 */
+/* 侧栏外壳：固定定位、滚动区域与 el-menu 根级样式；视觉细节由 _menu 统一维护。 */
 
 @use '../../tokens/sass-vars' as *;
 
@@ -16,7 +16,7 @@
     margin-left: 0 !important;
   }
 
-  // --- 侧栏固定列：宽度过渡、主题下滚动条内菜单色变量 ---
+  // --- 侧栏固定列 ---
   .sidebar-container {
     -webkit-transition: width 0.28s;
     transition: width 0.28s;
@@ -46,32 +46,36 @@
       overflow-x: hidden !important;
     }
 
-    .el-scrollbar__bar.is-vertical {
-      right: 0;
-    }
-
     .el-scrollbar {
       height: 100%;
     }
 
     .el-scrollbar.theme-light {
       --side-menu-text: #1f2937;
-      --side-menu-hover-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.08);
+      --side-menu-muted: #94a3b8;
+      --side-menu-hover-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.055);
       --side-menu-hover-text: #111827;
-      --side-menu-active-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.12);
+      --side-menu-active-bg: linear-gradient(100deg, rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.13), rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.045));
+      --side-menu-child-active-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.08);
       --side-menu-active-text: rgb(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b));
-      --side-menu-active-border: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.16);
+      --side-menu-active-border: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.2);
       --side-menu-active-line: rgb(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b));
+      --side-menu-parent-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.045);
+      --side-menu-rail: rgba(100, 116, 139, 0.2);
     }
 
     .el-scrollbar.theme-dark {
       --side-menu-text: #e5edf8;
-      --side-menu-hover-bg: rgba(255, 255, 255, 0.08);
+      --side-menu-muted: rgba(148, 163, 184, 0.76);
+      --side-menu-hover-bg: rgba(255, 255, 255, 0.052);
       --side-menu-hover-text: #ffffff;
-      --side-menu-active-bg: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.22);
+      --side-menu-active-bg: linear-gradient(100deg, rgba(56, 189, 248, 0.18), rgba(37, 99, 235, 0.045));
+      --side-menu-child-active-bg: rgba(56, 189, 248, 0.1);
       --side-menu-active-text: #ffffff;
-      --side-menu-active-border: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.24);
-      --side-menu-active-line: rgb(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b));
+      --side-menu-active-border: rgba(125, 211, 252, 0.2);
+      --side-menu-active-line: #38bdf8;
+      --side-menu-parent-bg: rgba(148, 163, 184, 0.055);
+      --side-menu-rail: rgba(148, 163, 184, 0.18);
     }
 
     .is-horizontal {
@@ -85,9 +89,6 @@
     }
 
     .svg-icon {
-      width: 18px;
-      height: 18px;
-      margin-right: 10px;
       flex-shrink: 0;
     }
 
@@ -102,7 +103,9 @@
       background: transparent !important;
     }
 
+    .sidebar-item,
     .el-menu-item,
+    .el-sub-menu__title,
     .menu-title {
       overflow: hidden !important;
       text-overflow: ellipsis !important;
@@ -116,12 +119,6 @@
     .el-sub-menu__icon-arrow {
       color: var(--side-menu-text) !important;
       fill: currentColor;
-    }
-
-    .el-menu-item,
-    .el-sub-menu__title {
-      position: relative;
-      font-weight: 500;
     }
 
     .el-menu-item .el-menu-tooltip__trigger {

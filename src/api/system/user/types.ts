@@ -17,6 +17,7 @@ export interface UserQuery extends PageQuery {
   userName?: string;
   nickName?: string;
   indonesianName?: string;
+  employeeNo?: string;
   phoneNumber?: string;
   status?: string;
   deptId?: string | number;

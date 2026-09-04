@@ -40,7 +40,7 @@
             <el-button v-hasPermi="['department:workOrder:export']" type="warning" plain icon="Download" @click="handleExport">导出人工单台账</el-button>
         </DepartmentPanelHeader>
       </template>
-      <el-table v-loading="loading" border :data="orderList">
+    <DepartmentDataTable v-loading="loading" border :data="orderList">
         <el-table-column label="发生年月" prop="occurDate" width="115" align="center">
           <template #default="scope">{{ formatMonth(scope.row.occurDate) }}</template>
         </el-table-column>
@@ -64,12 +64,14 @@
         <el-table-column label="项目负责人" prop="projectOwner" width="120" show-overflow-tooltip />
         <el-table-column label="操作" fixed="right" width="280" align="center">
           <template #default="scope">
-            <el-button v-if="scope.row.detailCount" link type="primary" @click="handleDetails(scope.row)">人工统计明细({{ scope.row.detailCount }})</el-button>
-            <el-button v-hasPermi="['department:workOrder:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
-            <el-button v-hasPermi="['department:workOrder:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            <DepartmentTableActions>
+              <el-button v-if="scope.row.detailCount" link type="primary" @click="handleDetails(scope.row)">人工统计明细({{ scope.row.detailCount }})</el-button>
+              <el-button v-hasPermi="['department:workOrder:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
+              <el-button v-hasPermi="['department:workOrder:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+    </DepartmentDataTable>
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
 
@@ -99,7 +101,7 @@
     </el-dialog>
 
     <el-dialog v-model="detailDialog.visible" :title="detailDialog.title" width="1400px" append-to-body>
-      <el-table v-loading="detailLoading" border :data="detailList" max-height="620px">
+      <DepartmentDataTable v-loading="detailLoading" border :data="detailList" max-height="620px">
         <el-table-column label="序号" prop="sequenceNo" width="70" align="center" fixed="left" />
         <el-table-column label="申请部门" prop="requestDept" width="140" show-overflow-tooltip />
         <el-table-column label="结算单位" prop="settlementUnit" width="160" show-overflow-tooltip />
@@ -115,11 +117,13 @@
         <el-table-column label="工作内容" prop="workContent" min-width="360" show-overflow-tooltip />
         <el-table-column label="操作" width="130" fixed="right" align="center">
           <template #default="scope">
-            <el-button v-hasPermi="['department:workOrder:edit']" link type="primary" @click="handleDetailEdit(scope.row)">编辑</el-button>
-            <el-button v-hasPermi="['department:workOrder:remove']" link type="danger" @click="handleDetailDelete(scope.row)">删除</el-button>
+            <DepartmentTableActions>
+              <el-button v-hasPermi="['department:workOrder:edit']" link type="primary" @click="handleDetailEdit(scope.row)">编辑</el-button>
+              <el-button v-hasPermi="['department:workOrder:remove']" link type="danger" @click="handleDetailDelete(scope.row)">删除</el-button>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
     </el-dialog>
 
     <el-dialog v-model="detailEditDialog.visible" :title="detailEditDialog.title" width="900px" append-to-body>
@@ -165,7 +169,9 @@
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import DepartmentMetricCard from '@/components/Department/MetricCard.vue';
 import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { addWorkOrder, delWorkOrder, delWorkOrderDetail, getWorkOrderDetails, listWorkOrder, previewWorkOrderPdf, updateWorkOrder, updateWorkOrderDetail, getWorkOrderSummary } from '@/api/department/workOrder';
 import type { WorkOrderDetailForm, WorkOrderDetailVO, WorkOrderForm, WorkOrderQuery, WorkOrderSummaryVO, WorkOrderVO } from '@/api/department/workOrder/types';
 import { useLoading } from '@/hooks/async/useLoading';

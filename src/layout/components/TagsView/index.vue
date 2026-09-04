@@ -482,13 +482,13 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .tags-view-container {
   display: flex;
-  align-items: flex-start;
-  height: 38px;
+  align-items: center;
+  height: 40px;
   width: 100%;
-  background-color: var(--app-surface-bg);
-  border: 1px solid var(--app-surface-border);
-  border-radius: var(--app-radius-md);
-  box-shadow: var(--app-shadow-sm);
+  background: linear-gradient(180deg, #fbfdff 0%, #f4f8fc 100%);
+  border: 1px solid #e3ebf4;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(38, 71, 105, 0.06), inset 0 1px 0 #fff;
 
   $btn-width: 26px;
   $btn-hover-bg: var(--el-fill-color-light);
@@ -500,14 +500,14 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     width: $btn-width;
-    height: 26px;
-    margin-top: 4px;
+    height: 28px;
+    margin-top: 0;
     cursor: pointer;
     color: var(--app-text-muted);
     user-select: none;
-    background-color: var(--app-surface-bg);
-    border: 1px solid var(--app-surface-border);
-    border-radius: var(--app-radius-md);
+    background: #fff;
+    border: 1px solid #e7eef5;
+    border-radius: 9px;
     transition:
       box-shadow 0.2s ease,
       transform 0.2s ease,
@@ -518,7 +518,7 @@ onBeforeUnmount(() => {
       background: $btn-hover-bg;
       color: $btn-hover-color;
       border-color: var(--el-color-primary-light-5);
-      box-shadow: var(--app-shadow-sm);
+      box-shadow: 0 4px 10px rgba(44, 81, 119, 0.08);
       transform: translateY(-1px);
     }
   }
@@ -542,16 +542,16 @@ onBeforeUnmount(() => {
       align-items: center;
       position: relative;
       cursor: pointer;
-      height: 26px;
+      height: 28px;
       line-height: 25px;
-      background-color: var(--app-surface-bg);
-      border: 1px solid var(--app-surface-border);
+      background: transparent;
+      border: 1px solid transparent;
       color: var(--el-text-color-regular);
       padding: 0 8px;
       font-size: 12px;
       margin-left: 5px;
-      margin-top: 4px;
-      border-radius: var(--app-radius-md);
+      margin-top: 0;
+      border-radius: 9px;
       transition:
         box-shadow 0.2s ease,
         transform 0.2s ease,
@@ -560,8 +560,9 @@ onBeforeUnmount(() => {
 
       &:hover {
         color: var(--el-color-primary);
-        border-color: var(--el-color-primary-light-5);
-        box-shadow: var(--app-shadow-sm);
+        border-color: #d6e8f8;
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(44, 81, 119, 0.07);
         transform: translateY(-1px);
       }
 
@@ -574,19 +575,21 @@ onBeforeUnmount(() => {
       }
 
       &.active {
-        background-color: var(--tags-view-active-bg);
+        background: linear-gradient(135deg, #3297e2 0%, #4eb5df 100%) !important;
         color: var(--el-color-white);
-        border-color: var(--tags-view-active-border-color);
+        border-color: transparent !important;
+        box-shadow: 0 5px 12px rgba(54, 145, 211, 0.24);
+        transform: translateY(-1px);
 
         &::before {
           content: '';
           background: var(--el-color-white);
           display: inline-block;
-          width: 8px;
-          height: 8px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
           position: relative;
-          margin-right: 5px;
+          margin-right: 6px;
         }
       }
     }
@@ -605,7 +608,7 @@ onBeforeUnmount(() => {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    margin-top: 4px;
+    margin-top: 0;
     margin-left: 4px;
   }
 
@@ -615,14 +618,14 @@ onBeforeUnmount(() => {
     justify-content: center;
     gap: 4px;
     min-width: $btn-width;
-    height: 26px;
+    height: 28px;
     padding: 0 8px;
     cursor: pointer;
     color: var(--app-text-muted);
     user-select: none;
-    background-color: var(--app-surface-bg);
-    border: 1px solid var(--app-surface-border);
-    border-radius: var(--app-radius-md);
+    background: #fff;
+    border: 1px solid #e7eef5;
+    border-radius: 9px;
     transition:
       box-shadow 0.2s ease,
       transform 0.2s ease,
@@ -633,7 +636,7 @@ onBeforeUnmount(() => {
       background: $btn-hover-bg;
       color: $btn-hover-color;
       border-color: var(--el-color-primary-light-5);
-      box-shadow: var(--app-shadow-sm);
+      box-shadow: 0 4px 10px rgba(44, 81, 119, 0.08);
       transform: translateY(-1px);
     }
   }
@@ -641,7 +644,7 @@ onBeforeUnmount(() => {
   .tags-refresh-btn {
     width: auto;
     font-size: 12px;
-    margin-top: 4px;
+    margin-top: 0;
     margin-left: 8px;
     margin-right: 8px;
   }
@@ -666,6 +669,41 @@ onBeforeUnmount(() => {
       &:hover {
         background: var(--el-fill-color-light);
       }
+    }
+  }
+}
+
+/* 深色主题覆盖放在非 scoped 样式中，避免主题选择器被 scoped 处理破坏。 */
+</style>
+
+<style lang="scss">
+html.dark .tags-view-container {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.94) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border-color: rgba(71, 85, 105, 0.48);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  .tags-nav-btn,
+  .tags-action-btn {
+    background: rgba(30, 41, 59, 0.76);
+    border-color: rgba(71, 85, 105, 0.48);
+  }
+
+  .tags-nav-btn:hover:not(.disabled),
+  .tags-action-btn:hover {
+    background: rgba(51, 65, 85, 0.9);
+    border-color: rgba(103, 190, 239, 0.5);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  }
+
+  .tags-view-wrapper .tags-view-item:not(.active) {
+    color: var(--el-text-color-regular);
+
+    &:hover {
+      background: rgba(51, 65, 85, 0.78);
+      border-color: rgba(103, 190, 239, 0.42);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
     }
   }
 }

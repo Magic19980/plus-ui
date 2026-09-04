@@ -34,9 +34,17 @@ export const generateWeeklyReport = (data: WeeklyReportGenerateForm): AxiosPromi
   });
 };
 
+export const delWeeklyReport = (id: string | number) => {
+  return request({
+    url: '/department/weeklyReport/' + id,
+    method: 'delete'
+  });
+};
+
 export default {
   listWeeklyReport,
   getWeeklyReport,
   getWeeklyReportSummary,
-  generateWeeklyReport
+  generateWeeklyReport,
+  delWeeklyReport
 };

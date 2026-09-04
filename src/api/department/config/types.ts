@@ -5,7 +5,11 @@ export interface DepartmentConfigQuery extends PageQuery {
 
 export interface DepartmentConfigVO {
   deptId: string | number;
+  parentId?: string | number;
   deptName?: string;
+  selectable?: boolean;
+  hasChildren?: boolean;
+  systemDeptAvailable?: boolean;
   status?: string;
   managerUserId?: string | number;
   managerName?: string;
@@ -21,3 +25,8 @@ export type DepartmentConfigForm = Partial<Omit<DepartmentConfigVO, 'deptId'>> &
   deptId?: string | number;
   status?: string;
 };
+
+export interface DepartmentConfigMigrationForm {
+  sourceDeptId: string | number;
+  targetDeptId: string | number;
+}

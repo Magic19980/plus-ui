@@ -18,6 +18,8 @@ export interface DeptVO extends BaseEntity {
   hasChildren?: boolean;
   deptId: number | string;
   deptName: string;
+  oaSourceType?: string;
+  oaSourceId?: string;
   indonesianName?: string;
   deptCategory: string;
   orderNum: number;
@@ -40,6 +42,7 @@ export interface DeptTreeVO extends BaseEntity {
   weight: number;
   children: DeptTreeVO[];
   disabled: boolean;
+  isLeaf?: boolean;
 }
 
 /**

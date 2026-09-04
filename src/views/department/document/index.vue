@@ -17,17 +17,27 @@
 
     <el-card shadow="never" class="document-card mt-2">
       <template #header>
-        <DepartmentPanelHeader kicker="DOCUMENT LIBRARY" title="资料库" description="支持项目归档、版本管理和权限保护的科室资料空间。">
-            <el-button v-hasPermi="['department:document:add']" type="primary" icon="Upload" @click="handleAdd">上传资料</el-button>
-            <el-button v-hasPermi="['department:document:query']" plain icon="Refresh" @click="getList">刷新</el-button>
+        <DepartmentPanelHeader kicker="DOCUMENT LIBRARY" :title="activeTab === 'category' ? '资料分类配置' : '资料库'" :description="activeTab === 'category' ? '维护资料库使用的多级分类，启用后即可用于资料归档。' : '支持项目归档、版本管理和权限保护的科室资料空间。'">
+            <template v-if="activeTab === 'category'">
+              <el-button v-hasPermi="['department:documentCategory:add']" type="primary" icon="Plus" @click="handleAddCategory">新增顶级分类</el-button>
+            </template>
+            <template v-else>
+              <el-button v-hasPermi="['department:document:add']" type="primary" icon="Upload" @click="handleAdd">上传资料</el-button>
+              <el-button v-hasPermi="['department:document:query']" plain icon="Refresh" @click="getList">刷新</el-button>
+            </template>
         </DepartmentPanelHeader>
       </template>
 
-      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <DepartmentPageTabs v-model="activeTab" @tab-change="handleTabChange">
         <el-tab-pane label="资料库" name="active" />
         <el-tab-pane label="回收站" name="recycle" />
-      </el-tabs>
+        <el-tab-pane v-hasPermi="['department:documentCategory:list']" name="category" lazy>
+          <template #label><span class="document-tab-label"><el-icon><CollectionTag /></el-icon>资料分类配置</span></template>
+          <DepartmentDocumentCategoryPanel ref="categoryPanelRef" embedded />
+        </el-tab-pane>
+      </DepartmentPageTabs>
 
+      <template v-if="activeTab !== 'category'">
       <el-form :inline="true" :model="queryParams" class="query-form">
         <el-form-item label="关键词">
           <el-input v-model="queryParams.title" clearable placeholder="标题或标签" @keyup.enter="handleQuery" />
@@ -51,7 +61,7 @@
         </div>
       </el-form>
 
-      <el-table v-loading="loading" border :data="documentList" class="document-table">
+      <DepartmentDataTable v-loading="loading" border :data="documentList" class="document-table">
         <el-table-column label="资料名称" min-width="260" show-overflow-tooltip>
           <template #default="scope">
             <div class="title-cell">
@@ -80,28 +90,31 @@
         </el-table-column>
         <el-table-column label="操作" fixed="right" width="280" align="center">
           <template #default="scope">
-            <template v-if="activeTab === 'active'">
-              <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handlePreview(toDocument(scope.row))">预览</el-button>
-              <el-button v-hasPermi="['department:document:download']" link type="primary" @click="handleDownload(toDocument(scope.row))">下载</el-button>
-              <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handleDetail(toDocument(scope.row))">详情</el-button>
-              <el-dropdown v-hasPermi="['department:document:edit']" @command="(command: string) => handleMoreCommand(command, toDocument(scope.row))">
-                <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="version">上传新版本</el-dropdown-item>
-                    <el-dropdown-item command="edit">编辑信息</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-              <el-button v-hasPermi="['department:document:remove']" link type="danger" @click="handleDelete(toDocument(scope.row))">删除</el-button>
-            </template>
-            <template v-else>
-              <el-button v-hasPermi="['department:document:restore']" link type="primary" @click="handleRestore(toDocument(scope.row))">恢复</el-button>
-            </template>
+            <DepartmentTableActions>
+              <template v-if="activeTab === 'active'">
+                <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handlePreview(toDocument(scope.row))">预览</el-button>
+                <el-button v-hasPermi="['department:document:download']" link type="primary" @click="handleDownload(toDocument(scope.row))">下载</el-button>
+                <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handleDetail(toDocument(scope.row))">详情</el-button>
+                <el-dropdown v-hasPermi="['department:document:edit']" @command="(command: string) => handleMoreCommand(command, toDocument(scope.row))">
+                  <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="version">上传新版本</el-dropdown-item>
+                      <el-dropdown-item command="edit">编辑信息</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+                <el-button v-hasPermi="['department:document:remove']" link type="danger" @click="handleDelete(toDocument(scope.row))">删除</el-button>
+              </template>
+              <template v-else>
+                <el-button v-hasPermi="['department:document:restore']" link type="primary" @click="handleRestore(toDocument(scope.row))">恢复</el-button>
+              </template>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      </template>
     </el-card>
 
     <el-dialog v-model="editDialog.visible" :title="editDialog.title" width="620px" append-to-body>
@@ -110,7 +123,7 @@
         <el-form-item label="资料分类" required>
           <el-tree-select v-model="editForm.categoryId" :data="categories" node-key="id" check-strictly filterable style="width: 100%" :props="{ label: 'categoryName', children: 'children' }" placeholder="请选择资料分类" />
         </el-form-item>
-        <el-alert v-if="!categories.length" title="请先在“资料分类配置”中创建并启用分类" type="warning" :closable="false" show-icon />
+        <el-alert v-if="!categories.length" title="请先在“资料分类配置”标签中创建并启用分类" type="warning" :closable="false" show-icon />
         <el-form-item label="关联项目">
           <el-select v-model="editForm.projectId" clearable filterable placeholder="不关联项目" style="width: 100%">
             <el-option v-for="item in projectOptions" :key="item.id" :label="item.projectName" :value="item.id" />
@@ -162,14 +175,14 @@
         <el-descriptions-item label="资料说明" :span="2"><div class="detail-description">{{ detailData.description || '—' }}</div></el-descriptions-item>
       </el-descriptions>
       <el-divider content-position="left">版本记录</el-divider>
-      <el-table v-loading="detailLoading" border :data="versions" size="small">
+      <DepartmentDataTable v-loading="detailLoading" border :data="versions" size="small">
         <el-table-column label="版本" width="80" align="center"><template #default="scope">v{{ scope.row.versionNo }}</template></el-table-column>
         <el-table-column label="文件名" prop="originalName" min-width="220" show-overflow-tooltip />
         <el-table-column label="大小" width="100" align="center"><template #default="scope">{{ formatFileSize(scope.row.fileSize) }}</template></el-table-column>
         <el-table-column label="上传人" prop="createByName" width="100" align="center" />
         <el-table-column label="版本说明" prop="versionNote" min-width="160" show-overflow-tooltip />
         <el-table-column label="时间" prop="createTime" width="165" align="center" />
-      </el-table>
+      </DepartmentDataTable>
       <template #footer><el-button @click="detailDialog.visible = false">关闭</el-button></template>
     </el-dialog>
 
@@ -186,13 +199,17 @@
 
 <script setup lang="ts" name="DepartmentDocument">
 import type { FormInstance, UploadFile, UploadFiles } from 'element-plus';
-import { ArrowDown, UploadFilled } from '@element-plus/icons-vue';
+import { ArrowDown, CollectionTag, UploadFilled } from '@element-plus/icons-vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listDepartmentDocumentCategoryOptions } from '@/api/department/documentCategory';
 import type { DepartmentDocumentCategoryVO } from '@/api/department/documentCategory/types';
 import { listDepartmentProjectOptions } from '@/api/department/project';
 import type { DepartmentProjectVO } from '@/api/department/project/types';
+import DepartmentPageTabs from '@/components/Department/PageTabs.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import DepartmentDocumentCategoryPanel from '../documentCategory/CategoryPanel.vue';
 import {
   delDepartmentDocument,
   downloadDepartmentDocument,
@@ -241,6 +258,7 @@ const editDialog = reactive({ visible: false, title: '' });
 const versionDialog = reactive({ visible: false });
 const detailDialog = reactive({ visible: false });
 const previewDialog = reactive({ visible: false, loading: false, title: '', row: undefined as DepartmentDocumentVO | undefined });
+const categoryPanelRef = ref<{ handleAdd: () => void }>();
 const previewUrl = ref('');
 const previewKind = ref<'image' | 'pdf' | 'none'>('none');
 
@@ -280,8 +298,11 @@ const resetQuery = () => {
 
 const handleTabChange = () => {
   queryParams.pageNum = 1;
+  if (activeTab.value === 'category') return;
   getList();
 };
+
+const handleAddCategory = () => categoryPanelRef.value?.handleAdd();
 
 const resetEdit = () => {
   Object.assign(editForm, { id: undefined, projectId: undefined, categoryId: categories.value[0]?.id, title: undefined, description: undefined, tags: undefined, visibility: 'DEPT', status: 'PUBLISHED', expireDate: undefined });
@@ -321,7 +342,7 @@ const appendIfPresent = (data: FormData, key: string, value: unknown) => {
 
 const submitEdit = async () => {
   if (!editForm.title?.trim()) return modal.msgWarning('请输入资料标题');
-  if (!editForm.categoryId) return modal.msgWarning(categories.value.length ? '请选择资料分类' : '请先在“资料分类配置”中创建并启用分类');
+  if (!editForm.categoryId) return modal.msgWarning(categories.value.length ? '请选择资料分类' : '请先在“资料分类配置”标签中创建并启用分类');
   buttonLoading.value = true;
   try {
     if (editForm.id) {
@@ -486,6 +507,8 @@ onMounted(() => {
   .hero-stats strong { font-size: 28px; line-height: 1.15; }
   .hero-stats span { margin-top: 8px; color: rgba(255, 255, 255, 0.66); font-size: 12px; }
   .document-card { border-radius: 12px; }
+  .document-tab-label { display: inline-flex; align-items: center; gap: 6px; }
+  :deep(.department-document-category-panel.is-embedded .table-panel) { border: 0; box-shadow: none; }
   .toolbar-actions, .query-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .query-form { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px; margin-bottom: 16px; padding: 14px 16px 2px; border-radius: 10px; background: var(--el-fill-color-light); }
   .query-actions { margin-left: auto; margin-bottom: 18px; }
