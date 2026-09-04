@@ -28,10 +28,11 @@ export const treeselect = (): AxiosPromise<MenuTreeOption[]> => {
 };
 
 // 根据角色ID查询菜单下拉树结构
-export const roleMenuTreeselect = (roleId: string | number): AxiosPromise<RoleMenuTree> => {
+export const roleMenuTreeselect = (roleId: string | number, signal?: AbortSignal): AxiosPromise<RoleMenuTree> => {
   return request({
     url: '/system/menu/roleMenuTreeselect/' + roleId,
-    method: 'get'
+    method: 'get',
+    signal
   });
 };
 

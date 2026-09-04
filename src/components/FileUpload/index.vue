@@ -242,7 +242,7 @@ const listToString = (list: any[], separator?: string) => {
 }
 
 .upload-file-list .el-upload-list__item {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-border-color-lighter);
   line-height: 2;
   margin-bottom: 10px;
   position: relative;

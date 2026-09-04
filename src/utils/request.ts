@@ -249,6 +249,10 @@ service.interceptors.response.use(
     }
   },
   async (error: any) => {
+    // 取消已关闭页面的请求不提示错误，避免快速切换弹窗时出现无意义的“canceled”提示。
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
     const message = (await extractErrorMessage(error)) || errorCode['default'];
     ElMessage({ message: message, type: 'error', duration: 5 * 1000 });
     error.isHandled = true;

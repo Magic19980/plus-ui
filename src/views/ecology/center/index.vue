@@ -1100,6 +1100,32 @@ html.dark .application-dialog .application-people-preview {
   background: rgba(34, 122, 78, 0.14);
 }
 
+/* 动态表单组件被弹窗 append 到 body 后，不再继承审批中心页面的局部暗色覆写。 */
+html.dark .application-dialog .dynamic-form__summary {
+  border-color: rgba(56, 168, 242, 0.32);
+  background: rgba(37, 99, 235, 0.12);
+}
+
+html.dark .application-dialog .dynamic-form__summary strong {
+  color: #e5edf8;
+}
+
+html.dark .application-dialog .dynamic-form__summary span,
+html.dark .application-dialog .dynamic-field__label small,
+html.dark .application-dialog .dynamic-field__hint {
+  color: #91a4bf;
+}
+
+html.dark .application-dialog .dynamic-field--choice,
+html.dark .application-dialog .dynamic-field--upload {
+  border-color: rgba(71, 85, 105, 0.62);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+html.dark .application-dialog .upload-file-list .el-upload-list__item {
+  border-color: rgba(100, 116, 139, 0.55);
+}
+
 @media (max-width: 760px) {
   .application-dialog.el-dialog {
     width: calc(100vw - 24px) !important;

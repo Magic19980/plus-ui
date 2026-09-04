@@ -80,31 +80,19 @@
                     <div class="selector-filter-heading">
                       <div class="table-heading">
                         <h3>筛选人员</h3>
-                        <span class="selector-heading-caption">按姓名、工号或手机号码检索</span>
+                        <span class="selector-heading-caption">按筛选条件检索本地用户</span>
                       </div>
                       <el-tag size="small" effect="plain" type="info">本地用户</el-tag>
                     </div>
                     <el-form ref="queryFormRef" :model="queryParams" class="query-form">
-                      <el-form-item label="姓名" prop="nickName">
+                      <el-form-item v-for="field in userFilterFields" :key="field.key" :label="field.label" :prop="field.key">
+                        <el-select v-if="field.key === 'status'" v-model="queryParams[field.key]" clearable :placeholder="field.placeholder">
+                          <el-option v-for="item in sys_normal_disable" :key="item.value" :label="item.label" :value="item.value" />
+                        </el-select>
                         <el-input
-                          v-model="queryParams.nickName"
-                          placeholder="请输入姓名"
-                          clearable
-                          @keyup.enter="handleQuery"
-                        />
-                      </el-form-item>
-                      <el-form-item label="工号" prop="employeeNo">
-                        <el-input
-                          v-model="queryParams.employeeNo"
-                          placeholder="请输入工号"
-                          clearable
-                          @keyup.enter="handleQuery"
-                        />
-                      </el-form-item>
-                      <el-form-item label="手机号码" prop="phoneNumber">
-                        <el-input
-                          v-model="queryParams.phoneNumber"
-                          placeholder="请输入手机号码"
+                          v-else
+                          v-model="queryParams[field.key]"
+                          :placeholder="field.placeholder"
                           clearable
                           @keyup.enter="handleQuery"
                         />
@@ -174,7 +162,7 @@
 
                 <el-alert
                   v-if="!hasSearched && !loading && selectUserList.length === 0"
-                  title="请先选择组织，或输入姓名、工号、手机号后搜索"
+                  title="请先选择组织，或输入筛选条件后搜索"
                   type="info"
                   :closable="false"
                   class="selector-empty-hint"
@@ -204,18 +192,27 @@
 <script setup lang="ts">
 import type { VxeTableInstance } from 'vxe-table';
 import animateConfig from '@/animate';
+import type { PageResult } from '@/api/types';
 import type { DeptTreeVO, DeptVO } from '@/api/system/dept/types';
 import api from '@/api/system/user';
 import type { UserQuery, UserVO } from '@/api/system/user/types';
 import { useDialogState } from '@/hooks/dialog/useDialogState';
 import { useDateRangeQuery } from '@/hooks/form/useDateRangeQuery';
 import { useDict } from '@/utils/dict';
+import type { AxiosPromise } from '@/utils/api-types';
+
+type UserFilterKey = 'userName' | 'nickName' | 'employeeNo' | 'email' | 'phoneNumber' | 'status';
+type UserListLoader = (query: UserQuery) => AxiosPromise<PageResult<UserVO>>;
 
 interface PropType {
   modelValue?: UserVO[] | UserVO | undefined;
   multiple?: boolean;
   data?: string | number | (string | number)[] | undefined;
   userIds?: string | number | (string | number)[] | undefined;
+  /** 自定义用户数据源，角色授权等场景可在此注入带业务范围的分页接口。 */
+  loadUsers?: UserListLoader;
+  /** 筛选字段，默认保留通用人员选择器的姓名、工号、手机号。 */
+  filterKeys?: UserFilterKey[];
   /** 限制为指定组织及其全部下级组织的人员；未隐藏组织树时可继续选择下级组织筛选。 */
   deptId?: string | number;
   /** 隐藏人员选择器中的组织树，避免与外部已选择的适用组织重复筛选。 */
@@ -226,6 +223,7 @@ const prop = withDefaults(defineProps<PropType>(), {
   modelValue: undefined,
   data: undefined,
   userIds: undefined,
+  filterKeys: () => ['nickName', 'employeeNo', 'phoneNumber'],
   deptId: undefined,
   hideDeptTree: false
 });
@@ -256,8 +254,10 @@ const { dialog, openDialog, closeDialog } = useDialogState('选择人员');
 const queryParams = ref<UserQuery>({
   pageNum: 1,
   pageSize: 10,
+  userName: '',
   nickName: '',
   employeeNo: '',
+  email: '',
   phoneNumber: '',
   status: '',
   deptId: '',
@@ -266,6 +266,22 @@ const queryParams = ref<UserQuery>({
 });
 
 const defaultSelectUserIds = computed(() => computedIds(prop.data));
+const filterDefinitions: Record<UserFilterKey, { label: string; placeholder: string }> = {
+  userName: { label: '登录账号', placeholder: '请输入登录账号' },
+  nickName: { label: '姓名', placeholder: '请输入姓名' },
+  employeeNo: { label: '工号', placeholder: '请输入工号' },
+  email: { label: '邮箱', placeholder: '请输入邮箱' },
+  phoneNumber: { label: '手机号', placeholder: '请输入手机号' },
+  status: { label: '状态', placeholder: '全部状态' }
+};
+const userFilterFields = computed(() => prop.filterKeys.map(key => ({ key, ...filterDefinitions[key] })));
+const hasQueryCriteria = computed(() => {
+  if (queryParams.value.deptId) return true;
+  return prop.filterKeys.some(key => {
+    const value = queryParams.value[key];
+    return typeof value === 'string' ? Boolean(value.trim()) : value !== undefined && value !== null && value !== '';
+  });
+});
 
 const confirm = () => {
   emit('update:modelValue', selectUserList.value);
@@ -373,7 +389,7 @@ const resetDepartmentSearch = async () => {
 
 /** 查询用户列表 */
 const getList = async () => {
-  if (!queryParams.value.deptId && !queryParams.value.nickName?.trim() && !queryParams.value.employeeNo?.trim() && !queryParams.value.phoneNumber?.trim()) {
+  if (!hasQueryCriteria.value) {
     userList.value = selectUserList.value.length ? [...selectUserList.value] : [];
     total.value = 0;
     hasSearched.value = false;
@@ -382,7 +398,8 @@ const getList = async () => {
   loading.value = true;
   queryParams.value.userIds = prop.userIds;
   try {
-    const res = await api.listUser(applyDateRange(queryParams.value));
+    const loadUsers = prop.loadUsers || api.listUser;
+    const res = await loadUsers(applyDateRange(queryParams.value));
     userList.value = res.data?.rows || [];
     total.value = res.data?.total || 0;
     await restoreSelectedRows();
@@ -410,7 +427,7 @@ const handleNodeClick = (data: DeptTreeVO) => {
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
-  if (!queryParams.value.deptId && !queryParams.value.nickName?.trim() && !queryParams.value.employeeNo?.trim() && !queryParams.value.phoneNumber?.trim()) {
+  if (!hasQueryCriteria.value) {
     userList.value = selectUserList.value.length ? [...selectUserList.value] : [];
     total.value = 0;
     hasSearched.value = false;
@@ -698,13 +715,16 @@ defineExpose({
 }
 
 .query-form :deep(.el-form-item__label) {
+  flex: 0 0 auto;
   padding-right: 8px;
   color: var(--app-text-muted, var(--el-text-color-secondary));
   line-height: 32px;
+  white-space: nowrap;
 }
 
 .query-form :deep(.el-form-item__content),
-.query-form :deep(.el-input) {
+.query-form :deep(.el-input),
+.query-form :deep(.el-select) {
   min-width: 0;
   width: 100%;
 }

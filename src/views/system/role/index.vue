@@ -218,10 +218,36 @@
     </el-dialog>
 
     <!-- 分配角色权限对话框 -->
-    <el-dialog v-model="openDataScope" :title="dialog.title" width="760px" append-to-body>
+    <el-dialog v-model="openDataScope" :title="dialog.title" width="760px" append-to-body @close="handleDataScopeClose">
       <el-form ref="dataScopeRef" :model="form" label-width="90px" class="dialog-grid-form permission-dialog-form">
-        <el-tabs v-model="permissionTab">
-          <el-tab-pane :label="$t('common.tabMenuPermission')" name="menu">
+        <div v-if="dataScopeLoading" class="permission-loading-state" role="status" aria-live="polite">
+          <span class="permission-loading-spinner" aria-hidden="true"></span>
+          <span>{{ $t('common.isLoading') }}</span>
+        </div>
+        <template v-else>
+          <div class="permission-tabs" role="tablist" :aria-label="$t('common.dialogAssignPermission')">
+            <button
+              type="button"
+              role="tab"
+              class="permission-tab"
+              :class="{ 'is-active': permissionTab === 'menu' }"
+              :aria-selected="permissionTab === 'menu'"
+              @click="permissionTab = 'menu'"
+            >
+              {{ $t('common.tabMenuPermission') }}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              class="permission-tab"
+              :class="{ 'is-active': permissionTab === 'data' }"
+              :aria-selected="permissionTab === 'data'"
+              @click="permissionTab = 'data'"
+            >
+              {{ $t('common.dataScope') }}
+            </button>
+          </div>
+          <div v-show="permissionTab === 'menu'" class="permission-tab-panel" role="tabpanel">
             <el-checkbox v-model="menuExpand" @change="handleCheckedTreeExpand($event, 'menu')">{{ $t('common.checkboxExpandCollapse') }}</el-checkbox>
             <el-checkbox v-model="menuNodeAll" @change="handleCheckedTreeNodeAll($event, 'menu')">
               全选/全不选
@@ -282,8 +308,8 @@
                 </template>
               </el-tree>
             </div>
-          </el-tab-pane>
-          <el-tab-pane :label="$t('common.dataScope')" name="data">
+          </div>
+          <div v-show="permissionTab === 'data'" class="permission-tab-panel" role="tabpanel">
             <el-form-item :label="$t('common.authScope')">
               <el-select v-model="form.dataScope" @change="dataScopeSelectChange">
                 <el-option
@@ -294,7 +320,7 @@
                 ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item v-show="form.dataScope === '2'" :label="$t('common.dataScope')">
+            <el-form-item v-if="permissionTab === 'data' && form.dataScope === '2'" :label="$t('common.dataScope')">
               <el-checkbox v-model="deptExpand" @change="handleCheckedTreeExpand($event, 'dept')">{{ $t('common.checkboxExpandCollapse') }}</el-checkbox>
               <el-checkbox v-model="deptNodeAll" @change="handleCheckedTreeNodeAll($event, 'dept')">
                 全选/全不选
@@ -307,19 +333,20 @@
                 class="tree-border"
                 :data="deptOptions"
                 show-checkbox
-                default-expand-all
                 node-key="id"
+                :default-checked-keys="selectedDeptPermissionIds"
                 :check-strictly="!form.deptCheckStrictly"
                 :empty-text="$t('common.isLoading')"
                 :props="{ label: 'label', children: 'children' }"
+                @check="handleDeptTreeCheck"
               ></el-tree>
             </el-form-item>
-          </el-tab-pane>
-        </el-tabs>
+          </div>
+        </template>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitDataScope">{{ $t('common.btnConfirm') }}</el-button>
+          <el-button type="primary" :disabled="dataScopeLoading" @click="submitDataScope">{{ $t('common.btnConfirm') }}</el-button>
           <el-button @click="cancelDataScope">{{ $t('common.btnCancel') }}</el-button>
         </div>
       </template>
@@ -391,10 +418,19 @@ const menuPermissionMeta = ref<RoleMenuPermissionMeta>({
 });
 const menuExpand = ref(false);
 const menuNodeAll = ref(false);
-const deptExpand = ref(true);
+const deptExpand = ref(false);
 const deptNodeAll = ref(false);
 const deptOptions = ref<DeptTreeOption[]>([]);
+const selectedDeptPermissionIds = ref<Array<string | number>>([]);
 const openDataScope = ref(false);
+const dataScopeLoading = ref(false);
+const deptPermissionLoading = ref(false);
+let dataScopeRequestId = 0;
+let dataScopeAbortController: AbortController | undefined;
+let deptPermissionAbortController: AbortController | undefined;
+let deptPermissionRoleId: string | number | undefined;
+let cachedMenuTree: MenuTreeOption[] | undefined;
+let cachedDeptTree: DeptTreeOption[] | undefined;
 /**
  * 权限分配弹窗 Tab：
  * data=数据权限，menu=菜单权限
@@ -673,10 +709,8 @@ const applyMenuTreeCheckedState = (checkedKeys: Array<string | number>) => {
   }
 
   syncingMenuTree.value = true;
-  tree.setCheckedKeys([]);
-  getDisplayCheckedMenuKeys(checkedKeys).forEach(key => {
-    tree.setChecked(key, true, false);
-  });
+  // Element Plus 支持批量回显，避免逐个 setChecked 触发多次树计算和重绘。
+  tree.setCheckedKeys(getDisplayCheckedMenuKeys(checkedKeys));
   syncingMenuTree.value = false;
 };
 
@@ -875,27 +909,36 @@ const handleAuthUser = (row: Partial<RoleVO>) => {
 };
 
 /** 所有部门节点数据 */
-const getDeptAllCheckedKeys = (): any => {
-  // 目前被选中的部门节点
-  const checkedKeys = deptRef.value?.getCheckedKeys();
-  // 半选中的部门节点
-  const halfCheckedKeys = deptRef.value?.getHalfCheckedKeys();
-  if (halfCheckedKeys) {
-    checkedKeys?.unshift(...halfCheckedKeys);
+const getDeptAllCheckedKeys = (): Array<string | number> => {
+  if (!deptRef.value) {
+    return selectedDeptPermissionIds.value;
   }
-  return checkedKeys;
+
+  return normalizePermissionIds([
+    ...deptRef.value.getCheckedKeys(),
+    ...deptRef.value.getHalfCheckedKeys()
+  ]);
+};
+/** 保存部门树选择结果，支持部门树按需挂载后继续提交 */
+const handleDeptTreeCheck = () => {
+  selectedDeptPermissionIds.value = getDeptAllCheckedKeys();
 };
 /** 重置新增的表单以及其他数据  */
 const reset = () => {
+  deptPermissionAbortController?.abort();
+  deptPermissionAbortController = undefined;
+  deptPermissionLoading.value = false;
+  deptPermissionRoleId = undefined;
   menuRef.value?.setCheckedKeys([]);
   menuPermissionMeta.value = createEmptyMenuPermissionMeta();
   setSelectedMenuPermissionIds([]);
   setSelectedButtonPermissionIds([]);
   lastCheckedMenuKeys.value = [];
+  selectedDeptPermissionIds.value = [];
   syncingMenuTree.value = false;
   menuExpand.value = false;
   menuNodeAll.value = false;
-  deptExpand.value = true;
+  deptExpand.value = false;
   deptNodeAll.value = false;
   form.value = { ...initForm };
   roleFormRef.value?.resetFields();
@@ -927,12 +970,6 @@ const getRoleMenuTreeselect = (roleId: string | number) => {
     return res.data;
   });
 };
-/** 根据角色ID查询部门树结构 */
-const getRoleDeptTreeSelect = async (roleId: string | number) => {
-  const res = await deptTreeSelect(roleId);
-  deptOptions.value = res.data.depts;
-  return res.data;
-};
 /** 树权限（展开/折叠）*/
 const handleCheckedTreeExpand = (value: unknown, type: string) => {
   const expanded = Boolean(value);
@@ -960,6 +997,7 @@ const handleCheckedTreeNodeAll = (value: any, type: string) => {
     refreshMenuTreeCheckedState(getPermissionStateIds());
   } else if (type == 'dept') {
     deptRef.value?.setCheckedNodes(value ? (deptOptions.value as any) : []);
+    handleDeptTreeCheck();
   }
 };
 /** 树权限（父子联动） */
@@ -993,32 +1031,138 @@ const cancel = () => {
   reset();
   closeDialog();
 };
+/**
+ * 按需加载自定义数据权限的部门树。
+ * 角色列表打开时只加载菜单权限；只有用户真正选择自定数据权限时才请求部门树。
+ */
+const loadDeptPermissionTree = async () => {
+  const roleId = form.value.roleId;
+  if (!roleId || form.value.dataScope !== '2' || deptPermissionLoading.value || deptPermissionRoleId === roleId) return;
+
+  const requestId = dataScopeRequestId;
+  deptPermissionAbortController?.abort();
+  const abortController = new AbortController();
+  deptPermissionAbortController = abortController;
+  deptPermissionLoading.value = true;
+
+  try {
+    const response = await deptTreeSelect(roleId, abortController.signal);
+    if (
+      requestId !== dataScopeRequestId ||
+      !openDataScope.value ||
+      permissionTab.value !== 'data' ||
+      form.value.roleId !== roleId ||
+      form.value.dataScope !== '2'
+    ) {
+      return;
+    }
+
+    const deptRes = response.data;
+    cachedDeptTree ??= deptRes.depts;
+    deptOptions.value = cachedDeptTree;
+    selectedDeptPermissionIds.value = normalizePermissionIds(deptRes.checkedKeys);
+    deptPermissionRoleId = roleId;
+  } catch (error) {
+    if (requestId !== dataScopeRequestId || abortController.signal.aborted) return;
+    console.error('加载部门权限树失败', error);
+    modal.msgError(t('common.msgOperateFailed'));
+  } finally {
+    if (requestId === dataScopeRequestId && deptPermissionAbortController === abortController) {
+      deptPermissionLoading.value = false;
+      deptPermissionAbortController = undefined;
+    }
+  }
+};
 /** 选择角色权限范围触发 */
 const dataScopeSelectChange = (value: string) => {
   if (value !== '2') {
+    deptPermissionAbortController?.abort();
+    deptPermissionAbortController = undefined;
+    deptPermissionLoading.value = false;
     deptRef.value?.setCheckedKeys([]);
+    selectedDeptPermissionIds.value = [];
+    deptOptions.value = [];
+    deptPermissionRoleId = undefined;
+  } else {
+    void loadDeptPermissionTree();
   }
 };
 /** 分配数据权限操作 */
 const handleDataScope = async (row: Partial<RoleVO>) => {
+  const roleId = row.roleId;
+  if (!roleId || dataScopeLoading.value) return;
+
+  const requestId = ++dataScopeRequestId;
+  dataScopeAbortController?.abort();
+  const abortController = new AbortController();
+  dataScopeAbortController = abortController;
   permissionTab.value = 'menu';
-  const response = await getRole(row.roleId);
-  Object.assign(form.value, response.data);
-  const menuRes = await getRoleMenuTreeselect(row.roleId);
-  const res = await getRoleDeptTreeSelect(row.roleId);
-  openDataScope.value = true;
   setTitle(t('common.dialogAssignPermission'));
-  await nextTick(() => {
+  dataScopeLoading.value = true;
+  openDataScope.value = true;
+
+  try {
+    // 列表行已包含角色基础字段，不再重复请求角色详情；权限接口并行加载。
+    const [menuResponse, deptResponse] = await Promise.all([
+      roleMenuTreeselect(roleId, abortController.signal),
+      String(row.dataScope) === '2' ? deptTreeSelect(roleId, abortController.signal) : Promise.resolve(undefined)
+    ]);
+
+    // 关闭弹窗或重新打开其他角色后，旧请求不得覆盖当前弹窗数据。
+    if (requestId !== dataScopeRequestId || !openDataScope.value) return;
+
+    const menuRes = menuResponse.data;
+    form.value = {
+      ...initForm,
+      roleId,
+      roleName: row.roleName ?? '',
+      roleKey: row.roleKey ?? '',
+      roleSort: Number(row.roleSort ?? initForm.roleSort),
+      status: row.status ?? initForm.status,
+      menuCheckStrictly: row.menuCheckStrictly ?? initForm.menuCheckStrictly,
+      deptCheckStrictly: row.deptCheckStrictly ?? initForm.deptCheckStrictly,
+      dataScope: row.dataScope ?? initForm.dataScope,
+      remark: row.remark ?? initForm.remark,
+      menuIds: [],
+      deptIds: []
+    };
+
+    // 菜单和部门结构在当前用户会话中是共享数据，仅首次打开时重新构建。
+    cachedMenuTree ??= menuRes.menus;
+    updateMenuPermissionOptions(cachedMenuTree);
+    if (deptResponse) {
+      const deptRes = deptResponse.data;
+      cachedDeptTree ??= deptRes.depts;
+      deptOptions.value = cachedDeptTree;
+      selectedDeptPermissionIds.value = normalizePermissionIds(deptRes.checkedKeys);
+      deptPermissionRoleId = roleId;
+    } else {
+      deptOptions.value = [];
+      selectedDeptPermissionIds.value = [];
+      deptPermissionRoleId = undefined;
+    }
+    dataScopeLoading.value = false;
+
+    await nextTick();
+    if (requestId !== dataScopeRequestId || !openDataScope.value) return;
+
     initPermissionState(menuRes.checkedKeys);
     syncFormMenuPermissionIds();
     refreshMenuTreeCheckedState(getPermissionStateIds());
-    deptRef.value?.setCheckedKeys(res.checkedKeys);
-    handleCheckedTreeExpand(menuExpand.value, 'menu');
-    handleCheckedTreeExpand(deptExpand.value, 'dept');
-  });
+    if (menuExpand.value) {
+      handleCheckedTreeExpand(true, 'menu');
+    }
+  } catch (error) {
+    if (requestId !== dataScopeRequestId) return;
+    console.error('加载角色权限失败', error);
+    dataScopeLoading.value = false;
+    openDataScope.value = false;
+    modal.msgError(t('common.msgOperateFailed'));
+  }
 };
 /** 提交按钮（数据权限） */
 const submitDataScope = async () => {
+  if (dataScopeLoading.value) return;
   if (form.value.roleId) {
     // 权限信息统一提交：菜单权限 + 数据权限。
     syncFormMenuPermissionIds();
@@ -1030,7 +1174,17 @@ const submitDataScope = async () => {
   }
 };
 /** 取消按钮（数据权限）*/
+const handleDataScopeClose = () => {
+  dataScopeRequestId += 1;
+  dataScopeAbortController?.abort();
+  dataScopeAbortController = undefined;
+  deptPermissionAbortController?.abort();
+  deptPermissionAbortController = undefined;
+  dataScopeLoading.value = false;
+  deptPermissionLoading.value = false;
+};
 const cancelDataScope = () => {
+  handleDataScopeClose();
   dataScopeRef.value?.resetFields();
   form.value = { ...initForm };
   permissionTab.value = 'menu';
@@ -1042,8 +1196,11 @@ const cancelDataScope = () => {
   syncingMenuTree.value = false;
   menuExpand.value = false;
   menuNodeAll.value = false;
-  deptExpand.value = true;
+  deptExpand.value = false;
   deptNodeAll.value = false;
+  selectedDeptPermissionIds.value = [];
+  deptOptions.value = [];
+  deptPermissionRoleId = undefined;
   openDataScope.value = false;
 };
 
@@ -1071,8 +1228,77 @@ onMounted(() => {
   --menu-name-col-width: 220px;
   --menu-tree-leading-offset: 44px;
 
-  :deep(.el-tabs__header) {
+  .permission-loading-state {
+    display: flex;
+    min-height: 360px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--el-text-color-secondary);
+    font-size: 14px;
+  }
+
+  .permission-loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--el-border-color-lighter);
+    border-top-color: var(--el-color-primary);
+    border-radius: 50%;
+    animation: permission-dialog-spin 0.8s linear infinite;
+  }
+
+  @keyframes permission-dialog-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .permission-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     margin-bottom: 16px;
+    padding: 4px;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+  }
+
+  .permission-tab {
+    flex: 1;
+    min-height: 32px;
+    padding: 0 16px;
+    color: var(--el-text-color-secondary);
+    font-size: 14px;
+    line-height: 32px;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      background-color 0.2s,
+      box-shadow 0.2s;
+
+    &:hover {
+      color: var(--el-color-primary);
+    }
+
+    &.is-active {
+      color: var(--el-color-primary);
+      font-weight: 600;
+      background: var(--el-bg-color);
+      box-shadow: var(--el-box-shadow-light);
+    }
+  }
+
+  .permission-tab-panel {
+    min-height: 0;
+  }
+
+  :deep(.permission-tab:focus-visible) {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 1px;
   }
 
   :deep(.tree-border) {

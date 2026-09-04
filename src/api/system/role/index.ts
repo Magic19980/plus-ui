@@ -147,10 +147,11 @@ export const authUserSelectAll = (data: any) => {
   });
 };
 // 根据角色ID查询部门树结构
-export const deptTreeSelect = (roleId: string | number): AxiosPromise<RoleDeptTree> => {
+export const deptTreeSelect = (roleId: string | number, signal?: AbortSignal): AxiosPromise<RoleDeptTree> => {
   return request({
     url: '/system/role/deptTree/' + roleId,
-    method: 'get'
+    method: 'get',
+    signal
   });
 };
 
