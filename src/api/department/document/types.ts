@@ -56,3 +56,12 @@ export interface DepartmentDocumentVersionVO {
   createByName?: string;
   createTime?: string;
 }
+
+export interface DepartmentDocumentVideoPreviewVO {
+  documentId: string | number;
+  versionId?: string | number;
+  fileName?: string;
+  contentType?: string;
+  fileSize?: number;
+  playbackUrl: string;
+}
