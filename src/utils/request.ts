@@ -113,8 +113,9 @@ service.interceptors.request.use(
     config.headers['Content-Language'] = getLanguage();
 
     const isToken = config.headers?.isToken === false;
-    // 是否需要防止数据重复提交
-    const isRepeatSubmit = config.headers?.repeatSubmit === false;
+    // 是否需要防止数据重复提交。文件上传的 FormData 请求可能在短时间内并行发送，不能按普通表单请求去重。
+    const repeatSubmitDisabled = config.headers?.repeatSubmit === false;
+    const isFormDataRequest = config.data instanceof FormData;
     // 是否需要加密
     const isEncrypt = config.headers?.isEncrypt === 'true';
 
@@ -129,7 +130,7 @@ service.interceptors.request.use(
       config.url = url;
     }
 
-    if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put')) {
+    if (!repeatSubmitDisabled && !isFormDataRequest && (config.method === 'post' || config.method === 'put')) {
       const requestObj = {
         url: config.url,
         data: typeof config.data === 'object' ? JSON.stringify(config.data) : config.data,

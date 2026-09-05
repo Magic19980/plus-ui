@@ -1,6 +1,6 @@
 <template>
   <div class="user-info-head" @click="editCropper()">
-    <img :src="options.img" title="点击上传头像" class="img-circle img-lg" />
+    <img :src="options.img" title="点击上传头像" class="img-circle img-lg" @error="handleAvatarError" />
     <el-dialog v-model="open" :title="title" width="800px" append-to-body @opened="modalOpened" @close="closeDialog">
       <el-row>
         <el-col :xs="24" :md="12" :style="{ height: '350px' }">
@@ -64,6 +64,7 @@ import { uploadOss } from '@/api/system/oss';
 import { updateUserProfile } from '@/api/system/user';
 import modal from '@/plugins/modal';
 import { useUserStore } from '@/store/modules/user';
+import defAva from '@/assets/images/profile.jpg';
 
 interface Options {
   img: string | any; // 裁剪图片的地址
@@ -78,6 +79,7 @@ interface Options {
 }
 
 const userStore = useUserStore();
+const { t } = useI18n();
 
 const open = ref(false);
 const visible = ref(false);
@@ -141,11 +143,22 @@ const uploadImg = async () => {
     const res = await uploadOss(formData);
     await updateUserProfile({ avatar: res.data.ossId });
     open.value = false;
-    options.img = res.data.url;
-    userStore.setAvatar(options.img);
-    modal.msgSuccess(t('common.msgEditSuccess'));
+    const avatarLoaded = await userStore.loadAvatar(res.data.ossId);
+    options.img = userStore.avatar;
+    if (avatarLoaded) {
+      modal.msgSuccess(t('common.msgEditSuccess'));
+    } else {
+      modal.msgWarning('头像已保存，但预览失败，请检查对象存储配置');
+    }
     visible.value = false;
   });
+};
+const handleAvatarError = (event: Event) => {
+  const image = event.currentTarget as HTMLImageElement;
+  if (image.dataset.fallbackApplied === 'true') return;
+  image.dataset.fallbackApplied = 'true';
+  options.img = defAva;
+  userStore.setAvatar(defAva);
 };
 /** 实时预览 */
 const realTime = (data: any) => {

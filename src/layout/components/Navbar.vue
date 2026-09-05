@@ -98,7 +98,7 @@
       <div class="avatar-container">
         <el-dropdown class="avatar-dropdown" trigger="click" @command="handleCommand">
           <div class="avatar-wrapper">
-            <img :src="userStore.avatar" class="user-avatar" />
+            <img :src="userStore.avatar" class="user-avatar" @error="handleAvatarError" />
             <div class="avatar-meta">
               <span class="avatar-name">{{ displayName }}</span>
               <span class="avatar-role">Workspace</span>
@@ -128,6 +128,7 @@
 import type { ElMessageBoxOptions } from 'element-plus';
 import { CaretBottom } from '@element-plus/icons-vue';
 import appLogo from '@/assets/logo/tei-logo.svg';
+import defAva from '@/assets/images/profile.jpg';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
 import tab from '@/plugins/tab';
 import router from '@/router';
@@ -154,6 +155,13 @@ const isDarkTheme = computed(
 const displayName = computed(() => userStore.nickname || '管理员');
 const departmentContexts = computed(() => departmentStore.contexts);
 const currentDepartmentName = computed(() => departmentStore.currentDepartmentName);
+
+const handleAvatarError = (event: Event) => {
+  const image = event.currentTarget as HTMLImageElement;
+  if (image.dataset.fallbackApplied === 'true') return;
+  image.dataset.fallbackApplied = 'true';
+  userStore.setAvatar(defAva);
+};
 
 const loadDepartmentContexts = async () => {
   try {

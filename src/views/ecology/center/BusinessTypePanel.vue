@@ -74,8 +74,20 @@
             </el-form-item>
             <el-form-item label="状态">
               <el-radio-group v-model="form.status" class="status-toggle">
-                <el-radio-button label="ENABLED">启用</el-radio-button>
-                <el-radio-button label="DISABLED">停用</el-radio-button>
+                <el-radio label="ENABLED" class="status-option status-option--enabled">
+                  <span class="status-option__content">
+                    <span class="status-option__icon">✓</span>
+                    <span class="status-option__copy"><strong>启用</strong><small>允许用户发起申请</small></span>
+                    <span class="status-option__mark" />
+                  </span>
+                </el-radio>
+                <el-radio label="DISABLED" class="status-option status-option--disabled">
+                  <span class="status-option__content">
+                    <span class="status-option__icon">—</span>
+                    <span class="status-option__copy"><strong>停用</strong><small>暂停新申请，保留历史记录</small></span>
+                    <span class="status-option__mark" />
+                  </span>
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </div>
@@ -268,12 +280,24 @@ onMounted(async () => { await Promise.all([loadList(), loadWorkflowBindingData()
 .business-type-form :deep(.el-input__wrapper:hover), .business-type-form :deep(.el-select__wrapper:hover), .business-type-form :deep(.el-textarea__inner:hover) { box-shadow: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 42%, var(--app-surface-border)) inset; }
 .business-type-form :deep(.el-input__wrapper.is-focus), .business-type-form :deep(.el-select__wrapper.is-focused), .business-type-form :deep(.el-textarea__inner:focus) { box-shadow: 0 0 0 1px var(--el-color-primary) inset, 0 0 0 3px color-mix(in srgb, var(--el-color-primary) 14%, transparent); }
 .business-type-form :deep(.el-input.is-disabled .el-input__wrapper) { background: color-mix(in srgb, var(--app-elevated-soft-bg) 70%, var(--app-surface-bg)); }
-.status-toggle { display: flex; width: 100%; }
-.status-toggle :deep(.el-radio-button) { flex: 1; }
-.status-toggle :deep(.el-radio-button__inner) { width: 100%; padding: 9px 14px; border-color: var(--app-surface-border); color: var(--app-text-muted); background: var(--app-surface-bg); box-shadow: none; }
-.status-toggle :deep(.el-radio-button:first-child .el-radio-button__inner) { border-radius: 10px 0 0 10px; }
-.status-toggle :deep(.el-radio-button:last-child .el-radio-button__inner) { border-radius: 0 10px 10px 0; }
-.status-toggle :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) { border-color: var(--el-color-primary); color: var(--el-color-primary); background: color-mix(in srgb, var(--el-color-primary) 12%, var(--app-surface-bg)); box-shadow: -1px 0 0 0 var(--el-color-primary); }
+.status-toggle { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.status-toggle :deep(.el-radio.status-option) { position: relative; display: flex; align-items: stretch; min-width: 0; height: 64px; margin: 0; padding: 0; border: 1px solid var(--app-surface-border); border-radius: 12px; color: var(--app-text-muted); background: var(--app-surface-bg); cursor: pointer; transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease; }
+.status-toggle :deep(.el-radio.status-option:hover) { border-color: color-mix(in srgb, var(--el-color-primary) 48%, var(--app-surface-border)); background: color-mix(in srgb, var(--el-color-primary) 5%, var(--app-surface-bg)); transform: translateY(-1px); }
+.status-toggle :deep(.status-option .el-radio__input) { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.status-toggle :deep(.status-option .el-radio__label) { display: block; width: 100%; padding: 0; }
+.status-option__content { display: flex; align-items: center; width: 100%; height: 100%; min-width: 0; padding: 10px 12px; gap: 9px; }
+.status-option__icon { display: inline-flex; align-items: center; justify-content: center; width: 27px; height: 27px; flex: 0 0 27px; border: 1px solid color-mix(in srgb, var(--app-text-muted) 35%, var(--app-surface-border)); border-radius: 50%; color: var(--app-text-muted); font-size: 15px; font-weight: 700; line-height: 1; }
+.status-option__copy { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
+.status-option__copy strong { color: var(--app-text-title); font-size: 13px; font-weight: 650; line-height: 1.2; }
+.status-option__copy small { overflow: hidden; color: var(--app-text-muted); font-size: 11px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.status-option__mark { width: 7px; height: 7px; flex: 0 0 7px; margin-left: auto; border: 1px solid color-mix(in srgb, var(--app-text-muted) 42%, var(--app-surface-border)); border-radius: 50%; background: transparent; }
+.status-toggle :deep(.el-radio.status-option.is-checked) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--el-color-primary) 10%, transparent); transform: translateY(-1px); }
+.status-toggle :deep(.status-option--enabled.is-checked) { border-color: color-mix(in srgb, #46c98f 68%, var(--app-surface-border)); background: color-mix(in srgb, #46c98f 10%, var(--app-surface-bg)); }
+.status-toggle :deep(.status-option--enabled.is-checked .status-option__icon) { border-color: #46c98f; color: #46c98f; background: color-mix(in srgb, #46c98f 13%, transparent); }
+.status-toggle :deep(.status-option--enabled.is-checked .status-option__mark) { border-color: #46c98f; background: #46c98f; box-shadow: 0 0 0 3px color-mix(in srgb, #46c98f 16%, transparent); }
+.status-toggle :deep(.status-option--disabled.is-checked) { border-color: color-mix(in srgb, #94a3b8 70%, var(--app-surface-border)); background: color-mix(in srgb, #94a3b8 10%, var(--app-surface-bg)); }
+.status-toggle :deep(.status-option--disabled.is-checked .status-option__icon) { border-color: #94a3b8; color: #cbd5e1; background: color-mix(in srgb, #94a3b8 14%, transparent); }
+.status-toggle :deep(.status-option--disabled.is-checked .status-option__mark) { border-color: #94a3b8; background: #94a3b8; box-shadow: 0 0 0 3px color-mix(in srgb, #94a3b8 16%, transparent); }
 .field-tip { display: flex; align-items: flex-start; gap: 4px; margin-top: 6px; color: var(--app-text-muted); font-size: 12px; line-height: 1.45; }
 .field-tip :deep(.el-icon) { flex: 0 0 auto; margin-top: 1px; color: var(--el-color-primary); }
 .binding-tip { display: flex; align-items: center; gap: 7px; margin: -3px 0 15px; padding: 9px 11px; border: 1px solid color-mix(in srgb, var(--el-color-primary) 16%, var(--app-surface-border)); border-radius: 9px; color: var(--app-text-muted); background: color-mix(in srgb, var(--el-color-primary) 6%, var(--app-surface-bg)); font-size: 12px; line-height: 1.45; }

@@ -79,7 +79,6 @@
                   <el-button link type="primary" @click="openApplicationDetail(scope.row)">详情</el-button>
                 <el-button v-if="canEdit(scope.row)" v-hasPermi="['ecology:application:edit']" link type="primary" @click="openApplicationEdit(scope.row)">编辑</el-button>
                 <el-button v-if="canSubmit(scope.row)" v-hasPermi="['ecology:application:submit']" link type="success" @click="submitApplication(scope.row)">提交</el-button>
-                <el-button v-if="canEdit(scope.row)" v-hasPermi="['ecology:application:preview']" link type="warning" @click="previewApplication(scope.row)">审批链</el-button>
                 <el-button v-if="scope.row.oaRequestId" v-hasPermi="['ecology:application:sync']" link type="warning" @click="syncApplication(scope.row)">同步</el-button>
                   <el-button v-if="scope.row.oaLink" link type="info" @click="openOa(scope.row)">打开泛微</el-button>
                 </DepartmentTableActions>
@@ -114,15 +113,21 @@
         </section>
 
         <section class="application-section">
-          <div class="application-section__heading"><span class="application-section__index">02</span><div><strong>审批策略</strong><span>确认审批方式，系统会据此生成本次审批链</span></div></div>
+          <div class="application-section__heading"><span class="application-section__index">02</span><div><strong>审批策略</strong><span>确认审批方式，提交时按规则生成审批链</span></div></div>
           <el-form-item label="审批方式" prop="approvalMode"><el-radio-group v-model="applicationForm.approvalMode" @change="handleApprovalModeChange"><el-radio label="AUTO_RULE">自动匹配</el-radio><el-radio label="PLAN">选择审批方案</el-radio><el-radio label="MANUAL">本次临时指定</el-radio></el-radio-group></el-form-item>
           <el-alert v-if="applicationForm.approvalMode === 'AUTO_RULE'" :title="applicationApprovalHint" type="info" :closable="false" class="application-alert" />
           <el-form-item v-if="applicationForm.approvalMode === 'PLAN'" label="审批方案" required><el-select v-model="applicationForm.approvalPlanId" filterable placeholder="选择当前业务的审批方案"><el-option v-for="item in applicationApprovalPlans" :key="item.id" :label="item.planName" :value="item.id" /></el-select></el-form-item>
             <el-alert v-if="applicationForm.approvalMode === 'PLAN'" title="选择方案只决定本次申请使用哪些审批人，不会创建新的泛微表单。" type="info" :closable="false" class="application-alert" />
           <el-alert v-if="applicationForm.approvalMode === 'MANUAL'" title="临时指定不会创建审批方案，只对当前申请生效。" type="info" :closable="false" class="application-alert" />
           <div class="application-flow-summary"><span>审批方式</span><el-tag type="info">{{ selectedApprovalName }}</el-tag><span class="form-tip">节点顺序和审批类型由该审批方式配置决定。</span></div>
-          <div v-if="applicationForm.approvalMode === 'AUTO_RULE' && matchedApplicationApproval" class="application-people-preview">
-            <div><span>审批人员：</span>{{ applicationPeopleNames('APPROVER') }}</div><div><span>抄送人员：</span>{{ applicationPeopleNames('COPY') || '—' }}</div>
+          <div v-if="applicationForm.approvalMode === 'AUTO_RULE'" class="application-people-preview">
+            <div><span>匹配方式：</span>提交时按业务归属组织、来源模块和方案条件确定审批方案</div>
+            <div><span>候选方案：</span>{{ matchedApplicationApprovals.length ? matchedApplicationApprovals.map((item) => item.planName).join('、') : '当前暂未找到可用方案' }}</div>
+          </div>
+          <div v-else-if="applicationForm.approvalMode === 'PLAN' && selectedApprovalPlan" class="application-people-preview">
+            <div><span>已选审批方案：</span>{{ selectedApprovalPlan.planName }}</div>
+            <div><span>审批人员：</span>{{ applicationPeopleNamesForPlan('APPROVER') || '方案尚未配置审批人' }}</div>
+            <div><span>抄送人员：</span>{{ applicationPeopleNamesForPlan('COPY') || '—' }}</div>
           </div>
           <template v-if="applicationForm.approvalMode === 'MANUAL'">
             <el-alert v-if="!applicationStageDefinitions.length" title="当前审批方式还没有配置审批节点，请先联系管理员维护流程配置。" type="warning" :closable="false" class="application-alert" />
@@ -143,23 +148,11 @@
         </section>
       </el-form>
       <template #footer>
-        <div class="application-dialog__footer"><span>保存后可在“我的申请”中继续提交</span><div><el-button @click="applicationDialog.visible = false">取消</el-button><el-button type="primary" :loading="buttonLoading" :disabled="applicationDialog.loading" @click="saveApplication">保存草稿</el-button></div></div>
+        <div class="application-dialog__footer"><span>草稿可暂存，提交泛微时会校验完整信息</span><div><el-button @click="applicationDialog.visible = false">取消</el-button><el-button plain :loading="buttonLoading" :disabled="applicationDialog.loading" @click="saveApplication">保存草稿</el-button><el-button type="primary" :loading="buttonLoading" :disabled="applicationDialog.loading" @click="submitApplicationFromDialog">提交泛微</el-button></div></div>
       </template>
     </el-dialog>
 
     <UserSelect ref="applicationActiveStageSelectRef" multiple :data="applicationActiveStageUsers.map((item) => item.userId)" @confirm-call-back="setApplicationActiveStageUsers" />
-
-    <el-dialog v-model="previewDialog.visible" title="审批链预览" width="760px" append-to-body>
-      <el-alert title="以下人员为提交时按当前业务和流程规则解析的结果，正式提交时会保存为审批人快照。" type="info" :closable="false" class="mb-3" />
-      <DepartmentDataTable v-loading="previewLoading" :data="previewRows" border>
-        <el-table-column label="顺序" width="70" prop="sortNo" />
-        <el-table-column label="审批节点" min-width="170"><template #default="scope"><div>{{ scope.row.stageName || '未命名节点' }}</div><small>第 {{ scope.row.stageOrder }} 节点</small></template></el-table-column>
-        <el-table-column label="方式" width="90"><template #default="scope">{{ stageModeLabel(scope.row.stageMode) }}</template></el-table-column>
-        <el-table-column label="类型" width="90"><template #default="scope">{{ participantRoleLabel(scope.row.participantRole) }}</template></el-table-column>
-        <el-table-column label="人员" min-width="180"><template #default="scope">{{ scope.row.oaUserName || scope.row.oaUserId || scope.row.localUserId }}</template></el-table-column>
-      </DepartmentDataTable>
-      <el-empty v-if="!previewLoading && previewRows.length === 0" description="当前申请没有匹配到审批范围" />
-    </el-dialog>
 
     <el-drawer v-model="detailDrawer.visible" title="审批申请详情" size="580px" append-to-body>
       <el-descriptions v-if="detail" :column="1" border>
@@ -176,7 +169,7 @@
         <el-descriptions-item v-if="detail.attachments?.length" label="附件">
           <div v-for="item in detail.attachments" :key="item.id" class="attachment-item">
             <span>{{ item.fileName || `附件_${item.ossId}` }}（{{ item.uploadStatus || '待上传' }}）</span>
-            <el-button v-if="item.ossId" link type="primary" @click="openAttachmentPreview(item)">预览</el-button>
+            <el-button v-if="item.ossId" link type="primary" icon="Download" @click="downloadAttachment(item)">下载附件</el-button>
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="申请内容"><div class="detail-content">{{ detail.content }}</div></el-descriptions-item>
@@ -193,11 +186,6 @@
       <template #footer><el-button v-if="detail?.oaLink" type="primary" @click="openOa(detail)">打开泛微流程</el-button></template>
     </el-drawer>
 
-    <AttachmentPreviewDialog
-      v-model="attachmentPreview.visible"
-      :oss-id="attachmentPreview.ossId"
-      :file-name="attachmentPreview.fileName"
-    />
   </div>
 </template>
 
@@ -206,25 +194,23 @@ import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 import modal from '@/plugins/modal';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
-import AttachmentPreviewDialog from '@/components/Ecology/AttachmentPreviewDialog.vue';
 import DynamicForm from '@/components/Ecology/DynamicForm.vue';
 import UserSelect from '@/components/UserSelect/index.vue';
 import { optionSelect } from '@/api/system/user';
 import type { UserVO } from '@/api/system/user/types';
 import type { PageResult } from '@/api/types';
-import { getOaApplication, listOaApplicationEvents, listOaApplications, listOaBusinessTypes, listOaDepartmentApprovals, listOaWorkflowConfigs, previewOaApplicationParticipants, reconcileOaApplications, saveOaApplication, submitOaApplication, syncOaApplication } from '@/api/ecology';
-import type { OaApprovalRulePreviewVO, OaApplicationForm, OaApplicationQuery, OaApplicationVO, OaApprovalParticipantVO, OaAttachmentVO, OaBusinessTypeVO, OaDepartmentApprovalVO, OaProcessEventLogVO, OaWorkflowConfigVO } from '@/api/ecology/types';
+import { getOaApplication, listOaApplicationEvents, listOaApplications, listOaBusinessTypes, listOaDepartmentApprovals, listOaWorkflowConfigs, reconcileOaApplications, saveOaApplication, submitOaApplication, syncOaApplication } from '@/api/ecology';
+import type { OaApplicationForm, OaApplicationQuery, OaApplicationVO, OaApprovalParticipantVO, OaAttachmentVO, OaBusinessTypeVO, OaDepartmentApprovalVO, OaProcessEventLogVO, OaWorkflowConfigVO } from '@/api/ecology/types';
+import { download as requestDownload } from '@/utils/request';
 
 const props = withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
 const applicationLoading = ref(false);
 const eventLoading = ref(false);
-const previewLoading = ref(false);
 const buttonLoading = ref(false);
 const applications = ref<OaApplicationVO[]>([]);
 const applicationTotal = ref(0);
 const enabledWorkflowConfigs = ref<OaWorkflowConfigVO[]>([]);
 const businessTypes = ref<OaBusinessTypeVO[]>([]);
-const previewRows = ref<OaApprovalRulePreviewVO[]>([]);
 const detail = ref<OaApplicationVO>();
 const events = ref<OaProcessEventLogVO[]>([]);
 const applicationFormRef = ref<ElFormInstance>();
@@ -234,10 +220,7 @@ const applicationQuery = reactive<OaApplicationQuery>({ pageNum: 1, pageSize: 10
 const applicationForm = reactive<OaApplicationForm>({ businessType: '', sourceModule: '', businessId: '', businessNo: '', title: '', content: '', urgency: 'NORMAL', formDataJson: '{}', workflowConfigId: undefined, companyId: undefined, deptId: undefined, deptIds: [], approvalMode: 'AUTO_RULE', approvalPlanId: undefined, processType: 'CUSTOM', participants: undefined });
 const applicationDialog = reactive({ visible: false, loading: false, title: '' });
 const detailDrawer = reactive({ visible: false });
-const previewDialog = reactive({ visible: false });
-const attachmentPreview = reactive<{ visible: boolean; ossId?: string | number; fileName?: string }>({ visible: false });
 const matchedApplicationApprovals = ref<OaDepartmentApprovalVO[]>([]);
-const matchedApplicationApproval = computed(() => matchedApplicationApprovals.value[0]);
 const applicationApprovalPlans = ref<OaDepartmentApprovalVO[]>([]);
 type ApplicationStageDefinition = { code: string; name: string; mode: string; required: boolean; sortNo: number; fieldCode: string };
 const applicationStageUsers = reactive<Record<string, UserVO[]>>({});
@@ -253,18 +236,17 @@ const statusOptions = [
   { label: '待核对', value: 'UNKNOWN' },
   { label: '已取消', value: 'CANCELLED' }
 ];
-const applicationRules = { workflowConfigId: [{ required: true, message: '请选择泛微表单', trigger: 'change' }], businessType: [{ required: true, message: '请选择业务类型', trigger: 'change' }], approvalMode: [{ required: true, message: '请选择审批策略', trigger: 'change' }] };
+const applicationRules = { workflowConfigId: [{ required: true, message: '请选择泛微表单', trigger: 'change' }], businessType: [{ required: true, message: '请选择业务类型', trigger: 'change' }], title: [{ required: true, message: '请填写申请标题', trigger: 'blur' }], content: [{ required: true, message: '请填写申请内容', trigger: 'blur' }], approvalMode: [{ required: true, message: '请选择审批策略', trigger: 'change' }] };
 
 const statusLabel = (status?: string) => statusOptions.find((item) => item.value === status)?.label || status || '未知';
 const statusType = (status?: string) => ({ APPROVED: 'success', REJECTED: 'danger', FAILED: 'danger', UNKNOWN: 'danger', IN_PROGRESS: 'warning', SUBMITTING: 'warning', CANCELLED: 'info' }[status || ''] || 'info') as 'success' | 'warning' | 'danger' | 'info';
 const eventLabel = (eventType?: string) => ({ SUBMIT_REQUEST: '提交请求', SUBMIT_SUCCESS: '提交成功', SUBMIT_FAILED: '提交失败', SUBMIT_UNKNOWN: '提交结果待核对', SYNC: '状态同步', SYNC_FAILED: '同步失败', CALLBACK: '泛微回调' }[eventType || ''] || eventType || '事件');
-const stageModeLabel = (mode?: string) => mode === 'COUNTERSIGN' ? '会签' : '依次签';
 const businessTypeLabel = (item: OaBusinessTypeVO) => `${item.businessName}（${item.businessType}）`;
 const businessTypeName = (value?: string) => businessTypes.value.find((item) => item.businessType === value)?.businessName || value || '—';
-const participantRoleLabel = (role?: string) => role === 'COPY' ? '抄送' : '审批';
 const canEdit = (row: any) => row.status === 'DRAFT' || row.status === 'FAILED';
 const canSubmit = (row: any) => canEdit(row);
 const selectedWorkflowConfig = computed(() => enabledWorkflowConfigs.value.find((item) => String(item.id) === String(applicationForm.workflowConfigId)));
+const selectedApprovalPlan = computed(() => applicationApprovalPlans.value.find((item) => String(item.id) === String(applicationForm.approvalPlanId)));
 const selectedApprovalName = computed(() => selectedWorkflowConfig.value?.approvalName || selectedWorkflowConfig.value?.workflowName || '未选择审批方式');
 const selectedFormSchema = computed(() => selectedWorkflowConfig.value?.fieldSchemaJson || '');
 const selectedFormFields = computed<any[]>(() => {
@@ -365,13 +347,13 @@ const handleApprovalModeChange = () => { matchedApplicationApprovals.value = [];
 const applicationApprovalHint = computed(() => {
   if (matchedApplicationApprovals.value.length === 1) {
     const item = matchedApplicationApprovals.value[0];
-    return `已匹配审批方案：${item.planName}`;
+    return `已找到候选方案：${item.planName}；提交时仍会按业务归属组织和方案条件最终确认`;
   }
-  if (matchedApplicationApprovals.value.length > 1) return '存在多个可用审批方案，请改为“选择审批方案”明确指定';
-  return '系统会根据业务类型、来源模块和方案条件自动匹配审批人员；没有匹配时可改为指定方案或临时指定';
+  if (matchedApplicationApprovals.value.length > 1) return '存在多个候选方案，建议切换为“选择审批方案”明确指定';
+  return '提交时系统会根据业务类型、来源模块和方案条件自动匹配审批人员；没有方案时可临时指定';
 });
 const loadApplicationApprovalConfig = async () => { matchedApplicationApprovals.value = []; applicationApprovalPlans.value = []; if (!applicationForm.workflowConfigId || !applicationForm.businessType) return; const res = await listOaDepartmentApprovals({ workflowConfigId: applicationForm.workflowConfigId, businessType: applicationForm.businessType, enabledOnly: true }); applicationApprovalPlans.value = res.data || []; matchedApplicationApprovals.value = applicationApprovalPlans.value; };
-const applicationPeopleNames = (role: string) => (matchedApplicationApproval.value?.users || []).filter((item) => item.participantRole === role).toSorted((a, b) => (a.sortNo || 0) - (b.sortNo || 0)).map((item) => item.nickName || item.userName || item.employeeNo).join('、');
+const applicationPeopleNamesForPlan = (role: string) => (selectedApprovalPlan.value?.users || []).filter((item) => item.participantRole === role).toSorted((a, b) => (a.sortNo || 0) - (b.sortNo || 0)).map((item) => item.nickName || item.userName || item.employeeNo).join('、');
 const applicationUsersForStage = (code: string) => code === 'COPY' ? applicationCopyUsers.value : (applicationStageUsers[code] || (applicationStageUsers[code] = []));
 const applicationActiveStageUsers = computed(() => applicationUsersForStage(applicationActiveStageCode.value || 'COPY'));
 const openApplicationStageSelect = (code: string) => { applicationActiveStageCode.value = code; void nextTick(() => applicationActiveStageSelectRef.value?.open()); };
@@ -382,35 +364,70 @@ const removeUser = (users: UserVO[], userId: string | number) => { const index =
 const moveUsers = (users: UserVO[], index: number, offset: number) => { const next = index + offset; if (next < 0 || next >= users.length) return; [users[index], users[next]] = [users[next], users[index]]; };
 const loadDirectUsers = async (participants: OaApprovalParticipantVO[]) => { resetManualUsers(); const ids = participants.map((item) => item.localUserId).filter((item): item is string | number => item !== undefined && item !== null); if (!ids.length) return; const res = await optionSelect([...new Set(ids.map(String))]); const byId = new Map((res.data || []).map((item) => [String(item.userId), item])); participants.toSorted((a, b) => (a.sortNo || 0) - (b.sortNo || 0)).forEach((item) => { const user = byId.get(String(item.localUserId)); if (!user) return; const code = String(item.stageCode || '').trim().toUpperCase(); if (item.participantRole === 'COPY' || code === 'COPY') applicationCopyUsers.value.push(user); else (applicationStageUsers[code] ||= []).push(user); }); };
 const buildManualParticipants = () => [...applicationStageDefinitions.value.flatMap((stage) => applicationUsersForStage(stage.code).map((item, index) => ({ stageCode: stage.code, stageName: stage.name, stageOrder: stage.sortNo, stageMode: stage.mode, participantRole: 'APPROVER', participantType: 'USER', localUserId: item.userId, sortNo: index, required: stage.required }))), ...applicationCopyUsers.value.map((item, index) => ({ stageCode: 'COPY', stageName: '抄送人员', stageOrder: 99, stageMode: 'SEQUENTIAL', participantRole: 'COPY', participantType: 'USER', localUserId: item.userId, sortNo: index, required: false }))] as any;
-const saveApplication = async () => {
-  const valid = await applicationFormRef.value?.validate().catch(() => false);
-  if (!valid) return;
-  const dynamicValid = dynamicFormRef.value?.validate();
-  if (dynamicValid && !dynamicValid.valid) { modal.msgWarning(dynamicValid.message); return; }
+const prepareApplicationApproval = () => {
   if (applicationForm.approvalMode === 'AUTO_RULE') {
     applicationForm.approvalPlanId = undefined;
     applicationForm.participants = undefined;
   } else if (applicationForm.approvalMode === 'PLAN') {
-    if (!applicationForm.approvalPlanId) { modal.msgWarning('请选择审批方案'); return; }
+    if (!applicationForm.approvalPlanId) { modal.msgWarning('请选择审批方案'); return false; }
     applicationForm.participants = undefined;
   } else {
     const missing = applicationStageDefinitions.value.find((stage) => stage.required && !applicationUsersForStage(stage.code).length);
-    if (missing) { modal.msgWarning(`临时指定时请配置“${missing.name}”的审批人员`); return; }
+    if (missing) { modal.msgWarning(`临时指定时请配置“${missing.name}”的审批人员`); return false; }
     applicationForm.participants = buildManualParticipants();
   }
-  buttonLoading.value = true;
-  try { await saveOaApplication(applicationForm); modal.msgSuccess('草稿保存成功'); applicationDialog.visible = false; await loadApplications(); } finally { buttonLoading.value = false; }
+  return true;
 };
+const validateApplication = async (forSubmit = false) => {
+  const valid = await applicationFormRef.value?.validate().catch(() => false);
+  if (!valid || !prepareApplicationApproval()) return false;
+  if (forSubmit) {
+    const dynamicValid = dynamicFormRef.value?.validate();
+    if (dynamicValid && !dynamicValid.valid) { modal.msgWarning(dynamicValid.message); return false; }
+  }
+  return true;
+};
+const showSubmitResult = (result?: OaApplicationVO) => {
+  const status = result?.status;
+  if (status === 'FAILED') modal.msgError(result?.failReason || '泛微提交失败');
+  else if (status === 'UNKNOWN') modal.msgWarning('提交结果待核对，请先同步申请状态，不要重复提交');
+  else if (status === 'SUBMITTING') modal.msgWarning('申请已进入提交处理中，请稍后同步状态');
+  else if (status === 'IN_PROGRESS' || status === 'SUBMITTED') modal.msgSuccess('已提交泛微审批');
+  else modal.msgWarning('申请已保存，当前提交状态待确认');
+};
+const persistApplication = async (submit = false) => {
+  if (!(await validateApplication(submit))) return;
+  buttonLoading.value = true;
+  try {
+    const saved = await saveOaApplication(applicationForm);
+    const savedApplication = saved.data;
+    const applicationId = savedApplication?.id || applicationForm.id;
+    if (!applicationId) throw new Error('保存申请后未返回申请编号');
+    applicationForm.id = applicationId;
+    if (!submit) {
+      modal.msgSuccess('草稿保存成功');
+    } else {
+      const result = await submitOaApplication(applicationId);
+      showSubmitResult(result.data);
+    }
+    applicationDialog.visible = false;
+    await loadApplications();
+  } finally { buttonLoading.value = false; }
+};
+const saveApplication = () => persistApplication(false);
+const submitApplicationFromDialog = async () => { await modal.confirm(`确认提交申请“${applicationForm.title || '未命名申请'}”吗？提交后将进入泛微审批。`); await persistApplication(true); };
 const submitApplication = async (row: any) => {
   await modal.confirm(`确认提交申请“${row.title}”吗？提交后将进入泛微审批。`);
   const res = await submitOaApplication(row.id);
-  if (res.data?.status === 'FAILED') modal.msgError(res.data.failReason || '泛微提交失败'); else modal.msgSuccess('已提交泛微审批');
+  showSubmitResult(res.data);
   await loadApplications();
 };
 const syncApplication = async (row: any) => { await syncOaApplication(row.id); modal.msgSuccess('同步完成'); await loadApplications(); if (detail.value?.id === row.id) openApplicationDetail(row); };
-const previewApplication = async (row: any) => { previewDialog.visible = true; previewLoading.value = true; previewRows.value = []; try { const res = await previewOaApplicationParticipants(row.id); previewRows.value = res.data || []; } finally { previewLoading.value = false; } };
 const openApplicationDetail = async (row: any) => { detailDrawer.visible = true; eventLoading.value = true; try { const [info, history] = await Promise.all([getOaApplication(row.id), listOaApplicationEvents(row.id)]); detail.value = info.data; events.value = history.data || []; } finally { eventLoading.value = false; } };
-const openAttachmentPreview = (item: OaAttachmentVO) => { attachmentPreview.ossId = item.ossId; attachmentPreview.fileName = item.fileName; attachmentPreview.visible = true; };
+const downloadAttachment = (item: OaAttachmentVO) => {
+  if (!item.ossId) return modal.msgWarning('附件尚未生成，请刷新后重试');
+  requestDownload(`/ecology/application/attachment-download/${item.ossId}`, {}, item.fileName || `附件_${item.ossId}`, 'get');
+};
 const openOa = (row: any) => { if (row.oaLink) window.open(row.oaLink, '_blank', 'noopener,noreferrer'); else modal.msgWarning('尚未配置泛微流程链接模板'); };
 
 onMounted(async () => { await Promise.all([loadApplications(), loadBusinessTypes()]); });

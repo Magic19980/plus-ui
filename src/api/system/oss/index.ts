@@ -29,6 +29,18 @@ export function uploadOss(data: FormData): AxiosPromise<OssUploadVO> {
   });
 }
 
+// 通过登录态预览OSS对象，避免浏览器直接访问私有或未正确配置公开策略的存储地址
+export function previewOss(ossId: string | number): Promise<Blob> {
+  return request({
+    url: '/resource/oss/preview/' + ossId,
+    method: 'get',
+    responseType: 'blob',
+    headers: {
+      repeatSubmit: false
+    }
+  }) as Promise<Blob>;
+}
+
 // 删除OSS对象存储
 export function delOss(ossId: string | number | Array<string | number>) {
   return request({

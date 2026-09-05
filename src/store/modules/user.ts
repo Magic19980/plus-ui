@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import type { UserInfo } from '@/api/system/user/types';
 import type { LoginData, LoginResult } from '@/api/types';
 import type { RuoYiAjaxResult } from '@/utils/api-types';
+import { previewOss } from '@/api/system/oss';
 import { getInfo as getUserInfo, login as loginApi, logout as logoutApi } from '@/api/login';
 import defAva from '@/assets/images/profile.jpg';
 import { getToken, removeToken, setToken } from '@/utils/auth';
@@ -16,6 +17,14 @@ export const useUserStore = defineStore('user', () => {
   const avatar = ref('');
   const roles = ref<Array<string>>([]); // 用户角色编码集合 → 判断路由权限
   const permissions = ref<Array<string>>([]); // 用户权限编码集合 → 判断按钮权限
+  let avatarObjectUrl = '';
+
+  const revokeAvatarObjectUrl = () => {
+    if (avatarObjectUrl) {
+      URL.revokeObjectURL(avatarObjectUrl);
+      avatarObjectUrl = '';
+    }
+  };
 
   /**
    * 登录
@@ -56,7 +65,11 @@ export const useUserStore = defineStore('user', () => {
       }
       name.value = user.userName;
       nickname.value = user.nickName;
-      avatar.value = profile;
+      if (/^\d+$/.test(String(user.avatar ?? '')) && String(user.avatar) !== '0') {
+        await loadAvatar(user.avatar);
+      } else {
+        setAvatar(profile);
+      }
       userId.value = user.userId;
       return Promise.resolve();
     }
@@ -69,11 +82,30 @@ export const useUserStore = defineStore('user', () => {
     token.value = '';
     roles.value = [];
     permissions.value = [];
+    setAvatar(defAva);
     removeToken();
   };
 
   const setAvatar = (value: string) => {
+    revokeAvatarObjectUrl();
     avatar.value = value;
+  };
+
+  const loadAvatar = async (ossId: string | number): Promise<boolean> => {
+    try {
+      const blob = await previewOss(ossId);
+      if (!(blob instanceof Blob) || blob.size === 0) {
+        throw new Error('头像预览内容为空');
+      }
+      revokeAvatarObjectUrl();
+      avatarObjectUrl = URL.createObjectURL(blob);
+      avatar.value = avatarObjectUrl;
+      return true;
+    } catch (error) {
+      console.warn('头像预览失败，已使用默认头像', error);
+      setAvatar(defAva);
+      return false;
+    }
   };
 
   return {
@@ -86,6 +118,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     getInfo,
     logout,
-    setAvatar
+    setAvatar,
+    loadAvatar
   };
 });

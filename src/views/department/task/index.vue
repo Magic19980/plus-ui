@@ -750,6 +750,124 @@ onMounted(async () => { await Promise.all([loadMyTasks(), loadReviewTasks()]); }
 .assignment-table { border-radius: 11px; overflow: hidden; }
 .assignment-table .assignment-member-name { color: var(--el-text-color-primary); font-weight: 600; }
 
+/* 成员分配弹窗通过 Teleport 挂载到 body，单独补齐暗色主题，避免表单卡片和控件继续使用浅色背景。 */
+html.dark .task-assignment-dialog.el-dialog {
+  --el-bg-color: var(--app-surface-bg);
+  --el-bg-color-overlay: var(--app-surface-bg);
+  --el-fill-color-blank: var(--app-surface-bg);
+  --el-fill-color-light: var(--app-elevated-soft-bg);
+  --el-fill-color-lighter: rgba(148, 163, 184, 0.08);
+  --el-text-color-primary: var(--app-text-title);
+  --el-text-color-regular: #d2deef;
+  --el-text-color-secondary: var(--app-text-muted);
+  --el-border-color: var(--app-surface-border);
+  --el-border-color-light: rgba(71, 85, 105, 0.42);
+  --el-border-color-lighter: rgba(71, 85, 105, 0.32);
+  --el-color-primary-light-8: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.28);
+  --el-color-primary-light-9: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.14);
+  background: var(--app-surface-bg);
+  border: 1px solid var(--app-surface-border);
+  box-shadow: var(--app-shadow-lg);
+  color: var(--app-text-title);
+}
+
+html.dark .task-assignment-dialog .el-dialog__header,
+html.dark .task-assignment-dialog .el-dialog__body,
+html.dark .task-assignment-dialog .el-dialog__footer {
+  background: var(--app-surface-bg);
+}
+
+html.dark .task-assignment-dialog .el-dialog__header,
+html.dark .task-assignment-dialog .el-dialog__footer {
+  border-color: var(--app-surface-border);
+}
+
+html.dark .task-assignment-dialog .el-dialog__headerbtn {
+  color: var(--app-text-muted);
+  background: var(--app-elevated-close-bg);
+}
+
+html.dark .task-assignment-dialog .el-dialog__headerbtn:hover {
+  color: var(--app-text-title);
+  background: var(--app-elevated-close-hover-bg);
+}
+
+html.dark .task-assignment-dialog .assignment-dialog__intro {
+  border-color: var(--app-surface-border);
+  background: linear-gradient(135deg, var(--app-elevated-soft-bg), rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.08));
+}
+
+html.dark .task-assignment-dialog .assignment-form-card {
+  border-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.32);
+  background: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.12);
+}
+
+html.dark .task-assignment-dialog .el-input__wrapper,
+html.dark .task-assignment-dialog .el-select__wrapper,
+html.dark .task-assignment-dialog .el-date-editor.el-input__wrapper,
+html.dark .task-assignment-dialog .el-time-editor.el-input__wrapper,
+html.dark .task-assignment-dialog .el-input-number {
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 0 0 1px var(--app-surface-border) inset;
+}
+
+html.dark .task-assignment-dialog .el-input__wrapper:hover,
+html.dark .task-assignment-dialog .el-select__wrapper:hover,
+html.dark .task-assignment-dialog .el-date-editor.el-input__wrapper:hover,
+html.dark .task-assignment-dialog .el-time-editor.el-input__wrapper:hover,
+html.dark .task-assignment-dialog .el-input-number:hover,
+html.dark .task-assignment-dialog .el-input__wrapper.is-focus,
+html.dark .task-assignment-dialog .el-select__wrapper.is-focused,
+html.dark .task-assignment-dialog .el-date-editor.el-input__wrapper.is-focus,
+html.dark .task-assignment-dialog .el-time-editor.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--app-accent-strong) inset;
+}
+
+html.dark .task-assignment-dialog .el-input__inner,
+html.dark .task-assignment-dialog .el-select__selected-item,
+html.dark .task-assignment-dialog .el-select__placeholder,
+html.dark .task-assignment-dialog .el-input-number__decrease,
+html.dark .task-assignment-dialog .el-input-number__increase {
+  color: var(--app-text-title);
+}
+
+html.dark .task-assignment-dialog .el-input__inner::placeholder,
+html.dark .task-assignment-dialog .el-select__placeholder {
+  color: var(--app-text-muted);
+}
+
+html.dark .task-assignment-dialog .assignment-workdays .el-checkbox__label {
+  color: var(--app-text-muted);
+}
+
+html.dark .task-assignment-dialog .assignment-workdays .el-checkbox.is-checked .el-checkbox__label {
+  color: #bfdbfe;
+}
+
+html.dark .task-assignment-dialog .assignment-workdays .el-checkbox__inner {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.42);
+}
+
+html.dark .task-assignment-dialog .assignment-table.el-table {
+  --el-table-bg-color: var(--app-surface-bg);
+  --el-table-tr-bg-color: var(--app-surface-bg);
+  --el-table-header-bg-color: rgba(15, 23, 42, 0.84);
+  --el-table-row-hover-bg-color: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.1);
+  --el-table-border-color: var(--app-surface-border);
+  --el-table-text-color: #d2deef;
+  --el-table-header-text-color: #b8c7db;
+}
+
+html.dark .task-assignment-dialog .assignment-table .el-table__header th.el-table__cell,
+html.dark .task-assignment-dialog .assignment-table .el-table__body td.el-table__cell {
+  border-color: var(--app-surface-border);
+}
+
+html.dark .task-assignment-dialog .assignment-table .el-table__body tr:hover > td.el-table__cell {
+  background: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.1) !important;
+}
+
 @media (max-width: 760px) {
   .task-assignment-dialog .el-dialog__body { padding-right: 20px; padding-left: 20px; }
   .task-assignment-dialog .el-dialog__footer { padding-right: 20px; padding-left: 20px; }
