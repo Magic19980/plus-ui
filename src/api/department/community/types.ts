@@ -10,6 +10,7 @@ export interface DepartmentCommunityQuery extends PageQuery {
 export interface DepartmentCommunityPostVO {
   id: string | number;
   title: string;
+  subtitle?: string;
   content: string;
   postType: string;
   tags?: string;
@@ -35,6 +36,7 @@ export interface DepartmentCommunityPostVO {
 export interface DepartmentCommunityPostForm {
   id?: string | number;
   title?: string;
+  subtitle?: string;
   content?: string;
   postType?: string;
   tags?: string;

@@ -9,9 +9,6 @@
         </div>
         <div class="hero-actions">
           <el-button v-hasPermi="['department:community:moderate']" plain @click="openReportAdmin">举报处理</el-button>
-          <el-button v-hasPermi="['department:community:add']" type="primary" size="large" icon="Plus" @click="openCreate">
-            发布内容
-          </el-button>
         </div>
       </div>
       <div class="hero-summary">
@@ -40,7 +37,7 @@
             </button>
           </div>
           <div class="filter-actions">
-            <el-input v-model="queryParams.keyword" clearable class="keyword-input" placeholder="搜索标题、内容或标签" @keyup.enter="handleQuery">
+            <el-input v-model="queryParams.keyword" clearable class="keyword-input" placeholder="搜索标题、副标题、内容或标签" @keyup.enter="handleQuery">
               <template #prefix><el-icon><Search /></el-icon></template>
             </el-input>
             <el-select v-model="queryParams.postType" clearable class="type-select" placeholder="全部类型" @change="handleQuery">
@@ -58,13 +55,16 @@
                 <div class="author-line"><strong>{{ post.authorName || '匿名用户' }}</strong><span v-if="post.deptName" class="dept-name">{{ post.deptName }}</span></div>
                 <span class="post-time">{{ post.createTime || '刚刚' }}</span>
               </div>
-              <el-tag :type="postTypeTag(post.postType)" effect="light" round>{{ postTypeLabel(post.postType) }}</el-tag>
+              <div class="post-header-actions" @click.stop>
+                <el-button text class="post-detail-button" aria-label="查看内容详情" @click="openPostDetail(post)"><el-icon><View /></el-icon>详情</el-button>
+                <el-tag :type="postTypeTag(post.postType)" effect="light" round>{{ postTypeLabel(post.postType) }}</el-tag>
+              </div>
             </div>
-            <div class="post-main-grid" :class="{ 'has-media': post.mediaList?.length }">
-              <div v-if="post.mediaList?.length" class="post-media-pane">
-                <div v-if="(post.mediaList?.length || 0) > 4" class="post-media-carousel">
+            <div class="post-main-grid" :class="{ 'has-media': postAttachmentMedia(post).length }">
+              <div v-if="postAttachmentMedia(post).length" class="post-media-pane">
+                <div v-if="postAttachmentMedia(post).length > 4" class="post-media-carousel">
                   <el-carousel height="360px" :autoplay="false" arrow="always" indicator-position="outside" trigger="click">
-                    <el-carousel-item v-for="(media, index) in post.mediaList || []" :key="media.ossId">
+                    <el-carousel-item v-for="(media, index) in postAttachmentMedia(post)" :key="media.ossId">
                       <div class="post-carousel-slide">
                         <button v-if="media.mediaType === 'IMAGE'" type="button" class="post-carousel-image" :aria-label="`查看第 ${index + 1} 张图片 ${media.fileName || ''}`" @click.stop="previewMedia(media)">
                           <img :src="media.previewUrl" alt="帖子图片，点击查看大图" loading="lazy" />
@@ -72,13 +72,13 @@
                         <div v-else class="post-carousel-video">
                           <video :src="media.previewUrl" controls playsinline preload="metadata" :aria-label="media.fileName || '社区视频'" :title="media.fileName || '社区视频'" @click.stop />
                         </div>
-                        <span class="post-carousel-index">{{ index + 1 }} / {{ post.mediaList?.length || 0 }}</span>
+                        <span class="post-carousel-index">{{ index + 1 }} / {{ postAttachmentMedia(post).length }}</span>
                       </div>
                     </el-carousel-item>
                   </el-carousel>
                 </div>
-                <div v-else class="post-media-strip" :class="{ 'is-single-media': post.mediaList?.length === 1 }">
-                  <div v-for="media in mediaPreviewList(post.mediaList)" :key="media.ossId" class="post-media-thumb">
+                <div v-else class="post-media-strip" :class="{ 'is-single-media': postAttachmentMedia(post).length === 1 }">
+                  <div v-for="media in mediaPreviewList(postAttachmentMedia(post))" :key="media.ossId" class="post-media-thumb">
                     <button v-if="media.mediaType === 'IMAGE'" type="button" class="post-image-preview" :aria-label="`查看图片 ${media.fileName || ''}`" @click.stop="previewMedia(media)">
                       <img :src="media.previewUrl" alt="帖子图片，点击查看大图" loading="lazy" />
                     </button>
@@ -90,8 +90,9 @@
               </div>
               <div class="post-content-pane">
                 <h3>{{ post.title }}</h3>
+                <p v-if="post.subtitle" class="post-subtitle">{{ post.subtitle }}</p>
                 <div class="post-content-scroll">
-                  <p>{{ post.content }}</p>
+                  <p>{{ postContentPreview(post.content) }}</p>
                   <div v-if="splitTags(post.tags).length" class="post-tags">
                     <el-tag v-for="tag in splitTags(post.tags)" :key="tag" size="small" effect="plain"># {{ tag }}</el-tag>
                   </div>
@@ -219,9 +220,10 @@
       </aside>
     </div>
 
-    <el-dialog v-model="postDialog.visible" :title="postDialog.title" width="760px" append-to-body destroy-on-close class="community-post-dialog">
+    <el-dialog v-model="postDialog.visible" :title="postDialog.title" width="min(960px, 92vw)" append-to-body destroy-on-close class="community-post-dialog">
       <el-form ref="postFormRef" :model="postForm" :rules="postRules" label-position="top">
         <el-form-item label="标题" prop="title"><el-input v-model="postForm.title" maxlength="200" show-word-limit placeholder="用一句话说清楚你想讨论什么" /></el-form-item>
+        <el-form-item label="副标题（可选）"><el-input v-model="postForm.subtitle" maxlength="300" show-word-limit placeholder="补充说明主题，可不填写" /></el-form-item>
         <div class="form-grid">
           <el-form-item label="内容类型" prop="postType">
             <el-select v-model="postForm.postType" style="width: 100%">
@@ -238,15 +240,15 @@
         <el-form-item label="话题标签">
           <el-input v-model="postForm.tags" maxlength="500" placeholder="多个标签用逗号分隔，如：系统、效率、经验" />
         </el-form-item>
-        <el-form-item label="正文" prop="content">
-          <el-input v-model="postForm.content" type="textarea" :rows="9" maxlength="10000" show-word-limit placeholder="描述背景、现象、你的想法或希望得到的帮助…" />
+        <el-form-item class="community-content-item" label="正文" prop="content">
+          <CommunityTiptapEditor v-model="postForm.content" v-model:media-oss-ids="inlineMediaOssIds" v-model:uploading="editorUploading" :min-height="390" :max-length="10000" />
         </el-form-item>
         <div class="media-field">
           <div class="media-field-head">
-            <div><strong>图片与视频</strong><span>可选附件</span></div>
+            <div><strong>附加图片与视频</strong><span>可选附件</span></div>
             <span class="media-count">{{ mediaItems.length }}/{{ maxMediaCount }}</span>
           </div>
-          <div class="media-field-description">可一次选择多张图片或视频，发布前可以逐个删除和调整附件。<span v-if="mediaItems.length" class="media-drag-tip">拖动缩略图可调整展示顺序</span></div>
+          <div class="media-field-description">正文中的图片会按排版位置显示；这里用于添加不需要插入正文的独立附件。<span v-if="mediaItems.length" class="media-drag-tip">拖动缩略图可调整展示顺序</span></div>
           <div class="media-upload-row">
             <el-upload
               class="community-media-uploader"
@@ -305,6 +307,84 @@
         <el-button @click="postDialog.visible = false">取消</el-button>
         <el-button :loading="buttonLoading" @click="submitPost('DRAFT')">保存草稿</el-button>
         <el-button type="primary" :loading="buttonLoading" @click="submitPost('PUBLISHED')">{{ postForm.id ? '保存并发布' : '发布' }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="postDetailDialog.visible" width="min(1080px, 92vw)" append-to-body destroy-on-close class="community-post-detail-dialog" :show-close="false">
+      <template #header>
+        <div class="post-detail-dialog-header">
+          <div>
+            <span class="post-detail-eyebrow">POST DETAIL</span>
+            <strong>内容详情</strong>
+          </div>
+          <el-button circle text icon="Close" aria-label="关闭内容详情" @click="postDetailDialog.visible = false" />
+        </div>
+      </template>
+      <div v-loading="postDetailDialog.loading" class="post-detail-body">
+        <template v-if="detailPost">
+          <main class="post-detail-main">
+            <div class="post-detail-type-row">
+              <el-tag :type="postTypeTag(detailPost.postType)" effect="light" round>{{ postTypeLabel(detailPost.postType) }}</el-tag>
+              <el-tag v-if="detailPost.status === 'RESOLVED'" type="success" effect="plain" round><el-icon><CircleCheck /></el-icon> 已解决</el-tag>
+              <el-tag v-else-if="detailPost.status === 'DRAFT'" type="info" effect="plain" round>草稿</el-tag>
+            </div>
+            <h2>{{ detailPost.title }}</h2>
+            <p v-if="detailPost.subtitle" class="post-detail-subtitle">{{ detailPost.subtitle }}</p>
+            <div class="post-detail-author">
+              <el-avatar :size="38" :src="detailPost.mine ? userStore.avatar || undefined : undefined" class="author-avatar">{{ avatarText(detailPost.authorName) }}</el-avatar>
+              <div>
+                <div class="post-detail-author-line"><strong>{{ detailPost.authorName || '匿名用户' }}</strong><span v-if="detailPost.deptName" class="dept-name">{{ detailPost.deptName }}</span></div>
+                <span>{{ detailPost.createTime || '刚刚' }}</span>
+              </div>
+            </div>
+            <div class="post-detail-divider" />
+            <article class="post-detail-copy"><CommunityTiptapEditor :model-value="detailPost.content" read-only :min-height="0" :max-length="10000" /></article>
+            <div v-if="splitTags(detailPost.tags).length" class="post-detail-tags">
+              <el-tag v-for="tag in splitTags(detailPost.tags)" :key="tag" size="small" effect="plain"># {{ tag }}</el-tag>
+            </div>
+            <section v-if="detailAttachmentMedia.length" class="post-detail-media-section">
+              <div class="post-detail-section-head"><strong>附件</strong><span>{{ detailAttachmentMedia.length }} 个媒体文件</span></div>
+              <div class="post-detail-media-grid" :class="{ 'is-single-media': detailAttachmentMedia.length === 1 }">
+                <template v-for="media in detailAttachmentMedia" :key="media.ossId">
+                  <button v-if="media.mediaType === 'IMAGE'" type="button" class="post-detail-media-image" :aria-label="`查看图片 ${media.fileName || ''}`" @click.stop="previewMedia(media)">
+                    <img :src="media.previewUrl" alt="帖子图片，点击查看大图" loading="lazy" />
+                  </button>
+                  <div v-else class="post-detail-media-video">
+                    <video :src="media.previewUrl" controls playsinline preload="metadata" :aria-label="media.fileName || '社区视频'" :title="media.fileName || '社区视频'" @click.stop />
+                  </div>
+                </template>
+              </div>
+            </section>
+          </main>
+          <aside class="post-detail-aside">
+            <section class="post-detail-side-card">
+              <div class="post-detail-side-heading"><span class="post-detail-side-icon"><el-icon><InfoFilled /></el-icon></span><div><strong>内容信息</strong><small>这条内容的发布详情</small></div></div>
+              <div class="post-detail-info-list">
+                <div><span>发布部门</span><strong>{{ detailPost.deptName || '未设置' }}</strong></div>
+                <div><span>可见范围</span><strong>{{ detailPost.visibility === 'DEPT' ? '本部门可见' : '全员可见' }}</strong></div>
+                <div><span>发布时间</span><strong>{{ detailPost.createTime || '—' }}</strong></div>
+                <div><span>最近更新</span><strong>{{ detailPost.updateTime || detailPost.createTime || '—' }}</strong></div>
+              </div>
+            </section>
+            <section class="post-detail-side-card post-detail-side-tip">
+              <span class="post-detail-side-kicker">JOIN THE DISCUSSION</span>
+              <strong>留下你的看法</strong>
+              <p>补充经验、提出建议，或直接参与这条内容的讨论。</p>
+              <el-button type="primary" plain @click="openDetailComments"><el-icon><ChatDotRound /></el-icon>查看讨论 {{ detailPost.commentCount || 0 }}</el-button>
+            </section>
+          </aside>
+        </template>
+        <el-empty v-else-if="!postDetailDialog.loading" description="暂时无法加载内容详情" />
+      </div>
+      <template #footer>
+        <div v-if="detailPost" class="post-detail-footer">
+          <div class="post-detail-stats"><span><el-icon><View /></el-icon>{{ detailPost.viewCount || 0 }} 次浏览</span><span><el-icon><ChatDotRound /></el-icon>{{ detailPost.commentCount || 0 }} 条讨论</span></div>
+          <div class="post-detail-footer-actions">
+            <el-button text :class="{ reacted: detailPost.liked }" @click="toggleDetailReaction('LIKE')"><el-icon><Pointer /></el-icon>{{ detailPost.likeCount || 0 }}</el-button>
+            <el-button text :class="{ reacted: detailPost.favorited }" @click="toggleDetailReaction('FAVORITE')"><el-icon><Star /></el-icon>{{ detailPost.favoriteCount || 0 }}</el-button>
+            <el-button type="primary" @click="openDetailComments"><el-icon><ChatDotRound /></el-icon>参与讨论</el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
 
@@ -437,6 +517,7 @@ import type {
   DepartmentCommunityReportQuery,
   DepartmentCommunityReportVO
 } from '@/api/department/community/types';
+import CommunityTiptapEditor from '@/components/CommunityTiptapEditor/index.vue';
 import modal from '@/plugins/modal';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useUserStore } from '@/store/modules/user';
@@ -450,7 +531,7 @@ const commentLoading = ref(false);
 const commentPanelLoading = ref(false);
 const postFormRef = ref<FormInstance>();
 const queryParams = reactive<DepartmentCommunityQuery>({ pageNum: 1, pageSize: 10, keyword: undefined, postType: undefined, feed: 'HOT' });
-const postForm = reactive<DepartmentCommunityPostForm>({ title: '', content: '', postType: 'DISCUSSION', tags: '', visibility: 'ALL' });
+const postForm = reactive<DepartmentCommunityPostForm>({ title: '', subtitle: '', content: '', postType: 'DISCUSSION', tags: '', visibility: 'ALL' });
 const commentForm = reactive<DepartmentCommunityCommentForm>({ content: '', parentId: 0 });
 const postDialog = reactive({ visible: false, title: '发布内容' });
 const expandedCommentPostId = ref<string | number>();
@@ -501,6 +582,13 @@ const commentThreads = computed<CommentThread[]>(() => {
   });
 });
 const reportDialog = reactive({ visible: false });
+const postDetailDialog = reactive({ visible: false, loading: false });
+const detailPost = ref<DepartmentCommunityPostVO>();
+const detailAttachmentMedia = computed(() => {
+  if (!detailPost.value?.mediaList?.length) return [];
+  const inlineIds = new Set(getContentOssIds(detailPost.value.content));
+  return detailPost.value.mediaList.filter(media => !inlineIds.has(String(media.ossId)));
+});
 const reportSubmitting = ref(false);
 const reportForm = reactive<DepartmentCommunityReportForm>({ reason: '' });
 const reportAdminDialog = reactive({ visible: false });
@@ -512,6 +600,8 @@ type CommunityMediaDraft = DepartmentCommunityMediaVO & { key: string; localUrl?
 const maxMediaCount = 9;
 const mediaItems = ref<CommunityMediaDraft[]>([]);
 const mediaUploading = ref(false);
+const inlineMediaOssIds = ref('');
+const editorUploading = ref(false);
 const draggingMediaKey = ref<string>();
 const dragOverMediaKey = ref<string>();
 const maxCommentMediaCount = 3;
@@ -592,19 +682,28 @@ const changeFeed = (feed: string) => {
 const openCreate = () => {
   resetMedia();
   originalMediaOssIds.value = undefined;
-  Object.assign(postForm, { id: undefined, title: '', content: '', postType: 'DISCUSSION', tags: '', visibility: 'ALL', status: 'PUBLISHED', mediaOssIds: undefined });
+  inlineMediaOssIds.value = '';
+  editorUploading.value = false;
+  Object.assign(postForm, { id: undefined, title: '', subtitle: '', content: '', postType: 'DISCUSSION', tags: '', visibility: 'ALL', status: 'PUBLISHED', mediaOssIds: undefined });
   postDialog.title = '发布内容';
   postDialog.visible = true;
 };
 
 const openEdit = (post: DepartmentCommunityPostVO) => {
   resetMedia();
-  mediaItems.value = (post.mediaList || []).map(media => ({ ...media, key: String(media.ossId), localUrl: media.previewUrl, uploadStatus: 'done' }));
+  const contentOssIds = getContentOssIds(post.content);
+  const contentOssIdSet = new Set(contentOssIds);
+  inlineMediaOssIds.value = contentOssIds.join(',');
+  editorUploading.value = false;
+  mediaItems.value = (post.mediaList || [])
+    .filter(media => !contentOssIdSet.has(String(media.ossId)))
+    .map(media => ({ ...media, key: String(media.ossId), localUrl: media.previewUrl, uploadStatus: 'done' }));
   const mediaOssIds = (post.mediaList || []).map(media => media.ossId).join(',');
   originalMediaOssIds.value = mediaOssIds;
   Object.assign(postForm, {
     id: post.id,
     title: post.title,
+    subtitle: post.subtitle || '',
     content: post.content,
     postType: post.postType,
     tags: post.tags || '',
@@ -616,16 +715,38 @@ const openEdit = (post: DepartmentCommunityPostVO) => {
   postDialog.visible = true;
 };
 
+const openPostDetail = async (post: DepartmentCommunityPostVO) => {
+  detailPost.value = undefined;
+  postDetailDialog.visible = true;
+  postDetailDialog.loading = true;
+  try {
+    const res = await getDepartmentCommunity(post.id);
+    detailPost.value = res.data || post;
+  } catch {
+    detailPost.value = post;
+  } finally {
+    postDetailDialog.loading = false;
+  }
+};
+
 const submitPost = async (status: 'DRAFT' | 'PUBLISHED') => {
-  if (mediaUploading.value) {
+  if (mediaUploading.value || editorUploading.value) {
     modal.msgWarning('媒体仍在上传，请稍候');
+    return;
+  }
+  if (!postForm.content || (!postContentPreview(postForm.content).trim() && !/<img\b/i.test(postForm.content))) {
+    modal.msgWarning('请输入正文或插入正文图片');
+    return;
+  }
+  const mediaOssIds = [...new Set([...splitOssIds(inlineMediaOssIds.value), ...mediaItems.value.map(item => String(item.ossId))])].join(',');
+  if (splitOssIds(mediaOssIds).length > maxMediaCount) {
+    modal.msgWarning('正文图片和附加媒体合计不能超过9个');
     return;
   }
   const valid = await postFormRef.value?.validate().catch(() => false);
   if (!valid) return;
   postForm.status = status;
-  const mediaOssIds = mediaItems.value.map(item => item.ossId).join(',');
-  const mediaChanged = !postForm.id || mediaOssIds !== (originalMediaOssIds.value || '');
+  const mediaChanged = !postForm.id || normalizeOssIds(mediaOssIds) !== normalizeOssIds(originalMediaOssIds.value);
   postForm.mediaOssIds = mediaChanged ? mediaOssIds : undefined;
   buttonLoading.value = true;
   try {
@@ -638,6 +759,8 @@ const submitPost = async (status: 'DRAFT' | 'PUBLISHED') => {
     }
     postDialog.visible = false;
     originalMediaOssIds.value = undefined;
+    inlineMediaOssIds.value = '';
+    editorUploading.value = false;
     resetMedia();
     await getList();
   } finally {
@@ -1051,6 +1174,29 @@ const toggleReaction = async (post: DepartmentCommunityPostVO, type: 'LIKE' | 'F
   if (commentPost.value?.id === post.id) Object.assign(commentPost.value, res.data);
 };
 
+const toggleDetailReaction = async (type: 'LIKE' | 'FAVORITE') => {
+  if (!detailPost.value) return;
+  await toggleReaction(detailPost.value, type);
+  const listPost = postList.value.find(post => String(post.id) === String(detailPost.value?.id));
+  if (listPost && listPost !== detailPost.value) {
+    Object.assign(listPost, {
+      liked: detailPost.value.liked,
+      favorited: detailPost.value.favorited,
+      likeCount: detailPost.value.likeCount,
+      favoriteCount: detailPost.value.favoriteCount
+    });
+  }
+};
+
+const openDetailComments = async () => {
+  const post = detailPost.value;
+  if (!post) return;
+  postDetailDialog.visible = false;
+  if (expandedCommentPostId.value !== post.id) {
+    await toggleComments(post);
+  }
+};
+
 const resolveComment = async (comment: DepartmentCommunityCommentVO) => {
   if (!commentPost.value) return;
   await modal.confirm('确认将这条评论采纳为解决方案吗？帖子会标记为“已解决”。');
@@ -1065,6 +1211,21 @@ const postTypeLabel = (value?: string) => postTypeOptions.find(item => item.valu
 const postTypeTag = (value?: string) => (postTypeOptions.find(item => item.value === value)?.type || 'info') as any;
 const splitTags = (value?: string) => (value || '').split(/[，,]/).map(item => item.trim()).filter(Boolean);
 const avatarText = (value?: string) => (value || '匿').slice(0, 1);
+const splitOssIds = (value?: string) => (value || '').split(',').map(item => item.trim()).filter(Boolean);
+const normalizeOssIds = (value?: string) => [...new Set(splitOssIds(value))].toSorted().join(',');
+const getContentOssIds = (value?: string) => Array.from(new Set(Array.from((value || '').matchAll(/oss:\/\/([\w-]+)/g), match => match[1])));
+const postAttachmentMedia = (post: DepartmentCommunityPostVO) => {
+  const inlineIds = new Set(getContentOssIds(post.content));
+  return (post.mediaList || []).filter(media => !inlineIds.has(String(media.ossId)));
+};
+const postContentPreview = (value?: string) =>
+  (value || '')
+    .replace(/<br\s*\/?\s*>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
 const mediaPreviewList = (mediaList?: DepartmentCommunityMediaVO[]) => (mediaList || []).slice(0, 4);
 const reportStatusLabel = (value?: string) => ({ PENDING: '待处理', REJECTED: '已驳回', TAKEN_DOWN: '已下线' })[value || ''] || '未知';
 const reportStatusTag = (value?: string) => ({ PENDING: 'warning', REJECTED: 'info', TAKEN_DOWN: 'danger' })[value || ''] || 'info';
@@ -1098,7 +1259,6 @@ onMounted(async () => {
   .hero-main { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
   .hero-actions { display: flex; align-items: center; gap: 10px; padding-top: 5px; }
   .hero-actions :deep(.el-button) { border-radius: 11px; }
-  .hero-actions :deep(.el-button--primary) { padding-right: 19px; padding-left: 19px; box-shadow: 0 9px 18px rgba(63, 142, 234, .2); }
   .hero-kicker { display: block; color: #6a9bdf; font-size: 11px; font-weight: 800; letter-spacing: 1.8px; }
   h2 { margin: 9px 0 7px; color: var(--community-ink); font-size: 30px; font-weight: 750; letter-spacing: .2px; }
   .hero-main p { max-width: 620px; margin: 0; color: var(--community-muted); font-size: 14px; line-height: 1.7; }
@@ -1138,11 +1298,15 @@ onMounted(async () => {
   .author-line strong { color: #243451; font-size: 14px; }
   .dept-name { padding: 2px 7px; border-radius: 5px; color: #8090a9; background: #f2f5f9; font-size: 11px; }
   .post-time { display: block; margin-top: 3px; color: #a2aec0; font-size: 12px; }
+  .post-header-actions { display: flex; align-items: center; gap: 8px; }
+  .post-detail-button { padding: 5px 7px; border-radius: 8px; color: #7a91ad; font-size: 12px; }
+  .post-detail-button:hover { color: var(--community-primary); background: #eef6ff; }
   .post-main-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 17px 20px 8px; }
   .post-main-grid.has-media { grid-template-columns: minmax(300px, 46%) minmax(0, 1fr); align-items: start; }
   .post-media-pane { min-width: 0; align-self: start; }
   .post-content-pane { display: flex; min-width: 0; min-height: 0; align-self: stretch; flex-direction: column; box-sizing: border-box; padding: 4px 14px 0 0; }
-  .post-content-pane h3 { flex: none; margin: 0 0 10px; color: #243451; font-size: 18px; font-weight: 700; line-height: 1.45; }
+  .post-content-pane h3 { flex: none; margin: 0 0 5px; color: #243451; font-size: 18px; font-weight: 700; line-height: 1.45; }
+  .post-subtitle { flex: none; margin: 0 0 11px; color: #596b86; font-size: 15px; font-weight: 500; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
   .post-content-scroll { flex: 1; min-height: 0; max-height: 294px; padding-right: 9px; overflow-y: auto; scrollbar-color: #b5c7df transparent; scrollbar-width: thin; }
   .post-content-scroll::-webkit-scrollbar { width: 6px; }
   .post-content-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -1356,9 +1520,13 @@ onMounted(async () => {
   }
 
   .el-dialog__title { color: #203454; font-size: 17px; font-weight: 750; }
-  .el-dialog__body { max-height: min(70vh, 720px); padding: 20px 24px 24px; overflow-y: auto; }
+  .el-dialog__body { max-height: min(78vh, 860px); padding: 24px 28px 28px; overflow-y: auto; }
   .el-dialog__footer { padding: 14px 22px; border-top: 1px solid #edf1f6; }
-  .el-form-item { margin-bottom: 16px; }
+  .el-form-item { margin-bottom: 19px; }
+  .community-content-item,
+  .community-content-item .el-form-item__content,
+  .community-content-item .community-tiptap-editor { width: 100%; min-width: 0; }
+  .community-content-item .el-form-item__content { display: block; }
   .el-form-item__label { height: auto; margin-bottom: 6px; padding: 0; color: #51627d; font-size: 12px; font-weight: 700; line-height: 1.4; }
   .el-input__wrapper, .el-textarea__inner, .el-select__wrapper { border-radius: 9px; }
   .el-textarea__inner { line-height: 1.65; }
@@ -1406,6 +1574,98 @@ onMounted(async () => {
   .media-field-hint { margin-top: 9px; color: #98a5b8; font-size: 12px; }
 }
 
+.community-post-detail-dialog {
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+  border: 1px solid #dfe8f3;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 26px 80px rgba(30, 54, 89, .2);
+
+  .el-dialog__header {
+    margin-right: 0;
+    padding: 0;
+    border-bottom: 1px solid #edf1f6;
+  }
+
+  .el-dialog__body { padding: 0; }
+  .el-dialog__footer { padding: 0; border-top: 1px solid #edf1f6; }
+
+  .post-detail-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 17px 22px;
+  }
+
+  .post-detail-dialog-header strong,
+  .post-detail-dialog-header span { display: block; }
+  .post-detail-dialog-header strong { margin-top: 4px; color: #203454; font-size: 17px; font-weight: 750; }
+  .post-detail-eyebrow { color: #6a9bdf; font-size: 10px; font-weight: 800; letter-spacing: 1.7px; }
+  .post-detail-dialog-header .el-button { color: #8090a9; background: #f3f6fa; }
+  .post-detail-dialog-header .el-button:hover { color: #3f8eea; background: #eaf3ff; }
+
+  .post-detail-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 252px;
+    gap: 24px;
+    max-height: min(70vh, 720px);
+    padding: 25px 26px 28px;
+    overflow-y: auto;
+  }
+
+  .post-detail-main { min-width: 0; }
+  .post-detail-type-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .post-detail-main h2 { margin: 13px 0 5px; color: #1e2f4a; font-size: 25px; font-weight: 750; line-height: 1.4; }
+  .post-detail-subtitle { margin: 0; color: #5e7190; font-size: 15px; line-height: 1.6; }
+  .post-detail-author { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .post-detail-author-line { display: flex; align-items: center; gap: 8px; }
+  .post-detail-author-line strong { color: #2b3b58; font-size: 13px; }
+  .post-detail-author > div > span { display: block; margin-top: 3px; color: #9aa8ba; font-size: 11px; }
+  .post-detail-divider { height: 1px; margin: 20px 0; background: #edf1f6; }
+  .post-detail-copy p { margin: 0; color: #526681; font-size: 15px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .post-detail-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+  .post-detail-media-section { margin-top: 24px; padding-top: 18px; border-top: 1px solid #edf1f6; }
+  .post-detail-section-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 12px; }
+  .post-detail-section-head strong { color: #30435f; font-size: 14px; }
+  .post-detail-section-head span { color: #9aa8ba; font-size: 11px; }
+  .post-detail-media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .post-detail-media-grid.is-single-media { grid-template-columns: minmax(0, 1fr); }
+  .post-detail-media-image, .post-detail-media-video { position: relative; display: block; width: 100%; aspect-ratio: 1.45; overflow: hidden; border: 1px solid #e4ebf4; border-radius: 12px; background: #f4f7fb; }
+  .post-detail-media-grid.is-single-media .post-detail-media-image, .post-detail-media-grid.is-single-media .post-detail-media-video { aspect-ratio: 16 / 9; }
+  .post-detail-media-image { padding: 0; cursor: zoom-in; }
+  .post-detail-media-image img { display: block; width: 100%; height: 100%; object-fit: contain; transition: transform .2s ease, filter .2s ease; }
+  .post-detail-media-image:hover img { filter: brightness(.96); transform: scale(1.02); }
+  .post-detail-media-video { background: #071222; }
+  .post-detail-media-video video { display: block; width: 100%; height: 100%; object-fit: contain; background: #071222; }
+
+  .post-detail-aside { display: grid; align-content: start; gap: 14px; min-width: 0; }
+  .post-detail-side-card { padding: 17px; border: 1px solid #e4ebf4; border-radius: 14px; background: #f9fbfe; }
+  .post-detail-side-heading { display: flex; align-items: center; gap: 9px; padding-bottom: 14px; border-bottom: 1px solid #e8eef5; }
+  .post-detail-side-heading > div { min-width: 0; }
+  .post-detail-side-heading strong, .post-detail-side-heading small { display: block; }
+  .post-detail-side-heading strong { color: #30435f; font-size: 14px; }
+  .post-detail-side-heading small { margin-top: 3px; color: #9aa8ba; font-size: 11px; }
+  .post-detail-side-icon { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 10px; color: #4d91e8; background: #e4f0ff; font-size: 16px; }
+  .post-detail-info-list { display: grid; gap: 13px; padding-top: 15px; }
+  .post-detail-info-list > div { display: grid; grid-template-columns: 65px minmax(0, 1fr); gap: 10px; align-items: start; }
+  .post-detail-info-list span { color: #8b9bb1; font-size: 11px; }
+  .post-detail-info-list strong { color: #526681; font-size: 12px; font-weight: 600; line-height: 1.45; text-align: right; overflow-wrap: anywhere; }
+  .post-detail-side-tip { background: linear-gradient(145deg, #eef7ff, #f9fcff); }
+  .post-detail-side-kicker { display: block; color: #6a9bdf; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; }
+  .post-detail-side-tip > strong { display: block; margin-top: 8px; color: #203858; font-size: 16px; }
+  .post-detail-side-tip p { margin: 7px 0 14px; color: #71809a; font-size: 12px; line-height: 1.6; }
+  .post-detail-side-tip .el-button { width: 100%; border-radius: 9px; }
+
+  .post-detail-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 22px; }
+  .post-detail-stats, .post-detail-footer-actions { display: flex; align-items: center; gap: 8px; }
+  .post-detail-stats { gap: 14px; color: #97a5b7; font-size: 11px; }
+  .post-detail-stats span { display: inline-flex; align-items: center; gap: 4px; }
+  .post-detail-footer-actions .el-button { color: #8798ae; }
+  .post-detail-footer-actions .el-button:hover, .post-detail-footer-actions .el-button.reacted { color: #3f8eea; }
+  .post-detail-footer-actions .el-button--primary { color: #fff; }
+}
+
 html.dark .community-post-dialog,
 .dark .community-post-dialog {
   border-color: #2a3850;
@@ -1429,7 +1689,59 @@ html.dark .community-post-dialog,
   .compose-media-preview { border-color: #33445c; background: #243247; }
 }
 
+html.dark .community-post-detail-dialog,
+.dark .community-post-detail-dialog {
+  border-color: #2a3850;
+  background: #141e30;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, .46);
+
+  .el-dialog__header, .el-dialog__footer { border-color: #2a3850; }
+  .post-detail-dialog-header strong { color: #e7eef9; }
+  .post-detail-dialog-header .el-button { color: #a9b8cd; background: #1f2d43; }
+  .post-detail-dialog-header .el-button:hover { color: #a9d3ff; background: #203d61; }
+  .post-detail-main h2 { color: #e7eef9; }
+  .post-detail-subtitle { color: #b4c3d7; }
+  .post-detail-author-line strong { color: #e1e9f5; }
+  .post-detail-author > div > span { color: #8fa3bd; }
+  .post-detail-divider, .post-detail-media-section, .post-detail-side-heading { border-color: #2a3850; }
+  .post-detail-copy p { color: #b2c0d2; }
+  .post-detail-section-head strong { color: #dbe6f5; }
+  .post-detail-section-head span { color: #8fa3bd; }
+  .post-detail-media-image, .post-detail-media-video { border-color: #33445c; background: #243247; }
+  .post-detail-media-video { background: #071222; }
+  .post-detail-side-card { border-color: #2a3850; background: #182337; }
+  .post-detail-side-heading strong { color: #e1e9f5; }
+  .post-detail-side-heading small, .post-detail-info-list span { color: #8fa3bd; }
+  .post-detail-side-icon { color: #a9c9ed; background: #203d61; }
+  .post-detail-info-list strong { color: #b4c3d7; }
+  .post-detail-side-tip { background: linear-gradient(145deg, #1a304a, #17263c); }
+  .post-detail-side-tip > strong { color: #e8f2ff; }
+  .post-detail-side-tip p { color: #9aaac0; }
+  .post-detail-stats { color: #8fa3bd; }
+  .post-detail-footer-actions .el-button { color: #9aaac0; }
+  .post-detail-footer-actions .el-button:hover, .post-detail-footer-actions .el-button.reacted { color: #86baff; }
+}
+
+@media (max-width: 760px) {
+  .community-post-detail-dialog {
+    .post-detail-body { grid-template-columns: 1fr; }
+    .post-detail-aside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+}
+
 @media (max-width: 560px) {
+  .community-post-detail-dialog {
+    width: calc(100vw - 24px) !important;
+
+    .post-detail-body { display: block; max-height: 72vh; padding: 18px 16px 20px; }
+    .post-detail-aside { grid-template-columns: 1fr; margin-top: 18px; }
+    .post-detail-main h2 { font-size: 21px; }
+    .post-detail-copy p { font-size: 14px; }
+    .post-detail-media-grid { grid-template-columns: 1fr; }
+    .post-detail-footer { align-items: stretch; flex-direction: column; padding: 12px 16px; }
+    .post-detail-footer-actions { justify-content: flex-end; }
+  }
+
   .community-post-dialog {
     width: calc(100vw - 24px) !important;
 
@@ -1661,6 +1973,9 @@ html.dark .department-community-page,
   .feed-tab:hover { background: #1b2b42; }
   .post-card:hover { border-color: #3b6590; background: #17253a; }
   .author-line strong, .post-content-pane h3, .comment-heading, .comment-line strong { color: #e1e9f5; }
+  .post-subtitle { color: #b4c3d7; }
+  .post-detail-button { color: #9aaac0; }
+  .post-detail-button:hover { color: #86baff; background: #203d61; }
   .dept-name { color: #a3b1c4; background: #253247; }
   .post-content-scroll p, .comment-line, .comment-content { color: #abb9cc; }
   .post-content-scroll { scrollbar-color: #526b8a transparent; }
