@@ -55,67 +55,242 @@
             <el-option v-for="item in fileTypes" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="queryParams.status" clearable placeholder="全部状态" style="width: 130px">
+            <el-option label="已发布" value="PUBLISHED" />
+            <el-option label="草稿" value="DRAFT" />
+            <el-option label="已归档" value="ARCHIVED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-select v-model="queryParams.sortBy" placeholder="最近更新" style="width: 140px" @change="handleQuery">
+            <el-option label="最近更新" value="updatedDesc" />
+            <el-option label="最早更新" value="updatedAsc" />
+            <el-option label="名称升序" value="nameAsc" />
+            <el-option label="文件从大到小" value="sizeDesc" />
+          </el-select>
+        </el-form-item>
         <div class="query-actions">
           <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
         </div>
       </el-form>
 
-      <DepartmentDataTable v-loading="loading" border :data="documentList" class="document-table">
-        <el-table-column label="资料名称" min-width="260" show-overflow-tooltip>
-          <template #default="scope">
-            <div class="title-cell">
-              <div class="file-icon" :class="fileIconClass(scope.row.currentFileSuffix)">{{ fileIconText(scope.row.currentFileSuffix) }}</div>
-              <div>
-                <div class="document-title">{{ scope.row.title }}</div>
-                <div class="document-file-name">{{ scope.row.currentOriginalName }}</div>
+      <div class="library-layout">
+        <aside class="library-sidebar">
+          <div class="sidebar-heading">
+            <div>
+              <span class="sidebar-kicker">BROWSE</span>
+              <strong>资料导航</strong>
+            </div>
+            <el-tag size="small" effect="plain">{{ categoryCount }} 个分类</el-tag>
+          </div>
+          <div class="quick-nav">
+            <button class="quick-nav-item" :class="{ active: !queryParams.categoryId && !queryParams.status }" type="button" @click="selectQuickFilter(undefined)">
+              <el-icon><Files /></el-icon><span>全部资料</span><small>{{ total }}</small>
+            </button>
+            <button class="quick-nav-item" :class="{ active: queryParams.status === 'PUBLISHED' }" type="button" @click="selectQuickFilter('PUBLISHED')">
+              <el-icon><CircleCheck /></el-icon><span>已发布</span>
+            </button>
+            <button class="quick-nav-item" :class="{ active: queryParams.status === 'DRAFT' }" type="button" @click="selectQuickFilter('DRAFT')">
+              <el-icon><EditPen /></el-icon><span>草稿</span>
+            </button>
+            <button class="quick-nav-item" :class="{ active: queryParams.status === 'ARCHIVED' }" type="button" @click="selectQuickFilter('ARCHIVED')">
+              <el-icon><Box /></el-icon><span>已归档</span>
+            </button>
+          </div>
+
+          <div class="sidebar-divider" />
+          <div class="category-heading">
+            <span>资料分类</span>
+          </div>
+          <el-tree
+            v-if="categories.length"
+            class="category-tree"
+            :data="categories"
+            node-key="id"
+            highlight-current
+            :current-node-key="queryParams.categoryId"
+            :props="{ label: 'categoryName', children: 'children' }"
+            @node-click="handleCategoryNodeClick"
+          >
+            <template #default="{ data }">
+              <div class="category-tree-node">
+                <el-icon><FolderOpened /></el-icon>
+                <span class="category-tree-label">{{ data.categoryName }}</span>
+                <small v-if="data.documentCount !== undefined" class="category-tree-count">{{ data.documentCount }}</small>
+              </div>
+            </template>
+          </el-tree>
+          <div v-else class="category-empty">
+            <el-icon><FolderOpened /></el-icon>
+            <span>暂无可用分类</span>
+            <el-button v-hasPermi="['department:documentCategory:add']" link type="primary" @click="handleAddCategory">创建分类</el-button>
+          </div>
+        </aside>
+
+        <main class="library-main">
+          <div v-if="documentList.length || selectedIds.length" class="selection-toolbar">
+            <div class="selection-summary">
+              <el-checkbox :model-value="allPageSelected" :indeterminate="somePageSelected && !allPageSelected" @change="toggleSelectAllPage">全选当前页</el-checkbox>
+              <span v-if="selectedIds.length">已选择 {{ selectedIds.length }} 份资料</span>
+            </div>
+            <div v-if="selectedIds.length" class="selection-actions">
+              <el-button v-if="activeTab === 'active'" v-hasPermi="['department:document:remove']" size="small" type="danger" plain @click="batchDelete">移入回收站</el-button>
+              <el-button v-else v-hasPermi="['department:document:restore']" size="small" type="primary" plain @click="batchRestore">批量恢复</el-button>
+              <el-button size="small" link @click="clearSelection">取消选择</el-button>
+            </div>
+          </div>
+          <div class="library-toolbar">
+            <div class="library-breadcrumb">
+              <el-icon><FolderOpened /></el-icon>
+              <span>资料库</span>
+              <template v-for="(segment, index) in breadcrumbSegments" :key="index">
+                <el-icon class="breadcrumb-arrow"><ArrowRight /></el-icon>
+                <strong v-if="index === breadcrumbSegments.length - 1">{{ segment }}</strong>
+                <span v-else class="breadcrumb-parent">{{ segment }}</span>
+              </template>
+            </div>
+            <div class="library-toolbar-tools">
+              <span class="result-count">共 {{ total }} 份资料</span>
+              <el-button-group class="view-switch">
+                <el-button :type="viewMode === 'grid' ? 'primary' : 'default'" title="卡片视图" @click="viewMode = 'grid'"><el-icon><Grid /></el-icon></el-button>
+                <el-button :type="viewMode === 'list' ? 'primary' : 'default'" title="列表视图" @click="viewMode = 'list'"><el-icon><List /></el-icon></el-button>
+              </el-button-group>
+            </div>
+          </div>
+
+          <div v-if="viewMode === 'grid'" v-loading="loading" class="document-grid">
+            <article v-for="row in documentList" :key="row.id" class="document-card-item" :class="{ selected: isSelected(row.id) }" @click="openQuickView(row)">
+              <div class="document-cover" :class="fileIconClass(row.currentFileSuffix)">
+                <div class="card-select" @click.stop><el-checkbox :model-value="isSelected(row.id)" @change="(checked: boolean) => toggleSelection(row.id, checked)" /></div>
+                <div class="cover-glow" />
+                <div class="cover-file-mark">
+                  <el-icon v-if="isVideoFile(row.currentFileSuffix)"><VideoCamera /></el-icon>
+                  <el-icon v-else-if="['.jpg', '.jpeg', '.png', '.gif'].includes((row.currentFileSuffix || '').toLowerCase())"><Picture /></el-icon>
+                  <el-icon v-else><Document /></el-icon>
+                  <span>{{ fileIconText(row.currentFileSuffix) }}</span>
+                </div>
+                <div class="cover-footer"><span>{{ mediaKindLabel(row.currentFileSuffix) }}</span><span>v{{ row.versionNo || 1 }}</span></div>
+                <div class="cover-hover"><el-button type="primary" circle title="预览" @click.stop="handlePreview(row)"><el-icon><View /></el-icon></el-button></div>
+              </div>
+              <div class="document-card-body">
+                <div class="document-card-title" :title="row.title">{{ row.title }}</div>
+                <div class="document-card-file" :title="row.currentOriginalName">{{ row.currentOriginalName || '未命名文件' }}</div>
+                <div v-if="expiryState(row) !== 'normal'" class="document-card-expiry" :class="expiryState(row)"><el-icon><WarningFilled /></el-icon>{{ expiryLabel(row) }}</div>
+                <div v-if="tagList(row.tags).length" class="document-card-tags">
+                  <el-tag v-for="tag in tagList(row.tags).slice(0, 2)" :key="tag" size="small" effect="plain">{{ tag }}</el-tag>
+                  <span v-if="tagList(row.tags).length > 2" class="more-tags">+{{ tagList(row.tags).length - 2 }}</span>
+                </div>
+                <div class="document-card-meta"><span>{{ row.categoryName || '未分类' }}</span><i /><span>{{ row.updateTime || '暂无更新记录' }}</span></div>
+                <div class="document-card-footer">
+                  <span><el-icon><User /></el-icon>{{ row.createByName || '未知上传人' }}</span>
+                  <el-tag :type="statusTagType(row.status)" effect="light" size="small">{{ statusLabel(row.status) }}</el-tag>
+                </div>
+              </div>
+            </article>
+            <el-empty v-if="!loading && !documentList.length" class="grid-empty" description="当前分类暂无资料" />
+          </div>
+
+          <div v-else v-loading="loading" class="document-list-view">
+            <div v-for="row in documentList" :key="row.id" class="document-list-item" :class="{ selected: isSelected(row.id) }" @click="openQuickView(row)">
+              <div class="list-select" @click.stop><el-checkbox :model-value="isSelected(row.id)" @change="(checked: boolean) => toggleSelection(row.id, checked)" /></div>
+              <div class="list-file-icon" :class="fileIconClass(row.currentFileSuffix)">{{ fileIconText(row.currentFileSuffix) }}</div>
+              <div class="list-file-main">
+                <div class="list-file-title" :title="row.title">{{ row.title }}</div>
+                <div class="list-file-name" :title="row.currentOriginalName">{{ row.currentOriginalName || '未命名文件' }}</div>
+                <div class="list-file-meta"><span>{{ row.categoryName || '未分类' }}</span><i /><span>{{ row.projectName || '公共资料' }}</span><i /><span>v{{ row.versionNo || 1 }}</span><i /><span>{{ formatFileSize(row.currentFileSize) }}</span></div>
+              </div>
+              <div class="list-file-owner"><span>{{ row.createByName || '未知上传人' }}</span><small>{{ row.updateTime || '—' }}</small></div>
+              <span v-if="expiryState(row) !== 'normal'" class="list-expiry" :class="expiryState(row)"><el-icon><WarningFilled /></el-icon>{{ expiryLabel(row) }}</span>
+              <el-tag :type="statusTagType(row.status)" effect="light">{{ statusLabel(row.status) }}</el-tag>
+              <div class="list-file-actions" @click.stop>
+                <template v-if="activeTab === 'active'">
+                  <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handlePreview(row)">预览</el-button>
+                  <el-button v-hasPermi="['department:document:download']" link type="primary" @click="handleDownload(row)">下载</el-button>
+                  <el-dropdown v-hasPermi="['department:document:edit']" @command="(command: string) => handleMoreCommand(command, row)">
+                    <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+                    <template #dropdown><el-dropdown-menu><el-dropdown-item command="version">上传新版本</el-dropdown-item><el-dropdown-item command="edit">编辑信息</el-dropdown-item></el-dropdown-menu></template>
+                  </el-dropdown>
+                  <el-button v-hasPermi="['department:document:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
+                </template>
+                <el-button v-else v-hasPermi="['department:document:restore']" link type="primary" @click="handleRestore(row)">恢复</el-button>
               </div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="分类" prop="categoryName" width="120" align="center" />
-        <el-table-column label="关联项目" prop="projectName" min-width="160" show-overflow-tooltip>
-          <template #default="scope">{{ scope.row.projectName || '科室公共资料' }}</template>
-        </el-table-column>
-        <el-table-column label="版本" width="80" align="center">
-          <template #default="scope">v{{ scope.row.versionNo || 1 }}</template>
-        </el-table-column>
-        <el-table-column label="大小" width="110" align="center">
-          <template #default="scope">{{ formatFileSize(scope.row.currentFileSize) }}</template>
-        </el-table-column>
-        <el-table-column label="上传人" prop="createByName" width="110" align="center" />
-        <el-table-column label="更新时间" prop="updateTime" width="165" align="center" />
-        <el-table-column label="状态" width="100" align="center">
-          <template #default="scope"><el-tag :type="statusTagType(scope.row.status)" effect="light">{{ statusLabel(scope.row.status) }}</el-tag></template>
-        </el-table-column>
-        <el-table-column label="操作" fixed="right" width="280" align="center">
-          <template #default="scope">
-            <DepartmentTableActions>
-              <template v-if="activeTab === 'active'">
-                <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handlePreview(toDocument(scope.row))">预览</el-button>
-                <el-button v-hasPermi="['department:document:download']" link type="primary" @click="handleDownload(toDocument(scope.row))">下载</el-button>
-                <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handleDetail(toDocument(scope.row))">详情</el-button>
-                <el-dropdown v-hasPermi="['department:document:edit']" @command="(command: string) => handleMoreCommand(command, toDocument(scope.row))">
-                  <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="version">上传新版本</el-dropdown-item>
-                      <el-dropdown-item command="edit">编辑信息</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-                <el-button v-hasPermi="['department:document:remove']" link type="danger" @click="handleDelete(toDocument(scope.row))">删除</el-button>
-              </template>
-              <template v-else>
-                <el-button v-hasPermi="['department:document:restore']" link type="primary" @click="handleRestore(toDocument(scope.row))">恢复</el-button>
-              </template>
-            </DepartmentTableActions>
-          </template>
-        </el-table-column>
-      </DepartmentDataTable>
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+            <el-empty v-if="!loading && !documentList.length" description="当前分类暂无资料" />
+          </div>
+
+          <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+        </main>
+      </div>
+
       </template>
     </el-card>
+
+    <el-drawer v-model="quickView.visible" class="document-quick-view" size="420px" append-to-body :with-header="false" @close="closeQuickView">
+      <div v-if="quickView.row" class="quick-view-content">
+        <div class="quick-view-header">
+          <div>
+            <span class="quick-view-kicker">QUICK PREVIEW</span>
+            <h3>资料信息</h3>
+          </div>
+          <el-button text circle aria-label="关闭详情" @click="closeQuickView"><el-icon><Close /></el-icon></el-button>
+        </div>
+        <div v-if="quickPreviewUrl && isQuickPreviewMedia(quickView.row.currentFileSuffix)" class="quick-view-media" @click="handlePreview(quickView.row)">
+          <video v-if="isVideoFile(quickView.row.currentFileSuffix)" :key="quickPreviewUrl" :src="quickPreviewUrl" class="quick-view-media-video" muted autoplay loop playsinline preload="auto" @error="handleQuickPreviewError" />
+          <img v-else :src="quickPreviewUrl" :alt="quickView.row.title" class="quick-view-media-image" @error="handleQuickPreviewError" />
+          <div class="quick-view-media-gradient" />
+          <div class="quick-view-media-badge"><el-icon><component :is="quickViewIcon(quickView.row.currentFileSuffix)" /></el-icon><span>{{ mediaKindLabel(quickView.row.currentFileSuffix) }}</span></div>
+          <div class="quick-view-media-play"><el-icon><View /></el-icon><span>打开完整预览</span></div>
+        </div>
+        <div v-else-if="quickPreviewLoading" class="quick-view-cover quick-view-cover-loading">
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>正在加载预览…</span>
+        </div>
+        <div v-else class="quick-view-cover" :class="fileIconClass(quickView.row.currentFileSuffix)" @click="handlePreview(quickView.row)">
+          <div class="quick-cover-pattern" />
+          <div class="quick-cover-mark"><el-icon><component :is="quickViewIcon(quickView.row.currentFileSuffix)" /></el-icon><strong>{{ fileIconText(quickView.row.currentFileSuffix) }}</strong></div>
+          <div v-if="quickPreviewError" class="quick-cover-status"><el-icon><WarningFilled /></el-icon><span>{{ quickPreviewError }}</span></div>
+          <div class="quick-cover-action"><el-icon><View /></el-icon><span>点击在线预览</span></div>
+        </div>
+        <div class="quick-view-title-row">
+          <div class="quick-view-title" :title="quickView.row.title">{{ quickView.row.title }}</div>
+          <div class="quick-view-statuses">
+            <el-tag :type="statusTagType(quickView.row.status)" effect="light" size="small">{{ statusLabel(quickView.row.status) }}</el-tag>
+            <el-tag v-if="expiryState(quickView.row) !== 'normal'" :type="expiryTagType(quickView.row)" effect="light" size="small">{{ expiryLabel(quickView.row) }}</el-tag>
+          </div>
+        </div>
+        <div class="quick-view-file-name" :title="quickView.row.currentOriginalName">{{ quickView.row.currentOriginalName || '未命名文件' }}</div>
+        <div v-if="tagList(quickView.row.tags).length" class="quick-view-tags">
+          <el-tag v-for="tag in tagList(quickView.row.tags)" :key="tag" size="small" effect="plain">{{ tag }}</el-tag>
+        </div>
+        <div class="quick-view-actions">
+          <el-button v-hasPermi="['department:document:query']" type="primary" @click="handlePreview(quickView.row)"><el-icon><View /></el-icon>在线预览</el-button>
+          <el-button v-hasPermi="['department:document:download']" @click="handleDownload(quickView.row)"><el-icon><Download /></el-icon>下载资料</el-button>
+        </div>
+        <div class="quick-view-divider" />
+        <dl class="quick-view-meta">
+          <div><dt>资料分类</dt><dd>{{ quickView.row.categoryName || '未分类' }}</dd></div>
+          <div><dt>关联项目</dt><dd>{{ quickView.row.projectName || '公共资料' }}</dd></div>
+          <div><dt>当前版本</dt><dd>v{{ quickView.row.versionNo || 1 }}</dd></div>
+          <div><dt>文件大小</dt><dd>{{ formatFileSize(quickView.row.currentFileSize) }}</dd></div>
+          <div><dt>上传人</dt><dd>{{ quickView.row.createByName || '未知上传人' }}</dd></div>
+          <div><dt>更新时间</dt><dd>{{ quickView.row.updateTime || '—' }}</dd></div>
+          <div v-if="quickView.row.expireDate"><dt>失效日期</dt><dd>{{ quickView.row.expireDate }}</dd></div>
+        </dl>
+        <div class="quick-view-description">
+          <span>资料说明</span>
+          <p>{{ quickView.row.description || '暂无资料说明' }}</p>
+        </div>
+        <div class="quick-view-footer-actions">
+          <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handleDetail(quickView.row)">查看版本记录</el-button>
+          <el-dropdown v-hasPermi="['department:document:edit']" @command="handleQuickMoreCommand">
+            <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+            <template #dropdown><el-dropdown-menu><el-dropdown-item command="version">上传新版本</el-dropdown-item><el-dropdown-item command="edit">编辑信息</el-dropdown-item></el-dropdown-menu></template>
+          </el-dropdown>
+        </div>
+      </div>
+    </el-drawer>
 
     <el-dialog v-model="editDialog.visible" :title="editDialog.title" width="620px" append-to-body>
       <el-form ref="editFormRef" :model="editForm" label-width="100px">
@@ -229,7 +404,8 @@
 
 <script setup lang="ts" name="DepartmentDocument">
 import type { FormInstance, UploadFile, UploadFiles } from 'element-plus';
-import { ArrowDown, CollectionTag, Loading, UploadFilled, WarningFilled } from '@element-plus/icons-vue';
+import { ArrowDown, ArrowRight, Box, CircleCheck, Close, CollectionTag, Document, Download, EditPen, Files, FolderOpened, Grid, List, Loading, Picture, UploadFilled, User, VideoCamera, View, WarningFilled } from '@element-plus/icons-vue';
+import type { Component } from 'vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listDepartmentDocumentCategoryOptions } from '@/api/department/documentCategory';
 import type { DepartmentDocumentCategoryVO } from '@/api/department/documentCategory/types';
@@ -289,7 +465,8 @@ const documentList = ref<DepartmentDocumentVO[]>([]);
 const categories = ref<DepartmentDocumentCategoryVO[]>([]);
 const projectOptions = ref<DepartmentProjectVO[]>([]);
 const total = ref(0);
-const queryParams = reactive<DepartmentDocumentQuery>({ pageNum: 1, pageSize: 10, title: undefined, categoryId: undefined, projectId: undefined, fileSuffix: undefined, status: undefined });
+const selectedIds = ref<Array<string | number>>([]);
+const queryParams = reactive<DepartmentDocumentQuery>({ pageNum: 1, pageSize: 12, title: undefined, categoryId: undefined, projectId: undefined, fileSuffix: undefined, status: undefined, sortBy: 'updatedDesc' });
 const editForm = reactive<DepartmentDocumentForm>({ categoryId: undefined, status: 'PUBLISHED', visibility: 'DEPT' });
 const editFile = ref<UploadFile>();
 const editFileList = ref<any[]>([]);
@@ -303,6 +480,13 @@ const editFormRef = ref<FormInstance>();
 const editDialog = reactive({ visible: false, title: '' });
 const versionDialog = reactive({ visible: false });
 const detailDialog = reactive({ visible: false });
+const quickView = reactive({ visible: false, row: undefined as DepartmentDocumentVO | undefined });
+const viewMode = ref<'grid' | 'list'>('grid');
+const quickPreviewUrl = ref('');
+const quickPreviewObjectUrl = ref(false);
+const quickPreviewLoading = ref(false);
+const quickPreviewError = ref('');
+const quickPreviewRequestId = ref(0);
 const previewDialog = reactive({ visible: false, loading: false, title: '', row: undefined as DepartmentDocumentVO | undefined, versionId: undefined as string | number | undefined });
 const categoryPanelRef = ref<{ handleAdd: () => void }>();
 const previewUrl = ref('');
@@ -319,16 +503,50 @@ const previewErrorHint = ref('');
 const previewVersion = ref<DepartmentDocumentVersionVO>();
 const previewLoadingTimer = ref<ReturnType<typeof setTimeout>>();
 
-const categoryCount = computed(() => categories.value.length);
+const countCategories = (nodes: DepartmentDocumentCategoryVO[]): number => nodes.reduce((count, node) => count + 1 + countCategories(node.children || []), 0);
+const categoryCount = computed(() => countCategories(categories.value));
+const allPageSelected = computed(() => documentList.value.length > 0 && documentList.value.every((row) => isSelected(row.id)));
+const somePageSelected = computed(() => documentList.value.some((row) => isSelected(row.id)));
+const breadcrumbSegments = computed(() => {
+  if (activeTab.value === 'recycle') return ['回收站'];
+  if (!queryParams.categoryId) return [queryParams.status ? statusLabel(queryParams.status) : '全部资料'];
+  const findPath = (nodes: DepartmentDocumentCategoryVO[], parents: string[] = []): string[] | undefined => {
+    for (const node of nodes) {
+      const currentPath = [...parents, node.categoryName];
+      if (String(node.id) === String(queryParams.categoryId)) return currentPath;
+      const childPath = findPath(node.children || [], currentPath);
+      if (childPath) return childPath;
+    }
+    return undefined;
+  };
+  return findPath(categories.value) || ['当前分类'];
+});
 const previewKindLabel = computed(() => ({ video: '视频预览', image: '图片预览', pdf: 'PDF 预览', none: '暂不支持' })[previewKind.value]);
 const previewVersionLabel = computed(() => {
   if (previewVersion.value) return `历史版本 v${previewVersion.value.versionNo}`;
   return `当前版本 v${previewDialog.row?.versionNo || 1}`;
 });
-const toDocument = (row: unknown) => row as DepartmentDocumentVO;
 const toVersion = (row: unknown) => row as DepartmentDocumentVersionVO;
 
+const tagList = (tags?: string) => (tags || '').split(/[,，]/).map((tag) => tag.trim()).filter(Boolean);
+const mediaKindLabel = (suffix?: string) => {
+  const value = (suffix || '').toLowerCase();
+  if (isVideoFile(value)) return '视频资料';
+  if (['.jpg', '.jpeg', '.png', '.gif'].includes(value)) return '图片资料';
+  if (value === '.pdf') return 'PDF 文档';
+  if (['.doc', '.docx'].includes(value)) return 'Word 文档';
+  if (['.xls', '.xlsx', '.csv'].includes(value)) return '表格资料';
+  return '其他资料';
+};
+const quickViewIcon = (suffix?: string): Component => {
+  const value = (suffix || '').toLowerCase();
+  if (isVideoFile(value)) return VideoCamera;
+  if (['.jpg', '.jpeg', '.png', '.gif'].includes(value)) return Picture;
+  return Document;
+};
+
 const getList = async () => {
+  clearSelection();
   loading.value = true;
   try {
     const res = activeTab.value === 'recycle' ? await listDepartmentDocumentRecycle(queryParams) : await listDepartmentDocument(queryParams);
@@ -354,8 +572,121 @@ const handleQuery = () => {
   getList();
 };
 
+const selectQuickFilter = (status?: string) => {
+  queryParams.categoryId = undefined;
+  queryParams.status = status;
+  handleQuery();
+};
+
+const handleCategoryNodeClick = (data: DepartmentDocumentCategoryVO) => {
+  queryParams.categoryId = data.id;
+  queryParams.status = undefined;
+  handleQuery();
+};
+
+const isSelected = (id: string | number) => selectedIds.value.some((selectedId) => String(selectedId) === String(id));
+
+const toggleSelection = (id: string | number, checked: boolean) => {
+  if (checked) {
+    if (!isSelected(id)) selectedIds.value.push(id);
+    return;
+  }
+  selectedIds.value = selectedIds.value.filter((selectedId) => String(selectedId) !== String(id));
+};
+
+const toggleSelectAllPage = (checked: boolean) => {
+  if (checked) {
+    const pageIds = documentList.value.map((row) => row.id);
+    selectedIds.value = [...new Map([...selectedIds.value, ...pageIds].map((id) => [String(id), id])).values()];
+  } else {
+    const pageIdSet = new Set(documentList.value.map((row) => String(row.id)));
+    selectedIds.value = selectedIds.value.filter((id) => !pageIdSet.has(String(id)));
+  }
+};
+
+const clearSelection = () => {
+  selectedIds.value = [];
+};
+
+const batchDelete = async () => {
+  if (!selectedIds.value.length) return;
+  await modal.confirm(`确认将选中的 ${selectedIds.value.length} 份资料移入回收站吗？`);
+  await delDepartmentDocument(selectedIds.value);
+  modal.msgSuccess('资料已批量移入回收站');
+  await getList();
+};
+
+const batchRestore = async () => {
+  if (!selectedIds.value.length) return;
+  await modal.confirm(`确认恢复选中的 ${selectedIds.value.length} 份资料吗？`);
+  await restoreDepartmentDocument(selectedIds.value);
+  modal.msgSuccess('资料已批量恢复');
+  await getList();
+};
+
+const releaseQuickPreviewUrl = () => {
+  if (quickPreviewObjectUrl.value && quickPreviewUrl.value) URL.revokeObjectURL(quickPreviewUrl.value);
+  quickPreviewUrl.value = '';
+  quickPreviewObjectUrl.value = false;
+};
+
+const isImageFile = (suffix?: string) => ['.jpg', '.jpeg', '.png', '.gif'].includes((suffix || '').toLowerCase());
+const isQuickPreviewMedia = (suffix?: string) => isVideoFile(suffix) || isImageFile(suffix);
+
+const loadQuickPreview = async (row: DepartmentDocumentVO) => {
+  const requestId = ++quickPreviewRequestId.value;
+  releaseQuickPreviewUrl();
+  quickPreviewError.value = '';
+  quickPreviewLoading.value = false;
+  if (!isQuickPreviewMedia(row.currentFileSuffix)) return;
+
+  quickPreviewLoading.value = true;
+  try {
+    if (isVideoFile(row.currentFileSuffix)) {
+      const response = await getDepartmentDocumentVideoPreview(row.id);
+      if (requestId === quickPreviewRequestId.value) quickPreviewUrl.value = response.data?.playbackUrl || '';
+    } else {
+      const blob = await previewDepartmentDocument(row.id);
+      if (requestId === quickPreviewRequestId.value) {
+        quickPreviewUrl.value = URL.createObjectURL(blob);
+        quickPreviewObjectUrl.value = true;
+      }
+    }
+    if (requestId === quickPreviewRequestId.value && !quickPreviewUrl.value) quickPreviewError.value = '暂无可用预览';
+  } catch {
+    if (requestId === quickPreviewRequestId.value) quickPreviewError.value = '预览内容加载失败';
+  } finally {
+    if (requestId === quickPreviewRequestId.value) quickPreviewLoading.value = false;
+  }
+};
+
+const closeQuickView = () => {
+  quickPreviewRequestId.value += 1;
+  releaseQuickPreviewUrl();
+  quickPreviewLoading.value = false;
+  quickPreviewError.value = '';
+  quickView.visible = false;
+};
+
+const handleQuickPreviewError = () => {
+  quickPreviewRequestId.value += 1;
+  releaseQuickPreviewUrl();
+  quickPreviewLoading.value = false;
+  quickPreviewError.value = '视频预览暂不可用，请打开完整预览或下载查看';
+};
+
+const openQuickView = (row: DepartmentDocumentVO) => {
+  quickView.row = row;
+  quickView.visible = true;
+  loadQuickPreview(row);
+};
+
+const handleQuickMoreCommand = (command: string) => {
+  if (quickView.row) handleMoreCommand(command, quickView.row);
+};
+
 const resetQuery = () => {
-  Object.assign(queryParams, { pageNum: 1, title: undefined, categoryId: undefined, projectId: undefined, fileSuffix: undefined, status: undefined });
+  Object.assign(queryParams, { pageNum: 1, title: undefined, categoryId: undefined, projectId: undefined, fileSuffix: undefined, status: undefined, sortBy: 'updatedDesc' });
   getList();
 };
 
@@ -746,6 +1077,26 @@ const formatFileSize = (size?: number) => {
 
 const statusLabel = (status?: string) => ({ DRAFT: '草稿', ARCHIVED: '已归档', PUBLISHED: '已发布' })[status || ''] || '已发布';
 const statusTagType = (status?: string) => (status === 'DRAFT' ? 'warning' : status === 'ARCHIVED' ? 'info' : 'success');
+const expiryState = (row: DepartmentDocumentVO) => {
+  if (!row.expireDate) return 'normal';
+  const expireTime = new Date(`${row.expireDate}T23:59:59`).getTime();
+  if (Number.isNaN(expireTime)) return 'normal';
+  const days = Math.ceil((expireTime - Date.now()) / (24 * 60 * 60 * 1000));
+  if (days < 0) return 'expired';
+  if (days <= 30) return 'expiring';
+  return 'normal';
+};
+const expiryLabel = (row: DepartmentDocumentVO) => {
+  const state = expiryState(row);
+  if (state === 'expired') return `已于 ${row.expireDate} 失效`;
+  if (state === 'expiring') {
+    const expireTime = new Date(`${row.expireDate}T23:59:59`).getTime();
+    const days = Math.max(0, Math.ceil((expireTime - Date.now()) / (24 * 60 * 60 * 1000)));
+    return days === 0 ? '今日失效' : `${days} 天后失效`;
+  }
+  return '';
+};
+const expiryTagType = (row: DepartmentDocumentVO) => (expiryState(row) === 'expired' ? 'danger' : 'warning');
 const fileIconText = (suffix?: string) => (suffix || '').replace('.', '').slice(0, 4).toUpperCase() || 'FILE';
 const fileIconClass = (suffix?: string) => {
   const value = (suffix || '').toLowerCase();
@@ -781,11 +1132,123 @@ onMounted(() => {
   .hero-stats strong { font-size: 28px; line-height: 1.15; }
   .hero-stats span { margin-top: 8px; color: rgba(255, 255, 255, 0.66); font-size: 12px; }
   .document-card { border-radius: 12px; }
+  .library-layout { display: grid; grid-template-columns: 228px minmax(0, 1fr); gap: 20px; min-width: 0; }
+  .library-sidebar { min-height: 540px; padding: 18px 12px; border: 1px solid var(--app-surface-border); border-radius: 16px; background: var(--app-surface-bg); }
+  .sidebar-heading, .category-heading, .library-toolbar, .document-card-footer, .list-file-meta, .list-file-owner { display: flex; align-items: center; }
+  .sidebar-heading, .category-heading, .library-toolbar { justify-content: space-between; }
+  .sidebar-heading { padding: 0 8px 14px; }
+  .sidebar-heading strong, .category-heading { color: var(--app-text-title); font-size: 14px; font-weight: 700; }
+  .sidebar-kicker, .quick-view-kicker { display: block; color: var(--el-color-primary); font-size: 10px; font-weight: 800; letter-spacing: 0.14em; line-height: 1.4; }
+  .sidebar-kicker { margin-bottom: 3px; }
+  .quick-nav { display: grid; gap: 4px; }
+  .quick-nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 10px; border: 0; border-radius: 10px; color: var(--app-text-muted); background: transparent; font-size: 13px; text-align: left; cursor: pointer; transition: 0.18s ease; }
+  .quick-nav-item:hover { color: var(--app-text-title); background: var(--el-fill-color-light); }
+  .quick-nav-item.active { color: var(--el-color-primary); background: var(--el-color-primary-light-9); font-weight: 600; }
+  .quick-nav-item .el-icon { font-size: 17px; }
+  .quick-nav-item small { margin-left: auto; color: var(--app-text-muted); font-size: 11px; }
+  .sidebar-divider, .quick-view-divider { height: 1px; margin: 18px 8px; background: var(--app-surface-border); }
+  .category-heading { padding: 0 8px 8px; }
+  .category-tree { padding: 0 2px; background: transparent; }
+  .category-tree :deep(.el-tree-node__content) { height: 40px; padding-right: 8px; border-radius: 9px; color: var(--app-text-muted); }
+  .category-tree :deep(.el-tree-node__content:hover), .category-tree :deep(.is-current > .el-tree-node__content) { color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
+  .category-tree :deep(.el-tree-node__expand-icon) { color: var(--app-text-muted); }
+  .category-tree-node { display: flex; align-items: center; gap: 8px; min-width: 0; width: 100%; }
+  .category-tree-node .el-icon { flex: 0 0 auto; color: var(--el-color-warning); }
+  .category-tree-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .category-tree-count { margin-left: auto; color: var(--app-text-muted); font-size: 11px; }
+  .category-empty { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 34px 8px; color: var(--app-text-muted); font-size: 12px; text-align: center; }
+  .category-empty .el-icon { color: var(--el-color-warning); font-size: 28px; }
+  .library-main { min-width: 0; }
+  .selection-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; margin-bottom: 10px; padding: 7px 10px 7px 14px; border: 1px solid color-mix(in srgb, var(--el-color-primary) 22%, var(--app-surface-border)); border-radius: 11px; background: var(--el-color-primary-light-9); }
+  .selection-summary, .selection-actions { display: flex; align-items: center; gap: 12px; }
+  .selection-summary > span { color: var(--el-color-primary); font-size: 12px; font-weight: 600; }
+  .card-select { position: absolute; z-index: 3; top: 11px; right: 11px; padding: 4px 6px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; background: rgba(8, 15, 30, 0.28); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); backdrop-filter: blur(4px); }
+  .card-select :deep(.el-checkbox), .list-select :deep(.el-checkbox) { margin: 0; }
+  .card-select :deep(.el-checkbox__label), .list-select :deep(.el-checkbox__label) { display: none; }
+  .card-select :deep(.el-checkbox__inner) { border-color: rgba(255, 255, 255, 0.84); background: transparent; }
+  .card-select :deep(.el-checkbox__input.is-checked .el-checkbox__inner) { border-color: var(--el-color-primary); background: var(--el-color-primary); }
+  .library-toolbar { gap: 16px; min-height: 40px; margin-bottom: 14px; }
+  .library-breadcrumb { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--app-text-muted); font-size: 13px; }
+  .library-breadcrumb > .el-icon:first-child { color: var(--el-color-primary); font-size: 17px; }
+  .breadcrumb-parent { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .library-breadcrumb strong { overflow: hidden; color: var(--app-text-title); text-overflow: ellipsis; white-space: nowrap; }
+  .breadcrumb-arrow { color: var(--app-text-muted); font-size: 13px; }
+  .library-toolbar-tools { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+  .result-count { color: var(--app-text-muted); font-size: 12px; }
+  .view-switch .el-button { width: 34px; height: 32px; padding: 0; }
+  .document-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 320px)); align-content: start; align-items: stretch; gap: 18px; min-height: 260px; padding: 2px; }
+  .document-card-item { position: relative; display: flex; min-width: 0; min-height: 326px; flex-direction: column; overflow: hidden; border: 1px solid var(--app-surface-border); border-radius: 16px; background: linear-gradient(180deg, var(--app-surface-bg) 0%, color-mix(in srgb, var(--app-surface-bg) 88%, var(--el-color-primary-light-9)) 100%); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+  .document-card-item::before { position: absolute; z-index: 1; top: 0; right: 18px; left: 18px; height: 3px; border-radius: 0 0 6px 6px; background: color-mix(in srgb, var(--el-color-primary) 72%, transparent); content: ''; opacity: 0.7; }
+  .document-card-item:hover { border-color: color-mix(in srgb, var(--el-color-primary) 48%, var(--app-surface-border)); box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14); transform: translateY(-2px); }
+  .document-card-item.selected { border-color: var(--el-color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--el-color-primary) 20%, transparent), 0 14px 30px rgba(15, 23, 42, 0.14); }
+  .document-cover, .quick-view-cover { position: relative; overflow: hidden; }
+  .document-cover { display: flex; align-items: center; justify-content: center; height: 156px; flex: 0 0 156px; color: #fff; }
+  .document-cover.pdf, .quick-view-cover.pdf { background: linear-gradient(135deg, #b5475b, #ef7d66); }
+  .document-cover.word, .quick-view-cover.word { background: linear-gradient(135deg, #2864bd, #59a2f2); }
+  .document-cover.excel, .quick-view-cover.excel { background: linear-gradient(135deg, #147451, #3dc18d); }
+  .document-cover.video, .quick-view-cover.video { background: linear-gradient(135deg, #a8444c, #f5a84a); }
+  .document-cover.image, .quick-view-cover.image { background: linear-gradient(135deg, #5b54b2, #b27cf3); }
+  .document-cover.other, .quick-view-cover.other { background: linear-gradient(135deg, #44546d, #8495ad); }
+  .cover-glow, .quick-cover-pattern { position: absolute; inset: -35%; opacity: 0.42; background: radial-gradient(circle at 26% 24%, rgba(255,255,255,0.44) 0 2px, transparent 3px), radial-gradient(circle at 72% 68%, rgba(255,255,255,0.3) 0 1px, transparent 2px), linear-gradient(125deg, transparent 44%, rgba(255,255,255,0.1) 45%, transparent 58%); transform: rotate(-12deg); }
+  .cover-file-mark { position: relative; z-index: 1; display: flex; align-items: center; flex-direction: column; gap: 8px; padding: 13px 20px 12px; border: 1px solid rgba(255, 255, 255, 0.24); border-radius: 17px; background: rgba(12, 22, 42, 0.16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 10px 24px rgba(12, 20, 40, 0.12); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); backdrop-filter: blur(4px); }
+  .cover-file-mark .el-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 14px; background: rgba(255, 255, 255, 0.16); font-size: 28px; }
+  .cover-file-mark span { font-size: 16px; font-weight: 800; letter-spacing: 0.08em; }
+  .cover-footer { position: absolute; z-index: 1; right: 13px; bottom: 11px; left: 13px; display: flex; justify-content: space-between; color: rgba(255, 255, 255, 0.84); font-size: 11px; }
+  .cover-footer span { padding: 4px 7px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; background: rgba(9, 18, 34, 0.16); backdrop-filter: blur(3px); }
+  .cover-hover { position: absolute; z-index: 2; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; background: linear-gradient(180deg, rgba(8, 15, 30, 0.12), rgba(8, 15, 30, 0.5)); transition: opacity 0.2s ease; }
+  .document-card-item:hover .cover-hover { opacity: 1; }
+  .cover-hover .el-button { width: 44px; height: 44px; border: 1px solid rgba(255, 255, 255, 0.5); color: #fff; background: rgba(255, 255, 255, 0.18); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); backdrop-filter: blur(5px); }
+  .document-card-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 15px 16px 14px; }
+  .document-card-title, .document-card-file, .document-card-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .document-card-title { color: var(--app-text-title); font-size: 14px; font-weight: 700; }
+  .document-card-file { margin-top: 5px; color: var(--app-text-muted); font-size: 11px; }
+  .document-card-expiry { display: flex; align-items: center; gap: 4px; margin-top: 9px; font-size: 11px; }
+  .document-card-expiry.expiring { color: var(--el-color-warning); }
+  .document-card-expiry.expired { color: var(--el-color-danger); }
+  .document-card-tags { display: flex; align-items: center; gap: 5px; min-height: 24px; margin-top: 11px; overflow: hidden; }
+  .document-card-tags .el-tag { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+  .more-tags { color: var(--app-text-muted); font-size: 11px; }
+  .document-card-meta { display: flex; align-items: center; gap: 7px; margin-top: 11px; color: var(--app-text-muted); font-size: 11px; }
+  .document-card-meta i, .list-file-meta i { width: 3px; height: 3px; flex: 0 0 auto; border-radius: 50%; background: var(--app-text-muted); }
+  .document-card-footer { justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 14px; color: var(--app-text-muted); font-size: 11px; }
+  .document-card-footer > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .grid-empty { grid-column: 1 / -1; min-height: 260px; }
+  .document-list-view { display: grid; align-content: start; gap: 10px; min-height: 260px; }
+  .document-list-item { position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 88px; padding: 11px 14px; border: 1px solid var(--app-surface-border); border-radius: 14px; background: var(--app-surface-bg); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04); cursor: pointer; transition: 0.18s ease; }
+  .document-list-item::before { position: absolute; top: 50%; left: 0; width: 3px; height: 30px; border-radius: 0 4px 4px 0; background: color-mix(in srgb, var(--el-color-primary) 72%, transparent); content: ''; opacity: 0.8; transform: translateY(-50%); }
+  .document-list-item:hover { border-color: color-mix(in srgb, var(--el-color-primary) 44%, var(--app-surface-border)); background: var(--el-fill-color-light); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.09); transform: translateY(-1px); }
+  .document-list-item.selected { border-color: var(--el-color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--el-color-primary) 17%, transparent), 0 8px 20px rgba(15, 23, 42, 0.09); }
+  .list-select { flex: 0 0 auto; }
+  .list-file-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 54px; flex: 0 0 auto; border-radius: 13px; color: #fff; font-size: 10px; font-weight: 800; box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12); }
+  .list-file-icon.pdf { background: linear-gradient(135deg, #ef5757, #b72745); }
+  .list-file-icon.word { background: linear-gradient(135deg, #3b82f6, #2554ae); }
+  .list-file-icon.excel { background: linear-gradient(135deg, #23a86c, #15744d); }
+  .list-file-icon.video { background: linear-gradient(135deg, #ef8b3a, #bd4d34); }
+  .list-file-icon.image { background: linear-gradient(135deg, #9b7af5, #6351b9); }
+  .list-file-icon.other { background: linear-gradient(135deg, #76869a, #445064); }
+  .list-file-main { min-width: 0; flex: 1; }
+  .list-file-title, .list-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list-file-title { color: var(--app-text-title); font-size: 14px; font-weight: 700; }
+  .list-file-name { margin-top: 4px; color: var(--app-text-muted); font-size: 11px; }
+  .list-file-meta { gap: 7px; margin-top: 8px; color: var(--app-text-muted); font-size: 11px; }
+  .list-file-owner { align-items: flex-end; flex: 0 0 132px; flex-direction: column; gap: 4px; color: var(--app-text-title); font-size: 12px; }
+  .list-file-owner small { color: var(--app-text-muted); font-size: 11px; }
+  .list-expiry { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; font-size: 11px; white-space: nowrap; }
+  .list-expiry.expiring { color: var(--el-color-warning); }
+  .list-expiry.expired { color: var(--el-color-danger); }
+  .list-file-actions { display: flex; align-items: center; flex: 0 0 auto; gap: 1px; opacity: 0.82; transition: opacity 0.18s ease; }
+  .document-list-item:hover .list-file-actions, .document-list-item:focus-within .list-file-actions { opacity: 1; }
+  .list-file-actions .el-button { padding: 6px 7px; font-size: 12px; }
+  .document-list-view > .el-empty { grid-column: 1 / -1; }
   .document-tab-label { display: inline-flex; align-items: center; gap: 6px; }
   :deep(.department-document-category-panel.is-embedded .table-panel) { border: 0; box-shadow: none; }
   .toolbar-actions, .query-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .query-form { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px; margin-bottom: 16px; padding: 14px 16px 2px; border-radius: 10px; background: var(--el-fill-color-light); }
-  .query-actions { margin-left: auto; margin-bottom: 18px; }
+  .query-form { display: grid; grid-template-columns: minmax(230px, 1.3fr) repeat(5, minmax(130px, 1fr)) auto; align-items: center; gap: 12px 14px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--app-surface-border) 82%, transparent); border-radius: 12px; background: var(--el-fill-color-light); }
+  :deep(.query-form .el-form-item) { min-width: 0; margin: 0; }
+  :deep(.query-form .el-form-item__label) { flex: 0 0 auto; padding-right: 8px; white-space: nowrap; }
+  :deep(.query-form .el-form-item__content) { min-width: 0; flex: 1; }
+  :deep(.query-form .el-input), :deep(.query-form .el-select), :deep(.query-form .el-tree-select) { width: 100% !important; }
+  .query-actions { align-items: center; justify-content: flex-end; margin: 0; }
   .title-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .file-icon { display: inline-flex; flex: 0 0 42px; align-items: center; justify-content: center; width: 42px; height: 46px; border-radius: 10px; color: #fff; font-size: 10px; font-weight: 800; }
   .file-icon.pdf { background: linear-gradient(135deg, #ef5757, #b72745); }
@@ -802,11 +1265,75 @@ onMounted(() => {
   .detail-description { white-space: pre-wrap; line-height: 1.7; }
   .version-operation-placeholder { color: var(--el-text-color-placeholder); }
   @media (max-width: 900px) {
+    .library-layout { grid-template-columns: 1fr; }
+    .library-sidebar { min-height: 0; }
+    .quick-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .category-tree { max-height: 230px; overflow-y: auto; }
     .hero-content { align-items: flex-start; flex-direction: column; }
     .hero-stats { width: 100%; justify-content: space-between; padding-right: 0; }
-    .query-actions { margin-left: 0; }
+    .query-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .query-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  }
+  @media (max-width: 700px) {
+    .selection-toolbar { align-items: flex-start; flex-direction: column; }
+    .library-toolbar { align-items: flex-start; flex-direction: column; }
+    .library-toolbar-tools { justify-content: space-between; width: 100%; }
+    .query-form { grid-template-columns: 1fr; gap: 10px; }
+    .query-actions { grid-column: auto; justify-content: flex-start; }
+    .document-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .document-cover { height: 124px; flex-basis: 124px; }
+    .document-card-body { padding: 11px; }
+    .document-list-item { align-items: flex-start; flex-wrap: wrap; }
+    .list-file-main { min-width: calc(100% - 106px); }
+    .list-file-owner { flex: 1; align-items: flex-start; margin-left: 60px; }
+    .list-file-actions { margin-left: auto; }
+    .list-expiry { margin-left: 60px; }
   }
 }
+
+:global(.el-drawer.document-quick-view) { background: var(--el-bg-color); }
+:global(.document-quick-view .el-drawer__body) { padding: 0 !important; }
+.quick-view-content { min-height: 100%; padding: 24px; color: var(--app-text-title); background: var(--el-bg-color); }
+.quick-view-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.quick-view-header h3 { margin: 4px 0 0; color: var(--app-text-title); font-size: 20px; }
+.quick-view-cover { display: flex; align-items: center; justify-content: center; height: 190px; margin-top: 22px; border-radius: 16px; color: #fff; cursor: pointer; }
+.quick-view-cover.pdf { background: linear-gradient(135deg, #b5475b, #ef7d66); }
+.quick-view-cover.word { background: linear-gradient(135deg, #2864bd, #59a2f2); }
+.quick-view-cover.excel { background: linear-gradient(135deg, #147451, #3dc18d); }
+.quick-view-cover.video { background: linear-gradient(135deg, #a8444c, #f5a84a); }
+.quick-view-cover.image { background: linear-gradient(135deg, #5b54b2, #b27cf3); }
+.quick-view-cover.other { background: linear-gradient(135deg, #44546d, #8495ad); }
+.quick-view-cover-loading { gap: 10px; border: 1px solid var(--app-surface-border); color: var(--app-text-muted); background: var(--el-fill-color-light); cursor: default; }
+.quick-view-cover-loading .el-icon { color: var(--el-color-primary); font-size: 24px; }
+.quick-view-media { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 9; min-height: 190px; margin-top: 22px; overflow: hidden; border: 1px solid rgba(22, 38, 64, 0.14); border-radius: 16px; background: #0b1220; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12); cursor: pointer; }
+.quick-view-media-video, .quick-view-media-image { display: block; width: 100%; height: 100%; object-fit: cover; background: #0b1220; }
+.quick-view-media-image { object-fit: contain; }
+.quick-view-media-gradient { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(4, 10, 21, 0.08) 35%, rgba(4, 10, 21, 0.7) 100%); }
+.quick-view-media-badge { position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 999px; color: rgba(255, 255, 255, 0.92); background: rgba(8, 15, 30, 0.46); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14); backdrop-filter: blur(8px); font-size: 11px; }
+.quick-view-media-play { position: absolute; right: 14px; bottom: 12px; left: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border: 1px solid rgba(255, 255, 255, 0.26); border-radius: 10px; color: #fff; background: rgba(8, 15, 30, 0.48); box-shadow: 0 7px 18px rgba(0, 0, 0, 0.16); backdrop-filter: blur(8px); font-size: 12px; transition: background 0.18s ease, transform 0.18s ease; }
+.quick-view-media:hover .quick-view-media-play { background: rgba(34, 116, 194, 0.78); transform: translateY(-1px); }
+.quick-cover-mark { position: relative; display: flex; align-items: center; flex-direction: column; gap: 10px; }
+.quick-cover-mark .el-icon { font-size: 40px; }
+.quick-cover-mark strong { font-size: 25px; letter-spacing: 0.12em; }
+.quick-cover-pattern { position: absolute; inset: -35%; opacity: 0.42; background: radial-gradient(circle at 26% 24%, rgba(255,255,255,0.44) 0 2px, transparent 3px), radial-gradient(circle at 72% 68%, rgba(255,255,255,0.3) 0 1px, transparent 2px), linear-gradient(125deg, transparent 44%, rgba(255,255,255,0.1) 45%, transparent 58%); transform: rotate(-12deg); }
+.quick-cover-status { position: absolute; top: 13px; right: 13px; left: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 9px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 9px; color: rgba(255, 255, 255, 0.9); background: rgba(8, 15, 30, 0.26); font-size: 11px; }
+.quick-cover-action { position: absolute; right: 14px; bottom: 12px; left: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.24); border-radius: 9px; color: rgba(255, 255, 255, 0.88); background: rgba(0, 0, 0, 0.15); font-size: 12px; }
+.quick-view-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 20px; }
+.quick-view-statuses { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.quick-view-title { min-width: 0; color: var(--app-text-title); font-size: 18px; font-weight: 750; line-height: 1.45; }
+.quick-view-file-name { margin-top: 5px; overflow: hidden; color: var(--app-text-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.quick-view-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.quick-view-actions { display: flex; gap: 10px; margin-top: 20px; }
+.quick-view-actions .el-button { flex: 1; }
+.quick-view-divider { margin: 22px 0; }
+.quick-view-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; margin: 0; }
+.quick-view-meta div { min-width: 0; }
+.quick-view-meta dt { color: var(--app-text-muted); font-size: 11px; }
+.quick-view-meta dd { margin: 5px 0 0; overflow: hidden; color: var(--app-text-title); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.quick-view-description { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--app-surface-border); }
+.quick-view-description > span { color: var(--app-text-muted); font-size: 11px; }
+.quick-view-description p { margin: 8px 0 0; color: var(--app-text-title); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+.quick-view-footer-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
 
 // el-dialog with append-to-body is teleported outside the page scope. Keep its
 // shell selectors global while the inner preview nodes retain the component scope id.

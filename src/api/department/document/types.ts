@@ -4,6 +4,7 @@ export interface DepartmentDocumentQuery extends PageQuery {
   projectId?: string | number;
   fileSuffix?: string;
   status?: string;
+  sortBy?: 'updatedDesc' | 'updatedAsc' | 'nameAsc' | 'sizeDesc';
 }
 
 export interface DepartmentDocumentVO {
