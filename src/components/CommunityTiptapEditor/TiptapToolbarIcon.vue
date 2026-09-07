@@ -58,6 +58,14 @@
       <path d="m3.5 8.5 5.5 5.5m0-5.5-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
       <path d="M14 15.5c.3-.9 1.1-1.5 2.1-1.5 1.2 0 2.1.8 2.1 1.8 0 1.1-.8 1.8-3.9 3.9h4.1" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" />
     </template>
+    <template v-else-if="name === 'text-wrap'">
+      <rect x="3.5" y="4" width="8.5" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.6" />
+      <path d="M14.5 5h6M14.5 8h6M3.5 14.5h17M3.5 18.5h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+    </template>
+    <template v-else-if="name === 'clear-format'">
+      <path d="M5 5h14M8 5v3l-2.5 9h13L16 8V5M10 12h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="m4 20 16-16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+    </template>
     <template v-else-if="name === 'align-left'">
       <path d="M4 6h16M4 10h11M4 14h16M4 18h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
     </template>

@@ -29,8 +29,8 @@ export const updateDepartmentCommunity = (data: DepartmentCommunityPostForm) =>
 export const delDepartmentCommunity = (id: string | number) =>
   request({ url: '/department/community/post/' + id, method: 'delete' });
 
-export const listDepartmentCommunityComments = (postId: string | number): AxiosPromise<DepartmentCommunityCommentVO[]> =>
-  request({ url: '/department/community/' + postId + '/comments', method: 'get' });
+export const listDepartmentCommunityComments = (postId: string | number, query: PageQuery): AxiosPromise<PageResult<DepartmentCommunityCommentVO>> =>
+  request({ url: '/department/community/' + postId + '/comments', method: 'get', params: query });
 
 export const addDepartmentCommunityComment = (postId: string | number, data: DepartmentCommunityCommentForm) =>
   request({ url: '/department/community/' + postId + '/comments', method: 'post', data });

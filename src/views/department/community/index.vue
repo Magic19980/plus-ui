@@ -92,7 +92,12 @@
                 <h3>{{ post.title }}</h3>
                 <p v-if="post.subtitle" class="post-subtitle">{{ post.subtitle }}</p>
                 <div class="post-content-scroll">
-                  <p>{{ postContentPreview(post.content) }}</p>
+                  <CommunityTiptapEditor
+                    :model-value="post.content"
+                    read-only
+                    :min-height="0"
+                    :max-length="10000"
+                  />
                   <div v-if="splitTags(post.tags).length" class="post-tags">
                     <el-tag v-for="tag in splitTags(post.tags)" :key="tag" size="small" effect="plain"># {{ tag }}</el-tag>
                   </div>
@@ -111,7 +116,7 @@
             </div>
             <section v-if="expandedCommentPostId === post.id" class="post-comments-panel" @click.stop>
               <div class="comments-panel-head">
-                <div><strong>讨论</strong><span>{{ comments.length }} 条评论</span><el-tag v-if="commentPost?.status === 'RESOLVED'" type="success" size="small" effect="plain" round>已解决</el-tag></div>
+                <div><strong>讨论</strong><span>{{ commentTotal }} 条评论</span><el-tag v-if="commentPost?.status === 'RESOLVED'" type="success" size="small" effect="plain" round>已解决</el-tag></div>
                 <el-button text @click="toggleComments(post)">收起</el-button>
               </div>
               <div v-loading="commentPanelLoading" class="comments-panel-body">
@@ -191,7 +196,10 @@
                       </div>
                     </div>
                   </div>
-                  <el-empty v-else :image-size="60" description="还没有评论，欢迎参与讨论" />
+                  <div v-if="commentHasMore" class="comments-load-more">
+                    <el-button link type="primary" :loading="commentLoadingMore" @click="loadMoreComments">查看剩余 {{ remainingCommentCount }} 条评论</el-button>
+                  </div>
+                  <el-empty v-if="!commentThreads.length" :image-size="60" description="还没有评论，欢迎参与讨论" />
                 </template>
               </div>
             </section>
@@ -537,6 +545,10 @@ const postDialog = reactive({ visible: false, title: '发布内容' });
 const expandedCommentPostId = ref<string | number>();
 const commentPost = ref<DepartmentCommunityPostVO>();
 const comments = ref<DepartmentCommunityCommentVO[]>([]);
+const commentTotal = ref(0);
+const commentPage = ref(1);
+const commentLoadingMore = ref(false);
+const COMMENT_PAGE_SIZE = 5;
 const replyingTo = ref<DepartmentCommunityCommentVO>();
 const commentInputRef = ref<any>();
 type CommentReplyThread = DepartmentCommunityCommentVO & {
@@ -581,6 +593,8 @@ const commentThreads = computed<CommentThread[]>(() => {
     return { comment, replies };
   });
 });
+const commentHasMore = computed(() => commentTotal.value > comments.value.length);
+const remainingCommentCount = computed(() => Math.max(commentTotal.value - comments.value.length, 0));
 const reportDialog = reactive({ visible: false });
 const postDetailDialog = reactive({ visible: false, loading: false });
 const detailPost = ref<DepartmentCommunityPostVO>();
@@ -1022,6 +1036,9 @@ const toggleComments = async (post: DepartmentCommunityPostVO) => {
     expandedCommentPostId.value = undefined;
     commentPost.value = undefined;
     comments.value = [];
+    commentTotal.value = 0;
+    commentPage.value = 1;
+    commentLoadingMore.value = false;
     cancelReply();
     commentForm.content = '';
     resetCommentMedia();
@@ -1031,6 +1048,9 @@ const toggleComments = async (post: DepartmentCommunityPostVO) => {
   commentPanelLoading.value = true;
   commentPost.value = undefined;
   comments.value = [];
+  commentTotal.value = 0;
+  commentPage.value = 1;
+  commentLoadingMore.value = false;
   replyingTo.value = undefined;
   commentForm.content = '';
   commentForm.parentId = 0;
@@ -1044,9 +1064,23 @@ const toggleComments = async (post: DepartmentCommunityPostVO) => {
   }
 };
 
-const loadComments = async (postId: string | number) => {
-  const res = await listDepartmentCommunityComments(postId);
-  comments.value = res.data || [];
+const loadComments = async (postId: string | number, pageNum = 1, append = false) => {
+  const res = await listDepartmentCommunityComments(postId, { pageNum, pageSize: COMMENT_PAGE_SIZE });
+  const page = res.data;
+  const rows = page?.rows || [];
+  comments.value = append ? [...comments.value, ...rows] : rows;
+  commentTotal.value = Number(page?.total || 0);
+  commentPage.value = pageNum;
+};
+
+const loadMoreComments = async () => {
+  if (!commentPost.value || commentLoadingMore.value || !commentHasMore.value) return;
+  commentLoadingMore.value = true;
+  try {
+    await loadComments(commentPost.value.id, commentPage.value + 1, true);
+  } finally {
+    commentLoadingMore.value = false;
+  }
 };
 
 const submitComment = async () => {
@@ -1071,7 +1105,7 @@ const submitComment = async () => {
     replyingTo.value = undefined;
     resetCommentMedia();
     await loadComments(commentPost.value.id);
-    commentPost.value.commentCount = comments.value.length;
+    commentPost.value.commentCount = commentTotal.value;
     await getList();
     modal.msgSuccess('评论已发表');
   } finally {
@@ -1111,7 +1145,7 @@ const handleDeleteComment = async (comment: DepartmentCommunityCommentVO) => {
   await delDepartmentCommunityComment(comment.id);
   if (commentPost.value) {
     await loadComments(commentPost.value.id);
-    commentPost.value.commentCount = comments.value.length;
+    commentPost.value.commentCount = commentTotal.value;
   }
   if (replyingTo.value?.id === comment.id) cancelReply();
   await getList();
@@ -1311,7 +1345,14 @@ onMounted(async () => {
   .post-content-scroll::-webkit-scrollbar { width: 6px; }
   .post-content-scroll::-webkit-scrollbar-track { background: transparent; }
   .post-content-scroll::-webkit-scrollbar-thumb { border-radius: 8px; background: #b5c7df; }
-  .post-content-scroll p { margin: 0; color: #687792; font-size: 14px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .post-content-scroll :deep(.community-tiptap-editor) { width: 100%; overflow: visible; }
+  /*
+   * 卡片预览只限制可视高度，不再覆盖富文本自身的排版参数。
+   * 编辑器、卡片和详情必须使用同一套段落/图片间距，否则浮动图片
+   * 下方的段落会因为行高不同，在不同容器中出现不同的环绕结果。
+   */
+  .post-content-scroll :deep(.tiptap) { padding: 0; color: #687792; }
+  .post-content-scroll :deep(.tiptap p) { white-space: pre-wrap; }
   .post-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
   .post-media-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .post-media-strip.is-single-media { grid-template-columns: minmax(0, 1fr); }
@@ -1449,6 +1490,8 @@ onMounted(async () => {
   .handled-text { color: #a2aec0; font-size: 12px; }
   .comment-submit { display: flex; justify-content: flex-end; margin-top: 0; margin-left: auto; }
   .comment-list { margin-top: 12px; padding: 3px 14px 5px; border: 1px solid var(--community-line); border-radius: 13px; background: var(--community-soft); }
+  .comments-load-more { display: flex; align-items: center; justify-content: center; min-height: 36px; margin-top: 8px; border-top: 1px solid var(--community-line); }
+  .comments-load-more :deep(.el-button) { margin: 0; color: var(--community-primary); font-size: 12px; }
   .comment-thread + .comment-thread { margin-top: 3px; }
   .comment-item { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid #f0f3f7; }
   .comment-item--root { padding-top: 6px; padding-bottom: 6px; border-top: 0; }
@@ -1526,6 +1569,7 @@ onMounted(async () => {
   .community-content-item,
   .community-content-item .el-form-item__content,
   .community-content-item .community-tiptap-editor { width: 100%; min-width: 0; }
+  .community-content-item .community-tiptap-editor { --community-editor-sticky-top: -24px; }
   .community-content-item .el-form-item__content { display: block; }
   .el-form-item__label { height: auto; margin-bottom: 6px; padding: 0; color: #51627d; font-size: 12px; font-weight: 700; line-height: 1.4; }
   .el-input__wrapper, .el-textarea__inner, .el-select__wrapper { border-radius: 9px; }
@@ -1623,7 +1667,8 @@ onMounted(async () => {
   .post-detail-author-line strong { color: #2b3b58; font-size: 13px; }
   .post-detail-author > div > span { display: block; margin-top: 3px; color: #9aa8ba; font-size: 11px; }
   .post-detail-divider { height: 1px; margin: 20px 0; background: #edf1f6; }
-  .post-detail-copy p { margin: 0; color: #526681; font-size: 15px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; }
+  /* 正文排版继承 CommunityTiptapEditor，确保详情与编辑器保持一致。 */
+  .post-detail-copy p { color: #526681; white-space: pre-wrap; overflow-wrap: anywhere; }
   .post-detail-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
   .post-detail-media-section { margin-top: 24px; padding-top: 18px; border-top: 1px solid #edf1f6; }
   .post-detail-section-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 12px; }
@@ -1746,6 +1791,7 @@ html.dark .community-post-detail-dialog,
     width: calc(100vw - 24px) !important;
 
     .el-dialog__body { padding: 16px; }
+    .community-content-item .community-tiptap-editor { --community-editor-sticky-top: -16px; }
     .form-grid { grid-template-columns: 1fr; gap: 0; }
     .media-upload-row { flex-direction: column; }
     .community-media-uploader { flex-basis: auto; }
@@ -1987,6 +2033,7 @@ html.dark .department-community-page,
   .media-field { background: #182337; }
   .report-tip { color: #a1b0c5; background: #1b293e; }
   .comment-item { border-top-color: #26354b; }
+  .comments-load-more { border-top-color: #2a3850; }
   .comment-replies { border-left-color: #466b94; }
   .comment-item--reply { border-top-color: #2a3850; }
   .comment-time { color: #8fa3bd; }

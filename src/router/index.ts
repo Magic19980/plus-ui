@@ -53,6 +53,20 @@ export const constantRoutes: RouteRecordRaw[] = [
     hidden: true
   },
   {
+    // 顶部“问题与建议”快捷入口不依赖动态菜单，避免菜单未刷新时被 404 拦截。
+    path: '/platform-feedback',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/department/platformFeedback/index.vue'),
+        name: 'PlatformFeedbackShortcut',
+        meta: { title: '问题与建议中心', icon: 'message' }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     component: () => import('@/views/error/404.vue'),
     hidden: true

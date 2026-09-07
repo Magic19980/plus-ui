@@ -1,6 +1,7 @@
 <template>
   <div class="community-tiptap-editor" :class="{ 'is-readonly': readOnly, 'is-uploading': uploading }">
-    <div v-if="!readOnly" class="tiptap-toolbar" role="toolbar" aria-label="正文排版工具">
+    <div v-if="!readOnly" class="tiptap-tools-sticky">
+      <div class="tiptap-toolbar" role="toolbar" aria-label="正文排版工具" @mousedown.capture="preserveToolbarSelection">
       <div class="toolbar-group toolbar-history-group">
         <button type="button" class="toolbar-button toolbar-icon-button" title="撤销" aria-label="撤销" :disabled="!editor?.can().undo()" @click="editor?.chain().focus().undo().run()"><TiptapToolbarIcon name="undo" /></button>
         <button type="button" class="toolbar-button toolbar-icon-button" title="重做" aria-label="重做" :disabled="!editor?.can().redo()" @click="editor?.chain().focus().redo().run()"><TiptapToolbarIcon name="redo" /></button>
@@ -65,12 +66,27 @@
         <button type="button" class="toolbar-button" :class="{ active: editor?.isActive('subscript') }" title="下标" aria-label="下标" @click="toggleSubscript"><TiptapToolbarIcon name="subscript" /></button>
       </div>
       <span class="toolbar-divider" />
-      <div class="toolbar-group">
+      <div v-if="!isImageSelected" class="toolbar-group">
         <button type="button" class="toolbar-button toolbar-align-button" :class="{ active: editor?.isActive({ textAlign: 'left' }) }" title="左对齐" aria-label="左对齐" @click="setTextAlign('left')"><TiptapToolbarIcon name="align-left" /></button>
         <button type="button" class="toolbar-button toolbar-align-button" :class="{ active: editor?.isActive({ textAlign: 'center' }) }" title="居中" aria-label="居中" @click="setTextAlign('center')"><TiptapToolbarIcon name="align-center" /></button>
         <button type="button" class="toolbar-button toolbar-align-button" :class="{ active: editor?.isActive({ textAlign: 'right' }) }" title="右对齐" aria-label="右对齐" @click="setTextAlign('right')"><TiptapToolbarIcon name="align-right" /></button>
         <button type="button" class="toolbar-button toolbar-align-button" :class="{ active: editor?.isActive({ textAlign: 'justify' }) }" title="两端对齐" aria-label="两端对齐" @click="setTextAlign('justify')"><TiptapToolbarIcon name="align-justify" /></button>
       </div>
+      <div v-else class="toolbar-group toolbar-image-align-group" aria-label="图片对齐方式">
+        <button type="button" class="toolbar-button toolbar-align-button" :class="{ active: selectedImageAlign === 'left' }" title="图片左对齐" aria-label="图片左对齐" @click="setImageAlign('left')"><TiptapToolbarIcon name="align-left" /></button>
+        <button type="button" class="toolbar-button toolbar-align-button" :class="{ active: selectedImageAlign === 'center' }" title="图片居中" aria-label="图片居中" @click="setImageAlign('center')"><TiptapToolbarIcon name="align-center" /></button>
+        <button type="button" class="toolbar-button toolbar-align-button" :class="{ active: selectedImageAlign === 'right' }" title="图片右对齐" aria-label="图片右对齐" @click="setImageAlign('right')"><TiptapToolbarIcon name="align-right" /></button>
+      </div>
+      <el-dropdown v-if="isImageSelected" class="toolbar-image-wrap-dropdown" trigger="click" @command="handleImageWrapCommand">
+        <button type="button" class="toolbar-dropdown-trigger toolbar-image-wrap-button" :class="{ active: selectedImageWrap !== 'none' }" title="文字环绕" aria-label="打开文字环绕菜单"><TiptapToolbarIcon name="text-wrap" /><span>{{ imageWrapLabel }}</span><TiptapToolbarIcon name="chevron-down" :size="13" /></button>
+        <template #dropdown>
+          <el-dropdown-menu class="community-image-wrap-menu" @mousedown.capture="preserveToolbarSelection">
+            <el-dropdown-item command="none" :class="{ 'is-current': selectedImageWrap === 'none' }"><TiptapToolbarIcon name="text-wrap" />无环绕</el-dropdown-item>
+            <el-dropdown-item command="left" :class="{ 'is-current': selectedImageWrap === 'left' }"><TiptapToolbarIcon name="align-left" />左侧环绕</el-dropdown-item>
+            <el-dropdown-item command="right" :class="{ 'is-current': selectedImageWrap === 'right' }"><TiptapToolbarIcon name="align-right" />右侧环绕</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <span class="toolbar-divider" />
       <div class="toolbar-group">
         <el-dropdown class="toolbar-insert-dropdown" trigger="click" @command="handleInsertCommand">
@@ -80,6 +96,7 @@
               <el-dropdown-item command="image"><TiptapToolbarIcon name="image-plus" />图片</el-dropdown-item>
               <el-dropdown-item command="table"><TiptapToolbarIcon name="table" />表格</el-dropdown-item>
               <el-dropdown-item command="code-block"><TiptapToolbarIcon name="code-block" />代码块</el-dropdown-item>
+              <el-dropdown-item divided command="clear-float"><TiptapToolbarIcon name="clear-format" />结束文字环绕</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -107,7 +124,7 @@
               <el-dropdown-item command="50%" :class="{ 'is-current': selectedImageWidth === '50%' }">较小 <span>50%</span></el-dropdown-item>
               <el-dropdown-item command="70%" :class="{ 'is-current': selectedImageWidth === '70%' }">标准 <span>70%</span></el-dropdown-item>
               <el-dropdown-item command="100%" :class="{ 'is-current': selectedImageWidth === '100%' }">铺满 <span>100%</span></el-dropdown-item>
-              <el-dropdown-item command="original" :class="{ 'is-current': !selectedImageWidth }">原始比例</el-dropdown-item>
+              <el-dropdown-item command="original" :class="{ 'is-current': !selectedImageWidth }">自适应宽度</el-dropdown-item>
               <el-dropdown-item command="custom">自定义宽度…</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -117,23 +134,24 @@
       <span class="toolbar-spacer" />
       <button type="button" class="toolbar-button toolbar-icon-button toolbar-search-button" :class="{ active: searchOpen }" title="查找和替换" aria-label="查找和替换" @click="toggleSearch"><TiptapToolbarIcon name="search" /></button>
       <span class="toolbar-count"><strong>{{ characterCount }}</strong><span>/{{ maxLength }}</span></span>
-    </div>
+      </div>
 
-    <div v-if="searchOpen" class="tiptap-search-panel" role="search">
-      <div class="tiptap-search-field"><TiptapToolbarIcon name="search" :size="15" /><input v-model="searchTerm" type="search" placeholder="查找正文" aria-label="查找正文" @input="updateSearchMatches" @keydown.enter.prevent="findNext(1)" /><span v-if="searchTerm" class="tiptap-search-count">{{ searchMatches.length ? `${searchIndex + 1}/${searchMatches.length}` : '无匹配' }}</span></div>
-      <button type="button" class="search-action-button" title="上一个" aria-label="上一个匹配项" :disabled="!searchMatches.length" @click="findNext(-1)">↑</button>
-      <button type="button" class="search-action-button" title="下一个" aria-label="下一个匹配项" :disabled="!searchMatches.length" @click="findNext(1)">↓</button>
-      <input v-model="replaceText" class="tiptap-replace-input" type="text" placeholder="替换为" aria-label="替换为" @keydown.enter.prevent="replaceCurrent" />
-      <button type="button" class="search-text-button" :disabled="!searchMatches.length" @click="replaceCurrent">替换</button>
-      <button type="button" class="search-text-button" :disabled="!searchMatches.length" @click="replaceAll">全部替换</button>
-      <button type="button" class="search-close-button" title="关闭查找和替换" aria-label="关闭查找和替换" @click="searchOpen = false">×</button>
+      <div v-if="searchOpen" class="tiptap-search-panel" role="search">
+        <div class="tiptap-search-field"><TiptapToolbarIcon name="search" :size="15" /><input v-model="searchTerm" type="search" placeholder="查找正文" aria-label="查找正文" @input="updateSearchMatches" @keydown.enter.prevent="findNext(1)" /><span v-if="searchTerm" class="tiptap-search-count">{{ searchMatches.length ? `${searchIndex + 1}/${searchMatches.length}` : '无匹配' }}</span></div>
+        <button type="button" class="search-action-button" title="上一个" aria-label="上一个匹配项" :disabled="!searchMatches.length" @click="findNext(-1)">↑</button>
+        <button type="button" class="search-action-button" title="下一个" aria-label="下一个匹配项" :disabled="!searchMatches.length" @click="findNext(1)">↓</button>
+        <input v-model="replaceText" class="tiptap-replace-input" type="text" placeholder="替换为" aria-label="替换为" @keydown.enter.prevent="replaceCurrent" />
+        <button type="button" class="search-text-button" :disabled="!searchMatches.length" @click="replaceCurrent">替换</button>
+        <button type="button" class="search-text-button" :disabled="!searchMatches.length" @click="replaceAll">全部替换</button>
+        <button type="button" class="search-close-button" title="关闭查找和替换" aria-label="关闭查找和替换" @click="searchOpen = false">×</button>
+      </div>
     </div>
 
     <div class="tiptap-content-shell" :style="contentShellStyle">
       <EditorContent :editor="editor" />
       <div v-if="uploading" class="tiptap-uploading-indicator"><span class="upload-spinner" />正在插入图片…</div>
     </div>
-    <div v-if="!readOnly" class="tiptap-editor-hint">点击正文中的图片，可在工具栏调整显示宽度；图片会保持原比例。</div>
+    <div v-if="!readOnly" class="tiptap-editor-hint">选中正文中的图片，可设置左/中/右对齐或文字环绕；拖动图片右下角可调整宽度。需要结束环绕时，把光标放到目标位置，在“添加”菜单选择“结束文字环绕”。</div>
 
     <input ref="imageInputRef" class="tiptap-image-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple @change="handleImageChange" />
   </div>
@@ -142,6 +160,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import { EditorContent, useEditor } from '@tiptap/vue-3';
+import { Node as TiptapNode } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -157,6 +176,34 @@ import { getToken } from '@/utils/auth';
 
 const OSS_MARKER_RE = /oss:\/\/([\w-]+)/g;
 const baseUrl = import.meta.env.VITE_APP_BASE_API;
+const IMAGE_MIN_WIDTH = 120;
+
+const parseImageWidth = (element: HTMLElement) => {
+  const value = element.style.width || element.getAttribute('width') || '';
+  const normalizedValue = value.trim();
+  if (!normalizedValue) return null;
+  return /^\d+(?:\.\d+)?$/.test(normalizedValue) ? `${normalizedValue}px` : normalizedValue;
+};
+
+const normalizeImageWidth = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return `${value}px`;
+  if (typeof value !== 'string') return null;
+  const normalizedValue = value.trim();
+  return /^(?:\d+(?:\.\d+)?%|\d+(?:\.\d+)?px)$/.test(normalizedValue) ? normalizedValue : null;
+};
+
+const ClearFloat = TiptapNode.create({
+  name: 'clearFloat',
+  group: 'block',
+  atom: true,
+  selectable: false,
+  parseHTML() {
+    return [{ tag: 'div[data-type="clear-float"]' }];
+  },
+  renderHTML() {
+    return ['div', { 'data-type': 'clear-float', class: 'community-clear-float' }];
+  }
+});
 
 const ResizableImage = Image.extend({
   addAttributes() {
@@ -164,9 +211,164 @@ const ResizableImage = Image.extend({
       ...this.parent?.(),
       width: {
         default: null,
-        parseHTML: element => element.getAttribute('width') || element.style.width || null,
-        renderHTML: attributes => (attributes.width ? { style: `width: ${attributes.width}; height: auto;` } : {})
+        parseHTML: parseImageWidth,
+        renderHTML: attributes => {
+          const width = normalizeImageWidth(attributes.width);
+          return width ? { style: `width: ${width}; height: auto;` } : {};
+        }
+      },
+      height: {
+        default: null,
+        parseHTML: () => null,
+        renderHTML: () => ({})
+      },
+      align: {
+        default: 'left',
+        parseHTML: element => {
+          const align = element.getAttribute('data-align');
+          return align === 'center' || align === 'right' ? align : 'left';
+        },
+        renderHTML: attributes => ({ 'data-align': attributes.align || 'left' })
+      },
+      wrap: {
+        default: 'none',
+        parseHTML: element => {
+          const wrap = element.getAttribute('data-wrap');
+          if (wrap === 'left' || wrap === 'right') return wrap;
+          const float = element.style.getPropertyValue('float').trim();
+          return float === 'left' || float === 'right' ? float : 'none';
+        },
+        renderHTML: attributes => {
+          const wrap = attributes.wrap === 'left' || attributes.wrap === 'right' ? attributes.wrap : 'none';
+          const layoutStyle = wrap === 'left'
+            ? 'float: left;'
+            : wrap === 'right'
+              ? 'float: right;'
+              : 'float: none;';
+          return { 'data-wrap': wrap, style: layoutStyle };
+        }
       }
+    };
+  },
+  addNodeView() {
+    const nodeName = this.name;
+    return ({ node, getPos, editor }) => {
+      let currentNode = node;
+      let cleanupResize = () => {};
+      const wrapper = document.createElement('div');
+      const image = document.createElement('img');
+      const resizeHandle = document.createElement('span');
+
+      wrapper.className = 'community-inline-image-node';
+      wrapper.contentEditable = 'false';
+      image.className = 'community-inline-image';
+      image.draggable = false;
+      resizeHandle.className = 'community-inline-image-resize-handle';
+      resizeHandle.setAttribute('aria-hidden', 'true');
+      wrapper.append(image, resizeHandle);
+
+      const getNodePosition = () => {
+        const position = getPos();
+        return typeof position === 'number' ? position : null;
+      };
+
+      const syncImageLayout = () => {
+        const attrs = currentNode.attrs;
+        const width = normalizeImageWidth(attrs.width);
+        const align = attrs.align === 'center' || attrs.align === 'right' ? attrs.align : 'left';
+        const wrap = attrs.wrap === 'left' || attrs.wrap === 'right' ? attrs.wrap : 'none';
+        const src = typeof attrs.src === 'string' ? attrs.src : '';
+        const alt = typeof attrs.alt === 'string' ? attrs.alt : '';
+        const title = typeof attrs.title === 'string' ? attrs.title : '';
+
+        wrapper.dataset.align = align;
+        wrapper.dataset.wrap = wrap;
+        wrapper.dataset.editable = String(editor.isEditable);
+        wrapper.style.width = width || 'max-content';
+        wrapper.style.maxWidth = '100%';
+        wrapper.style.float = wrap === 'left' ? 'left' : wrap === 'right' ? 'right' : 'none';
+        wrapper.style.marginLeft = wrap === 'right' ? '20px' : align === 'center' ? 'auto' : align === 'right' ? 'auto' : '0';
+        wrapper.style.marginRight = wrap === 'left' ? '20px' : align === 'center' ? 'auto' : align === 'left' ? 'auto' : '0';
+        image.style.width = width ? '100%' : 'auto';
+        image.style.height = 'auto';
+        image.src = src;
+        image.alt = alt;
+        if (title) image.title = title;
+        else image.removeAttribute('title');
+        image.dataset.align = align;
+        image.dataset.wrap = wrap;
+      };
+
+      const selectImage = (event: MouseEvent) => {
+        if (!editor.isEditable) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const position = getNodePosition();
+        if (position !== null) editor.commands.setNodeSelection(position);
+      };
+
+      const handleResizeStart = (event: PointerEvent) => {
+        if (!editor.isEditable) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const startRect = image.getBoundingClientRect();
+        const startWidth = startRect.width;
+        if (!startWidth) return;
+        const startX = event.clientX;
+        const editorWidth = editor.view.dom.clientWidth;
+        const maxWidth = Math.max(IMAGE_MIN_WIDTH, editorWidth || startWidth);
+        wrapper.classList.add('is-resizing');
+
+        const handleResizeMove = (moveEvent: PointerEvent) => {
+          const nextWidth = Math.min(maxWidth, Math.max(IMAGE_MIN_WIDTH, startWidth + moveEvent.clientX - startX));
+          wrapper.style.width = `${nextWidth}px`;
+          image.style.width = '100%';
+          image.style.height = 'auto';
+        };
+
+        const finishResize = () => {
+          const finalWidth = Math.round(Math.min(maxWidth, Math.max(IMAGE_MIN_WIDTH, image.getBoundingClientRect().width)));
+          cleanupResize();
+          const position = getNodePosition();
+          if (position !== null) {
+            editor.chain().focus().setNodeSelection(position).updateAttributes(nodeName, { width: `${finalWidth}px`, height: null }).run();
+          }
+        };
+
+        cleanupResize = () => {
+          wrapper.classList.remove('is-resizing');
+          document.removeEventListener('pointermove', handleResizeMove);
+          document.removeEventListener('pointerup', finishResize);
+          document.removeEventListener('pointercancel', finishResize);
+          cleanupResize = () => {};
+        };
+        document.addEventListener('pointermove', handleResizeMove);
+        document.addEventListener('pointerup', finishResize, { once: true });
+        document.addEventListener('pointercancel', finishResize, { once: true });
+      };
+
+      syncImageLayout();
+      image.addEventListener('click', selectImage);
+      resizeHandle.addEventListener('pointerdown', handleResizeStart);
+
+      return {
+        dom: wrapper,
+        update: updatedNode => {
+          if (updatedNode.type !== currentNode.type) return false;
+          currentNode = updatedNode;
+          syncImageLayout();
+          return true;
+        },
+        selectNode: () => wrapper.classList.add('ProseMirror-selectednode'),
+        deselectNode: () => wrapper.classList.remove('ProseMirror-selectednode'),
+        stopEvent: event => event.target === resizeHandle,
+        ignoreMutation: () => true,
+        destroy: () => {
+          cleanupResize();
+          image.removeEventListener('click', selectImage);
+          resizeHandle.removeEventListener('pointerdown', handleResizeStart);
+        }
+      };
     };
   }
 });
@@ -325,6 +527,9 @@ const emit = defineEmits<{
 const imageInputRef = ref<HTMLInputElement>();
 const uploading = ref(false);
 const selectedImageWidth = ref<string | null>(null);
+const selectedImageAlign = ref<'left' | 'center' | 'right'>('left');
+const selectedImageWrap = ref<'none' | 'left' | 'right'>('none');
+const lastImageSelectionPosition = ref<number | null>(null);
 const editorStateTick = ref(0);
 const searchOpen = ref(false);
 const searchTerm = ref('');
@@ -364,6 +569,16 @@ const isInTable = computed(() => {
   editorStateTick.value;
   return Boolean(editor.value?.isActive('table'));
 });
+const isImageSelected = computed(() => {
+  editorStateTick.value;
+  return Boolean(editor.value?.isActive('image'));
+});
+const imageWrapLabel = computed(() => {
+  editorStateTick.value;
+  if (selectedImageWrap.value === 'left') return '左环绕';
+  if (selectedImageWrap.value === 'right') return '右环绕';
+  return '无环绕';
+});
 
 const editor = useEditor({
   editable: !props.readOnly,
@@ -378,6 +593,7 @@ const editor = useEditor({
     Subscript,
     TaskList,
     TaskItem,
+    ClearFloat,
     TableKit.configure({
       table: {
         resizable: true,
@@ -407,11 +623,11 @@ const editor = useEditor({
   content: '',
   onUpdate: ({ editor: currentEditor }) => {
     if (isResolvingContent.value) return;
-    syncSelectedImageWidth();
+    syncSelectedImageState();
     emitEncodedContent(currentEditor.getHTML());
   },
   onSelectionUpdate: () => {
-    syncSelectedImageWidth();
+    syncSelectedImageState();
   },
   onCreate: () => {
     void syncExternalContent();
@@ -430,8 +646,16 @@ const buildPreviewUrl = (ossId: string | number) => {
 
 const encodeOssContent = (html: string) => {
   let result = html || '';
+  const escapeHtmlAttribute = (value: string) => value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
   for (const [url, ossId] of ossUrlToId) {
-    result = result.replaceAll(url, `oss://${ossId}`);
+    // getHTML() 会把图片 URL 的 & 序列化为 &amp;，两种形态都要转换为稳定标识。
+    result = result
+      .replaceAll(escapeHtmlAttribute(url), `oss://${ossId}`)
+      .replaceAll(url, `oss://${ossId}`);
   }
   return result;
 };
@@ -513,6 +737,7 @@ const handleInsertCommand = (command: string | number) => {
   if (command === 'image') openImagePicker();
   if (command === 'table') editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   if (command === 'code-block') toggleCodeBlock();
+  if (command === 'clear-float') insertClearFloat();
 };
 const handleTableCommand = (command: string | number) => {
   if (!editor.value) return;
@@ -632,15 +857,65 @@ const toggleSearch = () => {
   }
 };
 
-const syncSelectedImageWidth = () => {
+const preserveToolbarSelection = (event: MouseEvent) => {
+  if (event.button !== 0) return;
+  const target = event.target as HTMLElement | null;
+  if (target?.closest('button, .el-dropdown, .el-dropdown-menu, .el-popover, .el-popover__reference')) event.preventDefault();
+};
+
+const syncSelectedImageState = () => {
   editorStateTick.value += 1;
-  selectedImageWidth.value = editor.value?.isActive('image') ? editor.value.getAttributes('image').width || null : null;
+  if (!editor.value?.isActive('image')) {
+    selectedImageWidth.value = null;
+    selectedImageAlign.value = 'left';
+    selectedImageWrap.value = 'none';
+    return;
+  }
+  lastImageSelectionPosition.value = editor.value.state.selection.from;
+  const attributes = editor.value.getAttributes('image');
+  selectedImageWidth.value = attributes.width || null;
+  selectedImageAlign.value = attributes.align === 'center' || attributes.align === 'right' ? attributes.align : 'left';
+  selectedImageWrap.value = attributes.wrap === 'left' || attributes.wrap === 'right' ? attributes.wrap : 'none';
+};
+
+const updateSelectedImageAttributes = (attributes: Record<string, unknown>) => {
+  if (!editor.value) return false;
+  const position = lastImageSelectionPosition.value;
+  if (position === null || editor.value.state.doc.nodeAt(position)?.type.name !== 'image') return false;
+  return editor.value.chain().focus().setNodeSelection(position).updateAttributes('image', attributes).run();
 };
 
 const setImageWidth = (width: string | null) => {
-  if (!editor.value?.isActive('image')) return;
-  editor.value.chain().focus().updateAttributes('image', { width }).run();
+  if (!updateSelectedImageAttributes({ width })) return;
   selectedImageWidth.value = width;
+};
+
+const setImageAlign = (align: 'left' | 'center' | 'right') => {
+  if (!updateSelectedImageAttributes({ align, wrap: 'none' })) return;
+  selectedImageAlign.value = align;
+  selectedImageWrap.value = 'none';
+};
+
+const setImageWrap = (wrap: 'none' | 'left' | 'right') => {
+  const attributes = wrap === 'none' ? { wrap } : { wrap, align: wrap };
+  if (!updateSelectedImageAttributes(attributes)) return;
+  selectedImageWrap.value = wrap;
+  if (wrap !== 'none') selectedImageAlign.value = wrap;
+};
+
+const insertClearFloat = () => {
+  if (!editor.value) return;
+  const position = editor.value.state.selection.to;
+  editor.value.chain().focus().insertContentAt(position, { type: 'clearFloat' }).run();
+};
+
+const handleImageWrapCommand = (command: string | number) => {
+  const value = String(command);
+  if (value === 'clear-float') {
+    insertClearFloat();
+    return;
+  }
+  if (value === 'none' || value === 'left' || value === 'right') setImageWrap(value);
 };
 
 const handleImageSizeCommand = (command: string | number) => {
@@ -658,11 +933,19 @@ const setCustomImageWidth = () => {
   const currentWidth = selectedImageWidth.value || '70%';
   const width = window.prompt('请输入图片宽度，例如 60% 或 480px', currentWidth)?.trim();
   if (!width) return;
-  if (!/^(?:\d+(?:\.\d+)?%|\d+(?:\.\d+)?px|auto)$/.test(width)) {
+  const normalizedWidth = width.replace(/\s+/g, '');
+  const widthMatch = normalizedWidth.match(/^(\d+(?:\.\d+)?)(%|px)$/);
+  if (!widthMatch) {
     modal.msgWarning('宽度请填写百分比或像素值，例如 60% 或 480px');
     return;
   }
-  setImageWidth(width);
+  const numericWidth = Number(widthMatch[1]);
+  const unit = widthMatch[2];
+  if (numericWidth <= 0 || (unit === '%' && numericWidth > 100)) {
+    modal.msgWarning('百分比宽度需大于0且不超过100%，像素宽度需大于0');
+    return;
+  }
+  setImageWidth(`${numericWidth}${unit}`);
 };
 
 const openImagePicker = () => imageInputRef.value?.click();
@@ -687,7 +970,9 @@ const uploadInlineImage = async (file: File) => {
       src: media.previewUrl,
       alt: media.fileName || file.name,
       title: media.fileName || file.name,
-      width: '70%'
+      width: '70%',
+      align: 'left',
+      wrap: 'none'
     }
   };
 };
@@ -724,9 +1009,10 @@ watch(() => props.modelValue, () => {
 </script>
 
 <style scoped lang="scss">
-.community-tiptap-editor { width: 100%; box-sizing: border-box; overflow: hidden; border: 1px solid #dce5f0; border-radius: 12px; background: #fff; transition: border-color .2s, box-shadow .2s; }
+.community-tiptap-editor { width: 100%; box-sizing: border-box; overflow: clip; border: 1px solid #dce5f0; border-radius: 12px; background: #fff; transition: border-color .2s, box-shadow .2s; }
 .community-tiptap-editor:focus-within { border-color: #70a9e8; box-shadow: 0 0 0 3px rgba(83, 151, 226, .12); }
 .community-tiptap-editor.is-readonly { border: 0; border-radius: 0; background: transparent; }
+.tiptap-tools-sticky { position: sticky; z-index: 10; top: var(--community-editor-sticky-top, 0px); overflow: hidden; border-radius: 11px 11px 0 0; background: #fbfcfe; box-shadow: 0 6px 14px rgba(44, 76, 115, .08); }
 .tiptap-toolbar { display: flex; min-height: 48px; flex-wrap: wrap; align-items: center; align-content: center; gap: 2px; padding: 6px 10px; border-bottom: 1px solid #e8eef6; background: #fbfcfe; white-space: nowrap; }
 .toolbar-group { display: inline-flex; align-items: center; gap: 1px; }
 .toolbar-button, .toolbar-dropdown-trigger { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; gap: 5px; padding: 0; border: 1px solid transparent; border-radius: 7px; color: #66768c; background: transparent; cursor: pointer; font-size: 12px; font-weight: 600; line-height: 1; transition: color .2s, border-color .2s, background .2s; }
@@ -736,11 +1022,12 @@ watch(() => props.modelValue, () => {
 .toolbar-dropdown-trigger { min-width: 30px; padding: 0 7px; }
 .toolbar-dropdown-trigger .tiptap-toolbar-icon:last-child { color: #94a3b8; }
 .toolbar-dropdown-trigger span { white-space: nowrap; }
-.toolbar-heading-dropdown, .toolbar-list-dropdown, .toolbar-insert-dropdown, .toolbar-image-dropdown { display: inline-flex; }
+.toolbar-heading-dropdown, .toolbar-list-dropdown, .toolbar-insert-dropdown, .toolbar-image-dropdown, .toolbar-image-wrap-dropdown { display: inline-flex; }
 .toolbar-heading-dropdown .toolbar-dropdown-trigger { min-width: 74px; }
 .toolbar-list-dropdown .toolbar-dropdown-trigger { min-width: 48px; }
 .toolbar-insert-button { width: auto; min-width: 68px; }
 .toolbar-image-size-button { min-width: 50px; }
+.toolbar-image-wrap-button { width: auto; min-width: 84px; }
 .toolbar-align-button { width: 29px; padding: 0; }
 .toolbar-divider { width: 1px; height: 18px; margin: 0 5px; background: #dce5f0; }
 .toolbar-spacer { flex: 1 1 12px; min-width: 12px; }
@@ -776,6 +1063,10 @@ watch(() => props.modelValue, () => {
 .community-table-menu .el-dropdown-menu__item { border-radius: 6px; font-size: 12px; line-height: 30px; }
 .community-table-menu .el-dropdown-menu__item:hover { color: #3d8ddd; background: #eef6ff; }
 .community-table-menu .el-dropdown-menu__item.is-divided { margin-top: 5px; border-top-color: #e8eef6; }
+.community-image-wrap-menu { min-width: 142px; padding: 5px; border-radius: 10px; }
+.community-image-wrap-menu .el-dropdown-menu__item { display: flex; align-items: center; gap: 9px; border-radius: 6px; font-size: 12px; line-height: 30px; }
+.community-image-wrap-menu .el-dropdown-menu__item:hover, .community-image-wrap-menu .el-dropdown-menu__item.is-current { color: #3d8ddd; background: #eef6ff; }
+.community-image-wrap-menu .el-dropdown-menu__item.is-divided { margin-top: 5px; border-top-color: #e8eef6; }
 .tiptap-search-panel { display: flex; align-items: center; gap: 5px; padding: 7px 10px; border-bottom: 1px solid #e8eef6; background: #fff; }
 .tiptap-search-field { display: flex; min-width: 180px; height: 30px; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid #dfe7f1; border-radius: 7px; color: #8b9aae; background: #fbfcfe; }
 .tiptap-search-field input, .tiptap-replace-input { min-width: 0; border: 0; outline: 0; color: #52647e; background: transparent; font-size: 12px; }
@@ -794,7 +1085,7 @@ watch(() => props.modelValue, () => {
 .tiptap-uploading-indicator { position: absolute; right: 16px; bottom: 14px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid #cfe3f9; border-radius: 8px; color: #4a8ed2; background: rgba(244, 249, 255, .95); font-size: 12px; }
 .upload-spinner { width: 12px; height: 12px; border: 2px solid #b9d7f3; border-top-color: #4d99e3; border-radius: 50%; animation: tiptap-spin .8s linear infinite; }
 
-:deep(.tiptap) { min-height: inherit; box-sizing: border-box; padding: 20px 22px; outline: none; color: #43536c; font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
+:deep(.tiptap) { min-height: inherit; box-sizing: border-box; padding: 20px 22px; outline: none; color: #43536c; font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; display: flow-root; }
 .is-readonly :deep(.tiptap) { min-height: 0; padding: 0; color: #52647e; }
 :deep(.tiptap p) { margin: 0 0 12px; }
 :deep(.tiptap p:last-child) { margin-bottom: 0; }
@@ -815,9 +1106,27 @@ watch(() => props.modelValue, () => {
 :deep(.tiptap pre code) { padding: 0; color: inherit; background: transparent; }
 :deep(.tiptap mark) { padding: 0 2px; }
 :deep(.tiptap sup), :deep(.tiptap sub) { line-height: 0; }
-:deep(.tiptap img) { display: block; max-width: 100%; max-height: 420px; height: auto; margin: 12px auto; border-radius: 9px; object-fit: contain; box-shadow: 0 6px 18px rgba(37, 71, 111, .12); }
-.is-readonly :deep(.tiptap img) { max-height: 680px; }
-:deep(.tiptap img.ProseMirror-selectednode) { outline: 2px solid #5a9fe6; outline-offset: 3px; }
+:deep(.tiptap img) { display: block; max-width: 100%; height: auto; margin: 12px 0; border-radius: 9px; box-shadow: 0 6px 18px rgba(37, 71, 111, .12); }
+:deep(.tiptap img[data-align='left']) { margin-left: 0; margin-right: auto; }
+:deep(.tiptap img[data-align='center']) { margin-left: auto; margin-right: auto; }
+:deep(.tiptap img[data-align='right']) { margin-left: auto; margin-right: 0; }
+:deep(.tiptap img[data-wrap='left']) { float: left; margin-left: 0; margin-right: 20px; }
+:deep(.tiptap img[data-wrap='right']) { float: right; margin-left: 20px; margin-right: 0; }
+:deep(.community-inline-image-node) { position: relative; display: block; width: max-content; max-width: 100%; margin: 12px 0; }
+:deep(.community-inline-image-node[data-align='left']) { margin-left: 0; margin-right: auto; }
+:deep(.community-inline-image-node[data-align='center']) { margin-left: auto; margin-right: auto; }
+:deep(.community-inline-image-node[data-align='right']) { margin-left: auto; margin-right: 0; }
+:deep(.community-inline-image-node[data-wrap='left']) { float: left; margin-left: 0; margin-right: 20px; }
+:deep(.community-inline-image-node[data-wrap='right']) { float: right; margin-left: 20px; margin-right: 0; }
+:deep(.community-inline-image-node[data-wrap='none']) { float: none; }
+:deep(.community-inline-image-node img.community-inline-image) { width: auto; max-width: 100%; height: auto; margin: 0; border-radius: 9px; box-shadow: 0 6px 18px rgba(37, 71, 111, .12); }
+:deep(.community-inline-image-node .community-inline-image-resize-handle) { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; box-sizing: border-box; border: 2px solid #fff; border-radius: 50%; background: #4d99e3; box-shadow: 0 2px 6px rgba(33, 77, 125, .28); cursor: nwse-resize; opacity: 0; pointer-events: none; touch-action: none; transition: opacity .15s; }
+:deep(.community-inline-image-node.ProseMirror-selectednode) { outline: 2px solid #5a9fe6; outline-offset: 3px; border-radius: 9px; }
+:deep(.community-inline-image-node.ProseMirror-selectednode .community-inline-image-resize-handle) { opacity: 1; pointer-events: auto; }
+:deep(.community-inline-image-node[data-editable='false'] .community-inline-image-resize-handle) { display: none; }
+:deep(.community-inline-image-node.is-resizing) { user-select: none; }
+:deep(.community-inline-image-node.is-resizing img) { user-select: none; }
+:deep(.community-clear-float) { clear: both; height: 0; margin: 0; padding: 0; overflow: hidden; }
 :deep(.tiptap .tableWrapper) { margin: 15px 0; overflow-x: auto; }
 :deep(.tiptap .tableWrapper > table), :deep(.tiptap > table) { width: 100%; max-width: 100%; border: 1px solid #d8e2ed; border-radius: 9px; border-spacing: 0; background: #fff; table-layout: fixed; overflow: hidden; }
 :deep(.tiptap .tableWrapper > table th), :deep(.tiptap .tableWrapper > table td), :deep(.tiptap > table th), :deep(.tiptap > table td) { min-width: 72px; padding: 9px 11px; border-right: 1px solid #e1e8f0; border-bottom: 1px solid #e1e8f0; color: #52647e; vertical-align: top; text-align: left; line-height: 1.55; }
@@ -834,6 +1143,7 @@ watch(() => props.modelValue, () => {
   .tiptap-toolbar { flex-wrap: wrap; }
   .toolbar-spacer { display: none; }
   .toolbar-count { margin-left: auto; }
+  :deep(.community-inline-image-node[data-wrap='left']), :deep(.community-inline-image-node[data-wrap='right']) { float: none; margin-left: 0; margin-right: 0; }
 }
 </style>
 
@@ -841,6 +1151,7 @@ watch(() => props.modelValue, () => {
 html.dark .community-tiptap-editor { border-color: #31415a; background: #141e31; }
 html.dark .community-tiptap-editor:focus-within { border-color: #4e8bc9; box-shadow: 0 0 0 3px rgba(78, 139, 201, .16); }
 html.dark .community-tiptap-editor.is-readonly { border: 0; background: transparent; }
+html.dark .community-tiptap-editor .tiptap-tools-sticky { background: #19263b; box-shadow: 0 6px 16px rgba(0, 0, 0, .24); }
 html.dark .community-tiptap-editor .tiptap-toolbar { border-bottom-color: #2a3951; background: #19263b; }
 html.dark .community-tiptap-editor .toolbar-button { color: #a9b9cf; }
 html.dark .community-tiptap-editor .toolbar-button:hover:not(:disabled), html.dark .community-tiptap-editor .toolbar-button.active { color: #83bdf2; background: #223b5a; }
@@ -875,13 +1186,14 @@ html.dark .community-tiptap-editor .link-popover-secondary:hover { border-color:
 html.dark .community-highlight-menu { border-color: #2d4059; background: #19263b; }
 html.dark .community-highlight-menu .el-dropdown-menu__item { color: #b8c7da; }
 html.dark .community-highlight-menu .el-dropdown-menu__item:hover, html.dark .community-highlight-menu .el-dropdown-menu__item.is-current { color: #9bd0ff; background: #203d61; }
-html.dark .community-heading-menu, html.dark .community-list-menu, html.dark .community-insert-menu, html.dark .community-image-size-menu, html.dark .community-table-menu { border-color: #2d4059; background: #19263b; }
-html.dark .community-heading-menu .el-dropdown-menu__item, html.dark .community-list-menu .el-dropdown-menu__item, html.dark .community-insert-menu .el-dropdown-menu__item, html.dark .community-image-size-menu .el-dropdown-menu__item, html.dark .community-table-menu .el-dropdown-menu__item { color: #b8c7da; }
-html.dark .community-heading-menu .el-dropdown-menu__item.is-current, html.dark .community-list-menu .el-dropdown-menu__item:hover, html.dark .community-insert-menu .el-dropdown-menu__item:hover, html.dark .community-image-size-menu .el-dropdown-menu__item.is-current, html.dark .community-table-menu .el-dropdown-menu__item:hover { color: #9bd0ff; background: #203d61; }
+html.dark .community-heading-menu, html.dark .community-list-menu, html.dark .community-insert-menu, html.dark .community-image-size-menu, html.dark .community-table-menu, html.dark .community-image-wrap-menu { border-color: #2d4059; background: #19263b; }
+html.dark .community-heading-menu .el-dropdown-menu__item, html.dark .community-list-menu .el-dropdown-menu__item, html.dark .community-insert-menu .el-dropdown-menu__item, html.dark .community-image-size-menu .el-dropdown-menu__item, html.dark .community-table-menu .el-dropdown-menu__item, html.dark .community-image-wrap-menu .el-dropdown-menu__item { color: #b8c7da; }
+html.dark .community-heading-menu .el-dropdown-menu__item.is-current, html.dark .community-list-menu .el-dropdown-menu__item:hover, html.dark .community-insert-menu .el-dropdown-menu__item:hover, html.dark .community-image-size-menu .el-dropdown-menu__item.is-current, html.dark .community-table-menu .el-dropdown-menu__item:hover, html.dark .community-image-wrap-menu .el-dropdown-menu__item:hover, html.dark .community-image-wrap-menu .el-dropdown-menu__item.is-current { color: #9bd0ff; background: #203d61; }
 html.dark .community-list-menu .tiptap-toolbar-icon, html.dark .community-insert-menu .tiptap-toolbar-icon { color: #9eb3cc; }
 html.dark .community-image-size-menu .el-dropdown-menu__item span { color: #8193ac; }
 html.dark .community-image-size-menu .el-dropdown-menu__item.is-current span { color: #9bd0ff; }
 html.dark .community-table-menu .el-dropdown-menu__item.is-divided { border-top-color: #2d4059; }
+html.dark .community-image-wrap-menu .el-dropdown-menu__item.is-divided { border-top-color: #2d4059; }
 html.dark .community-tiptap-editor .tiptap .tableWrapper { scrollbar-color: #49627e #17243a; }
 html.dark .community-tiptap-editor .tiptap .tableWrapper > table, html.dark .community-tiptap-editor .tiptap > table { border-color: #31415a; background: #141e31; }
 html.dark .community-tiptap-editor .tiptap .tableWrapper > table th, html.dark .community-tiptap-editor .tiptap .tableWrapper > table td, html.dark .community-tiptap-editor .tiptap > table th, html.dark .community-tiptap-editor .tiptap > table td { border-color: #31415a; }

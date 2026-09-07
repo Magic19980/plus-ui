@@ -30,6 +30,11 @@
             <svg-icon class-name="search-icon" icon-class="search" />
           </div>
         </el-tooltip>
+        <el-tooltip content="问题与建议" effect="dark" placement="bottom">
+          <div class="right-menu-item hover-effect feedback-trigger" @click="openPlatformFeedback">
+            <el-icon><ChatDotRound /></el-icon>
+          </div>
+        </el-tooltip>
         <!-- 消息 -->
         <el-tooltip :content="$t('navbar.message')" effect="dark" placement="bottom">
           <div>
@@ -126,7 +131,7 @@
 
 <script setup lang="ts">
 import type { ElMessageBoxOptions } from 'element-plus';
-import { CaretBottom } from '@element-plus/icons-vue';
+import { CaretBottom, ChatDotRound } from '@element-plus/icons-vue';
 import appLogo from '@/assets/logo/tei-logo.svg';
 import defAva from '@/assets/images/profile.jpg';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
@@ -183,6 +188,20 @@ const searchMenuRef = ref<InstanceType<typeof SearchMenu>>();
 
 const openSearchMenu = () => {
   searchMenuRef.value?.openSearch();
+};
+
+const openPlatformFeedback = () => {
+  const currentRoute = router.currentRoute.value;
+  const pageTitle = String(currentRoute.meta?.title || '当前页面');
+  router.push({
+    path: '/platform-feedback/index',
+    query: {
+      mode: 'create',
+      sourcePath: currentRoute.fullPath,
+      sourceTitle: pageTitle,
+      sourceModule: pageTitle
+    }
+  });
 };
 
 const toggleSideBar = () => {
