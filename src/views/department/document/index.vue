@@ -292,7 +292,7 @@
       </div>
     </el-drawer>
 
-    <el-dialog v-model="editDialog.visible" :title="editDialog.title" width="620px" append-to-body>
+    <el-dialog v-model="editDialog.visible" class="document-edit-dialog" :title="editDialog.title" width="620px" append-to-body>
       <el-form ref="editFormRef" :model="editForm" label-width="100px">
         <el-form-item label="资料标题" required><el-input v-model="editForm.title" maxlength="200" show-word-limit placeholder="请输入资料标题" /></el-form-item>
         <el-form-item label="资料分类" required>
@@ -326,7 +326,7 @@
       <template #footer><el-button v-if="uploadingFile" @click="cancelUpload">取消上传</el-button><el-button type="primary" :loading="buttonLoading" :disabled="buttonLoading" @click="submitEdit">保存</el-button><el-button :disabled="buttonLoading" @click="editDialog.visible = false">取消</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="versionDialog.visible" title="上传资料新版本" width="520px" append-to-body>
+    <el-dialog v-model="versionDialog.visible" class="document-version-dialog" title="上传资料新版本" width="520px" append-to-body>
       <div class="version-tip">当前版本：v{{ versionTarget?.versionNo || 1 }}，上传后将生成 v{{ (versionTarget?.versionNo || 1) + 1 }}。</div>
       <el-form label-width="90px">
         <el-form-item label="版本说明"><el-input v-model="versionForm.versionNote" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="说明本次版本的修改内容" /></el-form-item>
@@ -341,7 +341,7 @@
       <template #footer><el-button v-if="uploadingFile" @click="cancelUpload">取消上传</el-button><el-button type="primary" :loading="buttonLoading" :disabled="buttonLoading" @click="submitVersion">上传版本</el-button><el-button :disabled="buttonLoading" @click="versionDialog.visible = false">取消</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="detailDialog.visible" title="资料详情" width="760px" append-to-body>
+    <el-dialog v-model="detailDialog.visible" class="document-detail-dialog" title="资料详情" width="760px" append-to-body>
       <el-descriptions v-if="detailData" :column="2" border>
         <el-descriptions-item label="资料标题">{{ detailData.title }}</el-descriptions-item>
         <el-descriptions-item label="资料分类">{{ detailData.categoryName }}</el-descriptions-item>
@@ -1176,13 +1176,13 @@ onMounted(() => {
   .library-toolbar-tools { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
   .result-count { color: var(--app-text-muted); font-size: 12px; }
   .view-switch .el-button { width: 34px; height: 32px; padding: 0; }
-  .document-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 320px)); align-content: start; align-items: stretch; gap: 18px; min-height: 260px; padding: 2px; }
-  .document-card-item { position: relative; display: flex; min-width: 0; min-height: 326px; flex-direction: column; overflow: hidden; border: 1px solid var(--app-surface-border); border-radius: 16px; background: linear-gradient(180deg, var(--app-surface-bg) 0%, color-mix(in srgb, var(--app-surface-bg) 88%, var(--el-color-primary-light-9)) 100%); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+  .document-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 320px)); align-content: start; align-items: stretch; gap: 20px; min-height: 260px; padding: 2px; }
+  .document-card-item { position: relative; display: flex; min-width: 0; min-height: 302px; flex-direction: column; overflow: hidden; border: 1px solid var(--app-surface-border); border-radius: 18px; background: linear-gradient(180deg, var(--app-surface-bg) 0%, color-mix(in srgb, var(--app-surface-bg) 88%, var(--el-color-primary-light-9)) 100%); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
   .document-card-item::before { position: absolute; z-index: 1; top: 0; right: 18px; left: 18px; height: 3px; border-radius: 0 0 6px 6px; background: color-mix(in srgb, var(--el-color-primary) 72%, transparent); content: ''; opacity: 0.7; }
   .document-card-item:hover { border-color: color-mix(in srgb, var(--el-color-primary) 48%, var(--app-surface-border)); box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14); transform: translateY(-2px); }
   .document-card-item.selected { border-color: var(--el-color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--el-color-primary) 20%, transparent), 0 14px 30px rgba(15, 23, 42, 0.14); }
   .document-cover, .quick-view-cover { position: relative; overflow: hidden; }
-  .document-cover { display: flex; align-items: center; justify-content: center; height: 156px; flex: 0 0 156px; color: #fff; }
+  .document-cover { display: flex; align-items: center; justify-content: center; height: 132px; flex: 0 0 132px; color: #fff; }
   .document-cover.pdf, .quick-view-cover.pdf { background: linear-gradient(135deg, #b5475b, #ef7d66); }
   .document-cover.word, .quick-view-cover.word { background: linear-gradient(135deg, #2864bd, #59a2f2); }
   .document-cover.excel, .quick-view-cover.excel { background: linear-gradient(135deg, #147451, #3dc18d); }
@@ -1190,27 +1190,27 @@ onMounted(() => {
   .document-cover.image, .quick-view-cover.image { background: linear-gradient(135deg, #5b54b2, #b27cf3); }
   .document-cover.other, .quick-view-cover.other { background: linear-gradient(135deg, #44546d, #8495ad); }
   .cover-glow, .quick-cover-pattern { position: absolute; inset: -35%; opacity: 0.42; background: radial-gradient(circle at 26% 24%, rgba(255,255,255,0.44) 0 2px, transparent 3px), radial-gradient(circle at 72% 68%, rgba(255,255,255,0.3) 0 1px, transparent 2px), linear-gradient(125deg, transparent 44%, rgba(255,255,255,0.1) 45%, transparent 58%); transform: rotate(-12deg); }
-  .cover-file-mark { position: relative; z-index: 1; display: flex; align-items: center; flex-direction: column; gap: 8px; padding: 13px 20px 12px; border: 1px solid rgba(255, 255, 255, 0.24); border-radius: 17px; background: rgba(12, 22, 42, 0.16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 10px 24px rgba(12, 20, 40, 0.12); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); backdrop-filter: blur(4px); }
-  .cover-file-mark .el-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 14px; background: rgba(255, 255, 255, 0.16); font-size: 28px; }
-  .cover-file-mark span { font-size: 16px; font-weight: 800; letter-spacing: 0.08em; }
-  .cover-footer { position: absolute; z-index: 1; right: 13px; bottom: 11px; left: 13px; display: flex; justify-content: space-between; color: rgba(255, 255, 255, 0.84); font-size: 11px; }
-  .cover-footer span { padding: 4px 7px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 999px; background: rgba(9, 18, 34, 0.16); backdrop-filter: blur(3px); }
+  .cover-file-mark { position: relative; z-index: 1; display: flex; align-items: center; flex-direction: column; gap: 6px; padding: 10px 16px 9px; border: 1px solid rgba(255, 255, 255, 0.24); border-radius: 15px; background: rgba(12, 22, 42, 0.16); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 8px 18px rgba(12, 20, 40, 0.12); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); backdrop-filter: blur(4px); }
+  .cover-file-mark .el-icon { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 12px; background: rgba(255, 255, 255, 0.16); font-size: 24px; }
+  .cover-file-mark span { font-size: 14px; font-weight: 800; letter-spacing: 0.08em; }
+  .cover-footer { position: absolute; z-index: 1; top: 11px; right: 12px; left: 12px; display: flex; justify-content: space-between; color: rgba(255, 255, 255, 0.84); font-size: 10px; }
+  .cover-footer span { padding: 4px 7px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; background: rgba(9, 18, 34, 0.22); box-shadow: 0 4px 10px rgba(7, 15, 30, 0.1); backdrop-filter: blur(5px); }
   .cover-hover { position: absolute; z-index: 2; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; background: linear-gradient(180deg, rgba(8, 15, 30, 0.12), rgba(8, 15, 30, 0.5)); transition: opacity 0.2s ease; }
   .document-card-item:hover .cover-hover { opacity: 1; }
-  .cover-hover .el-button { width: 44px; height: 44px; border: 1px solid rgba(255, 255, 255, 0.5); color: #fff; background: rgba(255, 255, 255, 0.18); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); backdrop-filter: blur(5px); }
-  .document-card-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 15px 16px 14px; }
+  .cover-hover .el-button { width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, 0.5); color: #fff; background: rgba(255, 255, 255, 0.18); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); backdrop-filter: blur(5px); }
+  .document-card-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 13px 15px 12px; }
   .document-card-title, .document-card-file, .document-card-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .document-card-title { color: var(--app-text-title); font-size: 14px; font-weight: 700; }
-  .document-card-file { margin-top: 5px; color: var(--app-text-muted); font-size: 11px; }
+  .document-card-title { color: var(--app-text-title); font-size: 14px; font-weight: 700; line-height: 1.4; }
+  .document-card-file { margin-top: 4px; color: var(--app-text-muted); font-size: 11px; }
   .document-card-expiry { display: flex; align-items: center; gap: 4px; margin-top: 9px; font-size: 11px; }
   .document-card-expiry.expiring { color: var(--el-color-warning); }
   .document-card-expiry.expired { color: var(--el-color-danger); }
-  .document-card-tags { display: flex; align-items: center; gap: 5px; min-height: 24px; margin-top: 11px; overflow: hidden; }
+  .document-card-tags { display: flex; align-items: center; gap: 5px; min-height: 22px; margin-top: 8px; overflow: hidden; }
   .document-card-tags .el-tag { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
   .more-tags { color: var(--app-text-muted); font-size: 11px; }
-  .document-card-meta { display: flex; align-items: center; gap: 7px; margin-top: 11px; color: var(--app-text-muted); font-size: 11px; }
+  .document-card-meta { display: flex; align-items: center; gap: 7px; margin-top: 8px; color: var(--app-text-muted); font-size: 11px; }
   .document-card-meta i, .list-file-meta i { width: 3px; height: 3px; flex: 0 0 auto; border-radius: 50%; background: var(--app-text-muted); }
-  .document-card-footer { justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 14px; color: var(--app-text-muted); font-size: 11px; }
+  .document-card-footer { justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 10px; color: var(--app-text-muted); font-size: 11px; }
   .document-card-footer > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .grid-empty { grid-column: 1 / -1; min-height: 260px; }
   .document-list-view { display: grid; align-content: start; gap: 10px; min-height: 260px; }
@@ -1296,7 +1296,7 @@ onMounted(() => {
 .quick-view-content { min-height: 100%; padding: 24px; color: var(--app-text-title); background: var(--el-bg-color); }
 .quick-view-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .quick-view-header h3 { margin: 4px 0 0; color: var(--app-text-title); font-size: 20px; }
-.quick-view-cover { display: flex; align-items: center; justify-content: center; height: 190px; margin-top: 22px; border-radius: 16px; color: #fff; cursor: pointer; }
+.quick-view-cover { position: relative; display: flex; align-items: center; justify-content: center; height: 190px; margin-top: 22px; overflow: hidden; border-radius: 16px; color: #fff; cursor: pointer; }
 .quick-view-cover.pdf { background: linear-gradient(135deg, #b5475b, #ef7d66); }
 .quick-view-cover.word { background: linear-gradient(135deg, #2864bd, #59a2f2); }
 .quick-view-cover.excel { background: linear-gradient(135deg, #147451, #3dc18d); }
@@ -1379,5 +1379,229 @@ onMounted(() => {
   .preview-file-summary { gap: 10px; margin-bottom: 12px; }
   .preview-file-summary > .el-tag { display: none; }
   .preview-file-meta span:last-child { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* The document page contains several custom surfaces that are not covered by
+ * Element Plus' dark variables alone. Keep all of them on the same palette. */
+:global(html.dark .department-document-page) {
+  color: var(--app-text-title);
+}
+
+:global(html.dark .department-document-page .document-card.el-card) {
+  --el-card-bg-color: var(--app-surface-bg);
+  --el-card-border-color: var(--app-surface-border);
+  border-color: var(--app-surface-border);
+  background: var(--app-surface-bg);
+}
+
+:global(html.dark .department-document-page .document-card .el-card__header),
+:global(html.dark .department-document-page .document-card .el-card__body) {
+  border-color: var(--app-surface-border);
+  background: var(--app-surface-bg);
+}
+
+:global(html.dark .department-document-page .query-form) {
+  border-color: var(--app-surface-border);
+  background: var(--app-elevated-soft-bg);
+}
+
+:global(html.dark .department-document-page .selection-toolbar) {
+  border-color: color-mix(in srgb, var(--app-accent-strong) 38%, var(--app-surface-border));
+  background: color-mix(in srgb, var(--app-accent-strong) 13%, var(--app-surface-bg));
+}
+
+:global(html.dark .department-document-page .library-sidebar),
+:global(html.dark .department-document-page .document-card-item),
+:global(html.dark .department-document-page .document-list-item) {
+  border-color: var(--app-surface-border);
+  background-color: var(--app-surface-bg);
+}
+
+:global(html.dark .department-document-page .document-card-item) {
+  background: linear-gradient(180deg, var(--app-surface-bg) 0%, color-mix(in srgb, var(--app-accent-strong) 5%, var(--app-surface-bg)) 100%);
+  box-shadow: var(--app-shadow-sm);
+}
+
+:global(html.dark .department-document-page .document-card-item:hover),
+:global(html.dark .department-document-page .document-list-item:hover) {
+  background: color-mix(in srgb, var(--app-accent-strong) 8%, var(--app-surface-bg));
+  box-shadow: var(--app-shadow-md);
+}
+
+:global(html.dark .department-document-page .quick-nav-item:hover),
+:global(html.dark .department-document-page .category-tree .el-tree-node__content:hover),
+:global(html.dark .department-document-page .category-tree .is-current > .el-tree-node__content) {
+  background: color-mix(in srgb, var(--app-accent-strong) 12%, var(--app-surface-bg));
+}
+
+:global(html.dark .department-document-page .quick-nav-item.active) {
+  color: #9edcff;
+  background: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg));
+}
+
+:global(html.dark .department-document-page .category-tree .el-tree-node__content),
+:global(html.dark .department-document-page .category-tree .el-tree-node__expand-icon) {
+  color: var(--app-text-muted);
+}
+
+:global(html.dark .department-document-page .library-breadcrumb strong),
+:global(html.dark .department-document-page .sidebar-heading strong),
+:global(html.dark .department-document-page .category-heading),
+:global(html.dark .department-document-page .document-card-title),
+:global(html.dark .department-document-page .document-list-item .list-file-title) {
+  color: var(--app-text-title);
+}
+
+:global(html.dark .department-document-page .document-card-file),
+:global(html.dark .department-document-page .document-card-meta),
+:global(html.dark .department-document-page .list-file-name),
+:global(html.dark .department-document-page .list-file-meta),
+:global(html.dark .department-document-page .list-file-owner small),
+:global(html.dark .department-document-page .result-count),
+:global(html.dark .department-document-page .library-breadcrumb),
+:global(html.dark .department-document-page .category-tree-count) {
+  color: var(--app-text-muted);
+}
+
+:global(html.dark .department-document-page .document-card-meta i),
+:global(html.dark .department-document-page .list-file-meta i) {
+  background: var(--app-text-muted);
+}
+
+:global(html.dark .department-document-page .grid-empty .el-empty__description),
+:global(html.dark .department-document-page .document-list-view .el-empty__description) {
+  color: var(--app-text-muted);
+}
+
+/* Drawer and dialogs are teleported to body, so they need independent dark selectors. */
+:global(html.dark .el-drawer.document-quick-view),
+:global(html.dark .document-edit-dialog.el-dialog),
+:global(html.dark .document-version-dialog.el-dialog),
+:global(html.dark .document-detail-dialog.el-dialog),
+:global(html.dark .document-preview-dialog.el-dialog) {
+  --el-bg-color: #111827;
+  --el-bg-color-overlay: #111827;
+  --el-fill-color-blank: #111827;
+  --el-text-color-primary: #e5edf8;
+  --el-text-color-regular: #aab8ca;
+  --el-text-color-placeholder: #7f91a8;
+  border-color: var(--app-surface-border);
+  color: var(--app-text-title);
+  background: #111827;
+}
+
+:global(html.dark .document-quick-view .el-drawer__body),
+:global(html.dark .document-edit-dialog .el-dialog__header),
+:global(html.dark .document-edit-dialog .el-dialog__body),
+:global(html.dark .document-edit-dialog .el-dialog__footer),
+:global(html.dark .document-version-dialog .el-dialog__header),
+:global(html.dark .document-version-dialog .el-dialog__body),
+:global(html.dark .document-version-dialog .el-dialog__footer),
+:global(html.dark .document-detail-dialog .el-dialog__header),
+:global(html.dark .document-detail-dialog .el-dialog__body),
+:global(html.dark .document-detail-dialog .el-dialog__footer),
+:global(html.dark .document-preview-dialog .el-dialog__header),
+:global(html.dark .document-preview-dialog .el-dialog__body),
+:global(html.dark .document-preview-dialog .el-dialog__footer) {
+  border-color: var(--app-surface-border);
+  color: var(--app-text-title);
+  background: #111827;
+}
+
+:global(html.dark .document-quick-view .quick-view-content),
+:global(html.dark .document-quick-view .quick-view-header h3),
+:global(html.dark .document-quick-view .quick-view-title),
+:global(html.dark .document-quick-view .quick-view-meta dd),
+:global(html.dark .document-quick-view .quick-view-description p) {
+  color: var(--app-text-title);
+}
+
+:global(html.dark .document-quick-view .quick-view-file-name),
+:global(html.dark .document-quick-view .quick-view-meta dt),
+:global(html.dark .document-quick-view .quick-view-description > span) {
+  color: var(--app-text-muted);
+}
+
+:global(html.dark .document-quick-view .quick-view-divider),
+:global(html.dark .document-preview-dialog .preview-file-summary) {
+  border-color: var(--app-surface-border);
+}
+
+:global(html.dark .document-quick-view .quick-view-cover-loading) {
+  background: var(--app-elevated-soft-bg);
+}
+
+:global(html.dark .document-preview-dialog .el-dialog__header) {
+  background: #111827;
+}
+
+:global(html.dark .document-preview-dialog .el-dialog__headerbtn) {
+  background: var(--app-elevated-close-bg);
+}
+
+:global(html.dark .document-preview-dialog .el-dialog__headerbtn .el-dialog__close) {
+  color: var(--app-text-muted);
+}
+
+:global(html.dark .document-preview-dialog .preview-dialog-title),
+:global(html.dark .document-preview-dialog .preview-file-title) {
+  color: var(--app-text-title);
+}
+
+:global(html.dark .document-preview-dialog .preview-dialog-eyebrow),
+:global(html.dark .document-preview-dialog .preview-file-meta) {
+  color: var(--app-text-muted);
+}
+
+:global(html.dark .document-preview-dialog .preview-file-summary) {
+  background: var(--app-elevated-soft-bg);
+  box-shadow: none;
+}
+
+:global(html.dark .document-preview-dialog .preview-file-meta i) {
+  background: var(--app-text-muted);
+}
+
+:global(html.dark .document-preview-dialog .preview-container) {
+  background: #0b1220;
+}
+
+:global(html.dark .document-edit-dialog .el-input__wrapper),
+:global(html.dark .document-edit-dialog .el-select__wrapper),
+:global(html.dark .document-edit-dialog .el-tree-select .el-select__wrapper),
+:global(html.dark .document-edit-dialog .el-textarea__inner),
+:global(html.dark .document-version-dialog .el-input__wrapper),
+:global(html.dark .document-version-dialog .el-textarea__inner),
+:global(html.dark .document-detail-dialog .el-descriptions__body),
+:global(html.dark .document-detail-dialog .el-descriptions__table) {
+  border-color: var(--app-surface-border);
+  background: var(--app-elevated-soft-bg);
+  box-shadow: 0 0 0 1px var(--app-surface-border) inset;
+}
+
+:global(html.dark .document-edit-dialog .el-input__inner),
+:global(html.dark .document-edit-dialog .el-select__selected-item),
+:global(html.dark .document-edit-dialog .el-select__placeholder),
+:global(html.dark .document-edit-dialog .el-textarea__inner),
+:global(html.dark .document-version-dialog .el-input__inner),
+:global(html.dark .document-version-dialog .el-textarea__inner) {
+  color: var(--app-text-title);
+}
+
+:global(html.dark .document-edit-dialog .el-input__inner::placeholder),
+:global(html.dark .document-edit-dialog .el-textarea__inner::placeholder),
+:global(html.dark .document-version-dialog .el-textarea__inner::placeholder) {
+  color: var(--app-text-muted);
+}
+
+:global(html.dark .document-detail-dialog .el-descriptions__label),
+:global(html.dark .document-detail-dialog .el-descriptions__content) {
+  border-color: var(--app-surface-border);
+  color: var(--app-text-title);
+  background: var(--app-surface-bg);
+}
+
+:global(html.dark .document-detail-dialog .version-operation-placeholder) {
+  color: var(--app-text-muted);
 }
 </style>

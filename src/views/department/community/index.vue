@@ -107,8 +107,8 @@
             <div class="post-footer">
               <div class="post-state"><el-tag v-if="post.status === 'RESOLVED'" type="success" size="small" effect="plain"><el-icon><CircleCheck /></el-icon> 已解决</el-tag><el-tag v-else-if="post.status === 'DRAFT'" type="info" size="small" effect="plain">草稿</el-tag><span><el-icon><View /></el-icon>{{ post.viewCount || 0 }}</span></div>
               <div class="post-actions" @click.stop>
-                <el-button text :class="{ reacted: post.liked }" @click="toggleReaction(post, 'LIKE')"><el-icon><Pointer /></el-icon>{{ post.likeCount || 0 }}</el-button>
-                <el-button text :class="{ reacted: post.favorited }" @click="toggleReaction(post, 'FAVORITE')"><el-icon><Star /></el-icon>{{ post.favoriteCount || 0 }}</el-button>
+                <el-button text :loading="isReactionLoading(post.id, 'LIKE')" :disabled="isReactionLoading(post.id, 'LIKE')" :class="{ reacted: post.liked }" @click="toggleReaction(post, 'LIKE')"><el-icon><Pointer /></el-icon>{{ post.likeCount || 0 }}</el-button>
+                <el-button text :loading="isReactionLoading(post.id, 'FAVORITE')" :disabled="isReactionLoading(post.id, 'FAVORITE')" :class="{ reacted: post.favorited }" @click="toggleReaction(post, 'FAVORITE')"><el-icon><Star /></el-icon>{{ post.favoriteCount || 0 }}</el-button>
                 <el-button text :class="{ reacted: expandedCommentPostId === post.id }" :aria-label="expandedCommentPostId === post.id ? '收起讨论' : '展开讨论'" @click="toggleComments(post)"><el-icon><ChatDotRound /></el-icon>{{ post.commentCount || 0 }}</el-button>
                 <el-button v-if="post.mine" v-hasPermi="['department:community:edit']" text @click="openEdit(post)"><el-icon><Edit /></el-icon>编辑</el-button>
                 <el-button v-if="post.mine" v-hasPermi="['department:community:remove']" text type="danger" @click="handleDelete(post)"><el-icon><Delete /></el-icon></el-button>
@@ -374,23 +374,114 @@
                 <div><span>最近更新</span><strong>{{ detailPost.updateTime || detailPost.createTime || '—' }}</strong></div>
               </div>
             </section>
-            <section class="post-detail-side-card post-detail-side-tip">
-              <span class="post-detail-side-kicker">JOIN THE DISCUSSION</span>
-              <strong>留下你的看法</strong>
-              <p>补充经验、提出建议，或直接参与这条内容的讨论。</p>
-              <el-button type="primary" plain @click="openDetailComments"><el-icon><ChatDotRound /></el-icon>查看讨论 {{ detailPost.commentCount || 0 }}</el-button>
-            </section>
           </aside>
+          <section class="post-detail-comments" aria-label="评论区">
+            <div class="post-detail-comments-head">
+              <div class="post-detail-comments-title">
+                <span class="post-detail-comments-kicker">COMMENTS</span>
+                <strong>评论</strong>
+                <span>{{ commentTotal }} 条</span>
+              </div>
+              <span class="post-detail-comments-tip">补充经验、提出建议，和大家一起完善这条内容</span>
+            </div>
+            <div v-loading="detailCommentLoading" class="post-detail-comments-content">
+              <template v-if="commentPost && String(commentPost.id) === String(detailPost.id)">
+                <div class="detail-comment-editor">
+                  <el-avatar :size="36" :src="userStore.avatar || undefined" class="author-avatar">{{ avatarText(userStore.nickname || '我') }}</el-avatar>
+                  <div class="detail-comment-input-wrap">
+                    <div v-if="replyingTo" class="detail-comment-reply-target">
+                      <span>正在评论 {{ replyingTo.authorName || '这条评论' }}</span>
+                      <el-button link type="primary" size="small" @click="cancelReply">取消评论</el-button>
+                    </div>
+                    <el-input ref="detailCommentInputRef" v-model="commentForm.content" type="textarea" :rows="3" maxlength="2000" show-word-limit :placeholder="replyingTo ? '写下你的评论…' : '写下你的评论，分享你的经验或建议…'" @keydown.ctrl.enter.prevent="submitComment" />
+                    <div v-if="commentMediaItems.length" class="detail-comment-media-draft-list">
+                      <div v-for="item in commentMediaItems" :key="item.key" class="detail-comment-media-draft">
+                        <img :src="item.localUrl || item.previewUrl" alt="评论图片" />
+                        <div v-if="item.uploadStatus === 'uploading'" class="detail-comment-media-uploading">上传中…</div>
+                        <button type="button" aria-label="移除评论图片" @click="removeCommentMedia(item)">×</button>
+                      </div>
+                    </div>
+                    <div class="detail-comment-composer-footer">
+                      <div class="detail-comment-tools">
+                        <el-popover placement="bottom-start" trigger="click" width="292" :teleported="true">
+                          <template #reference>
+                            <el-button text class="detail-comment-tool-button" aria-label="选择表情"><span class="comment-emoji-trigger">😊</span></el-button>
+                          </template>
+                          <div class="comment-emoji-picker" role="listbox" aria-label="选择表情">
+                            <button v-for="emoji in emojiList" :key="emoji" type="button" class="comment-emoji" :aria-label="`插入表情 ${emoji}`" @click="insertDetailEmoji(emoji)">{{ emoji }}</button>
+                          </div>
+                        </el-popover>
+                        <el-upload
+                          class="detail-comment-image-uploader"
+                          multiple
+                          :show-file-list="false"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          :http-request="handleCommentMediaUpload"
+                          :disabled="commentMediaUploading || commentMediaItems.length >= maxCommentMediaCount"
+                        >
+                          <el-button text class="detail-comment-tool-button" :disabled="commentMediaUploading || commentMediaItems.length >= maxCommentMediaCount" aria-label="添加图片"><el-icon><Picture /></el-icon></el-button>
+                        </el-upload>
+                        <span class="detail-comment-composer-hint">Ctrl + Enter 发表评论</span>
+                      </div>
+                      <el-button v-hasPermi="['department:community:comment']" type="primary" :loading="commentLoading" @click="submitComment">发表评论</el-button>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="commentThreads.length" class="detail-comment-list">
+                  <div v-for="thread in commentThreads" :key="thread.comment.id" class="detail-comment-thread">
+                    <article class="detail-comment-item detail-comment-item--root">
+                      <el-avatar :size="34" :src="thread.comment.mine ? userStore.avatar || undefined : undefined" class="author-avatar">{{ avatarText(thread.comment.authorName) }}</el-avatar>
+                      <div class="detail-comment-main">
+                        <div class="detail-comment-line"><strong>{{ thread.comment.authorName || '匿名用户' }}</strong><span class="detail-comment-dept" v-if="thread.comment.deptName">{{ thread.comment.deptName }}</span><span class="detail-comment-content">{{ thread.comment.content }}</span></div>
+                        <div v-if="thread.comment.mediaList?.length" class="detail-comment-media-list">
+                          <button v-for="media in thread.comment.mediaList" :key="media.ossId" type="button" @click="previewMedia(media)"><img :src="media.previewUrl" alt="评论图片" loading="lazy" /></button>
+                        </div>
+                        <div class="detail-comment-meta">
+                          <span>{{ thread.comment.createTime }}</span>
+                          <div class="detail-comment-actions">
+                            <el-button v-if="thread.comment.mine" v-hasPermi="['department:community:comment']" link type="danger" size="small" @click="handleDeleteComment(thread.comment)">删除</el-button>
+                            <el-button v-hasPermi="['department:community:comment']" link type="primary" size="small" @click="handleReply(thread.comment)">评论</el-button>
+                            <el-button v-if="detailPost.postType === 'QUESTION' && detailPost.status !== 'RESOLVED'" v-hasPermi="['department:community:edit']" link type="success" size="small" @click="resolveComment(thread.comment)">采纳</el-button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                    <div v-if="thread.replies.length" class="detail-comment-replies">
+                      <article v-for="reply in thread.replies" :key="reply.id" class="detail-comment-item detail-comment-item--reply" :style="{ '--reply-depth': Math.min(reply.depth, 3) }">
+                        <div class="detail-comment-main">
+                          <div class="detail-comment-line"><strong>{{ reply.authorName || '匿名用户' }}</strong><span v-if="reply.replyToName" class="detail-comment-reply-context">回复 @{{ reply.replyToName }}</span><span class="detail-comment-content">{{ reply.content }}</span></div>
+                          <div v-if="reply.mediaList?.length" class="detail-comment-media-list">
+                            <button v-for="media in reply.mediaList" :key="media.ossId" type="button" @click="previewMedia(media)"><img :src="media.previewUrl" alt="评论图片" loading="lazy" /></button>
+                          </div>
+                          <div class="detail-comment-meta">
+                            <span>{{ reply.createTime }}</span>
+                            <div class="detail-comment-actions">
+                              <el-button v-if="reply.mine" v-hasPermi="['department:community:comment']" link type="danger" size="small" @click="handleDeleteComment(reply)">删除</el-button>
+                              <el-button v-hasPermi="['department:community:comment']" link type="primary" size="small" @click="handleReply(reply)">评论</el-button>
+                              <el-button v-if="detailPost.postType === 'QUESTION' && detailPost.status !== 'RESOLVED'" v-hasPermi="['department:community:edit']" link type="success" size="small" @click="resolveComment(reply)">采纳</el-button>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="commentHasMore" class="detail-comments-load-more">
+                  <el-button link type="primary" :loading="commentLoadingMore" @click="loadMoreComments">查看剩余 {{ remainingCommentCount }} 条评论</el-button>
+                </div>
+                <el-empty v-if="!commentThreads.length" :image-size="56" description="还没有评论，来留下第一条评论吧" />
+              </template>
+            </div>
+          </section>
         </template>
         <el-empty v-else-if="!postDetailDialog.loading" description="暂时无法加载内容详情" />
       </div>
       <template #footer>
         <div v-if="detailPost" class="post-detail-footer">
-          <div class="post-detail-stats"><span><el-icon><View /></el-icon>{{ detailPost.viewCount || 0 }} 次浏览</span><span><el-icon><ChatDotRound /></el-icon>{{ detailPost.commentCount || 0 }} 条讨论</span></div>
+          <div class="post-detail-stats"><span><el-icon><View /></el-icon>{{ detailPost.viewCount || 0 }} 次浏览</span><span><el-icon><ChatDotRound /></el-icon>{{ commentTotal }} 条评论</span></div>
           <div class="post-detail-footer-actions">
-            <el-button text :class="{ reacted: detailPost.liked }" @click="toggleDetailReaction('LIKE')"><el-icon><Pointer /></el-icon>{{ detailPost.likeCount || 0 }}</el-button>
-            <el-button text :class="{ reacted: detailPost.favorited }" @click="toggleDetailReaction('FAVORITE')"><el-icon><Star /></el-icon>{{ detailPost.favoriteCount || 0 }}</el-button>
-            <el-button type="primary" @click="openDetailComments"><el-icon><ChatDotRound /></el-icon>参与讨论</el-button>
+            <el-button text :loading="isReactionLoading(detailPost.id, 'LIKE')" :disabled="isReactionLoading(detailPost.id, 'LIKE')" :class="{ reacted: detailPost.liked }" @click="toggleDetailReaction('LIKE')"><el-icon><Pointer /></el-icon>{{ detailPost.likeCount || 0 }}</el-button>
+            <el-button text :loading="isReactionLoading(detailPost.id, 'FAVORITE')" :disabled="isReactionLoading(detailPost.id, 'FAVORITE')" :class="{ reacted: detailPost.favorited }" @click="toggleDetailReaction('FAVORITE')"><el-icon><Star /></el-icon>{{ detailPost.favoriteCount || 0 }}</el-button>
           </div>
         </div>
       </template>
@@ -537,6 +628,7 @@ const total = ref(0);
 const buttonLoading = ref(false);
 const commentLoading = ref(false);
 const commentPanelLoading = ref(false);
+const reactionLoading = reactive<Record<string, boolean>>({});
 const postFormRef = ref<FormInstance>();
 const queryParams = reactive<DepartmentCommunityQuery>({ pageNum: 1, pageSize: 10, keyword: undefined, postType: undefined, feed: 'HOT' });
 const postForm = reactive<DepartmentCommunityPostForm>({ title: '', subtitle: '', content: '', postType: 'DISCUSSION', tags: '', visibility: 'ALL' });
@@ -548,9 +640,11 @@ const comments = ref<DepartmentCommunityCommentVO[]>([]);
 const commentTotal = ref(0);
 const commentPage = ref(1);
 const commentLoadingMore = ref(false);
+const detailCommentLoading = ref(false);
 const COMMENT_PAGE_SIZE = 5;
 const replyingTo = ref<DepartmentCommunityCommentVO>();
 const commentInputRef = ref<any>();
+const detailCommentInputRef = ref<any>();
 type CommentReplyThread = DepartmentCommunityCommentVO & {
   depth: number;
   replyToName?: string;
@@ -730,7 +824,16 @@ const openEdit = (post: DepartmentCommunityPostVO) => {
 };
 
 const openPostDetail = async (post: DepartmentCommunityPostVO) => {
+  expandedCommentPostId.value = undefined;
   detailPost.value = undefined;
+  commentPost.value = undefined;
+  comments.value = [];
+  commentTotal.value = 0;
+  commentPage.value = 1;
+  commentLoadingMore.value = false;
+  cancelReply();
+  commentForm.content = '';
+  resetCommentMedia();
   postDetailDialog.visible = true;
   postDetailDialog.loading = true;
   try {
@@ -740,6 +843,15 @@ const openPostDetail = async (post: DepartmentCommunityPostVO) => {
     detailPost.value = post;
   } finally {
     postDetailDialog.loading = false;
+  }
+  if (detailPost.value) {
+    detailCommentLoading.value = true;
+    commentPost.value = detailPost.value;
+    try {
+      await loadComments(detailPost.value.id);
+    } finally {
+      detailCommentLoading.value = false;
+    }
   }
 };
 
@@ -1123,9 +1235,9 @@ const cancelReply = () => {
   commentForm.parentId = 0;
 };
 
-const insertEmoji = (emoji: string) => {
+const insertEmojiAt = (emoji: string, inputRef: typeof commentInputRef) => {
   const current = commentForm.content || '';
-  const textarea = commentInputRef.value?.textarea as HTMLTextAreaElement | undefined;
+  const textarea = inputRef.value?.textarea as HTMLTextAreaElement | undefined;
   if (!textarea) {
     commentForm.content = current + emoji;
     return;
@@ -1139,6 +1251,9 @@ const insertEmoji = (emoji: string) => {
     textarea.setSelectionRange(cursor, cursor);
   });
 };
+
+const insertEmoji = (emoji: string) => insertEmojiAt(emoji, commentInputRef);
+const insertDetailEmoji = (emoji: string) => insertEmojiAt(emoji, detailCommentInputRef);
 
 const handleDeleteComment = async (comment: DepartmentCommunityCommentVO) => {
   await modal.confirm('确认删除这条评论吗？');
@@ -1198,14 +1313,24 @@ const handleReportAction = async (row: DepartmentCommunityReportVO, status: 'REJ
   await getReports();
 };
 
+const reactionKey = (postId: string | number, type: 'LIKE' | 'FAVORITE') => `${postId}:${type}`;
+const isReactionLoading = (postId: string | number, type: 'LIKE' | 'FAVORITE') => Boolean(reactionLoading[reactionKey(postId, type)]);
+
 const toggleReaction = async (post: DepartmentCommunityPostVO, type: 'LIKE' | 'FAVORITE') => {
-  const res = await toggleDepartmentCommunityReaction(post.id, type);
-  if (!res.data) return;
-  post.liked = res.data.liked;
-  post.favorited = res.data.favorited;
-  post.likeCount = res.data.likeCount;
-  post.favoriteCount = res.data.favoriteCount;
-  if (commentPost.value?.id === post.id) Object.assign(commentPost.value, res.data);
+  const key = reactionKey(post.id, type);
+  if (reactionLoading[key]) return;
+  reactionLoading[key] = true;
+  try {
+    const res = await toggleDepartmentCommunityReaction(post.id, type);
+    if (!res.data) return;
+    post.liked = res.data.liked;
+    post.favorited = res.data.favorited;
+    post.likeCount = res.data.likeCount;
+    post.favoriteCount = res.data.favoriteCount;
+    if (commentPost.value?.id === post.id) Object.assign(commentPost.value, res.data);
+  } finally {
+    reactionLoading[key] = false;
+  }
 };
 
 const toggleDetailReaction = async (type: 'LIKE' | 'FAVORITE') => {
@@ -1219,15 +1344,6 @@ const toggleDetailReaction = async (type: 'LIKE' | 'FAVORITE') => {
       likeCount: detailPost.value.likeCount,
       favoriteCount: detailPost.value.favoriteCount
     });
-  }
-};
-
-const openDetailComments = async () => {
-  const post = detailPost.value;
-  if (!post) return;
-  postDetailDialog.visible = false;
-  if (expandedCommentPostId.value !== post.id) {
-    await toggleComments(post);
   }
 };
 
@@ -1702,6 +1818,74 @@ onMounted(async () => {
   .post-detail-side-tip p { margin: 7px 0 14px; color: #71809a; font-size: 12px; line-height: 1.6; }
   .post-detail-side-tip .el-button { width: 100%; border-radius: 9px; }
 
+  .post-detail-comments {
+    grid-column: 1 / -1;
+    margin-top: 1px;
+    padding-top: 22px;
+    border-top: 1px solid #edf1f6;
+  }
+
+  .post-detail-comments-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 13px; }
+  .post-detail-comments-title { display: flex; align-items: baseline; gap: 9px; }
+  .post-detail-comments-title strong { color: #203454; font-size: 18px; font-weight: 750; }
+  .post-detail-comments-title > span:last-child { color: #8b9bb1; font-size: 12px; }
+  .post-detail-comments-kicker { color: #6a9bdf; font-size: 10px; font-weight: 800; letter-spacing: 1.7px; }
+  .post-detail-comments-tip { color: #9aa8ba; font-size: 11px; }
+  .post-detail-comments-content { min-height: 72px; }
+
+  .detail-comment-editor {
+    display: flex;
+    gap: 11px;
+    padding: 13px;
+    border: 1px solid #dce7f3;
+    border-radius: 14px;
+    background: #f8fbff;
+  }
+
+  .detail-comment-input-wrap { flex: 1; min-width: 0; }
+  .detail-comment-reply-target { display: flex; align-items: center; gap: 7px; margin: 0 0 7px; color: #6a9bdf; font-size: 12px; }
+  .detail-comment-reply-target .el-button { padding: 0; font-size: 11px; }
+  .detail-comment-input-wrap :deep(.el-textarea__inner) { min-height: 82px !important; padding: 11px 13px; border-color: #dce7f3; border-radius: 10px; background: #fff; box-shadow: none; color: #32435f; font-size: 13px; line-height: 1.6; }
+  .detail-comment-input-wrap :deep(.el-textarea__inner:focus) { border-color: #76afea; box-shadow: 0 0 0 3px rgba(63, 142, 234, .1); }
+  .detail-comment-input-wrap :deep(.el-input__count) { color: #9aa8ba; background: transparent; }
+
+  .detail-comment-media-draft-list, .detail-comment-media-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .detail-comment-media-draft-list { margin-top: 9px; }
+  .detail-comment-media-draft { position: relative; width: 68px; height: 68px; overflow: hidden; border: 1px solid #dce7f3; border-radius: 8px; background: #edf2f8; }
+  .detail-comment-media-draft img, .detail-comment-media-list img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .detail-comment-media-draft > button { position: absolute; top: 4px; right: 4px; display: flex; width: 18px; height: 18px; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 50%; color: #fff; background: rgba(13, 24, 42, .7); cursor: pointer; font-size: 14px; line-height: 1; }
+  .detail-comment-media-uploading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; background: rgba(13, 33, 61, .56); font-size: 11px; }
+
+  .detail-comment-composer-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 7px; }
+  .detail-comment-tools { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .detail-comment-tool-button { width: 31px; height: 31px; padding: 0; color: #7f91aa; }
+  .detail-comment-tool-button:hover { color: #3f8eea; background: #eaf3ff; }
+  .detail-comment-image-uploader { display: inline-flex; }
+  .detail-comment-composer-hint { margin-left: 5px; color: #9aa8ba; font-size: 11px; }
+  .detail-comment-composer-footer > .el-button { min-width: 86px; border-radius: 9px; }
+
+  .detail-comment-list { margin-top: 15px; }
+  .detail-comment-thread + .detail-comment-thread { margin-top: 2px; }
+  .detail-comment-item { display: flex; gap: 10px; padding: 13px 3px; border-top: 1px solid #edf1f6; }
+  .detail-comment-item--root { padding-top: 14px; }
+  .detail-comment-main { flex: 1; min-width: 0; }
+  .detail-comment-line { color: #526681; font-size: 13px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .detail-comment-line strong { margin-right: 7px; color: #2b3b58; font-size: 13px; font-weight: 750; }
+  .detail-comment-dept { display: inline-block; margin-right: 8px; padding: 2px 6px; border-radius: 5px; color: #6a88ab; background: #eef5fd; font-size: 10px; line-height: 1.3; vertical-align: 1px; }
+  .detail-comment-content { color: #526681; }
+  .detail-comment-reply-context { margin-right: 5px; color: #6a9bdf; }
+  .detail-comment-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 18px; margin-top: 5px; color: #9aa8ba; font-size: 11px; }
+  .detail-comment-actions { display: flex; align-items: center; gap: 8px; }
+  .detail-comment-actions :deep(.el-button) { margin: 0; padding: 0; font-size: 11px; }
+  .detail-comment-replies { position: relative; margin: 0 0 3px 44px; padding-left: 14px; border-left: 2px solid #d9e6f4; }
+  .detail-comment-item--reply { display: block; margin-left: calc((var(--reply-depth, 1) - 1) * 22px); padding: 8px 0; border-top-color: #f0f3f7; }
+  .detail-comment-item--reply:first-child { border-top: 0; }
+  .detail-comment-media-list { margin-top: 8px; }
+  .detail-comment-media-list button { width: 74px; height: 74px; padding: 0; overflow: hidden; border: 1px solid #dce7f3; border-radius: 8px; background: #edf2f8; cursor: zoom-in; }
+  .detail-comment-media-list button:hover { border-color: #76afea; box-shadow: 0 3px 12px rgba(63, 142, 234, .15); }
+  .detail-comments-load-more { display: flex; align-items: center; justify-content: center; min-height: 38px; margin-top: 8px; border-top: 1px solid #edf1f6; }
+  .detail-comments-load-more :deep(.el-button) { margin: 0; font-size: 12px; }
+
   .post-detail-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 22px; }
   .post-detail-stats, .post-detail-footer-actions { display: flex; align-items: center; gap: 8px; }
   .post-detail-stats { gap: 14px; color: #97a5b7; font-size: 11px; }
@@ -1762,6 +1946,29 @@ html.dark .community-post-detail-dialog,
   .post-detail-side-tip { background: linear-gradient(145deg, #1a304a, #17263c); }
   .post-detail-side-tip > strong { color: #e8f2ff; }
   .post-detail-side-tip p { color: #9aaac0; }
+  .post-detail-comments { border-top-color: #2a3850; }
+  .post-detail-comments-title strong { color: #e7eef9; }
+  .post-detail-comments-title > span:last-child, .post-detail-comments-tip { color: #8fa3bd; }
+  .detail-comment-editor { border-color: #2a3850; background: #182337; }
+  .detail-comment-reply-target { color: #a9c9ed; }
+  .detail-comment-input-wrap :deep(.el-textarea__inner) { border-color: #33445c; background: #101827; color: #dbe6f5; }
+  .detail-comment-input-wrap :deep(.el-textarea__inner:focus) { border-color: #5b9bdd; box-shadow: 0 0 0 3px rgba(91, 155, 221, .16); }
+  .detail-comment-input-wrap :deep(.el-textarea__inner::placeholder) { color: #71839d; }
+  .detail-comment-input-wrap :deep(.el-input__count) { color: #8193ac; }
+  .detail-comment-media-draft { border-color: #33445c; background: #243247; }
+  .detail-comment-composer-hint { color: #8193ac; }
+  .detail-comment-tool-button { color: #a9b8cd; }
+  .detail-comment-tool-button:hover { color: #a9d3ff; background: #203d61; }
+  .detail-comment-item { border-top-color: #2a3850; }
+  .detail-comment-line, .detail-comment-content { color: #b2c0d2; }
+  .detail-comment-line strong { color: #e1e9f5; }
+  .detail-comment-dept { color: #a6c3e2; background: #203d61; }
+  .detail-comment-reply-context { color: #a9c9ed; }
+  .detail-comment-meta { color: #8fa3bd; }
+  .detail-comment-replies { border-left-color: #466b94; }
+  .detail-comment-item--reply { border-top-color: #26354b; }
+  .detail-comment-media-list button { border-color: #33445c; background: #243247; }
+  .detail-comments-load-more { border-top-color: #2a3850; }
   .post-detail-stats { color: #8fa3bd; }
   .post-detail-footer-actions .el-button { color: #9aaac0; }
   .post-detail-footer-actions .el-button:hover, .post-detail-footer-actions .el-button.reacted { color: #86baff; }
@@ -1771,6 +1978,7 @@ html.dark .community-post-detail-dialog,
   .community-post-detail-dialog {
     .post-detail-body { grid-template-columns: 1fr; }
     .post-detail-aside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .post-detail-comments-head { align-items: flex-start; flex-direction: column; gap: 5px; }
   }
 }
 
@@ -1785,6 +1993,14 @@ html.dark .community-post-detail-dialog,
     .post-detail-media-grid { grid-template-columns: 1fr; }
     .post-detail-footer { align-items: stretch; flex-direction: column; padding: 12px 16px; }
     .post-detail-footer-actions { justify-content: flex-end; }
+    .post-detail-comments { margin-right: -2px; margin-left: -2px; padding-top: 18px; }
+    .detail-comment-editor { gap: 8px; padding: 10px; }
+    .detail-comment-composer-footer { align-items: flex-end; }
+    .detail-comment-composer-hint { display: none; }
+    .detail-comment-meta { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .detail-comment-actions { justify-content: flex-end; }
+    .detail-comment-replies { margin-left: 38px; padding-left: 10px; }
+    .detail-comment-item--reply { margin-left: calc((var(--reply-depth, 1) - 1) * 16px); }
   }
 
   .community-post-dialog {
