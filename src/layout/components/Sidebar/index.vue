@@ -84,8 +84,10 @@ const bgColor = computed(() => (sideTheme.value === 'theme-dark' ? '#111827' : '
 const textColor = computed(() => (sideTheme.value === 'theme-dark' ? '#e5edf8' : '#1f2937'));
 const sidebarBackground = computed(() =>
   sideTheme.value === 'theme-dark'
-    ? 'linear-gradient(180deg, #111d31 0%, #0d1728 42%, #0b1423 100%)'
-    : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 56%, #f2f6fa 100%)'
+    // 侧栏主题必须使用自身的背景 token，不能复用页面的 app-sidebar-bg。
+    // 否则浅色页面 + 暗色菜单时会出现浅色背景配浅色文字的低对比度问题。
+    ? 'var(--app-sidebar-dark-bg)'
+    : 'linear-gradient(180deg, var(--app-sidebar-light-bg) 0%, #f8fafc 56%, #f2f6fa 100%)'
 );
 const menuStyle = computed(() => ({
   backgroundColor: bgColor.value,
@@ -108,9 +110,10 @@ onMounted(loadMenuBadges);
   flex-direction: column;
   gap: 10px;
   padding: 11px 9px 10px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--app-sidebar-border);
   border-radius: 20px;
   box-shadow:
+    8px 0 28px rgba(2, 6, 23, 0.22),
     0 18px 42px rgba(2, 6, 23, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   background: var(--sidebar-bg) !important;
@@ -122,9 +125,8 @@ onMounted(loadMenuBadges);
     right: 0;
     left: 0;
     height: 48%;
-    background:
-      radial-gradient(circle at 92% 0%, rgba(56, 189, 248, 0.14), transparent 36%),
-      radial-gradient(circle at 3% 28%, rgba(99, 102, 241, 0.1), transparent 38%);
+    // 画布背景保持纯色，避免折叠侧栏边缘出现一块独立的蓝色背景。
+    background: transparent;
     content: '';
     opacity: 0.92;
     pointer-events: none;
@@ -227,6 +229,11 @@ onMounted(loadMenuBadges);
 :deep(.el-scrollbar__bar.is-vertical) {
   right: -2px;
   width: 4px;
+}
+
+:deep(.el-scrollbar__bar.is-horizontal) {
+  // 侧栏只允许纵向滚动，禁止横向滚动条在底部生成一条异常色带。
+  display: none;
 }
 
 :deep(.el-scrollbar__thumb) {

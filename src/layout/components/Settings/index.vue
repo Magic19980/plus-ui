@@ -189,18 +189,25 @@ const isDark = useDark({
   valueDark: 'dark',
   valueLight: 'light'
 });
-// 匹配菜单颜色 + 暗黑切换过渡
-watch(isDark, () => {
-  const html = document.documentElement;
-  html.classList.add('dark-transitioning');
-  setTimeout(() => html.classList.remove('dark-transitioning'), 400);
+// 页面主题切换时同步布局状态，避免浅色页面残留暗色菜单导致文字与背景对比度不足。
+watch(
+  isDark,
+  value => {
+    settingsStore.dark = value;
 
-  if (isDark.value) {
-    settingsStore.sideTheme = SideThemeEnum.DARK;
-  } else {
-    settingsStore.sideTheme = sideTheme.value;
-  }
-});
+    const html = document.documentElement;
+    html.classList.add('dark-transitioning');
+    setTimeout(() => html.classList.remove('dark-transitioning'), 400);
+
+    // 暗色页面固定使用暗色菜单；关闭暗色模式后恢复为浅色菜单，保证整套导航视觉一致。
+    const nextSideTheme = value ? SideThemeEnum.DARK : SideThemeEnum.LIGHT;
+    sideTheme.value = nextSideTheme;
+    settingsStore.sideTheme = nextSideTheme;
+  },
+  { immediate: true }
+);
+
+// 主题副作用集中在此处，避免切换页签或刷新页面时出现主题状态不一致。
 
 /** 菜单导航设置 */
 watch(
@@ -239,12 +246,11 @@ const radiusBaseChange = (val: number) => {
   document.documentElement.style.setProperty('--app-radius-base', `${val}px`);
 };
 const handleTheme = (val: string) => {
-  sideTheme.value = val;
   if (isDark.value && val === SideThemeEnum.LIGHT) {
     // 暗黑模式颜色不变
-    settingsStore.sideTheme = SideThemeEnum.DARK;
     return;
   }
+  sideTheme.value = val;
   settingsStore.sideTheme = val;
 };
 const saveSetting = () => {

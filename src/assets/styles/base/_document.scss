@@ -23,23 +23,28 @@
 }
 
 // --- 全局滚动条 ---
+// 轨道直接使用页面画布色，避免原生滚动条在页签切换后形成一条独立背景。
+html {
+  scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
+  scrollbar-width: thin;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: transparent;
+  background-color: var(--app-scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--app-text-muted);
+  background-color: var(--app-scrollbar-thumb);
   border-radius: 999px;
-  opacity: 0.42;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(100, 116, 139, 0.56);
+  background-color: var(--app-scrollbar-thumb-hover);
 }
 
 // --- 排版工具类 ---

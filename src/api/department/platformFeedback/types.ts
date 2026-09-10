@@ -59,6 +59,8 @@ export interface PlatformFeedbackCommentVO {
   feedbackId: string | number;
   content: string;
   authorName?: string;
+  /** 作者头像对应的 OSS ID，需通过登录态预览。 */
+  authorAvatar?: string | number;
   deptName?: string;
   mine?: boolean;
   createTime?: string;

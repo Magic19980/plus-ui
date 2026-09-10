@@ -187,7 +187,7 @@
           <section v-if="detail.resolutionNote" class="detail-section"><h3><span class="section-bar section-bar--green"></span>处理说明</h3><div class="resolution-note"><el-icon><CircleCheck /></el-icon><span>{{ detail.resolutionNote }}</span></div></section>
           <section v-if="detail.attachments?.length" class="detail-section"><h3><span class="section-bar section-bar--orange"></span>附件 <small>{{ detail.attachments.length }}</small></h3><div class="attachment-list"><a v-for="item in detail.attachments" :key="String(item.ossId)" :href="item.url" target="_blank" rel="noopener"><el-icon><Document /></el-icon><span>{{ item.originalName }}</span><el-icon><Download /></el-icon></a></div></section>
           <section class="detail-section"><h3><span class="section-bar section-bar--purple"></span>处理进展</h3><el-timeline class="feedback-timeline"><el-timeline-item v-for="item in detail.activities || []" :key="String(item.id)" :timestamp="item.createTime" placement="top"><strong>{{ activityLabel(item.actionType) }}</strong><span>{{ item.actionNote }}</span><small>{{ item.operatorName || '系统' }}</small></el-timeline-item><el-timeline-item v-if="!detail.activities?.length" timestamp="暂无记录"><span>提交后，处理进展会显示在这里</span></el-timeline-item></el-timeline></section>
-          <section class="detail-section comments-section"><div class="section-heading-row"><h3><span class="section-bar section-bar--blue"></span>沟通记录 <small>{{ commentTotal }}</small></h3></div><div v-loading="commentsLoading" class="comment-list"> <div v-for="item in comments" :key="String(item.id)" class="comment-item"><el-avatar :size="32">{{ avatarText(item.authorName) }}</el-avatar><div><div class="comment-author"><strong>{{ item.authorName || '匿名用户' }}</strong><span>{{ item.createTime }}</span></div><p>{{ item.content }}</p></div></div><el-empty v-if="!comments.length && !commentsLoading" :image-size="54" description="还没有沟通记录" /></div><div v-hasPermi="['department:platformFeedback:comment']" class="comment-composer"><el-input v-model="commentForm.content" type="textarea" :rows="3" maxlength="4000" show-word-limit placeholder="补充信息、回复处理进展或提出新的建议" /><div><span>保持信息清晰，方便后续追踪</span><el-button type="primary" size="small" :loading="commentSaving" @click="submitComment">发送评论</el-button></div></div></section>
+          <section class="detail-section comments-section"><div class="section-heading-row"><h3><span class="section-bar section-bar--blue"></span>沟通记录 <small>{{ commentTotal }}</small></h3></div><div v-loading="commentsLoading" class="comment-list"> <div v-for="item in comments" :key="String(item.id)" class="comment-item"><UserAvatar :size="32" :src="item.mine ? userStore.avatar || undefined : undefined" :oss-id="item.mine ? undefined : item.authorAvatar" :name="item.authorName" /><div><div class="comment-author"><strong>{{ item.authorName || '匿名用户' }}</strong><span>{{ item.createTime }}</span></div><p>{{ item.content }}</p></div></div><el-empty v-if="!comments.length && !commentsLoading" :image-size="54" description="还没有沟通记录" /></div><div v-hasPermi="['department:platformFeedback:comment']" class="comment-composer"><el-input v-model="commentForm.content" type="textarea" :rows="3" maxlength="4000" show-word-limit placeholder="补充信息、回复处理进展或提出新的建议" /><div><span>保持信息清晰，方便后续追踪</span><el-button type="primary" size="small" :loading="commentSaving" @click="submitComment">发送评论</el-button></div></div></section>
           <section class="detail-section process-section"><div class="section-heading-row"><h3><span class="section-bar section-bar--orange"></span>处理反馈</h3><span class="process-tip">仅已配置的处理人可保存</span></div><template v-if="detail.processAllowed"><el-form label-position="top" class="process-form"><el-form-item label="更新状态"><el-select v-model="processForm.status" style="width: 100%"><el-option v-for="item in detailStatusOptions" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item><el-form-item label="处理说明"><el-input v-model="processForm.note" type="textarea" :rows="3" maxlength="2000" placeholder="记录判断、处理结果或下一步计划" /></el-form-item><el-button type="primary" :loading="processSaving" @click="submitProcess">保存处理进展</el-button></el-form></template><el-alert v-else type="info" :closable="false" show-icon title="当前账号未配置为反馈处理人，暂无处理权限" /></section>
         </template>
       </div>
@@ -202,9 +202,12 @@ import { ElMessage } from 'element-plus';
 import { ChatDotRound, ChatLineRound, CircleCheck, CircleCheckFilled, CollectionTag, Delete, Document, Download, Filter, InfoFilled, Link, Message, Operation, Paperclip, Plus, Promotion, QuestionFilled, Refresh, Search, Setting, User, Warning } from '@element-plus/icons-vue';
 import { addPlatformFeedback, addPlatformFeedbackComment, getPlatformFeedback, getPlatformFeedbackHandlers, getPlatformFeedbackSummary, listPlatformFeedback, listPlatformFeedbackActivities, listPlatformFeedbackAssigneeOptions, listPlatformFeedbackComments, processPlatformFeedback, updatePlatformFeedbackHandlers, uploadPlatformFeedbackAttachment } from '@/api/department/platformFeedback';
 import type { PlatformFeedbackActivityVO, PlatformFeedbackAttachmentVO, PlatformFeedbackCommentVO, PlatformFeedbackForm, PlatformFeedbackProcessForm, PlatformFeedbackQuery, PlatformFeedbackSummaryVO, PlatformFeedbackUserOptionVO, PlatformFeedbackVO } from '@/api/department/platformFeedback/types';
+import UserAvatar from '@/components/UserAvatar/index.vue';
+import { useUserStore } from '@/store/modules/user';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
+const userStore = useUserStore();
 const listLoading = ref(false);
 const total = ref(0);
 const feedbackList = ref<PlatformFeedbackVO[]>([]);
@@ -547,10 +550,6 @@ function activityLabel(action?: string) {
   return ({ CREATED: '提交反馈', ASSIGNED: '负责人变更', STATUS_CHANGED: '状态更新', NOTE: '补充处理说明', COMMENT: '新增沟通记录' } as Record<string, string>)[action || ''] || '更新记录';
 }
 
-function avatarText(name?: string) {
-  return (name || '匿').slice(0, 1);
-}
-
 onMounted(async () => {
   readRouteContext();
   await Promise.all([getList(), getSummary()]);
@@ -876,6 +875,9 @@ onMounted(async () => {
 :global(html.dark .feedback-detail-drawer .detail-source-card strong) { color: #deebf8; }
 :global(html.dark .feedback-detail-drawer .attachment-list a) { border-color: var(--feedback-border); color: #8cc5f5; }
 :global(html.dark .feedback-detail-drawer .comment-composer) { border-color: var(--feedback-border); background: rgba(30, 41, 59, 0.65); }
+ :global(html.dark .feedback-detail-drawer .comment-author strong) { color: #e5edf8; }
+ :global(html.dark .feedback-detail-drawer .comment-author span) { color: #94a3b8; }
+ :global(html.dark .feedback-detail-drawer .comment-item p) { color: #c2d0e4; }
     :global(html.dark .feedback-detail-drawer .comment-item .el-avatar) { color: #b9ddff; background: rgba(77, 148, 213, 0.2); }
 :global(html.dark .feedback-detail-drawer .resolution-note) { border-color: rgba(70, 160, 105, 0.35); background: rgba(29, 84, 55, 0.32); }
 :global(html.dark .feedback-detail-drawer .process-section) { border-color: rgba(171, 125, 65, 0.38); background: rgba(85, 59, 26, 0.25); }

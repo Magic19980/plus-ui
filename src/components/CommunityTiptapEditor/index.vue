@@ -1170,6 +1170,7 @@ html.dark .community-tiptap-editor .search-action-button, html.dark .community-t
 html.dark .community-tiptap-editor .search-action-button:hover:not(:disabled), html.dark .community-tiptap-editor .search-text-button:hover:not(:disabled), html.dark .community-tiptap-editor .search-close-button:hover { border-color: #4676a6; color: #9bd0ff; background: #203d61; }
 html.dark .community-tiptap-editor .tiptap-editor-hint { color: #8193ac; }
 html.dark .community-tiptap-editor .tiptap { color: #b8c7da; background: #141e31; }
+html.dark .community-tiptap-editor.is-readonly .tiptap { background: transparent; }
 html.dark .community-tiptap-editor .tiptap h2 { color: #e4edf9; }
 html.dark .community-tiptap-editor .tiptap h3 { color: #cbdcf1; }
 html.dark .community-tiptap-editor .tiptap blockquote { border-left-color: #5b9edb; color: #a7b8cf; background: #1b2a40; }

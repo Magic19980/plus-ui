@@ -9,7 +9,8 @@
     transition: margin-left 0.28s;
     margin-left: calc(#{$base-sidebar-width} + 12px);
     position: relative;
-    background: transparent;
+    // 主容器作为页面画布兜底，保证内容区与底部留白颜色一致。
+    background: var(--app-shell-bg);
   }
 
   .sidebarHide {

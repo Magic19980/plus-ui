@@ -225,6 +225,14 @@ html.dark {
   --app-shell-bg: #060b16;
   --app-shell-spot-1: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.18);
   --app-shell-spot-2: rgba(var(--app-accent-r), var(--app-accent-g), var(--app-accent-b), 0.14);
+  // 页面原生滚动条轨道与深色画布保持一致，避免切换页签后右侧出现亮色边带。
+  --app-scrollbar-track: #060b16;
+  --app-scrollbar-thumb: rgba(71, 85, 105, 0.68);
+  --app-scrollbar-thumb-hover: rgba(82, 107, 138, 0.82);
+  // 侧栏主题独立于页面主题，支持暗色页面下继续使用浅色菜单。
+  --app-sidebar-light-bg: #f8fafc;
+  --app-sidebar-dark-bg: #111827;
+  --app-sidebar-bg: #111827;
   --app-sidebar-border: rgba(148, 163, 184, 0.1);
   --app-navbar-bg: #111827;
   --app-navbar-border: rgba(71, 85, 105, 0.48);

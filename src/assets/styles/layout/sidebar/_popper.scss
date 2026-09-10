@@ -10,13 +10,95 @@
 
 .el-popper.is-pure {
   border-radius: var(--app-radius-md);
+  border: 1px solid var(--app-surface-border);
+  background: var(--app-surface-bg);
   box-shadow: var(--app-shadow-md);
 
   .el-menu--popup {
+    min-width: 192px;
+    padding: 7px;
     border-radius: var(--app-radius-md);
+    border: 0;
+    background: var(--app-surface-bg) !important;
+
+    .el-menu-item,
+    .el-sub-menu__title {
+      box-sizing: border-box;
+      height: 40px;
+      margin: 2px 0;
+      padding: 0 12px !important;
+      border: 1px solid transparent;
+      border-radius: var(--app-radius-sm);
+      color: var(--app-text-muted) !important;
+      background: transparent !important;
+      font-size: 13px;
+      line-height: 38px;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .el-menu-item:hover,
+    .el-sub-menu__title:hover {
+      border-color: color-mix(in srgb, var(--app-accent-strong) 24%, transparent);
+      color: var(--app-text-title) !important;
+      background: color-mix(in srgb, var(--app-accent-strong) 12%, var(--app-surface-bg)) !important;
+    }
+
+    .el-menu-item.is-active,
+    .el-sub-menu.is-active > .el-sub-menu__title {
+      border-color: color-mix(in srgb, var(--app-accent-strong) 34%, transparent);
+      color: var(--app-text-title) !important;
+      background: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg)) !important;
+      box-shadow: inset 2px 0 0 var(--app-accent-strong);
+    }
+
+    .svg-icon,
+    .el-sub-menu__icon-arrow {
+      color: currentColor !important;
+      fill: currentColor;
+    }
   }
 
   .el-menu-item {
     border-radius: var(--app-radius-sm);
   }
+}
+
+/* 折叠侧栏的弹层会 teleport 到 body，必须用 html.dark 重新提供实体暗色背景。 */
+html.dark .el-popper.is-pure,
+.dark .el-popper.is-pure {
+  border-color: var(--app-surface-border);
+  background: var(--app-surface-bg);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(125, 211, 252, 0.05);
+}
+
+html.dark .el-popper.is-pure .el-menu--popup,
+.dark .el-popper.is-pure .el-menu--popup {
+  background: var(--app-surface-bg) !important;
+}
+
+html.dark .el-popper.is-pure .el-menu--popup .el-menu-item,
+html.dark .el-popper.is-pure .el-menu--popup .el-sub-menu__title,
+.dark .el-popper.is-pure .el-menu--popup .el-menu-item,
+.dark .el-popper.is-pure .el-menu--popup .el-sub-menu__title {
+  color: #b8c8dc !important;
+  background: transparent !important;
+}
+
+html.dark .el-popper.is-pure .el-menu--popup .el-menu-item:hover,
+html.dark .el-popper.is-pure .el-menu--popup .el-sub-menu__title:hover,
+.dark .el-popper.is-pure .el-menu--popup .el-menu-item:hover,
+.dark .el-popper.is-pure .el-menu--popup .el-sub-menu__title:hover {
+  border-color: rgba(125, 211, 252, 0.22);
+  color: #f2f7ff !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+}
+
+html.dark .el-popper.is-pure .el-menu--popup .el-menu-item.is-active,
+html.dark .el-popper.is-pure .el-menu--popup .el-sub-menu.is-active > .el-sub-menu__title,
+.dark .el-popper.is-pure .el-menu--popup .el-menu-item.is-active,
+.dark .el-popper.is-pure .el-menu--popup .el-sub-menu.is-active > .el-sub-menu__title {
+  border-color: rgba(125, 211, 252, 0.28);
+  color: #f7fbff !important;
+  background: linear-gradient(100deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.1)) !important;
+  box-shadow: inset 2px 0 0 #38bdf8, inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }

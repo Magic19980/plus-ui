@@ -56,6 +56,8 @@ function addIframe() {
   position: relative;
   overflow: hidden;
   padding: 12px;
+  // 页面内容不足一屏时，底部留白仍使用统一画布色，避免露出另一层背景。
+  background: var(--app-shell-bg);
 
   &:fullscreen,
   &:-webkit-full-screen,

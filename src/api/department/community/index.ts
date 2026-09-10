@@ -2,6 +2,7 @@ import type { PageResult } from '@/api/types';
 import type { AxiosPromise } from '@/utils/api-types';
 import request from '@/utils/request';
 import type {
+  CommunityReactionType,
   DepartmentCommunityCommentForm,
   DepartmentCommunityCommentVO,
   DepartmentCommunityPostForm,
@@ -38,7 +39,7 @@ export const addDepartmentCommunityComment = (postId: string | number, data: Dep
 export const delDepartmentCommunityComment = (id: string | number) =>
   request({ url: '/department/community/comment/' + id, method: 'delete' });
 
-export const toggleDepartmentCommunityReaction = (postId: string | number, reactionType: 'LIKE' | 'FAVORITE'): AxiosPromise<DepartmentCommunityReactionVO> =>
+export const toggleDepartmentCommunityReaction = (postId: string | number, reactionType: CommunityReactionType): AxiosPromise<DepartmentCommunityReactionVO> =>
   request({ url: '/department/community/' + postId + '/reaction/' + reactionType, method: 'post' });
 
 export const resolveDepartmentCommunity = (postId: string | number, commentId: string | number) =>
