@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container workflow-spel-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -9,40 +9,40 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.componentName')" prop="componentName">
-            <el-input
+              <UiInput
               v-model="queryParams.componentName"
               :placeholder="$t('common.placeholderInputComponentName')"
               clearable
               @keyup.enter="handleQuery"
-            />
+              />
           </el-form-item>
           <el-form-item :label="$t('common.methodName')" prop="methodName">
-            <el-input
+              <UiInput
               v-model="queryParams.methodName"
               :placeholder="$t('common.placeholderInputMethodName')"
               clearable
               @keyup.enter="handleQuery"
-            />
+              />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
             <h3>{{ $t('common.sectionFlowExpression') }}</h3>
           </div>
           <div class="toolbar-actions">
-            <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['workflow:spel:add']">
+            <UiButton type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['workflow:spel:add']">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               type="success"
               plain
               icon="Edit"
@@ -51,8 +51,8 @@
               v-hasPermi="['workflow:spel:edit']"
             >
               {{ $t('common.btnEdit') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               type="danger"
               plain
               icon="Delete"
@@ -61,14 +61,14 @@
               v-hasPermi="['workflow:spel:remove']"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:showSearch="showSearch" :search="false" @queryTable="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         border
         class="data-table"
         :data="spelList"
@@ -98,8 +98,8 @@
         <el-table-column :label="$t('common.spelExpression')" align="center" prop="viewSpel" />
         <el-table-column :label="$t('common.status')" align="center" prop="status">
           <template #default="scope">
-            <el-tag v-if="scope.row.status === '0'">{{ $t('common.tagNormal') }}</el-tag>
-            <el-tag v-else>{{ $t('common.tagDisabled') }}</el-tag>
+            <UiTag v-if="scope.row.status === '0'" type="success">{{ $t('common.tagNormal') }}</UiTag>
+            <UiTag v-else type="danger">{{ $t('common.tagDisabled') }}</UiTag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.remark')" align="center">
@@ -109,36 +109,38 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-              <el-button
-                link
-                type="primary"
-                icon="Edit"
-                @click="handleUpdate(scope.row)"
-                v-hasPermi="['workflow:spel:edit']"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
-                link
-                type="primary"
-                icon="Delete"
-                @click="handleDelete(scope.row)"
-                v-hasPermi="['workflow:spel:remove']"
-              ></el-button>
-            </el-tooltip>
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                <UiButton
+                  link
+                  type="primary"
+                  icon="Edit"
+                  @click="handleUpdate(scope.row)"
+                  v-hasPermi="['workflow:spel:edit']"
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
+                  link
+                  type="danger"
+                  icon="Delete"
+                  @click="handleDelete(scope.row)"
+                  v-hasPermi="['workflow:spel:remove']"
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         :total="total"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
     <!-- 添加或修改流程spel表达式定义对话框 -->
     <el-dialog :title="dialog.title" v-model="dialog.visible" width="550px" append-to-body>
       <el-form ref="spelFormRef" :model="form" :rules="rules" label-width="100px">
@@ -212,6 +214,9 @@ import { listSpel, getSpel, delSpel, addSpel, updateSpel } from '@/api/workflow/
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { SpelVO, SpelQuery, SpelForm } from '@/api/workflow/spel/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiInput, UiPagination, UiTag, UiTooltip } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
 import { useSearchReset } from '@/hooks/form/useSearchReset';

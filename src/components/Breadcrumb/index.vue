@@ -37,7 +37,7 @@ const getBreadcrumb = () => {
       if (index !== 0) item = item.slice(1);
       return item;
     });
-    const found = getMatched(pathList, permissionStore.defaultRoutes);
+    const found = getMatched(pathList, getDefaultRoutes());
     matched = found.map(item => ({ path: item.path, meta: { ...item.meta } as RouteMeta, redirect: item.redirect as string | undefined }));
   } else {
     matched = route.matched
@@ -50,7 +50,7 @@ const getBreadcrumb = () => {
   }
   // 从响应式 defaultRoutes 中同步对应菜单项的最新 meta.title
   matched = matched.map(item => {
-    const latest = findMetaByPath(item.path, permissionStore.defaultRoutes);
+    const latest = findMetaByPath(item.path, getDefaultRoutes());
     if (latest) {
       return { ...item, meta: { ...item.meta, ...latest } as RouteMeta };
     }
@@ -58,6 +58,14 @@ const getBreadcrumb = () => {
   });
   levelList.value = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false);
 };
+
+/**
+ * vue-router 5 exposes a broader normalized route shape from Pinia's reactive
+ * proxy. Breadcrumb matching only reads the raw route fields, so keep the
+ * compatibility cast at this boundary instead of spreading it through the
+ * recursive helpers below.
+ */
+const getDefaultRoutes = (): RouteRecordRaw[] => permissionStore.defaultRoutes as unknown as RouteRecordRaw[];
 
 const findMetaByPath = (targetPath: string, list: RouteRecordRaw[]): RouteMeta | null => {
   for (const item of list) {
@@ -94,12 +102,9 @@ const getMatched = (pathList: string[], routeList: RouteRecordRaw[]): RouteRecor
   find(routeList, pathList);
   return matched;
 };
-const isDashboard = (matchedRoute?: { name?: string | symbol }) => {
+const isDashboard = (matchedRoute?: { name?: string | symbol; path?: string }) => {
   const name = matchedRoute && (matchedRoute.name as string);
-  if (!name) {
-    return false;
-  }
-  return name.trim() === 'Index';
+  return name?.trim() === 'Index' || matchedRoute?.path === '/index';
 };
 const handleLink = (item: { redirect?: string; path: string }) => {
   const { redirect, path } = item;

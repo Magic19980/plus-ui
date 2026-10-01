@@ -1,0 +1,254 @@
+/*
+ * 泛微工作中心的动森卡片规范。
+ *
+ * 这些页面由多个历史模块组成，之前每个页面都给自己的 el-card、body
+ * 和标题区加了不同的背景与留白。UiCard 在动森模式下还会多一层
+ * .ui-animal-card__body，因此这里统一处理“外层卡片”和“内容层”的职责：
+ * 外层负责边框、圆角和阴影，body 负责留白，Hero 的视觉背景只出现一次。
+ */
+
+html[data-ui-theme='animal'] {
+  :is(
+    .ecology-center-page,
+    .ecology-business-config-page,
+    .ecology-business-submit-page,
+    .import-business-page,
+    .import-config-page,
+    .hrm-sync-page,
+    .ecology-my-application-page,
+    .workflow-config-page
+  ) {
+    --ecology-card-bg: color-mix(in srgb, var(--app-surface-bg) 92%, var(--animal-bg-color-secondary));
+    --ecology-card-border: var(--app-surface-border);
+    --ecology-card-shadow: 0 8px 22px rgb(61 52 40 / 12%);
+    --ecology-card-radius: 20px;
+    --ecology-section-bg: color-mix(in srgb, var(--animal-bg-color-secondary) 52%, var(--app-surface-bg));
+    --ecology-hero-bg: linear-gradient(135deg, #eaf4d8 0%, #d8edca 52%, #c6e3c1 100%);
+    min-height: 100%;
+    padding: 16px 18px 28px !important;
+    background: transparent !important;
+    color: var(--animal-text-color);
+  }
+
+  :is(
+    .ecology-center-page,
+    .ecology-business-config-page,
+    .ecology-business-submit-page,
+    .import-business-page,
+    .import-config-page,
+    .hrm-sync-page,
+    .ecology-my-application-page,
+    .workflow-config-page
+  ):not(.is-embedded) {
+    /* One shared outer shell for every primary card. */
+    :is(
+      .intro-card,
+      .main-card,
+      .history-hero,
+      .history-card,
+      .history-stat,
+      .workspace-hero,
+      .workspace-card,
+      .overview-card,
+      .workflow-hero,
+      .workflow-card,
+      .submit-hero,
+      .submit-card,
+      .note-card
+    ) {
+      min-width: 0;
+      border: 1px solid var(--ecology-card-border) !important;
+      border-radius: var(--ecology-card-radius) !important;
+      background: var(--ecology-card-bg) !important;
+      box-shadow: var(--ecology-card-shadow) !important;
+    }
+
+    /* AnimalCard's body must not become a second inset card. */
+    :is(
+      .intro-card,
+      .main-card,
+      .history-hero,
+      .history-card,
+      .history-stat,
+      .workspace-hero,
+      .workspace-card,
+      .overview-card,
+      .workflow-hero,
+      .workflow-card,
+      .submit-hero,
+      .submit-card,
+      .note-card
+    ) > :is(.el-card__body, .ui-animal-card__body) {
+      min-width: 0;
+      background: transparent !important;
+    }
+
+    /* Hero cards share one height and one content edge. */
+    :is(.intro-card, .workspace-hero, .history-hero, .workflow-hero, .submit-hero) {
+      overflow: hidden !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    :is(.workspace-hero, .history-hero, .workflow-hero, .submit-hero) > :is(.el-card__body, .ui-animal-card__body) {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 132px;
+      padding: 26px 30px !important;
+      border-radius: inherit;
+      background: var(--ecology-hero-bg) !important;
+    }
+
+    .workflow-hero > :is(.el-card__body, .ui-animal-card__body) {
+      justify-content: flex-start;
+    }
+
+    /* These Hero variants have a real inner content wrapper. */
+    :is(.intro-card) > :is(.el-card__body, .ui-animal-card__body) {
+      padding: 0 !important;
+    }
+
+    :is(.intro-card__content, .intro-content) {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 132px;
+      padding: 26px 30px !important;
+      border-radius: inherit;
+      background: var(--ecology-hero-bg) !important;
+    }
+
+    :is(.intro-card__content, .intro-content, .workspace-hero, .history-hero, .workflow-hero, .submit-hero) :is(h2, h3) {
+      color: var(--animal-text-color) !important;
+      text-shadow: none !important;
+    }
+
+    :is(.intro-card__content, .intro-content, .workspace-hero, .history-hero, .workflow-hero, .submit-hero) p {
+      color: var(--animal-text-color-secondary) !important;
+    }
+
+    /* Main content cards use the same breathing room and never add an inset fill. */
+    :is(.main-card, .history-card, .workspace-card, .workflow-card, .submit-card, .note-card) {
+      overflow: hidden !important;
+      padding: 0 !important;
+      margin-top: 14px !important;
+    }
+
+    :is(.main-card, .history-card, .workspace-card, .workflow-card, .submit-card, .note-card) > :is(.el-card__body, .ui-animal-card__body) {
+      padding: 20px 22px 24px !important;
+      border-radius: inherit;
+    }
+
+    /* Header slots and first content rows align to the same left edge. */
+    :is(.main-card, .history-card, .workflow-card) > .ui-animal-card__header {
+      margin: 0 !important;
+      padding: 20px 22px 14px !important;
+      border-bottom: 1px solid var(--animal-border-color-light) !important;
+    }
+
+    :is(.main-card__header, .card-heading, .workspace-heading, .submit-card__heading, .section-heading) {
+      min-width: 0;
+      color: var(--animal-text-color) !important;
+    }
+
+    :is(.history-overview, .overview-grid) {
+      gap: 14px !important;
+      margin: 14px 0 !important;
+    }
+
+    :is(.overview-card, .history-stat) {
+      min-height: 92px;
+      border-radius: 16px !important;
+      background: color-mix(in srgb, var(--animal-primary-color) 5%, var(--app-surface-bg)) !important;
+      box-shadow: 0 4px 12px rgb(61 52 40 / 8%) !important;
+    }
+
+    :is(.workspace-hero + .config-tabs, .history-hero + .history-overview) {
+      margin-top: 14px !important;
+    }
+
+    /* Tables remain a component-level surface, but use the same radius and line color. */
+    :is(.el-table, .data-table) {
+      overflow: hidden;
+      border: 1px solid var(--animal-border-color-light) !important;
+      border-radius: 14px;
+      background: var(--app-surface-bg) !important;
+    }
+
+    :is(.el-table th.el-table__cell, .data-table th.el-table__cell) {
+      color: var(--animal-text-color) !important;
+      background: var(--animal-bg-color-secondary) !important;
+    }
+
+    :is(.el-table td.el-table__cell, .data-table td.el-table__cell) {
+      color: var(--animal-text-color) !important;
+      border-bottom-color: var(--animal-border-color-light) !important;
+      background: var(--app-surface-bg) !important;
+    }
+
+    :is(.el-table__row:hover > td.el-table__cell, .data-table .el-table__row:hover > td.el-table__cell) {
+      background: var(--animal-primary-color-bg) !important;
+    }
+  }
+}
+
+html.dark[data-ui-theme='animal'] {
+  :is(
+    .ecology-center-page,
+    .ecology-business-config-page,
+    .ecology-business-submit-page,
+    .import-business-page,
+    .import-config-page,
+    .hrm-sync-page,
+    .ecology-my-application-page,
+    .workflow-config-page
+  ) {
+    --ecology-card-bg: color-mix(in srgb, var(--app-surface-bg) 90%, #405650);
+    --ecology-card-border: var(--animal-border-color);
+    --ecology-card-shadow: 0 8px 22px rgb(9 23 22 / 28%);
+    --ecology-section-bg: color-mix(in srgb, var(--animal-bg-color-secondary) 62%, var(--app-surface-bg));
+    --ecology-hero-bg: linear-gradient(135deg, #334b47 0%, #2f4541 54%, #29403d 100%);
+  }
+
+  :is(
+    .ecology-center-page,
+    .ecology-business-config-page,
+    .ecology-business-submit-page,
+    .import-business-page,
+    .import-config-page,
+    .hrm-sync-page,
+    .ecology-my-application-page,
+    .workflow-config-page
+  ):not(.is-embedded) {
+    :is(.intro-card__content, .intro-content, .workspace-hero, .history-hero, .workflow-hero, .submit-hero) {
+      background: var(--ecology-hero-bg) !important;
+    }
+
+    :is(.overview-card, .history-stat) {
+      background: color-mix(in srgb, var(--animal-primary-color) 8%, var(--app-surface-bg)) !important;
+    }
+
+    :is(.el-table th.el-table__cell, .data-table th.el-table__cell) {
+      background: var(--animal-bg-color-secondary) !important;
+    }
+
+    :is(.el-table td.el-table__cell, .data-table td.el-table__cell) {
+      background: var(--app-surface-bg) !important;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  html[data-ui-theme='animal'] :is(.ecology-center-page, .ecology-business-config-page, .ecology-business-submit-page, .import-business-page, .import-config-page, .hrm-sync-page, .ecology-my-application-page, .workflow-config-page):not(.is-embedded) {
+    padding: 12px !important;
+  }
+
+  html[data-ui-theme='animal'] :is(.intro-card__content, .intro-content, .workspace-hero, .history-hero, .workflow-hero, .submit-hero) {
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
+}

@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container monitor-operlog-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,13 +12,13 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.operIp')" prop="operIp">
-            <el-input v-model="queryParams.operIp" :placeholder="$t('common.placeholderInputHost')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.operIp" :placeholder="$t('common.placeholderInputHost')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.systemModule')" prop="title">
-            <el-input v-model="queryParams.title" :placeholder="$t('common.placeholderInputTitle')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.title" :placeholder="$t('common.placeholderInputTitle')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.operator')" prop="operName">
-            <el-input
+            <UiInput
               v-model="queryParams.operName"
               :placeholder="$t('common.placeholderInputOperName')"
               clearable
@@ -26,31 +26,25 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.clientKey')" prop="clientKey">
-            <el-input v-model="queryParams.clientKey" :placeholder="$t('common.placeholderInputClient')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.clientKey" :placeholder="$t('common.placeholderInputClient')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.deviceType')" prop="deviceType">
-            <el-select v-model="queryParams.deviceType" :placeholder="$t('common.placeholderInputDeviceType')" clearable>
-              <el-option v-for="dict in sys_device_type" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.deviceType" :options="sys_device_type" :placeholder="$t('common.placeholderInputDeviceType')" clearable />
           </el-form-item>
           <el-form-item :label="$t('common.browser')" prop="browser">
-            <el-input v-model="queryParams.browser" :placeholder="$t('common.placeholderInputBrowser')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.browser" :placeholder="$t('common.placeholderInputBrowser')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.os')" prop="os">
-            <el-input v-model="queryParams.os" :placeholder="$t('common.placeholderInputOs')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.os" :placeholder="$t('common.placeholderInputOs')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.type')" prop="businessType">
-            <el-select v-model="queryParams.businessType" :placeholder="$t('common.placeholderOperType')" clearable>
-              <el-option v-for="dict in sys_oper_type" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.businessType" :options="sys_oper_type" :placeholder="$t('common.placeholderOperType')" clearable />
           </el-form-item>
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="queryParams.status" :placeholder="$t('common.placeholderOperStatus')" clearable>
-              <el-option v-for="dict in sys_common_status" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.status" :options="sys_common_status" :placeholder="$t('common.placeholderOperStatus')" clearable />
           </el-form-item>
           <el-form-item :label="$t('common.operTimeRange')" style="width: 308px">
-            <el-date-picker
+            <UiDatePicker
               v-model="dateRange"
               value-format="YYYY-MM-DD HH:mm:ss"
               type="daterange"
@@ -58,17 +52,17 @@
               :start-placeholder="$t('common.placeholderStartDate')"
               :end-placeholder="$t('common.placeholderEndDate')"
               :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
-            ></el-date-picker>
+            />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -77,7 +71,7 @@
             <p>共 {{ total }} 条记录，支持类型过滤、详情查看、批量清空和导出。</p>
           </div>
           <div class="toolbar-actions">
-            <el-button
+            <UiButton
               v-hasPermi="['monitor:operlog:remove']"
               type="danger"
               plain
@@ -86,8 +80,8 @@
               @click="handleDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['monitor:operlog:remove']"
               type="danger"
               plain
@@ -95,8 +89,8 @@
               @click="handleClean"
             >
               {{ $t('common.btnClear') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['monitor:operlog:export']"
               type="warning"
               plain
@@ -104,15 +98,14 @@
               @click="handleExport"
             >
               {{ $t('common.btnExport') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
+      <DepartmentDataTable
         ref="operLogTableRef"
-        v-loading="loading"
         :data="operlogList"
         class="data-table"
         border
@@ -179,27 +172,29 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" fixed="right" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipOperDetail')" placement="top">
-              <el-button
-                v-hasPermi="['monitor:operlog:query']"
-                link
-                type="primary"
-                icon="View"
-                @click="handleView(scope.row)"
-              ></el-button>
-            </el-tooltip>
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipOperDetail')" placement="bottom">
+                <UiButton
+                  v-hasPermi="['monitor:operlog:query']"
+                  link
+                  type="primary"
+                  icon="View"
+                  @click="handleView(scope.row)"
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
     <!-- 操作日志详细 -->
     <OperInfoDialog ref="operInfoDialogRef" />
   </div>
@@ -207,6 +202,9 @@
 
 <script setup name="Operlog" lang="ts">
 import { list, delOperlog, cleanOperlog } from '@/api/monitor/operlog';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDatePicker, UiInput, UiPagination, UiSelect, UiTooltip } from '@/components/UiKit';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { OperLogForm, OperLogQuery, OperLogVO } from '@/api/monitor/operlog/types';
@@ -232,7 +230,7 @@ const { showSearch } = useSearchToggle();
 const total = ref(0);
 const { dateRange, applyDateRange, resetDateRange } = useDateRangeQuery();
 
-const operLogTableRef = ref<ElTableInstance>();
+const operLogTableRef = ref<{ sort: (prop: string, order: 'ascending' | 'descending' | null) => void }>();
 const queryFormRef = ref<ElFormInstance>();
 
 const data = reactive<PageData<OperLogForm, OperLogQuery>>({

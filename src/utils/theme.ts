@@ -1,24 +1,43 @@
+const DEFAULT_PRIMARY_COLOR = '#409eff';
+
+/**
+ * 规范化主题色，避免配置被清空或传入非法值后生成无效的 rgba / Hex CSS。
+ * 主题色来自设置面板和持久化存储，不能假设每次读取到的值都完整可靠。
+ */
+const normalizeHexColor = (color: string, fallback = DEFAULT_PRIMARY_COLOR) => {
+  const value = color?.trim() || '';
+  if (/^#[\da-f]{6}$/i.test(value)) return value;
+  if (/^#[\da-f]{3}$/i.test(value)) {
+    return `#${value
+      .slice(1)
+      .split('')
+      .map((part) => `${part}${part}`)
+      .join('')}`;
+  }
+  return fallback;
+};
+
 // 处理主题样式
 export const handleThemeStyle = (theme: string) => {
-  document.documentElement.style.setProperty('--el-color-primary', theme);
+  const safeTheme = normalizeHexColor(theme);
+  const rgb = hexToRgb(safeTheme);
+
+  document.documentElement.style.setProperty('--el-color-primary', safeTheme);
   for (let i = 1; i <= 9; i++) {
-    document.documentElement.style.setProperty(`--el-color-primary-light-${i}`, `${getLightColor(theme, i / 10)}`);
+    document.documentElement.style.setProperty(`--el-color-primary-light-${i}`, `${getLightColor(safeTheme, i / 10)}`);
   }
   for (let i = 1; i <= 9; i++) {
-    document.documentElement.style.setProperty(`--el-color-primary-dark-${i}`, `${getDarkColor(theme, i / 10)}`);
+    document.documentElement.style.setProperty(`--el-color-primary-dark-${i}`, `${getDarkColor(safeTheme, i / 10)}`);
   }
   // 同时更新应用层的高亮色变量，使其跟随主色变化
-  const rgb = hexToRgb(theme);
-  if (rgb?.length >= 3) {
-    document.documentElement.style.setProperty('--app-accent-r', rgb[0]);
-    document.documentElement.style.setProperty('--app-accent-g', rgb[1]);
-    document.documentElement.style.setProperty('--app-accent-b', rgb[2]);
-  }
-  document.documentElement.style.setProperty('--app-accent-strong', theme);
+  document.documentElement.style.setProperty('--app-accent-r', rgb[0]);
+  document.documentElement.style.setProperty('--app-accent-g', rgb[1]);
+  document.documentElement.style.setProperty('--app-accent-b', rgb[2]);
+  document.documentElement.style.setProperty('--app-accent-strong', safeTheme);
   document.documentElement.style.setProperty('--app-accent-soft', `rgba(${rgb.join(',')}, 0.08)`);
   // 计算按钮交互态颜色（hover ≈ 暗 15%，active ≈ 暗 25%）
-  document.documentElement.style.setProperty('--app-button-hover', getDarkColor(theme, 0.15));
-  document.documentElement.style.setProperty('--app-button-active', getDarkColor(theme, 0.25));
+  document.documentElement.style.setProperty('--app-button-hover', getDarkColor(safeTheme, 0.15));
+  document.documentElement.style.setProperty('--app-button-active', getDarkColor(safeTheme, 0.25));
 };
 
 // hex颜色转rgb颜色

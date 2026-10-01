@@ -6,47 +6,47 @@
         <h3>审批方式配置</h3>
         <p>维护可跨泛微表单复用的审批方式和审批节点规则。</p>
       </div>
-      <el-button v-hasPermi="['ecology:workflowConfig:add']" type="primary" icon="Plus" @click="openAdd">新增审批方式</el-button>
+      <UiButton v-hasPermi="['ecology:workflowConfig:add']" type="primary" icon="Plus" @click="openAdd">新增审批方式</UiButton>
     </div>
 
     <el-alert title="审批方式是通用配置；这里维护系统编码和审批节点。不同泛微表单的实际值，请在对应表单的“审批方式”字段选项中填写。" type="info" :closable="false" show-icon class="panel-guide" />
-    <el-table v-loading="loading" :data="rows" border class="config-table" row-key="id">
+    <DepartmentDataTable :loading="loading" :data="rows" border class="config-table" row-key="id">
       <el-table-column label="审批方式" min-width="250">
         <template #default="scope"><div class="option-cell"><span class="option-cell__icon"><el-icon><Finished /></el-icon></span><div><strong>{{ scope.row.optionName }}</strong><small>系统编码：{{ scope.row.optionCode }}</small></div></div></template>
       </el-table-column>
       <el-table-column label="节点字段映射" min-width="320" show-overflow-tooltip><template #default="scope">{{ stageSummary(asOption(scope.row)) }}</template></el-table-column>
       <el-table-column label="显示顺序" prop="sortNo" width="100" align="center" />
-      <el-table-column label="状态" width="90" align="center"><template #default="scope"><el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'" effect="plain">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</el-tag></template></el-table-column>
+      <el-table-column label="状态" width="90" align="center"><template #default="scope"><UiTag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'" effect="plain">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</UiTag></template></el-table-column>
       <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip />
-      <el-table-column label="操作" fixed="right" width="150" align="center"><template #default="scope"><DepartmentTableActions><el-button v-hasPermi="['ecology:workflowConfig:edit']" link type="primary" @click="openEdit(asOption(scope.row))">编辑</el-button><el-button v-hasPermi="['ecology:workflowConfig:remove']" link type="danger" @click="remove(asOption(scope.row))">删除</el-button></DepartmentTableActions></template></el-table-column>
-    </el-table>
-    <el-empty v-if="!loading && !rows.length" description="暂无通用审批方式，请先新增配置" />
+      <el-table-column label="操作" fixed="right" width="150" align="center"><template #default="scope"><DepartmentTableActions><UiButton v-hasPermi="['ecology:workflowConfig:edit']" link type="primary" @click="openEdit(asOption(scope.row))">编辑</UiButton><UiButton v-hasPermi="['ecology:workflowConfig:remove']" link type="danger" @click="remove(asOption(scope.row))">删除</UiButton></DepartmentTableActions></template></el-table-column>
+    </DepartmentDataTable>
+    <UiEmpty v-if="!loading && !rows.length" description="暂无通用审批方式，请先新增配置" />
 
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="820px" append-to-body destroy-on-close class="option-dialog">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <div class="dialog-summary"><span class="summary-icon"><el-icon><Finished /></el-icon></span><div><strong>通用审批方式</strong><small>同一审批方式可被多个泛微表单和业务类型复用。</small></div></div>
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="审批方式名称" prop="optionName"><el-input v-model="form.optionName" maxlength="100" placeholder="如：依次签、会签、部门负责人审批" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="系统审批方式编码" prop="optionCode"><el-input v-model="form.optionCode" maxlength="64" placeholder="如：SEQUENTIAL、COUNTERSIGN，需全局唯一" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="审批方式名称" prop="optionName"><UiInput v-model="form.optionName" :maxlength="100" placeholder="如：依次签、会签、部门负责人审批" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="系统审批方式编码" prop="optionCode"><UiInput v-model="form.optionCode" :maxlength="64" placeholder="如：SEQUENTIAL、COUNTERSIGN，需全局唯一" /></el-form-item></el-col>
         </el-row>
         <div class="section-title"><span>审批节点字段映射</span><small>只有节点字段随审批方式变化时在这里维护</small></div>
         <div class="stage-list">
           <div v-for="(stage, index) in mapping.stages" :key="stage.key" class="stage-row">
             <span class="stage-index">{{ index + 1 }}</span>
-            <el-input v-model="stage.code" class="stage-code" placeholder="节点编码，如 STAGE_1" />
-            <el-input v-model="stage.name" class="stage-name" placeholder="节点名称，如 一级会签" />
-            <el-input v-model="stage.fieldCode" class="stage-field" placeholder="泛微人员字段，如 ycq1" />
-            <el-select v-model="stage.mode" class="stage-mode"><el-option label="依次签" value="SEQUENTIAL" /><el-option label="会签" value="COUNTERSIGN" /><el-option label="或签" value="OR_SIGN" /></el-select>
+            <UiInput v-model="stage.code" class="stage-code" placeholder="节点编码，如 STAGE_1" />
+            <UiInput v-model="stage.name" class="stage-name" placeholder="节点名称，如 一级会签" />
+            <UiInput v-model="stage.fieldCode" class="stage-field" placeholder="泛微人员字段，如 ycq1" />
+            <UiSelect v-model="stage.mode" :options="stageModeOptions" class="stage-mode" />
             <el-checkbox v-model="stage.required" class="stage-required">必填</el-checkbox>
-            <el-button link type="danger" @click="removeStage(index)">删除</el-button>
+            <UiButton link type="danger" @click="removeStage(index)">删除</UiButton>
           </div>
-          <el-button type="primary" plain icon="Plus" @click="addStage">新增审批节点</el-button>
+          <UiButton type="primary" plain icon="Plus" @click="addStage">新增审批节点</UiButton>
         </div>
         <div class="mapping-tip">申请标题、内容、申请人、申请日期、审批方式、抄送和附件等公用字段在“表单配置”中维护；这里只配置本审批方式的节点编码、泛微人员字段和顺序，用户在审批方案中维护。</div>
-        <el-row :gutter="16" class="bottom-row"><el-col :span="8"><el-form-item label="显示顺序"><el-input-number v-model="form.sortNo" :min="0" :max="999" /></el-form-item></el-col><el-col :span="8"><el-form-item label="状态"><el-switch v-model="form.status" active-value="ENABLED" inactive-value="DISABLED" /></el-form-item></el-col></el-row>
-        <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="2" maxlength="1000" show-word-limit /></el-form-item>
+        <el-row :gutter="16" class="bottom-row"><el-col :span="8"><el-form-item label="显示顺序"><el-input-number v-model="form.sortNo" :min="0" :max="999" /></el-form-item></el-col><el-col :span="8"><el-form-item label="状态"><UiSwitch v-model="form.status" active-value="ENABLED" inactive-value="DISABLED" /></el-form-item></el-col></el-row>
+        <el-form-item label="备注"><UiTextarea v-model="form.remark" :rows="2" :maxlength="1000" show-word-limit /></el-form-item>
       </el-form>
-      <template #footer><el-button type="primary" :loading="saving" @click="save">保存审批方式</el-button><el-button @click="dialog.visible = false">取消</el-button></template>
+      <template #footer><UiButton type="primary" :loading="saving" @click="save">保存审批方式</UiButton><UiButton @click="dialog.visible = false">取消</UiButton></template>
     </el-dialog>
   </div>
 </template>
@@ -55,7 +55,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import { Finished } from '@element-plus/icons-vue';
 import modal from '@/plugins/modal';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiEmpty, UiInput, UiSelect, UiSwitch, UiTag, UiTextarea } from '@/components/UiKit';
 import { delOaWorkflowOption, listOaWorkflowOptions, saveOaWorkflowOption } from '@/api/ecology';
 import type { OaWorkflowOptionForm, OaWorkflowOptionVO } from '@/api/ecology/types';
 
@@ -68,6 +70,11 @@ const dialog = reactive({ visible: false, title: '' });
 const form = reactive<OaWorkflowOptionForm>(newOption());
 const mapping = reactive<{ stages: Stage[] }>({ stages: [] });
 const rules = { optionName: [{ required: true, message: '请输入审批方式名称', trigger: 'blur' }], optionCode: [{ required: true, message: '请输入系统审批方式编码', trigger: 'blur' }] };
+const stageModeOptions = [
+  { value: 'SEQUENTIAL', label: '依次签' },
+  { value: 'COUNTERSIGN', label: '会签' },
+  { value: 'OR_SIGN', label: '或签' }
+];
 const asOption = (row: any): OaWorkflowOptionVO => row;
 
 function newOption(): OaWorkflowOptionForm { return { id: undefined, optionCode: '', optionName: '', participantMappingJson: '', sortNo: 0, status: 'ENABLED', remark: '' }; }

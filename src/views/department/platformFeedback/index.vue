@@ -31,7 +31,7 @@
       </div>
     </section>
 
-    <el-card shadow="never" class="feedback-workspace">
+    <UiCard shadow="never" class="feedback-workspace">
       <div class="workspace-heading">
         <div>
           <span class="section-kicker">FEEDBACK WORKSPACE</span>
@@ -39,9 +39,9 @@
           <p>统一查看问题、数据、流程疑问和改进建议，按状态持续跟进。</p>
         </div>
         <div class="workspace-tools">
-          <el-button plain @click="handleQuery"><el-icon><Refresh /></el-icon>刷新</el-button>
-          <el-button v-hasPermi="['department:platformFeedback:manage']" plain @click="openHandlerDialog"><el-icon><Setting /></el-icon>配置处理人</el-button>
-          <el-button v-hasPermi="['department:platformFeedback:add']" type="primary" @click="openCreate"><el-icon><Plus /></el-icon>提交反馈</el-button>
+          <UiButton plain @click="handleQuery"><el-icon><Refresh /></el-icon>刷新</UiButton>
+          <UiButton v-hasPermi="['department:platformFeedback:manage']" plain @click="openHandlerDialog"><el-icon><Setting /></el-icon>配置处理人</UiButton>
+          <UiButton v-hasPermi="['department:platformFeedback:add']" type="primary" @click="openCreate"><el-icon><Plus /></el-icon>提交反馈</UiButton>
         </div>
       </div>
 
@@ -57,31 +57,25 @@
         <div class="filter-panel-title"><span><el-icon><Filter /></el-icon> 筛选反馈</span><small>支持按关键字、类型、状态和来源模块组合查询</small></div>
         <el-form :inline="true" class="feedback-filter-form" @submit.prevent>
           <el-form-item class="filter-keyword">
-            <el-input v-model="queryParams.keyword" clearable placeholder="搜索编号、标题或描述" @keyup.enter="handleQuery">
+            <UiInput v-model="queryParams.keyword" clearable placeholder="搜索编号、标题或描述" @keyup.enter="handleQuery">
               <template #prefix><el-icon><Search /></el-icon></template>
-            </el-input>
+            </UiInput>
           </el-form-item>
           <el-form-item>
-            <el-select v-model="queryParams.feedbackType" clearable placeholder="全部类型">
-              <el-option v-for="item in feedbackTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.feedbackType" :options="feedbackTypeOptions" clearable placeholder="全部类型" />
           </el-form-item>
           <el-form-item>
-            <el-select v-model="queryParams.priority" clearable placeholder="全部优先级">
-              <el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.priority" :options="priorityOptions" clearable placeholder="全部优先级" />
           </el-form-item>
           <el-form-item>
-            <el-select v-model="queryParams.status" clearable placeholder="全部状态">
-              <el-option v-for="item in allStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.status" :options="allStatusOptions" clearable placeholder="全部状态" />
           </el-form-item>
           <el-form-item class="filter-module">
-            <el-input v-model="queryParams.moduleName" clearable placeholder="来源模块" />
+            <UiInput v-model="queryParams.moduleName" clearable placeholder="来源模块" />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" @click="handleQuery"><el-icon><Search /></el-icon>查询</el-button>
-            <el-button @click="resetQuery"><el-icon><Refresh /></el-icon>重置</el-button>
+            <UiButton type="primary" @click="handleQuery"><el-icon><Search /></el-icon>查询</UiButton>
+            <UiButton @click="resetQuery"><el-icon><Refresh /></el-icon>重置</UiButton>
           </el-form-item>
         </el-form>
       </div>
@@ -91,7 +85,7 @@
         <div class="list-hint"><el-icon><InfoFilled /></el-icon> 点击记录查看详情和处理进展</div>
       </div>
 
-        <el-table v-loading="listLoading" :data="feedbackList" class="feedback-table" row-class-name="feedback-table-row" @row-click="openDetail">
+        <DepartmentDataTable :loading="listLoading" :data="feedbackList" class="feedback-table" row-class-name="feedback-table-row" @row-click="openDetail">
         <el-table-column label="反馈" min-width="330">
           <template #default="scope">
             <div class="feedback-title-cell">
@@ -104,13 +98,13 @@
           </template>
         </el-table-column>
         <el-table-column label="类型" width="100" align="center">
-          <template #default="scope"><el-tag :type="typeTag(scope.row.feedbackType)" effect="light" round>{{ typeLabel(scope.row.feedbackType) }}</el-tag></template>
+          <template #default="scope"><UiTag :type="typeTag(scope.row.feedbackType)" effect="light" round>{{ typeLabel(scope.row.feedbackType) }}</UiTag></template>
         </el-table-column>
         <el-table-column label="优先级" width="105" align="center">
           <template #default="scope"><span class="priority-label" :class="`priority-label--${scope.row.priority?.toLowerCase()}`"><i></i>{{ priorityLabel(scope.row.priority) }}</span></template>
         </el-table-column>
         <el-table-column label="状态" width="125" align="center">
-          <template #default="scope"><el-tag :type="statusTag(scope.row.status)" effect="light" round>{{ statusLabel(scope.row.status) }}</el-tag></template>
+          <template #default="scope"><UiTag :type="statusTag(scope.row.status)" effect="light" round>{{ statusLabel(scope.row.status) }}</UiTag></template>
         </el-table-column>
         <el-table-column label="提交人" min-width="170">
           <template #default="scope">
@@ -121,12 +115,12 @@
           <template #default="scope"><span class="update-time">{{ scope.row.updateTime || scope.row.createTime || '—' }}</span></template>
         </el-table-column>
         <el-table-column label="操作" width="90" fixed="right" align="center">
-          <template #default="scope"><el-button link type="primary" @click.stop="openDetail(scope.row)">查看详情</el-button></template>
+          <template #default="scope"><UiButton link type="primary" @click.stop="openDetail(scope.row)">查看详情</UiButton></template>
         </el-table-column>
-        <template #empty><el-empty :image-size="76" description="还没有反馈记录，提交第一条问题或建议吧" /></template>
-      </el-table>
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
-    </el-card>
+          <template #empty><UiEmpty :image-size="76" description="还没有反馈记录，提交第一条问题或建议吧" /></template>
+        </DepartmentDataTable>
+      <UiPagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+    </UiCard>
 
     <el-dialog v-model="handlerDialog.visible" title="配置反馈处理人" width="min(620px, 94vw)" append-to-body destroy-on-close class="feedback-handler-dialog">
       <div v-loading="handlerDialog.loading" class="handler-config-body">
@@ -140,14 +134,14 @@
         </el-form>
         <div class="handler-config-tip"><el-icon><InfoFilled /></el-icon><span>处理人变更立即生效；历史反馈不会被重新分派。</span></div>
       </div>
-      <template #footer><el-button @click="handlerDialog.visible = false">取消</el-button><el-button type="primary" :loading="handlerDialog.saving" :disabled="handlerForm.userIds.length < 2 || handlerForm.userIds.length > 3" @click="saveHandlers">保存配置</el-button></template>
+      <template #footer><UiButton @click="handlerDialog.visible = false">取消</UiButton><UiButton type="primary" :loading="handlerDialog.saving" :disabled="handlerForm.userIds.length < 2 || handlerForm.userIds.length > 3" @click="saveHandlers">保存配置</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="createDialog.visible" title="提交问题与建议" width="min(760px, 94vw)" append-to-body destroy-on-close class="feedback-create-dialog" @closed="resetCreateForm">
       <div v-if="sourceContext.title || sourceContext.path" class="source-context-banner">
         <span class="source-context-icon"><el-icon><Link /></el-icon></span>
         <div><strong>已带入当前页面上下文</strong><span>{{ sourceContext.title || sourceContext.module || '当前页面' }}<i v-if="sourceContext.path"> · {{ sourceContext.path }}</i></span></div>
-        <el-button link type="primary" @click="clearSourceContext">清除</el-button>
+        <UiButton link type="primary" @click="clearSourceContext">清除</UiButton>
       </div>
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-position="top" class="feedback-create-form">
         <div class="form-section-intro"><span class="form-step">01</span><div><strong>先告诉我们反馈类型</strong><small>选择类型后，我们会用更合适的方式跟进</small></div></div>
@@ -160,10 +154,10 @@
         </el-form-item>
         <div class="form-section-intro"><span class="form-step">02</span><div><strong>把问题说清楚</strong><small>信息越完整，处理和回复会越快</small></div></div>
         <el-row :gutter="18">
-          <el-col :span="16"><el-form-item label="标题" prop="title"><el-input v-model="createForm.title" maxlength="200" show-word-limit placeholder="例如：导入批次页面无法选择组织" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="优先级"><el-select v-model="createForm.priority" style="width: 100%"><el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="来源模块"><el-input v-model="createForm.moduleName" clearable placeholder="例如：泛微同步、业务提交" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="业务编号（可选）"><el-input v-model="createForm.businessRef" clearable placeholder="方便定位的批次号、申请号等" /></el-form-item></el-col>
+          <el-col :span="16"><el-form-item label="标题" prop="title"><UiInput v-model="createForm.title" :maxlength="200" show-word-limit placeholder="例如：导入批次页面无法选择组织" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="优先级"><UiSelect v-model="createForm.priority" :options="priorityOptions" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="来源模块"><UiInput v-model="createForm.moduleName" clearable placeholder="例如：泛微同步、业务提交" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="业务编号（可选）"><UiInput v-model="createForm.businessRef" clearable placeholder="方便定位的批次号、申请号等" /></el-form-item></el-col>
         </el-row>
         <el-form-item :label="createForm.feedbackType === 'SUGGESTION' ? '建议内容 / 当前痛点' : '问题描述'" prop="description"><el-input v-model="createForm.description" type="textarea" :rows="4" maxlength="10000" show-word-limit :placeholder="createForm.feedbackType === 'SUGGESTION' ? '描述当前做法、遇到的阻碍，以及你希望怎样改进' : '描述看到的现象、影响范围和发生频率'" /></el-form-item>
         <el-collapse-transition>
@@ -172,23 +166,23 @@
             <el-row :gutter="18"><el-col :span="12"><el-form-item label="期望结果（可选）"><el-input v-model="createForm.expectedResult" type="textarea" :rows="2" maxlength="2000" placeholder="本来应该发生什么" /></el-form-item></el-col><el-col :span="12"><el-form-item label="实际结果（可选）"><el-input v-model="createForm.actualResult" type="textarea" :rows="2" maxlength="2000" placeholder="现在实际发生了什么" /></el-form-item></el-col></el-row>
           </div>
         </el-collapse-transition>
-        <el-form-item label="附件（可选）"><el-upload class="feedback-uploader" multiple :show-file-list="false" :http-request="handleAttachmentUpload" :disabled="attachmentUploading || attachments.length >= 5"><el-button plain><el-icon><Paperclip /></el-icon> 添加附件</el-button><span class="upload-tip">最多 5 个，每个不超过 50MB</span></el-upload><div v-if="attachments.length" class="attachment-draft-list"><div v-for="item in attachments" :key="String(item.ossId)" class="attachment-draft"><el-icon><Document /></el-icon><span>{{ item.originalName }}</span><el-button link type="danger" @click="removeAttachment(item)"><el-icon><Delete /></el-icon></el-button></div></div></el-form-item>
+        <el-form-item label="附件（可选）"><UiUpload class="feedback-uploader" multiple :show-file-list="false" :http-request="handleAttachmentUpload" :disabled="attachmentUploading || attachments.length >= 5"><UiButton plain><el-icon><Paperclip /></el-icon> 添加附件</UiButton><span class="upload-tip">最多 5 个，每个不超过 50MB</span></UiUpload><div v-if="attachments.length" class="attachment-draft-list"><div v-for="item in attachments" :key="String(item.ossId)" class="attachment-draft"><el-icon><Document /></el-icon><span>{{ item.originalName }}</span><UiButton link type="danger" @click="removeAttachment(item)"><el-icon><Delete /></el-icon></UiButton></div></div></el-form-item>
       </el-form>
-      <template #footer><el-button @click="createDialog.visible = false">取消</el-button><el-button v-hasPermi="['department:platformFeedback:add']" type="primary" :loading="createSaving" :disabled="attachmentUploading" @click="submitCreate"><el-icon><Promotion /></el-icon>提交反馈</el-button></template>
+      <template #footer><UiButton @click="createDialog.visible = false">取消</UiButton><UiButton v-hasPermi="['department:platformFeedback:add']" type="primary" :loading="createSaving" :disabled="attachmentUploading" @click="submitCreate"><el-icon><Promotion /></el-icon>提交反馈</UiButton></template>
     </el-dialog>
 
     <el-drawer v-model="detailDrawer.visible" title="反馈详情" direction="rtl" size="min(620px, 94vw)" class="feedback-detail-drawer" destroy-on-close>
       <div v-loading="detailDrawer.loading" class="feedback-detail" @click.stop>
         <template v-if="detail">
-          <div class="detail-heading"><div class="detail-heading-main"><span class="detail-type-label" :class="`detail-type-label--${detail.feedbackType?.toLowerCase()}`"><el-icon><component :is="typeIcon(detail.feedbackType)" /></el-icon>{{ typeLabel(detail.feedbackType) }}</span><el-tag :type="statusTag(detail.status)" effect="light" round>{{ statusLabel(detail.status) }}</el-tag><el-tag :type="priorityTag(detail.priority)" effect="plain" round>{{ priorityLabel(detail.priority) }}</el-tag></div><h2>{{ detail.title }}</h2><p>{{ detail.feedbackNo }} · {{ detail.reporterName || '匿名用户' }} · {{ detail.createTime || '刚刚' }}</p></div>
+          <div class="detail-heading"><div class="detail-heading-main"><span class="detail-type-label" :class="`detail-type-label--${detail.feedbackType?.toLowerCase()}`"><el-icon><component :is="typeIcon(detail.feedbackType)" /></el-icon>{{ typeLabel(detail.feedbackType) }}</span><UiTag :type="statusTag(detail.status)" effect="light" round>{{ statusLabel(detail.status) }}</UiTag><UiTag :type="priorityTag(detail.priority)" effect="plain" round>{{ priorityLabel(detail.priority) }}</UiTag></div><h2>{{ detail.title }}</h2><p>{{ detail.feedbackNo }} · {{ detail.reporterName || '匿名用户' }} · {{ detail.createTime || '刚刚' }}</p></div>
           <div v-if="detail.moduleName || detail.pagePath || detail.businessRef" class="detail-source-card"><div v-if="detail.moduleName"><span>来源模块</span><strong>{{ detail.moduleName }}</strong></div><div v-if="detail.pageTitle || detail.pagePath"><span>来源页面</span><strong>{{ detail.pageTitle || detail.pagePath }}</strong><small v-if="detail.pagePath">{{ detail.pagePath }}</small></div><div v-if="detail.businessRef"><span>业务编号</span><strong>{{ detail.businessRef }}</strong></div></div>
           <section class="detail-section"><h3><span class="section-bar"></span>反馈内容</h3><div class="detail-description">{{ detail.description }}</div></section>
           <section v-if="detail.reproduceSteps || detail.expectedResult || detail.actualResult" class="detail-section"><h3><span class="section-bar"></span>问题补充</h3><dl class="detail-facts"><template v-if="detail.reproduceSteps"><dt>复现步骤</dt><dd>{{ detail.reproduceSteps }}</dd></template><template v-if="detail.expectedResult"><dt>期望结果</dt><dd>{{ detail.expectedResult }}</dd></template><template v-if="detail.actualResult"><dt>实际结果</dt><dd>{{ detail.actualResult }}</dd></template></dl></section>
           <section v-if="detail.resolutionNote" class="detail-section"><h3><span class="section-bar section-bar--green"></span>处理说明</h3><div class="resolution-note"><el-icon><CircleCheck /></el-icon><span>{{ detail.resolutionNote }}</span></div></section>
           <section v-if="detail.attachments?.length" class="detail-section"><h3><span class="section-bar section-bar--orange"></span>附件 <small>{{ detail.attachments.length }}</small></h3><div class="attachment-list"><a v-for="item in detail.attachments" :key="String(item.ossId)" :href="item.url" target="_blank" rel="noopener"><el-icon><Document /></el-icon><span>{{ item.originalName }}</span><el-icon><Download /></el-icon></a></div></section>
           <section class="detail-section"><h3><span class="section-bar section-bar--purple"></span>处理进展</h3><el-timeline class="feedback-timeline"><el-timeline-item v-for="item in detail.activities || []" :key="String(item.id)" :timestamp="item.createTime" placement="top"><strong>{{ activityLabel(item.actionType) }}</strong><span>{{ item.actionNote }}</span><small>{{ item.operatorName || '系统' }}</small></el-timeline-item><el-timeline-item v-if="!detail.activities?.length" timestamp="暂无记录"><span>提交后，处理进展会显示在这里</span></el-timeline-item></el-timeline></section>
-          <section class="detail-section comments-section"><div class="section-heading-row"><h3><span class="section-bar section-bar--blue"></span>沟通记录 <small>{{ commentTotal }}</small></h3></div><div v-loading="commentsLoading" class="comment-list"> <div v-for="item in comments" :key="String(item.id)" class="comment-item"><UserAvatar :size="32" :src="item.mine ? userStore.avatar || undefined : undefined" :oss-id="item.mine ? undefined : item.authorAvatar" :name="item.authorName" /><div><div class="comment-author"><strong>{{ item.authorName || '匿名用户' }}</strong><span>{{ item.createTime }}</span></div><p>{{ item.content }}</p></div></div><el-empty v-if="!comments.length && !commentsLoading" :image-size="54" description="还没有沟通记录" /></div><div v-hasPermi="['department:platformFeedback:comment']" class="comment-composer"><el-input v-model="commentForm.content" type="textarea" :rows="3" maxlength="4000" show-word-limit placeholder="补充信息、回复处理进展或提出新的建议" /><div><span>保持信息清晰，方便后续追踪</span><el-button type="primary" size="small" :loading="commentSaving" @click="submitComment">发送评论</el-button></div></div></section>
-          <section class="detail-section process-section"><div class="section-heading-row"><h3><span class="section-bar section-bar--orange"></span>处理反馈</h3><span class="process-tip">仅已配置的处理人可保存</span></div><template v-if="detail.processAllowed"><el-form label-position="top" class="process-form"><el-form-item label="更新状态"><el-select v-model="processForm.status" style="width: 100%"><el-option v-for="item in detailStatusOptions" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item><el-form-item label="处理说明"><el-input v-model="processForm.note" type="textarea" :rows="3" maxlength="2000" placeholder="记录判断、处理结果或下一步计划" /></el-form-item><el-button type="primary" :loading="processSaving" @click="submitProcess">保存处理进展</el-button></el-form></template><el-alert v-else type="info" :closable="false" show-icon title="当前账号未配置为反馈处理人，暂无处理权限" /></section>
+          <section class="detail-section comments-section"><div class="section-heading-row"><h3><span class="section-bar section-bar--blue"></span>沟通记录 <small>{{ commentTotal }}</small></h3></div><div v-loading="commentsLoading" class="comment-list"> <div v-for="item in comments" :key="String(item.id)" class="comment-item"><UserAvatar :size="32" :src="item.mine ? userStore.avatar || undefined : undefined" :oss-id="item.mine ? undefined : item.authorAvatar" :name="item.authorName" /><div><div class="comment-author"><strong>{{ item.authorName || '匿名用户' }}</strong><span>{{ item.createTime }}</span></div><p>{{ item.content }}</p></div></div><UiEmpty v-if="!comments.length && !commentsLoading" :image-size="54" description="还没有沟通记录" /></div><div v-hasPermi="['department:platformFeedback:comment']" class="comment-composer"><el-input v-model="commentForm.content" type="textarea" :rows="3" maxlength="4000" show-word-limit placeholder="补充信息、回复处理进展或提出新的建议" /><div><span>保持信息清晰，方便后续追踪</span><UiButton type="primary" size="small" :loading="commentSaving" @click="submitComment">发送评论</UiButton></div></div></section>
+          <section class="detail-section process-section"><div class="section-heading-row"><h3><span class="section-bar section-bar--orange"></span>处理反馈</h3><span class="process-tip">仅已配置的处理人可保存</span></div><template v-if="detail.processAllowed"><el-form label-position="top" class="process-form"><el-form-item label="更新状态"><UiSelect v-model="processForm.status" :options="detailStatusOptions" style="width: 100%" /></el-form-item><el-form-item label="处理说明"><el-input v-model="processForm.note" type="textarea" :rows="3" maxlength="2000" placeholder="记录判断、处理结果或下一步计划" /></el-form-item><UiButton type="primary" :loading="processSaving" @click="submitProcess">保存处理进展</UiButton></el-form></template><el-alert v-else type="info" :closable="false" show-icon title="当前账号未配置为反馈处理人，暂无处理权限" /></section>
         </template>
       </div>
     </el-drawer>
@@ -203,6 +197,8 @@ import { ChatDotRound, ChatLineRound, CircleCheck, CircleCheckFilled, Collection
 import { addPlatformFeedback, addPlatformFeedbackComment, getPlatformFeedback, getPlatformFeedbackHandlers, getPlatformFeedbackSummary, listPlatformFeedback, listPlatformFeedbackActivities, listPlatformFeedbackAssigneeOptions, listPlatformFeedbackComments, processPlatformFeedback, updatePlatformFeedbackHandlers, uploadPlatformFeedbackAttachment } from '@/api/department/platformFeedback';
 import type { PlatformFeedbackActivityVO, PlatformFeedbackAttachmentVO, PlatformFeedbackCommentVO, PlatformFeedbackForm, PlatformFeedbackProcessForm, PlatformFeedbackQuery, PlatformFeedbackSummaryVO, PlatformFeedbackUserOptionVO, PlatformFeedbackVO } from '@/api/department/platformFeedback/types';
 import UserAvatar from '@/components/UserAvatar/index.vue';
+import { UiButton, UiCard, UiEmpty, UiInput, UiPagination, UiSelect, UiTag, UiUpload } from '@/components/UiKit';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import { useUserStore } from '@/store/modules/user';
 import { useRoute } from 'vue-router';
 
@@ -631,9 +627,10 @@ onMounted(async () => {
 .filter-panel-title small { color: var(--feedback-muted); font-size: 11px; }
 .feedback-filter-form { display: flex; flex-wrap: wrap; gap: 0 10px; align-items: center; }
 .feedback-filter-form .el-form-item { margin: 0 0 9px; }
-.feedback-filter-form .el-input, .feedback-filter-form .el-select { width: 170px; }
-.feedback-filter-form .filter-keyword .el-input { width: 260px; }
-.feedback-filter-form .filter-module .el-input { width: 145px; }
+.feedback-filter-form .el-input, .feedback-filter-form .el-select,
+.feedback-filter-form .ui-animal-input-wrap, .feedback-filter-form .ui-animal-select { width: 170px; }
+.feedback-filter-form .filter-keyword .el-input, .feedback-filter-form .filter-keyword .ui-animal-input-wrap { width: 260px; }
+.feedback-filter-form .filter-module .el-input, .feedback-filter-form .filter-module .ui-animal-input-wrap { width: 145px; }
 .feedback-filter-form .filter-actions { margin-left: auto; }
 .list-toolbar { min-height: 42px; display: flex; align-items: center; justify-content: space-between; color: var(--feedback-muted); font-size: 12px; }
 .list-result { display: inline-flex; align-items: center; gap: 6px; }.result-dot { width: 6px; height: 6px; border-radius: 50%; background: #65b8ee; box-shadow: 0 0 0 4px #eaf6ff; }.list-hint { display: inline-flex; align-items: center; gap: 5px; }
@@ -651,7 +648,7 @@ onMounted(async () => {
 .feedback-detail { min-height: 100%; padding-bottom: 25px; }.detail-heading { padding-bottom: 17px; border-bottom: 1px solid var(--feedback-border); }.detail-heading-main { display: flex; align-items: center; gap: 8px; }.detail-type-label { display: inline-flex; align-items: center; gap: 5px; color: #5d9ee0; font-size: 12px; font-weight: 700; }.detail-type-label--system { color: #df6b6b; }.detail-type-label--suggestion { color: #45a777; }.detail-heading h2 { margin: 13px 0 7px; font-size: 20px; line-height: 1.45; }.detail-heading p { margin: 0; color: var(--feedback-muted); font-size: 11px; }.detail-source-card { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 17px; padding: 13px; border: 1px solid #e1ebf5; border-radius: 12px; background: #f7fbff; }.detail-source-card div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }.detail-source-card span { color: var(--feedback-muted); font-size: 10px; }.detail-source-card strong, .detail-source-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }.detail-source-card small { color: #8ea0b2; font-size: 10px; }.detail-section { margin-top: 21px; }.detail-section h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; font-size: 14px; }.detail-section h3 small { color: var(--feedback-muted); font-size: 11px; font-weight: 400; }.section-bar { width: 3px; height: 16px; display: inline-block; border-radius: 4px; background: #5da8e8; }.section-bar--green { background: #59b47f; }.section-bar--orange { background: #e8a34e; }.section-bar--purple { background: #9676d7; }.section-bar--blue { background: #4f9fe4; }.detail-description { color: var(--app-text-regular, #53657a); font-size: 13px; line-height: 1.85; white-space: pre-wrap; }.detail-facts { margin: 0; display: grid; grid-template-columns: 78px 1fr; gap: 9px 11px; color: var(--app-text-regular, #53657a); font-size: 12px; }.detail-facts dt { color: var(--feedback-muted); }.detail-facts dd { margin: 0; white-space: pre-wrap; line-height: 1.6; }.resolution-note { padding: 11px 13px; display: flex; gap: 8px; color: #3a8a60; border: 1px solid #d4efdf; border-radius: 10px; background: #f1fbf5; font-size: 12px; line-height: 1.6; }.attachment-list { display: flex; flex-direction: column; gap: 7px; }.attachment-list a { padding: 8px 10px; display: flex; align-items: center; gap: 8px; color: #568bbd; border: 1px solid var(--feedback-border); border-radius: 8px; text-decoration: none; font-size: 12px; }.attachment-list a span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.feedback-timeline { padding-left: 3px; }.feedback-timeline :deep(.el-timeline-item__timestamp) { color: var(--feedback-muted); font-size: 10px; }.feedback-timeline strong, .feedback-timeline span, .feedback-timeline small { display: block; }.feedback-timeline strong { margin-bottom: 4px; font-size: 12px; }.feedback-timeline span { color: var(--app-text-regular, #53657a); font-size: 12px; line-height: 1.6; }.feedback-timeline small { margin-top: 4px; color: var(--feedback-muted); font-size: 10px; }.comment-list { min-height: 40px; display: flex; flex-direction: column; gap: 12px; }.comment-item { display: flex; gap: 9px; }.comment-item :deep(.el-avatar) { flex: 0 0 auto; color: #4d94d5; background: #eaf5ff; }.comment-author { display: flex; align-items: center; gap: 9px; }.comment-author strong { font-size: 12px; }.comment-author span { color: var(--feedback-muted); font-size: 10px; }.comment-item p { margin: 4px 0 0; color: var(--app-text-regular, #53657a); font-size: 12px; line-height: 1.6; white-space: pre-wrap; }.comment-composer { margin-top: 15px; padding: 11px; border: 1px solid var(--feedback-border); border-radius: 10px; background: var(--app-elevated-soft-bg, #f8fafc); }.comment-composer > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; color: var(--feedback-muted); font-size: 10px; }.comment-composer :deep(.el-textarea__inner) { border: 0; background: transparent; box-shadow: none; }.process-section { padding: 15px; border: 1px solid #f0e2cc; border-radius: 13px; background: #fffaf3; }.section-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }.process-tip { color: #b3926d; font-size: 10px; }.process-form :deep(.el-form-item) { margin-bottom: 9px; }.process-form :deep(.el-form-item__label) { margin-bottom: 4px; color: #8e7556; font-size: 11px; }.process-form :deep(.el-input__wrapper), .process-form :deep(.el-textarea__inner) { border-color: #efdfc7; border-radius: 9px; }
 
 @media (max-width: 1280px) { .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }.feedback-filter-form .filter-actions { margin-left: 0; } }
-@media (max-width: 900px) { .feedback-hero { align-items: flex-start; flex-direction: column; padding: 25px; }.hero-actions { width: 100%; min-width: 0; box-sizing: border-box; }.workspace-heading { align-items: flex-start; flex-direction: column; }.workspace-tools { width: 100%; }.workspace-tools .el-button { flex: 1; }.type-choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }.filter-panel-title small, .list-hint { display: none; }.feedback-filter-form .el-input, .feedback-filter-form .filter-keyword .el-input, .feedback-filter-form .el-select, .feedback-filter-form .filter-module .el-input { width: 100%; }.feedback-filter-form .el-form-item { flex: 1 1 180px; }.feedback-filter-form .filter-actions { flex: 0 0 auto; } }
+@media (max-width: 900px) { .feedback-hero { align-items: flex-start; flex-direction: column; padding: 25px; }.hero-actions { width: 100%; min-width: 0; box-sizing: border-box; }.workspace-heading { align-items: flex-start; flex-direction: column; }.workspace-tools { width: 100%; }.workspace-tools .el-button, .workspace-tools .ui-animal-button { flex: 1; }.type-choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }.filter-panel-title small, .list-hint { display: none; }.feedback-filter-form .el-input, .feedback-filter-form .filter-keyword .el-input, .feedback-filter-form .el-select, .feedback-filter-form .filter-module .el-input, .feedback-filter-form .ui-animal-input-wrap, .feedback-filter-form .ui-animal-select { width: 100%; }.feedback-filter-form .el-form-item { flex: 1 1 180px; }.feedback-filter-form .filter-actions { flex: 0 0 auto; } }
 @media (max-width: 600px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.summary-caption { display: none; }.hero-pills { gap: 6px; }.hero-pills span { font-size: 11px; }.feed-switch { padding: 0 10px; }.feed-switch span { font-size: 12px; }.type-choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.detail-source-card { grid-template-columns: 1fr; }.detail-facts { grid-template-columns: 66px 1fr; } }
 
 :global(html.dark .platform-feedback-page) {
@@ -889,4 +886,995 @@ onMounted(async () => {
 :global(html.dark .feedback-detail-drawer .process-form .el-input__inner),
 :global(html.dark .feedback-detail-drawer .process-form .el-select__selected-item),
 :global(html.dark .feedback-detail-drawer .process-form .el-textarea__inner) { color: #e5edf8; }
+
+/* 动森深色模式：反馈中心不能继续沿用办公蓝色的暗色覆盖。 */
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page) {
+  --feedback-blue: var(--animal-primary-color);
+  --feedback-blue-soft: var(--animal-primary-color-bg);
+  --feedback-border: var(--animal-overlay-border);
+  --feedback-muted: var(--animal-overlay-muted);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .summary-card),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-workspace) {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+  box-shadow: var(--app-shadow-sm);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .summary-content span),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .workspace-heading p),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-title-copy span),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .people-cell span),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .detail-description),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .detail-facts),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .comment-item p),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-timeline span) {
+  color: var(--animal-overlay-muted);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feed-switcher),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .filter-panel) {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-surface);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feed-switch.active) {
+  color: var(--animal-primary-color);
+  background: var(--animal-overlay-bg);
+  box-shadow: var(--app-shadow-sm);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .filter-panel-title),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-title-copy strong) {
+  color: var(--animal-text-color);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-filter-form .el-input__wrapper),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-filter-form .el-select__wrapper) {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-bg-color-input);
+  box-shadow: 0 0 0 1px var(--animal-overlay-border) inset;
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-filter-form .el-input__inner),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-filter-form .el-select__selected-item) {
+  color: var(--animal-overlay-text);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-filter-form .el-input__inner::placeholder),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-filter-form .el-select__placeholder) {
+  color: var(--animal-overlay-muted);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-table) {
+  --el-table-bg-color: var(--animal-overlay-bg);
+  --el-table-tr-bg-color: var(--animal-overlay-bg);
+  --el-table-header-bg-color: var(--animal-overlay-surface);
+  --el-table-row-hover-bg-color: var(--animal-overlay-hover);
+  --el-table-border-color: var(--animal-overlay-border);
+  --el-table-text-color: var(--animal-overlay-text);
+  --el-table-header-text-color: var(--animal-text-color);
+  border-color: var(--animal-overlay-border);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-table .el-table__header-wrapper th.el-table__cell),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-table .el-table__body tr),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-table .el-table__body td.el-table__cell),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-table .el-table__fixed-right),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page .feedback-table .el-table__fixed-right-patch) {
+  border-color: var(--animal-overlay-border);
+  color: var(--animal-overlay-text);
+  background: var(--animal-overlay-bg);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-handler-dialog.el-dialog),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog.el-dialog),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer.el-drawer) {
+  --el-bg-color: var(--animal-overlay-bg);
+  --el-bg-color-overlay: var(--animal-overlay-bg);
+  --el-fill-color-blank: var(--animal-overlay-bg);
+  --el-text-color-primary: var(--animal-overlay-text);
+  --el-text-color-regular: var(--animal-overlay-text);
+  --el-text-color-placeholder: var(--animal-overlay-muted);
+  border-color: var(--animal-overlay-border);
+  color: var(--animal-overlay-text);
+  background: var(--animal-overlay-bg);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-dialog__header),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-dialog__body),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-dialog__footer),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-handler-dialog .el-dialog__header),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-handler-dialog .el-dialog__body),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-handler-dialog .el-dialog__footer),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .el-drawer__header),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .el-drawer__body) {
+  border-color: var(--animal-overlay-border);
+  color: var(--animal-overlay-text);
+  background: var(--animal-overlay-bg);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-input__wrapper),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-select__wrapper),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-textarea__inner),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-handler-dialog .el-select__wrapper),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .process-form .el-input__wrapper),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .process-form .el-select__wrapper),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .process-form .el-textarea__inner) {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-bg-color-input);
+  box-shadow: 0 0 0 1px var(--animal-overlay-border) inset;
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-input__inner),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-select__selected-item),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-create-dialog .el-textarea__inner),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-handler-dialog .el-select__selected-item),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .process-form .el-input__inner),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .process-form .el-select__selected-item),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .feedback-detail-drawer .process-form .el-textarea__inner) {
+  color: var(--animal-overlay-text);
+}
+</style>
+
+<!-- 动森模式皮肤：反馈中心原有暗色覆盖保留办公蓝色，这里统一页面区域与弹层的主题语义。 -->
+<style lang="scss">
+html[data-ui-theme='animal'] .platform-feedback-page {
+  --feedback-blue: var(--animal-primary-color);
+  --feedback-blue-soft: var(--animal-primary-color-bg);
+  --feedback-border: var(--animal-border-color-light);
+  --feedback-muted: var(--animal-text-color-secondary);
+  color: var(--animal-text-color);
+  background: transparent;
+
+  .feedback-hero {
+    border-color: rgb(25 145 132 / 30%);
+    color: var(--animal-text-color);
+    background:
+      radial-gradient(circle at 88% 8%, rgb(25 200 185 / 18%), transparent 25%),
+      radial-gradient(circle at 74% 92%, rgb(112 185 113 / 18%), transparent 28%),
+      linear-gradient(118deg, #d7efdc 0%, #d2ece9 56%, #e7f0cf 100%);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .feedback-hero::after {
+    border-color: rgb(64 125 109 / 20%);
+    box-shadow: 0 0 0 30px rgb(64 125 109 / 6%), 0 0 0 60px rgb(64 125 109 / 4%);
+  }
+
+  .hero-kicker,
+  .section-kicker {
+    color: #3f8f83;
+  }
+
+  .hero-copy h1 {
+    color: #345e4c;
+    text-shadow: 0 2px 14px rgb(64 91 74 / 14%);
+  }
+
+  .hero-copy p {
+    color: #5c806e;
+  }
+
+  .hero-pills span {
+    color: #4e7565;
+    border-color: rgb(63 143 131 / 25%);
+    background: rgb(255 255 255 / 42%);
+  }
+
+  .hero-actions {
+    border-color: rgb(25 145 132 / 28%);
+    color: #345e4c;
+    background: linear-gradient(135deg, rgb(255 255 255 / 62%), rgb(232 249 239 / 66%));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 72%), var(--app-shadow-md);
+  }
+
+  .hero-actions div span {
+    color: #6d917f;
+  }
+
+  .hero-mark {
+    color: #168f84;
+    background: linear-gradient(145deg, #e6f9f6, #d7f1e7);
+  }
+
+  .summary-card,
+  .feedback-workspace {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  .summary-card {
+    border-radius: var(--animal-radius-card);
+    background: linear-gradient(145deg, var(--app-surface-bg), var(--animal-bg-color));
+  }
+
+  .summary-card--blue,
+  .summary-card--teal {
+    color: var(--animal-primary-color);
+  }
+
+  .summary-card--orange {
+    color: var(--animal-status-warning);
+  }
+
+  .summary-card--purple,
+  .summary-card--pink {
+    color: #b1779b;
+  }
+
+  .summary-card--green {
+    color: var(--animal-status-success);
+  }
+
+  .summary-icon {
+    background: color-mix(in srgb, currentColor 18%, var(--app-surface-bg));
+  }
+
+  .summary-icon .el-icon {
+    color: currentColor;
+  }
+
+  .summary-content span,
+  .workspace-heading p,
+  .feedback-title-copy span,
+  .people-cell span,
+  .update-time,
+  .summary-caption,
+  .list-toolbar,
+  .filter-panel-title small {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .workspace-heading {
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .workspace-tools .el-button,
+  .workspace-tools .ui-animal-button {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .workspace-tools .el-button--primary,
+  .workspace-tools .ui-animal-button.ui-animal-button--primary {
+    border-color: var(--animal-primary-color) !important;
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+  }
+
+  .workspace-tools .el-button:hover,
+  .workspace-tools .ui-animal-button:hover {
+    border-color: var(--animal-primary-color) !important;
+    color: #168f84 !important;
+    background: var(--animal-primary-color-bg) !important;
+  }
+
+  .workspace-tools .el-button--primary:hover,
+  .workspace-tools .ui-animal-button.ui-animal-button--primary:hover {
+    color: #153b36 !important;
+    background: var(--animal-primary-color-hover) !important;
+  }
+
+  .feed-switcher {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .feed-switch {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .feed-switch:hover,
+  .feed-switch.active {
+    color: var(--animal-primary-color);
+    background: var(--animal-bg-color-input);
+  }
+
+  .feed-switch.active {
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .feed-switch small {
+    color: #fffdf5;
+    background: var(--animal-status-warning);
+  }
+
+  .filter-panel {
+    border-color: var(--animal-border-color-light);
+    background: linear-gradient(135deg, #f4f8e9, #f7f3df);
+  }
+
+  .filter-panel-title {
+    color: #53725f;
+  }
+
+  .feedback-filter-form .el-input__wrapper,
+  .feedback-filter-form .el-select__wrapper {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-input);
+    box-shadow: 0 2px 0 var(--animal-shadow-soft);
+  }
+
+  .feedback-filter-form .el-input__wrapper:hover,
+  .feedback-filter-form .el-select__wrapper:hover,
+  .feedback-filter-form .el-input__wrapper.is-focus,
+  .feedback-filter-form .el-select__wrapper.is-focused {
+    box-shadow: 0 0 0 1px var(--animal-primary-color) inset, 0 2px 0 var(--animal-shadow-soft);
+  }
+
+  .feedback-filter-form .el-input__inner,
+  .feedback-filter-form .el-select__selected-item {
+    color: var(--animal-text-color);
+  }
+
+  .feedback-filter-form .el-input__inner::placeholder,
+  .feedback-filter-form .el-select__placeholder {
+    color: var(--animal-placeholder-color);
+  }
+
+  .filter-actions .el-button,
+  .filter-actions .ui-animal-button {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .filter-actions .el-button--primary,
+  .filter-actions .ui-animal-button.ui-animal-button--primary {
+    border-color: var(--animal-primary-color) !important;
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+  }
+
+  .filter-actions .el-button--primary:hover,
+  .filter-actions .ui-animal-button.ui-animal-button--primary:hover {
+    background: var(--animal-primary-color-hover) !important;
+  }
+
+  .result-dot {
+    background: var(--animal-primary-color);
+    box-shadow: 0 0 0 4px rgb(25 200 185 / 16%);
+  }
+
+  .feedback-table {
+    --el-table-bg-color: var(--app-surface-bg);
+    --el-table-tr-bg-color: var(--app-surface-bg);
+    --el-table-header-bg-color: #f7f3df;
+    --el-table-row-hover-bg-color: var(--animal-primary-color-bg);
+    --el-table-border-color: var(--animal-border-color-light);
+    --el-table-text-color: var(--animal-text-color);
+    border-color: var(--animal-border-color-light);
+  }
+
+  .feedback-table .el-table__header-wrapper th.el-table__cell,
+  .feedback-table .el-table__fixed-header-wrapper th.el-table__cell {
+    color: #6f5131 !important;
+    border-bottom-color: var(--animal-border-color-light);
+    background: #f7f3df !important;
+  }
+
+  .feedback-table .el-table__body tr,
+  .feedback-table .el-table__body td.el-table__cell {
+    color: var(--animal-text-color);
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+  }
+
+  .feedback-table .el-table__body tr:hover > td.el-table__cell {
+    background: var(--animal-primary-color-bg) !important;
+  }
+
+  .feedback-table .el-table__fixed-right,
+  .feedback-table .el-table__fixed-right-patch {
+    background: var(--app-surface-bg) !important;
+  }
+
+  .feedback-title-copy strong {
+    color: var(--animal-text-color);
+  }
+
+  .feedback-type-icon--system,
+  .type-choice:nth-child(1) .type-choice-icon {
+    color: var(--animal-status-danger);
+    background: rgb(207 98 92 / 13%);
+  }
+
+  .feedback-type-icon--data,
+  .type-choice:nth-child(2) .type-choice-icon {
+    color: var(--animal-status-info);
+    background: rgb(92 145 201 / 13%);
+  }
+
+  .feedback-type-icon--process,
+  .type-choice:nth-child(3) .type-choice-icon {
+    color: #9b7cc1;
+    background: rgb(155 124 193 / 14%);
+  }
+
+  .feedback-type-icon--question,
+  .type-choice:nth-child(4) .type-choice-icon {
+    color: var(--animal-status-warning);
+    background: rgb(200 139 43 / 14%);
+  }
+
+  .feedback-type-icon--suggestion,
+  .type-choice:nth-child(5) .type-choice-icon {
+    color: var(--animal-status-success);
+    background: rgb(85 168 107 / 14%);
+  }
+
+  .priority-label--urgent {
+    color: var(--animal-status-danger);
+  }
+
+  .priority-label--high {
+    color: var(--animal-status-warning);
+  }
+
+  .priority-label--normal {
+    color: var(--animal-status-info);
+  }
+
+  .priority-label--low {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .source-context-banner,
+  .detail-source-card {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .source-context-icon {
+    color: #168f84;
+    background: var(--animal-primary-color-bg);
+  }
+
+  .source-context-banner strong,
+  .detail-source-card strong {
+    color: var(--animal-text-color);
+  }
+
+  .source-context-banner span,
+  .detail-source-card span,
+  .detail-source-card small {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .type-choice {
+    border-color: var(--animal-border-color-light);
+    color: var(--animal-text-color);
+    background: var(--app-surface-bg);
+  }
+
+  .type-choice:hover,
+  .type-choice.active {
+    border-color: var(--animal-primary-color);
+    background: var(--animal-primary-color-bg);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .type-choice-check,
+  .detail-type-label--suggestion,
+  .detail-type-label {
+    color: var(--animal-primary-color);
+  }
+
+  .form-step {
+    color: #168f84;
+    background: var(--animal-primary-color-bg);
+  }
+
+  .attachment-draft,
+  .comment-composer {
+    border-color: var(--animal-border-color-light);
+    color: var(--animal-text-color);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .detail-heading {
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .detail-description,
+  .detail-facts,
+  .comment-item p,
+  .feedback-timeline span {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .section-bar,
+  .section-bar--blue {
+    background: var(--animal-primary-color);
+  }
+
+  .section-bar--green {
+    background: var(--animal-status-success);
+  }
+
+  .section-bar--orange {
+    background: var(--animal-status-warning);
+  }
+
+  .section-bar--purple {
+    background: #9b7cc1;
+  }
+
+  .resolution-note {
+    border-color: rgb(85 168 107 / 30%);
+    color: #43875a;
+    background: rgb(85 168 107 / 12%);
+  }
+
+  .process-section {
+    border-color: rgb(200 139 43 / 30%);
+    background: rgb(200 139 43 / 9%);
+  }
+
+  .process-tip,
+  .process-form .el-form-item__label {
+    color: #9b7a4e;
+  }
+
+  .comment-item .el-avatar {
+    color: #168f84;
+    background: var(--animal-primary-color-bg);
+  }
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .platform-feedback-page {
+  --feedback-blue: var(--animal-primary-color);
+  --feedback-blue-soft: rgb(25 200 185 / 16%);
+  --feedback-border: var(--animal-border-color-light);
+  --feedback-muted: var(--animal-text-color-secondary);
+
+  .feedback-hero {
+    border-color: var(--animal-border-color);
+    color: var(--animal-text-color);
+    background:
+      radial-gradient(circle at 88% 6%, rgb(127 228 211 / 20%), transparent 27%),
+      radial-gradient(circle at 72% 95%, rgb(123 200 142 / 14%), transparent 30%),
+      linear-gradient(118deg, #29433f 0%, #345751 56%, #3f6b62 100%);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .feedback-hero::after {
+    border-color: rgb(127 228 211 / 28%);
+    box-shadow: 0 0 0 30px rgb(127 228 211 / 7%), 0 0 0 60px rgb(127 228 211 / 4%);
+  }
+
+  .hero-kicker,
+  .section-kicker {
+    color: #8fe0d1;
+  }
+
+  .hero-copy h1 {
+    color: var(--animal-text-color);
+    text-shadow: 0 2px 14px rgb(0 0 0 / 20%);
+  }
+
+  .hero-copy p {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .hero-pills span {
+    color: #d5e9da;
+    border-color: rgb(127 228 211 / 28%);
+    background: rgb(25 200 185 / 12%);
+  }
+
+  .hero-actions {
+    border-color: rgb(127 228 211 / 30%);
+    color: var(--animal-text-color);
+    background: linear-gradient(135deg, rgb(64 86 80 / 88%), rgb(38 58 56 / 80%));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), var(--app-shadow-md);
+  }
+
+  .hero-actions div span {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .hero-mark {
+    color: #9be9dc;
+    background: linear-gradient(145deg, rgb(25 200 185 / 24%), rgb(25 200 185 / 9%));
+  }
+
+  .summary-card,
+  .feedback-workspace {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  .summary-card {
+    background: linear-gradient(145deg, #2f4542, #263937);
+  }
+
+  .summary-card--blue,
+  .summary-card--teal {
+    color: #8fe0d1;
+  }
+
+  .summary-card--orange {
+    color: var(--animal-status-warning);
+  }
+
+  .summary-card--purple,
+  .summary-card--pink {
+    color: #d2a9e2;
+  }
+
+  .summary-card--green {
+    color: var(--animal-status-success);
+  }
+
+  .summary-icon {
+    background: color-mix(in srgb, currentColor 22%, var(--app-surface-bg));
+  }
+
+  .summary-icon .el-icon {
+    color: currentColor;
+  }
+
+  .summary-content span,
+  .workspace-heading p,
+  .feedback-title-copy span,
+  .people-cell span,
+  .update-time,
+  .summary-caption,
+  .list-toolbar,
+  .filter-panel-title small {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .workspace-heading {
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .workspace-tools .el-button,
+  .workspace-tools .ui-animal-button {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .workspace-tools .el-button--primary,
+  .workspace-tools .ui-animal-button.ui-animal-button--primary,
+  .filter-actions .el-button--primary,
+  .filter-actions .ui-animal-button.ui-animal-button--primary {
+    border-color: var(--animal-primary-color) !important;
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+  }
+
+  .workspace-tools .el-button:hover,
+  .workspace-tools .ui-animal-button:hover,
+  .filter-actions .el-button:hover,
+  .filter-actions .ui-animal-button:hover {
+    border-color: var(--animal-primary-color) !important;
+    color: #a8f0e4 !important;
+    background: rgb(25 200 185 / 16%) !important;
+  }
+
+  .workspace-tools .el-button--primary:hover,
+  .workspace-tools .ui-animal-button.ui-animal-button--primary:hover,
+  .filter-actions .el-button--primary:hover,
+  .filter-actions .ui-animal-button.ui-animal-button--primary:hover {
+    color: #153b36 !important;
+    background: var(--animal-primary-color-hover) !important;
+  }
+
+  .feed-switcher,
+  .filter-panel {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .feed-switch {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .feed-switch:hover,
+  .feed-switch.active {
+    color: #a8f0e4;
+    background: var(--animal-bg-color-input);
+  }
+
+  .feed-switch.active {
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .feed-switch small {
+    color: #263a38;
+    background: var(--animal-status-warning);
+  }
+
+  .filter-panel-title {
+    color: var(--animal-text-color);
+  }
+
+  .feedback-filter-form .el-input__wrapper,
+  .feedback-filter-form .el-select__wrapper {
+    border-color: var(--animal-border-color);
+    background: var(--animal-bg-color-input);
+    box-shadow: 0 0 0 1px var(--animal-border-color) inset;
+  }
+
+  .feedback-filter-form .el-input__wrapper:hover,
+  .feedback-filter-form .el-select__wrapper:hover,
+  .feedback-filter-form .el-input__wrapper.is-focus,
+  .feedback-filter-form .el-select__wrapper.is-focused {
+    box-shadow: 0 0 0 1px var(--animal-primary-color) inset;
+  }
+
+  .feedback-filter-form .el-input__inner,
+  .feedback-filter-form .el-select__selected-item {
+    color: var(--animal-text-color);
+  }
+
+  .feedback-filter-form .el-input__inner::placeholder,
+  .feedback-filter-form .el-select__placeholder {
+    color: var(--animal-placeholder-color);
+  }
+
+  .filter-actions .el-button,
+  .filter-actions .ui-animal-button {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .filter-actions .el-button--primary,
+  .filter-actions .ui-animal-button.ui-animal-button--primary {
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+  }
+
+  .result-dot {
+    background: var(--animal-primary-color);
+    box-shadow: 0 0 0 4px rgb(25 200 185 / 18%);
+  }
+
+  .feedback-table {
+    --el-table-bg-color: var(--app-surface-bg);
+    --el-table-tr-bg-color: var(--app-surface-bg);
+    --el-table-header-bg-color: #405650;
+    --el-table-row-hover-bg-color: rgb(25 200 185 / 14%);
+    --el-table-border-color: var(--animal-border-color-light);
+    --el-table-text-color: var(--animal-text-color);
+    --el-table-header-text-color: #fff6df;
+    border-color: var(--animal-border-color-light);
+  }
+
+  .feedback-table .el-table__header-wrapper th.el-table__cell,
+  .feedback-table .el-table__fixed-header-wrapper th.el-table__cell {
+    color: #fff6df !important;
+    border-bottom-color: var(--animal-border-color);
+    background: #405650 !important;
+  }
+
+  .feedback-table .el-table__body tr,
+  .feedback-table .el-table__body td.el-table__cell {
+    color: var(--animal-text-color);
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+  }
+
+  .feedback-table .el-table__body tr:hover > td.el-table__cell {
+    background: rgb(25 200 185 / 14%) !important;
+  }
+
+  .feedback-table .el-table__fixed-right,
+  .feedback-table .el-table__fixed-right-patch {
+    background: var(--app-surface-bg) !important;
+  }
+
+  .feedback-title-copy strong {
+    color: var(--animal-text-color);
+  }
+
+  .feedback-type-icon--system,
+  .type-choice:nth-child(1) .type-choice-icon {
+    color: var(--animal-status-danger);
+    background: rgb(237 139 130 / 16%);
+  }
+
+  .feedback-type-icon--data,
+  .type-choice:nth-child(2) .type-choice-icon {
+    color: var(--animal-status-info);
+    background: rgb(139 185 234 / 16%);
+  }
+
+  .feedback-type-icon--process,
+  .type-choice:nth-child(3) .type-choice-icon {
+    color: #d2a9e2;
+    background: rgb(155 124 193 / 18%);
+  }
+
+  .feedback-type-icon--question,
+  .type-choice:nth-child(4) .type-choice-icon {
+    color: var(--animal-status-warning);
+    background: rgb(228 182 106 / 18%);
+  }
+
+  .feedback-type-icon--suggestion,
+  .type-choice:nth-child(5) .type-choice-icon {
+    color: var(--animal-status-success);
+    background: rgb(123 200 142 / 17%);
+  }
+
+  .priority-label--urgent {
+    color: var(--animal-status-danger);
+  }
+
+  .priority-label--high {
+    color: var(--animal-status-warning);
+  }
+
+  .priority-label--normal {
+    color: var(--animal-status-info);
+  }
+
+  .priority-label--low {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .source-context-banner,
+  .detail-source-card {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .source-context-icon {
+    color: #9be9dc;
+    background: rgb(25 200 185 / 16%);
+  }
+
+  .source-context-banner strong,
+  .detail-source-card strong {
+    color: var(--animal-text-color);
+  }
+
+  .source-context-banner span,
+  .detail-source-card span,
+  .detail-source-card small {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .type-choice {
+    border-color: var(--animal-border-color-light);
+    color: var(--animal-text-color-secondary);
+    background: var(--animal-bg-color-input);
+  }
+
+  .type-choice:hover,
+  .type-choice.active {
+    border-color: var(--animal-primary-color);
+    color: var(--animal-text-color);
+    background: rgb(25 200 185 / 16%);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .type-choice-check,
+  .detail-type-label--suggestion,
+  .detail-type-label {
+    color: #9be9dc;
+  }
+
+  .form-step {
+    color: #9be9dc;
+    background: rgb(25 200 185 / 16%);
+  }
+
+  .attachment-draft,
+  .comment-composer {
+    border-color: var(--animal-border-color-light);
+    color: var(--animal-text-color);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .detail-heading {
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .detail-description,
+  .detail-facts,
+  .comment-item p,
+  .feedback-timeline span {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .section-bar,
+  .section-bar--blue {
+    background: var(--animal-primary-color);
+  }
+
+  .section-bar--green {
+    background: var(--animal-status-success);
+  }
+
+  .section-bar--orange {
+    background: var(--animal-status-warning);
+  }
+
+  .section-bar--purple {
+    background: #d2a9e2;
+  }
+
+  .resolution-note {
+    border-color: rgb(123 200 142 / 35%);
+    color: #a7e6b7;
+    background: rgb(123 200 142 / 14%);
+  }
+
+  .process-section {
+    border-color: rgb(228 182 106 / 35%);
+    background: rgb(228 182 106 / 13%);
+  }
+
+  .process-tip,
+  .process-form .el-form-item__label {
+    color: #e4b66a;
+  }
+
+  .comment-item .el-avatar {
+    color: #9be9dc;
+    background: rgb(25 200 185 / 16%);
+  }
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] {
+  .feedback-handler-dialog.el-dialog,
+  .feedback-create-dialog.el-dialog,
+  .feedback-detail-drawer.el-drawer {
+    --el-bg-color: var(--animal-overlay-bg);
+    --el-bg-color-overlay: var(--animal-overlay-bg);
+    --el-fill-color-blank: var(--animal-overlay-bg);
+    --el-text-color-primary: var(--animal-overlay-text);
+    --el-text-color-regular: var(--animal-overlay-text);
+    --el-text-color-placeholder: var(--animal-overlay-muted);
+    border-color: var(--animal-overlay-border);
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+  }
+
+  .feedback-handler-dialog .el-dialog__header,
+  .feedback-handler-dialog .el-dialog__body,
+  .feedback-handler-dialog .el-dialog__footer,
+  .feedback-create-dialog .el-dialog__header,
+  .feedback-create-dialog .el-dialog__body,
+  .feedback-create-dialog .el-dialog__footer,
+  .feedback-detail-drawer .el-drawer__header,
+  .feedback-detail-drawer .el-drawer__body {
+    border-color: var(--animal-overlay-border);
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+  }
+
+  .feedback-create-dialog .el-input__wrapper,
+  .feedback-create-dialog .el-select__wrapper,
+  .feedback-create-dialog .el-textarea__inner,
+  .feedback-handler-dialog .el-select__wrapper,
+  .feedback-detail-drawer .process-form .el-input__wrapper,
+  .feedback-detail-drawer .process-form .el-select__wrapper,
+  .feedback-detail-drawer .process-form .el-textarea__inner {
+    border-color: var(--animal-overlay-border);
+    background: var(--animal-bg-color-input);
+    box-shadow: 0 0 0 1px var(--animal-overlay-border) inset;
+  }
+
+  .feedback-create-dialog .el-input__inner,
+  .feedback-create-dialog .el-select__selected-item,
+  .feedback-create-dialog .el-textarea__inner,
+  .feedback-handler-dialog .el-select__selected-item,
+  .feedback-detail-drawer .process-form .el-input__inner,
+  .feedback-detail-drawer .process-form .el-select__selected-item,
+  .feedback-detail-drawer .process-form .el-textarea__inner {
+    color: var(--animal-overlay-text);
+  }
+}
 </style>

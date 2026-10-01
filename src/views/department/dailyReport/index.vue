@@ -1,24 +1,38 @@
 <template>
   <div class="p-2 app-container department-daily-report-page">
-    <el-card shadow="never" class="calendar-toolbar">
+    <UiCard shadow="never" class="calendar-toolbar">
       <div class="toolbar-main">
-        <div class="month-switcher">
-          <el-button circle icon="ArrowLeft" @click="changeMonth(-1)" />
-          <el-date-picker v-model="selectedMonth" type="month" value-format="YYYY-MM" placeholder="选择月份" :disabled-date="disableFutureMonth" />
-          <el-button circle icon="ArrowRight" @click="changeMonth(1)" />
-          <el-button plain @click="goCurrentMonth">本月</el-button>
+        <div class="toolbar-period">
+          <div class="toolbar-period-copy">
+            <span class="toolbar-period-icon" aria-hidden="true"><el-icon><Calendar /></el-icon></span>
+            <div>
+              <strong>日报周期</strong>
+              <small>按月查看填写进度</small>
+            </div>
+          </div>
+          <div class="month-switcher">
+            <UiButton class="month-nav-button" circle icon="ArrowLeft" aria-label="上个月" @click="changeMonth(-1)" />
+            <div class="month-picker-shell">
+              <UiDatePicker v-model="selectedMonth" type="month" value-format="YYYY-MM" placeholder="选择月份" :disabled-date="disableFutureMonth" />
+            </div>
+            <UiButton class="month-nav-button" circle icon="ArrowRight" aria-label="下个月" @click="changeMonth(1)" />
+            <UiButton class="current-month-button" plain @click="goCurrentMonth">本月</UiButton>
+          </div>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['department:dailyReport:add']" type="primary" plain icon="Plus" @click="handleAdd()">新增日报</el-button>
-          <el-button v-hasPermi="['department:dailyReport:add']" type="warning" plain icon="Calendar" @click="openOverrideManager">日期例外</el-button>
-          <el-button v-hasPermi="['department:dailyReport:export']" plain icon="Download" @click="handleExport">导出明细</el-button>
-          <el-button v-hasPermi="['department:dailyReport:import']" plain icon="Upload" @click="handleImport">导入明细</el-button>
+          <UiButton v-hasPermi="['department:dailyReport:add']" type="primary" plain icon="Plus" @click="handleAdd()">新增日报</UiButton>
+          <UiButton v-hasPermi="['department:dailyReport:add']" type="warning" plain icon="Calendar" @click="openOverrideManager">日期例外</UiButton>
+          <UiButton v-hasPermi="['department:dailyReport:export']" plain icon="Download" @click="handleExport">导出明细</UiButton>
+          <UiButton v-hasPermi="['department:dailyReport:import']" plain icon="Upload" @click="handleImport">导入明细</UiButton>
         </div>
       </div>
-      <div class="toolbar-hint">日历仅展示当前科室已分配“日报”任务的成员；常规工作日由日报任务配置，临时日期安排在“日期例外”中维护，类型由数据字典配置，休假请在人事档案中维护。</div>
-    </el-card>
+      <div class="toolbar-hint">
+        <span class="toolbar-hint-icon" aria-hidden="true"><el-icon><InfoFilled /></el-icon></span>
+        <span>日历仅展示当前科室已分配“日报”任务的成员；常规工作日由日报任务配置，临时日期安排在“日期例外”中维护，类型由数据字典配置，休假请在人事档案中维护。</span>
+      </div>
+    </UiCard>
 
-    <el-card v-loading="loading" shadow="never" class="calendar-card mt-2">
+    <UiCard v-loading="loading" shadow="never" class="calendar-card mt-2">
       <template #header>
         <div class="calendar-heading">
           <div>
@@ -61,36 +75,45 @@
         </DepartmentDataTable>
         <div v-if="calendar.members.length > memberPageSize" class="calendar-pagination">
           <span>共 {{ calendar.members.length }} 位成员</span>
-          <el-pagination
-            v-model:current-page="memberPage"
-            v-model:page-size="memberPageSize"
-            :page-sizes="[50, 100, 200]"
-            layout="sizes, prev, pager, next"
+          <UiPagination
+            :page="memberPage"
+            :limit="memberPageSize"
             :total="calendar.members.length"
-            background
-            @size-change="handleMemberPageSizeChange"
+            :page-size-options="[50, 100, 200]"
+            :show-quick-jumper="false"
+            @update:page="handleMemberPageChange"
+            @update:limit="handleMemberPageSizeChange"
           />
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="680px" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
-        <el-form-item label="日报日期" prop="reportDate"><el-date-picker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled-date="isUnavailableDate" /></el-form-item>
-        <el-form-item label="今日工作" prop="todayWork"><el-input v-model="form.todayWork" type="textarea" :rows="6" maxlength="4000" show-word-limit placeholder="填写今日完成的主要工作" /></el-form-item>
-        <el-form-item label="明日计划"><el-input v-model="form.tomorrowPlan" type="textarea" :rows="4" maxlength="2000" show-word-limit placeholder="填写明日计划" /></el-form-item>
-        <el-form-item label="待协调事项"><el-input v-model="form.coordinationNote" type="textarea" :rows="3" maxlength="2000" show-word-limit placeholder="填写需要协调的事项或备注" /></el-form-item>
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="680px" append-to-body :show-footer="true">
+      <template #header>
+        <div class="report-dialog-title">
+          <span class="report-dialog-title-icon" aria-hidden="true"><el-icon><Calendar /></el-icon></span>
+          <span class="report-dialog-title-copy">
+            <strong>{{ dialog.title }}</strong>
+            <small>{{ dialog.title === '新增日报' ? '记录今日工作，安排明日计划' : '补充并更新日报记录' }}</small>
+          </span>
+        </div>
+      </template>
+      <el-form ref="formRef" class="daily-report-form" :model="form" :rules="rules" label-width="110px">
+        <el-form-item class="report-date-field" label="日报日期" prop="reportDate"><UiDatePicker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled-date="isUnavailableDate" /></el-form-item>
+        <el-form-item class="report-field report-field--primary" label="今日工作" prop="todayWork"><UiTextarea v-model="form.todayWork" :rows="6" :maxlength="4000" show-word-limit placeholder="填写今日完成的主要工作" /></el-form-item>
+        <el-form-item class="report-field" label="明日计划"><UiTextarea v-model="form.tomorrowPlan" :rows="4" :maxlength="2000" show-word-limit placeholder="填写明日计划" /></el-form-item>
+        <el-form-item class="report-field" label="待协调事项"><UiTextarea v-model="form.coordinationNote" :rows="3" :maxlength="2000" show-word-limit placeholder="填写需要协调的事项或备注" /></el-form-item>
         <template v-if="form.id">
           <el-divider content-position="left">附件归档</el-divider>
-          <el-upload :action="attachmentUploadUrl" :headers="globalHeaders()" :show-file-list="false" :on-success="handleAttachmentUploadSuccess" :on-error="handleAttachmentUploadError"><el-button type="primary" plain icon="Upload">上传附件</el-button></el-upload>
-          <div v-if="attachments.length" class="attachment-list"><div v-for="item in attachments" :key="item.id" class="attachment-item"><el-link :href="item.url" target="_blank" type="primary">{{ item.originalName }}</el-link><el-button link type="danger" @click="handleDeleteAttachment(item)">移除归档</el-button></div></div>
+          <UiUpload :action="attachmentUploadUrl" :headers="globalHeaders()" :show-file-list="false" :on-success="handleAttachmentUploadSuccess" :on-error="handleAttachmentUploadError"><UiButton type="primary" plain icon="Upload">上传附件</UiButton></UiUpload>
+          <div v-if="attachments.length" class="attachment-list"><div v-for="item in attachments" :key="item.id" class="attachment-item"><el-link :href="item.url" target="_blank" type="primary">{{ item.originalName }}</el-link><UiButton link type="danger" @click="handleDeleteAttachment(item)">移除归档</UiButton></div></div>
           <div v-else class="attachment-empty">暂无附件</div>
         </template>
       </el-form>
-      <template #footer><el-button :loading="buttonLoading" type="primary" @click="submitForm">保存日报</el-button><el-button @click="dialog.visible = false">取消</el-button></template>
-    </el-dialog>
+      <template #footer><div class="report-dialog-footer"><UiButton :loading="buttonLoading" type="primary" @click="submitForm">保存日报</UiButton><UiButton @click="dialog.visible = false">取消</UiButton></div></template>
+    </UiDialog>
 
-    <el-dialog v-model="viewDialog.visible" title="日报详情" width="680px" append-to-body>
+    <UiDialog v-model="viewDialog.visible" title="日报详情" width="680px" append-to-body :show-footer="true">
       <el-descriptions v-if="viewData" :column="1" border>
         <el-descriptions-item label="日报日期">{{ viewData.reportDate }}</el-descriptions-item>
         <el-descriptions-item label="填报人">{{ viewData.nickName || viewData.userName }}</el-descriptions-item>
@@ -102,56 +125,58 @@
       <el-divider content-position="left">附件归档</el-divider>
       <div v-if="viewAttachments.length" class="attachment-list"><div v-for="item in viewAttachments" :key="item.id" class="attachment-item"><el-link :href="item.url" target="_blank" type="primary">{{ item.originalName }}</el-link></div></div>
       <div v-else class="attachment-empty">暂无附件</div>
-      <template #footer><el-button v-if="viewData && isMine(viewData)" type="primary" @click="handleUpdate(viewData)">编辑日报</el-button><el-button @click="viewDialog.visible = false">关闭</el-button></template>
-    </el-dialog>
+      <template #footer><UiButton v-if="viewData && isMine(viewData)" type="primary" @click="handleUpdate(viewData)">编辑日报</UiButton><UiButton @click="viewDialog.visible = false">关闭</UiButton></template>
+    </UiDialog>
 
-    <el-dialog v-model="settingsDialog.visible" title="日期例外" width="min(980px, calc(100vw - 32px))" class="calendar-settings-dialog" append-to-body>
+    <UiDialog v-model="settingsDialog.visible" title="日期例外规则" width="920px" class="calendar-settings-dialog" append-to-body :show-footer="true">
       <template #header>
-        <div class="settings-dialog-title"><span class="settings-dialog-title-icon"><el-icon><Calendar /></el-icon></span><span class="settings-dialog-title-copy"><strong>日期例外</strong><small>临时调整日报填写规则</small></span></div>
+        <div class="settings-dialog-title"><span class="settings-dialog-title-icon"><el-icon><Calendar /></el-icon></span><span class="settings-dialog-title-copy"><strong>日期例外规则</strong><small>临时调整日报填写要求</small></span></div>
       </template>
-      <div class="settings-note"><span class="settings-note-icon"><el-icon><InfoFilled /></el-icon></span><div><strong>使用说明</strong><p>每周工作日和日报提醒由任务中心配置；本处用于临时调整指定日期是否需要填写日报。</p></div></div>
+      <div class="calendar-settings-content">
+        <div class="settings-note"><span class="settings-note-icon"><el-icon><InfoFilled /></el-icon></span><div><strong>使用说明</strong><p>每周工作日和日报提醒由任务中心配置；本处用于临时调整指定日期是否需要填写日报。</p></div></div>
 
         <section class="settings-section exception-settings-section">
           <div class="settings-section-heading">
             <div>
-              <div class="settings-heading-title"><h4>日期例外</h4><el-tag size="small" type="success" effect="plain">临时规则</el-tag></div>
+              <div class="settings-heading-title"><h4>日期例外</h4><UiTag size="small" type="success" effect="plain">临时规则</UiTag></div>
               <p>按日期调整日报要求和适用成员</p>
             </div>
-            <el-button type="primary" link icon="Plus" @click="resetOverrideForm">新增日期例外</el-button>
+            <UiButton type="primary" link icon="Plus" @click="resetOverrideForm">新增日期例外</UiButton>
         </div>
         <el-form :model="overrideForm" label-position="top" class="override-form">
           <div class="override-form-row override-main-row">
-            <el-form-item label="日期"><el-date-picker v-model="overrideForm.calendarDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" /></el-form-item>
-            <el-form-item label="类型"><el-select v-model="overrideForm.dayType" :loading="!dm_date_exception.length" :disabled="!dm_date_exception.length" placeholder="请选择日期例外类型"><el-option v-for="item in dm_date_exception" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
-            <el-form-item label="是否需要填写日报" class="report-requirement-item"><div class="report-rule-control"><el-switch v-model="overrideForm.needReport" class="report-rule-switch" size="large" inline-prompt active-text="需要" inactive-text="无需" :width="72" /><span class="report-rule-hint" :class="{ 'is-active': overrideForm.needReport }">{{ overrideForm.needReport ? '会生成日报填写要求' : '不生成日报填写要求' }}</span></div></el-form-item>
+            <el-form-item label="日期"><UiDatePicker v-model="overrideForm.calendarDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" /></el-form-item>
+            <el-form-item label="类型"><UiSelect v-model="overrideForm.dayType" :options="dateExceptionOptions" :disabled="!dm_date_exception.length" placeholder="请选择日期例外类型" /></el-form-item>
+            <el-form-item label="是否需要填写日报" class="report-requirement-item"><div class="report-rule-control"><UiSwitch v-model="overrideForm.needReport" class="report-rule-switch" size="large" inline-prompt active-text="需要" inactive-text="无需" :width="72" /><span class="report-rule-hint" :class="{ 'is-active': overrideForm.needReport }">{{ overrideForm.needReport ? '会生成日报填写要求' : '不生成日报填写要求' }}</span></div></el-form-item>
           </div>
           <div class="override-form-row override-detail-row">
             <el-form-item class="override-user" label="适用成员"><el-select v-model="selectedUserIds" multiple filterable clearable class="member-select" :disabled="!userOptions.length" placeholder="请选择成员，可多选或全选"><template #tag><span v-if="memberSelectionLabel" class="member-select-summary" :class="{ 'is-all': canManageDepartment && allUsersSelected }" :title="memberSelectionLabel">{{ memberSelectionLabel }}</span></template><template #header><el-checkbox :model-value="allUsersSelected" :indeterminate="someUsersSelected" :disabled="!userOptions.length" @change="toggleAllUsers">全选成员</el-checkbox></template><el-option v-for="item in userOptions" :key="item.userId" :label="`${item.nickName || item.userName}（${item.userName}）`" :value="item.userId" /></el-select><span class="field-helper">支持多选和全选；选择框内仅显示已选人数</span></el-form-item>
-            <el-form-item class="override-remark" label="说明"><el-input v-model="overrideForm.remark" placeholder="补充日期安排说明" /></el-form-item>
-            <el-form-item class="override-action"><el-button type="primary" icon="Check" @click="saveOverride">保存例外</el-button></el-form-item>
+            <el-form-item class="override-remark" label="说明"><UiInput v-model="overrideForm.remark" placeholder="补充日期安排说明" /></el-form-item>
+            <el-form-item class="override-action"><UiButton type="primary" icon="Plus" @click="saveOverride">添加例外</UiButton></el-form-item>
           </div>
         </el-form>
         <DepartmentDataTable class="override-table" :data="overrides" border stripe size="small" max-height="260">
           <el-table-column prop="calendarDate" label="日期" width="140" align="center" />
           <el-table-column label="类型" width="160" align="center"><template #default="scope"><dict-tag :options="dm_date_exception" :value="scope.row.dayType" /></template></el-table-column>
-          <el-table-column label="填写日报" width="110" align="center"><template #default="scope"><el-tag :type="scope.row.needReport ? 'success' : 'info'">{{ scope.row.needReport ? '是' : '否' }}</el-tag></template></el-table-column>
+          <el-table-column label="填写日报" width="110" align="center"><template #default="scope"><UiTag :type="scope.row.needReport ? 'success' : 'info'">{{ scope.row.needReport ? '是' : '否' }}</UiTag></template></el-table-column>
           <el-table-column label="人员范围" width="220"><template #default="scope">{{ getOverrideUserLabel(scope.row) }}</template></el-table-column>
           <el-table-column prop="remark" label="说明" show-overflow-tooltip />
-          <el-table-column label="操作" width="90" align="center"><template #default="scope"><DepartmentTableActions><el-button link type="danger" @click="removeOverride(scope.row)">删除</el-button></DepartmentTableActions></template></el-table-column>
+          <el-table-column label="操作" width="90" align="center"><template #default="scope"><DepartmentTableActions><UiButton link type="danger" @click="removeOverride(scope.row)">删除</UiButton></DepartmentTableActions></template></el-table-column>
           <template #empty><div class="override-empty"><el-icon><Calendar /></el-icon><strong>暂无日期例外</strong><span>新增规则后会显示在这里</span></div></template>
         </DepartmentDataTable>
-      </section>
+        </section>
+      </div>
 
       <template #footer>
-        <div class="settings-footer"><el-button @click="settingsDialog.visible = false">关闭</el-button></div>
+        <div class="settings-footer"><UiButton @click="settingsDialog.visible = false">关闭</UiButton></div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="upload.open" :title="upload.title" width="420px" append-to-body>
-      <el-upload ref="uploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="upload.headers" :action="upload.url" :auto-upload="false" :disabled="upload.isUploading" :on-progress="handleUploadProgress" :on-success="handleUploadSuccess"><el-icon class="el-icon--upload"><UploadFilled /></el-icon><div class="el-upload__text">拖拽 Excel 文件到此处，或点击上传</div><template #tip><div class="el-upload__tip">日报日期必须是工作日；每人每天只能有一条日报。</div></template></el-upload>
+    <UiDialog v-model="upload.open" :title="upload.title" width="420px" append-to-body :show-footer="true">
+      <UiUpload ref="uploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="upload.headers" :action="upload.url" :auto-upload="false" :disabled="upload.isUploading" :on-progress="handleUploadProgress" :on-success="handleUploadSuccess"><el-icon class="el-icon--upload"><UploadFilled /></el-icon><div class="el-upload__text">拖拽 Excel 文件到此处，或点击上传</div><template #tip><div class="el-upload__tip">日报日期必须是工作日；每人每天只能有一条日报。</div></template></UiUpload>
       <div class="upload-template-link" @click="downloadTemplate">下载导入模板</div>
-      <template #footer><el-button type="primary" :loading="upload.isUploading" @click="submitUpload">开始导入</el-button><el-button @click="upload.open = false">取消</el-button></template>
-    </el-dialog>
+      <template #footer><UiButton type="primary" :loading="upload.isUploading" @click="submitUpload">开始导入</UiButton><UiButton @click="upload.open = false">取消</UiButton></template>
+    </UiDialog>
   </div>
 </template>
 
@@ -162,6 +187,7 @@ import type { DailyCalendarCellVO, DailyCalendarDayVO, DailyCalendarOverrideForm
 import type { PersonUserOptionVO } from '@/api/department/person/types';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDatePicker, UiDialog, UiInput, UiPagination, UiSelect, UiSwitch, UiTag, UiTextarea, UiUpload } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { useUserStore } from '@/store/modules/user';
@@ -181,7 +207,7 @@ const attachments = ref<DailyReportAttachmentVO[]>([]);
 const viewAttachments = ref<DailyReportAttachmentVO[]>([]);
 const buttonLoading = ref(false);
 const formRef = ref<ElFormInstance>();
-const uploadRef = ref<ElUploadInstance>();
+const uploadRef = ref<{ handleRemove?: (file: unknown) => void; submit?: () => void }>();
 const today = formatDate(new Date());
 const dialog = reactive({ visible: false, title: '' });
 const viewDialog = reactive({ visible: false });
@@ -211,11 +237,13 @@ const getCalendar = async () => { await withLoading(async () => { const res = aw
 const disableFutureMonth = (date: Date) => { const now = new Date(); return date > new Date(now.getFullYear(), now.getMonth(), 1); };
 const changeMonth = (offset: number) => { const [year, month] = selectedMonth.value.split('-').map(Number); const nextMonth = new Date(year, month - 1 + offset, 1); if (disableFutureMonth(nextMonth)) return modal.msgWarning('日报只统计到今天，不能查看未来月份'); selectedMonth.value = formatMonth(nextMonth); memberPage.value = 1; getCalendar(); };
 const goCurrentMonth = () => { selectedMonth.value = formatMonth(new Date()); memberPage.value = 1; getCalendar(); };
-const handleMemberPageSizeChange = () => { memberPage.value = 1; };
+const handleMemberPageChange = (page: number) => { memberPage.value = page; };
+const handleMemberPageSizeChange = (pageSize: number) => { memberPageSize.value = pageSize; memberPage.value = 1; };
 const getCell = (member: any, date: string) => (member.cells || []).find((item: DailyCalendarCellVO) => item.date === date) || ({ date, state: 'REST', workday: false } as DailyCalendarCellVO);
 const isUnavailableDate = (date: Date) => { const current = new Date(); if (date > current) return true; const dateText = formatDate(date); const day = calendar.days.find((item) => item.date === dateText); const currentMember = calendar.members.find((item) => String(item.userId) === String(userStore.userId)); const cell = currentMember ? getCell(currentMember, dateText) : undefined; return Boolean(cell ? !cell.workday : day && !day.workday); };
 const isMine = (row: DailyReportVO) => String(row.userId) === String(userStore.userId);
 const dateExceptionLabel = (value?: string) => dm_date_exception.value?.find((item: DictDataOption) => String(item.value) === String(value))?.label || value || '日期例外';
+const dateExceptionOptions = computed(() => (dm_date_exception.value || []).map((item: DictDataOption) => ({ value: item.value, label: item.label })));
 const leaveTypeLabel = (value?: string) => dm_leave_type.value?.find((item: DictDataOption) => String(item.value) === String(value))?.label || value || '休假';
 const cellTitle = (member: any, cell: DailyCalendarCellVO, day: DailyCalendarDayVO) => cell.state === 'FILLED' ? `${member.nickName || member.userName}：点击查看日报` : cell.state === 'LEAVE' ? `${member.nickName || member.userName}：${leaveTypeLabel(cell.leaveType)}，点击查看自动日报` : cell.state === 'EXCEPTION' ? `${member.nickName || member.userName}：${dateExceptionLabel(cell.dayType)}，无需填写日报` : cell.state === 'MISSING' ? `${member.nickName || member.userName}：${dateExceptionLabel(cell.dayType || day.dayType) !== '日期例外' ? `${dateExceptionLabel(cell.dayType || day.dayType)}未填写日报` : `${cell.label || '工作日'}未填写日报`}` : cell.state === 'UNAVAILABLE' ? `${member.nickName || member.userName}：不在当前科室服务期内，无日报要求` : `${day.date}为${dateExceptionLabel(cell.dayType || day.dayType) !== '日期例外' ? dateExceptionLabel(cell.dayType || day.dayType) : cell.label || day.label || '休息日'}，无需填写`;
 const resetReportForm = () => { Object.assign(form, { id: undefined, reportDate: undefined, todayWork: undefined, tomorrowPlan: undefined, coordinationNote: undefined }); attachments.value = []; formRef.value?.resetFields(); };
@@ -252,10 +280,37 @@ onMounted(getCalendar);
 
 <style scoped lang="scss">
 .department-daily-report-page {
-  .calendar-toolbar, .calendar-card { border: 0; border-radius: 14px; }
+  // 日期选择器的面板是绝对定位浮层，工具栏不能继续裁剪它，否则动森模式下只能看到触发器。
+  .calendar-toolbar { overflow: visible; border: 0; border-radius: 14px; }
+  .calendar-toolbar :deep(.el-card__body), .calendar-toolbar :deep(.ui-animal-card__body) { overflow: visible; }
+  .calendar-card { border: 0; border-radius: 14px; }
   .toolbar-main, .calendar-heading, .leave-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  // 将标题、月份和快捷操作收敛为一个完整控件，避免几个独立胶囊拼接在一起。
+  .toolbar-period { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px; border: 1px solid color-mix(in srgb, var(--el-color-primary) 18%, var(--el-border-color-light)); border-radius: 20px; background: color-mix(in srgb, var(--el-color-primary) 5%, var(--el-fill-color-light)); box-shadow: 0 3px 0 color-mix(in srgb, var(--el-color-primary) 16%, transparent); }
+  .toolbar-period-copy { display: flex; align-items: center; gap: 8px; min-width: 146px; padding: 3px 12px 3px 5px; border-right: 1px solid color-mix(in srgb, var(--el-color-primary) 18%, var(--el-border-color-lighter)); }
+  .toolbar-period-copy strong { display: block; color: var(--el-text-color-primary); font-size: 14px; line-height: 20px; }
+  .toolbar-period-copy small { display: block; margin-top: 2px; color: var(--el-text-color-secondary); font-size: 11px; line-height: 16px; white-space: nowrap; }
+  .toolbar-period-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 32px; height: 32px; border: 1px solid color-mix(in srgb, var(--el-color-primary) 28%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--el-color-primary) 14%, transparent); color: var(--el-color-primary); font-size: 16px; box-shadow: 0 2px 0 color-mix(in srgb, var(--el-color-primary) 20%, transparent); }
   .month-switcher, .toolbar-actions, .legend { display: flex; align-items: center; gap: 8px; }
-  .toolbar-hint, .calendar-heading p { margin-top: 10px; color: var(--el-text-color-secondary); font-size: 13px; }
+  .month-switcher { flex: 0 0 auto; gap: 4px; padding: 0 4px 0 2px; border: 0; border-radius: 16px; background: transparent; box-shadow: none; }
+  .month-switcher .month-nav-button { flex: 0 0 40px; width: 40px; min-width: 40px; }
+  .month-picker-shell { display: flex; align-items: center; flex: 0 0 150px; width: 150px; }
+  .month-picker-shell .animal-date-picker { width: 150px; }
+  .month-switcher .current-month-button { min-width: 70px; margin-left: 2px; }
+  .month-switcher :deep(.animal-date-picker__trigger) { min-height: 40px; padding: 0 10px; border-color: transparent; border-radius: 14px; background: transparent; box-shadow: none; }
+  .month-switcher :deep(.animal-date-picker__value) { color: var(--el-text-color-primary); font-weight: 700; letter-spacing: .2px; }
+  .month-switcher :deep(.animal-date-picker__calendar-icon) { color: var(--el-color-primary); }
+  .month-switcher :deep(.animal-date-picker__clear) { color: var(--el-text-color-secondary); }
+  :global(html[data-ui-theme='animal'][data-color-mode] .department-daily-report-page .month-nav-button) { color: var(--animal-text-color-secondary) !important; background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+  :global(html[data-ui-theme='animal'][data-color-mode] .department-daily-report-page .month-nav-button:hover:not(:disabled)) { color: var(--animal-primary-color) !important; background: color-mix(in srgb, var(--animal-primary-color) 14%, transparent) !important; border-color: color-mix(in srgb, var(--animal-primary-color) 22%, transparent) !important; }
+  :global(html[data-ui-theme='animal'][data-color-mode] .department-daily-report-page .current-month-button) { color: #173c37 !important; background: var(--animal-primary-color) !important; border-color: var(--animal-primary-color) !important; box-shadow: 0 3px 0 var(--animal-primary-color-active) !important; }
+  :global(html[data-ui-theme='animal'][data-color-mode] .department-daily-report-page .current-month-button:hover:not(:disabled)) { background: var(--animal-primary-color-hover) !important; border-color: var(--animal-primary-color-hover) !important; box-shadow: 0 4px 0 var(--animal-primary-color-active) !important; }
+  :global(html[data-ui-theme='animal'] .department-daily-report-page .month-picker-shell .animal-date-picker__trigger) { color: var(--animal-text-color) !important; background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+  .toolbar-actions { flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+  .toolbar-hint { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 11px 2px 0; border-top: 1px solid var(--el-border-color-lighter); color: var(--el-text-color-secondary); font-size: 12px; line-height: 18px; }
+  .toolbar-hint-icon { display: inline-flex; flex: 0 0 auto; margin-top: 1px; color: var(--el-color-primary); font-size: 15px; }
+  .toolbar-hint > span:last-child { flex: 1; min-width: 0; }
+  .calendar-heading p { margin-top: 10px; color: var(--el-text-color-secondary); font-size: 13px; }
   .panel-kicker { color: var(--el-color-primary); font-size: 11px; letter-spacing: 1.2px; }
   .calendar-heading h3 { margin: 4px 0 0; color: var(--el-text-color-primary); }
   .legend { color: var(--el-text-color-secondary); font-size: 12px; flex-wrap: wrap; }
@@ -275,7 +330,9 @@ onMounted(getCalendar);
   .member-cell { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; text-align: left; } .member-name { font-weight: 600; } .member-account, .member-title, .member-dept { color: var(--el-text-color-secondary); font-size: 11px; } .member-dept { color: var(--el-color-warning); }
   .day-header { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px 0; line-height: 1.3; } .day-header strong { font-size: 14px; } .day-header span { color: var(--el-text-color-secondary); font-size: 11px; } .day-header em { color: var(--el-color-primary); font-size: 10px; font-style: normal; white-space: nowrap; }
   .day-header.is-rest { background: var(--el-fill-color); color: var(--el-text-color-secondary); } .day-header.is-rest em { color: var(--el-text-color-secondary); } .day-header.is-exception em { color: var(--el-color-warning); } .day-header.is-today { color: var(--el-color-primary); }
-  .report-cell { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 46px; margin: -7px; cursor: pointer; font-size: 12px; transition: background .15s; } .report-cell:hover { background: var(--el-fill-color-light); } .report-cell.state-filled { color: #529b2e; } .report-cell.state-leave { color: #337ecc; } .report-cell.state-exception { color: #b88230; background: #fdf6ec; cursor: default; } .report-cell.state-missing { color: #c45656; background: #fef0f0; } .report-cell.state-rest { color: #a8abb2; background: var(--el-fill-color-lighter); cursor: default; } .report-cell.state-unavailable { flex-direction: column; gap: 0; color: var(--el-text-color-placeholder); background: transparent; cursor: default; } .report-cell.state-unavailable small { font-size: 10px; line-height: 1.2; }
+  .report-cell { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 46px; margin: -7px; cursor: pointer; font-size: 12px; transition: background .15s; } .report-cell:hover { background: var(--el-fill-color-light); } .report-cell.state-filled { color: #529b2e; } .report-cell.state-leave { color: #337ecc; } .report-cell.state-exception { color: #b88230; background: var(--daily-cell-exception-bg, #fdf6ec); cursor: default; } .report-cell.state-missing { color: #c45656; background: var(--daily-cell-missing-bg, #fef0f0); } .report-cell.state-rest { color: #a8abb2; background: var(--el-fill-color-lighter); cursor: default; } .report-cell.state-unavailable { flex-direction: column; gap: 0; color: var(--el-text-color-placeholder); background: transparent; cursor: default; } .report-cell.state-unavailable small { font-size: 10px; line-height: 1.2; }
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-daily-report-page) { --daily-cell-exception-bg: color-mix(in srgb, var(--animal-status-warning) 14%, var(--app-surface-bg)); --daily-cell-missing-bg: color-mix(in srgb, var(--animal-status-danger) 14%, var(--app-surface-bg)); }
+  // 动森主题的日历板样式放在下方的全局主题块中，办公模式保持 Element Plus 原生布局。
   .empty-calendar { padding: 70px 0; color: var(--el-text-color-secondary); text-align: center; }
   .settings-dialog-title { display: flex; align-items: center; gap: 10px; }
   .settings-dialog-title-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-size: 18px; }
@@ -317,8 +374,319 @@ onMounted(getCalendar);
   .settings-footer { display: flex; justify-content: flex-end; gap: 10px; }
   .leave-toolbar { margin-bottom: 12px; color: var(--el-text-color-secondary); font-size: 13px; }
   .report-text { white-space: pre-wrap; line-height: 1.7; } .attachment-list { margin-top: 12px; } .attachment-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--el-border-color-lighter); } .attachment-empty { margin-top: 10px; color: var(--el-text-color-secondary); font-size: 13px; } .upload-template-link { margin-top: 12px; color: var(--el-color-primary); cursor: pointer; }
-  @media (max-width: 900px) { .toolbar-main, .calendar-heading { align-items: flex-start; flex-direction: column; } .summary-grid { grid-template-columns: repeat(2, 1fr); } .toolbar-actions { flex-wrap: wrap; } .calendar-pagination { align-items: flex-end; flex-direction: column; } }
-  @media (max-width: 760px) { .override-main-row, .override-detail-row { grid-template-columns: 1fr; } .override-detail-row { margin-top: 10px; } .override-action { justify-self: start; } }
+  @media (max-width: 900px) { .toolbar-main, .calendar-heading { align-items: flex-start; flex-direction: column; } .toolbar-period { width: 100%; justify-content: space-between; } .summary-grid { grid-template-columns: repeat(2, 1fr); } .toolbar-actions { justify-content: flex-start; flex-wrap: wrap; } .calendar-pagination { align-items: flex-end; flex-direction: column; } }
+  @media (max-width: 760px) { .toolbar-period { align-items: flex-start; flex-direction: column; gap: 10px; } .month-switcher { width: 100%; } .month-picker-shell, .month-picker-shell .animal-date-picker { flex: 1; width: auto; min-width: 0; } .toolbar-actions { width: 100%; } .override-main-row, .override-detail-row { grid-template-columns: 1fr; } .override-detail-row { margin-top: 10px; } .override-action { justify-self: start; } }
+}
+</style>
+
+<style lang="scss">
+// 动森主题的日历板样式仅作用于动森模式，避免污染办公模式的 Element Plus 表格。
+html[data-ui-theme='animal'] .department-daily-report-page {
+  .calendar-scroll {
+    margin: 2px 0 0;
+    padding: 12px;
+    border: 1px solid color-mix(in srgb, var(--animal-primary-color) 16%, var(--animal-border-color-light));
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--animal-primary-color) 4%, var(--animal-bg-color));
+  }
+
+  .calendar-scroll .calendar-table {
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--animal-primary-color) 26%, var(--animal-border-color-light));
+    border-radius: 18px;
+    background: var(--animal-bg-color);
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--animal-primary-color) 13%, var(--animal-shadow-soft)), 0 10px 24px color-mix(in srgb, var(--animal-shadow-soft) 50%, transparent);
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__th {
+    min-height: 74px;
+    padding: 10px 8px;
+    border-bottom: 2px solid color-mix(in srgb, var(--animal-primary-color) 16%, var(--animal-border-color-light));
+    background: color-mix(in srgb, var(--animal-accent-color, #f0a85b) 8%, var(--animal-bg-color-secondary));
+    color: var(--animal-text-color);
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__th:first-child {
+    padding-left: 18px;
+    background: color-mix(in srgb, var(--animal-primary-color) 9%, var(--animal-bg-color-secondary));
+    text-align: left;
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__cell {
+    min-height: 92px;
+    padding: 12px 8px;
+    border-bottom-color: color-mix(in srgb, var(--animal-border-color-light) 76%, transparent);
+    background: color-mix(in srgb, #fff 28%, var(--animal-bg-color));
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__th,
+  .calendar-scroll .calendar-table .ui-animal-table__cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__th:first-child,
+  .calendar-scroll .calendar-table .ui-animal-table__cell:first-child {
+    justify-content: flex-start;
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__row:nth-child(even) .ui-animal-table__cell {
+    background: color-mix(in srgb, var(--animal-primary-color) 3%, var(--animal-bg-color));
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__row:last-child .ui-animal-table__cell {
+    border-bottom: 0;
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__row:hover .ui-animal-table__cell {
+    background: color-mix(in srgb, var(--animal-primary-color) 8%, var(--animal-bg-color));
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__cell:first-child {
+    padding-left: 18px;
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__header-content {
+    justify-content: center;
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__th:first-child .ui-animal-table__header-content {
+    justify-content: flex-start;
+  }
+
+  .member-cell {
+    position: relative;
+    gap: 3px;
+    padding: 5px 4px 5px 16px;
+  }
+
+  .member-cell::before {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: 5px;
+    border-radius: 999px;
+    background: var(--animal-primary-color);
+    content: '';
+  }
+
+  .member-name {
+    color: var(--animal-text-color);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .member-account,
+  .member-title,
+  .member-dept {
+    font-size: 11px;
+    line-height: 17px;
+  }
+
+  .day-header {
+    min-height: 52px;
+    gap: 2px;
+    padding: 2px 3px;
+    border-radius: 14px;
+  }
+
+  .day-header strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 31px;
+    height: 26px;
+    padding: 0 7px;
+    border-radius: 10px;
+    background: color-mix(in srgb, #fff 62%, var(--animal-bg-color-secondary));
+    color: var(--animal-text-color);
+    font-size: 13px;
+    line-height: 26px;
+  }
+
+  .day-header span {
+    color: var(--animal-text-color-secondary);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .day-header em {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--animal-primary-color) 11%, transparent);
+    color: var(--animal-primary-color);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+  }
+
+  .day-header.is-rest {
+    background: color-mix(in srgb, var(--animal-accent-color, #f0a85b) 9%, transparent);
+    color: var(--animal-text-color-secondary);
+  }
+
+  .day-header.is-rest strong {
+    background: color-mix(in srgb, var(--animal-accent-color, #f0a85b) 16%, var(--animal-bg-color-secondary));
+  }
+
+  .day-header.is-rest em {
+    background: color-mix(in srgb, var(--animal-accent-color, #f0a85b) 14%, transparent);
+    color: var(--animal-accent-color, #b88230);
+  }
+
+  .day-header.is-exception em {
+    background: color-mix(in srgb, var(--animal-status-warning, #e6a23c) 16%, transparent);
+    color: var(--animal-status-warning, #b88230);
+  }
+
+  .day-header.is-today {
+    background: color-mix(in srgb, var(--animal-primary-color) 10%, transparent);
+  }
+
+  .day-header.is-today strong {
+    background: var(--animal-primary-color);
+    color: #fff;
+    box-shadow: 0 2px 0 var(--animal-primary-color-active, #0ea89c);
+  }
+
+  .report-cell {
+    flex-direction: column;
+    gap: 2px;
+    min-width: 62px;
+    min-height: 38px;
+    margin: 0 auto;
+    padding: 6px 5px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 16px;
+    transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+
+  .report-cell:hover:not(.state-rest):not(.state-exception):not(.state-unavailable) {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--animal-primary-color) 34%, transparent);
+    background: color-mix(in srgb, var(--animal-primary-color) 13%, var(--animal-bg-color));
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--animal-primary-color) 20%, transparent);
+  }
+
+  .report-cell.state-filled {
+    border-color: color-mix(in srgb, var(--animal-status-success, #67c23a) 22%, transparent);
+    background: color-mix(in srgb, var(--animal-status-success, #67c23a) 10%, var(--animal-bg-color));
+    color: var(--animal-status-success, #529b2e);
+  }
+
+  .report-cell.state-leave {
+    border-color: color-mix(in srgb, var(--animal-status-info, #409eff) 22%, transparent);
+    background: color-mix(in srgb, var(--animal-status-info, #409eff) 10%, var(--animal-bg-color));
+    color: var(--animal-status-info, #337ecc);
+  }
+
+  .report-cell.state-exception {
+    border-color: color-mix(in srgb, var(--animal-status-warning, #e6a23c) 24%, transparent);
+    background: color-mix(in srgb, var(--animal-status-warning, #e6a23c) 11%, var(--animal-bg-color));
+    color: var(--animal-status-warning, #b88230);
+  }
+
+  .report-cell.state-missing {
+    border-color: color-mix(in srgb, var(--animal-status-danger, #f56c6c) 22%, transparent);
+    background: color-mix(in srgb, var(--animal-status-danger, #f56c6c) 10%, var(--animal-bg-color));
+    color: var(--animal-status-danger, #c45656);
+  }
+
+  .report-cell.state-rest {
+    border-color: color-mix(in srgb, var(--animal-border-color-light) 65%, transparent);
+    background: color-mix(in srgb, var(--animal-bg-color-secondary) 58%, var(--animal-bg-color));
+    color: var(--animal-text-color-secondary);
+  }
+
+  .report-cell.state-unavailable {
+    min-width: 52px;
+    background: transparent;
+    color: var(--animal-text-color-disabled, var(--el-text-color-placeholder));
+  }
+
+  .report-cell .el-icon {
+    font-size: 13px;
+  }
+
+  .report-cell.state-unavailable small {
+    color: inherit;
+    font-size: 10px;
+    font-weight: 600;
+  }
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .department-daily-report-page {
+  .calendar-scroll {
+    border-color: color-mix(in srgb, var(--animal-primary-color) 24%, var(--animal-border-color-light));
+    background: color-mix(in srgb, var(--animal-primary-color) 5%, var(--animal-bg-color));
+  }
+
+  .calendar-scroll .calendar-table {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color);
+    box-shadow: 0 3px 0 var(--animal-shadow-soft), 0 10px 24px rgb(0 0 0 / 18%);
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__th {
+    border-bottom-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+    color: var(--animal-text-color);
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__th:first-child {
+    background: color-mix(in srgb, var(--animal-primary-color) 12%, var(--animal-bg-color-secondary));
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__cell {
+    border-bottom-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color);
+    color: var(--animal-text-color);
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__row:nth-child(even) .ui-animal-table__cell {
+    background: color-mix(in srgb, var(--animal-primary-color) 4%, var(--animal-bg-color));
+  }
+
+  .calendar-scroll .calendar-table .ui-animal-table__row:hover .ui-animal-table__cell {
+    background: color-mix(in srgb, var(--animal-primary-color) 10%, var(--animal-bg-color));
+  }
+
+  .day-header strong {
+    background: var(--animal-bg-color-input);
+  }
+
+  .day-header.is-rest {
+    background: color-mix(in srgb, var(--animal-accent-color, #e4b66a) 10%, transparent);
+  }
+
+  .day-header.is-rest strong {
+    background: color-mix(in srgb, var(--animal-accent-color, #e4b66a) 18%, var(--animal-bg-color-input));
+  }
+
+  .report-cell.state-filled {
+    background: color-mix(in srgb, var(--animal-status-success) 14%, var(--animal-bg-color));
+  }
+
+  .report-cell.state-leave {
+    background: color-mix(in srgb, var(--animal-status-info) 14%, var(--animal-bg-color));
+  }
+
+  .report-cell.state-exception {
+    background: color-mix(in srgb, var(--animal-status-warning) 14%, var(--animal-bg-color));
+  }
+
+  .report-cell.state-missing {
+    background: color-mix(in srgb, var(--animal-status-danger) 14%, var(--animal-bg-color));
+  }
+
+  .report-cell.state-rest {
+    background: color-mix(in srgb, var(--animal-bg-color-secondary) 72%, var(--animal-bg-color));
+  }
 }
 </style>
 
@@ -622,6 +990,562 @@ onMounted(getCalendar);
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+  }
+}
+
+/*
+ * 日报弹窗是跨主题复用的表单；动森模式的 Modal 会通过 Teleport 渲染，
+ * 因此使用稳定的业务类名约束弹窗标题、字段卡片和底部操作区，避免依赖
+ * 业务页面的 scoped 属性，也避免标签、文本域和计数器发生错位。
+ */
+.report-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.report-dialog-title-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid color-mix(in srgb, var(--el-color-primary) 28%, var(--el-border-color-light));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--el-color-primary) 12%, transparent);
+  color: var(--el-color-primary);
+  font-size: 17px;
+}
+
+.report-dialog-title-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.report-dialog-title-copy strong,
+.report-dialog-title-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-dialog-title-copy strong {
+  color: var(--el-text-color-primary);
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.report-dialog-title-copy small {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 17px;
+}
+
+.animal-modal:has(.daily-report-form) .animal-modal__body {
+  // 动森弹窗顶部是收窄的有机曲线，标题需要下移到宽阔区域，避免图标和文字被曲线裁掉。
+  padding: 44px 34px 18px;
+}
+
+.animal-modal:has(.daily-report-form) .animal-modal__header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--animal-overlay-border, var(--el-border-color-lighter));
+}
+
+.animal-modal:has(.daily-report-form) .animal-modal__title {
+  width: 100%;
+}
+
+.animal-modal:has(.daily-report-form) .report-dialog-title {
+  padding: 0 12px;
+}
+
+.animal-modal:has(.daily-report-form) .animal-modal__content {
+  padding: 14px 2px 16px;
+  overflow-x: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.animal-modal:has(.daily-report-form) .animal-modal__footer {
+  justify-content: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--animal-overlay-border, var(--el-border-color-lighter));
+}
+
+.animal-modal:has(.daily-report-form) .report-dialog-footer {
+  justify-content: center;
+}
+
+.daily-report-form {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.daily-report-form .el-form-item {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.daily-report-form .el-form-item__label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: auto !important;
+  min-height: 20px;
+  margin-bottom: 7px;
+  padding: 0;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.daily-report-form .el-form-item__content {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-left: 0 !important;
+  line-height: normal;
+}
+
+.daily-report-form .el-form-item__content > * {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.daily-report-form .report-date-field {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 184px);
+  column-gap: 14px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--el-color-primary) 5%, var(--el-bg-color));
+}
+
+.daily-report-form .report-date-field .el-form-item__label {
+  margin: 0;
+}
+
+.daily-report-form .report-date-field .el-form-item__content {
+  display: flex;
+  align-items: center;
+}
+
+.daily-report-form .report-date-field .animal-date-picker,
+.daily-report-form .report-date-field .el-date-editor {
+  width: 184px !important;
+  max-width: 100%;
+}
+
+.daily-report-form .report-field {
+  padding: 10px 12px 11px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--el-color-primary) 4%, var(--el-bg-color));
+}
+
+.daily-report-form .report-field--primary {
+  border-color: color-mix(in srgb, var(--el-color-primary) 38%, var(--el-border-color-lighter));
+  background: color-mix(in srgb, var(--el-color-primary) 7%, var(--el-bg-color));
+}
+
+.daily-report-form .report-field .el-form-item__label {
+  margin-bottom: 6px;
+}
+
+.daily-report-form .report-field .ui-animal-textarea {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--el-color-primary) 18%, var(--animal-border-color-light, var(--el-border-color-light)));
+  border-radius: 14px;
+  background: var(--animal-bg-color-input, var(--el-fill-color-blank));
+  box-shadow: 0 2px 0 var(--animal-shadow-soft, var(--el-border-color-light));
+}
+
+.daily-report-form .report-field--primary .ui-animal-textarea {
+  min-height: 120px;
+}
+
+.daily-report-form .report-field:not(.report-field--primary) .ui-animal-textarea {
+  min-height: 68px;
+}
+
+.daily-report-form .report-field .ui-animal-textarea__count {
+  right: 12px;
+  bottom: 8px;
+}
+
+.daily-report-form .el-divider {
+  margin: 4px 0 14px;
+}
+
+.report-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.calendar-settings-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.animal-modal__content:has(.calendar-settings-content) {
+  overflow-x: hidden;
+}
+
+.calendar-settings-content .settings-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.calendar-settings-content .settings-dialog-title-icon,
+.animal-modal__title .settings-dialog-title-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  font-size: 18px;
+}
+
+.animal-modal__title .settings-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.animal-modal__title .settings-dialog-title-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.animal-modal__title .settings-dialog-title-copy strong,
+.animal-modal__title .settings-dialog-title-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.animal-modal__title .settings-dialog-title-copy strong {
+  color: var(--el-text-color-primary);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.animal-modal__title .settings-dialog-title-copy small {
+  color: var(--el-text-color-secondary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.calendar-settings-content .settings-note,
+.calendar-settings-content .settings-section {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.calendar-settings-content .settings-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--el-color-primary-light-8);
+  border-left: 3px solid var(--el-color-primary);
+  border-radius: 10px;
+  background: var(--el-color-primary-light-9);
+}
+
+.calendar-settings-content .settings-note > div {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.calendar-settings-content .settings-note-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--el-color-primary);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.calendar-settings-content .settings-note strong {
+  display: block;
+  color: var(--el-text-color-primary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.calendar-settings-content .settings-note p {
+  margin: 2px 0 0;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.calendar-settings-content .settings-note p {
+  overflow-wrap: anywhere;
+}
+
+.calendar-settings-content .settings-section {
+  margin: 0;
+  padding: 16px 18px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  background: var(--el-bg-color);
+}
+
+/*
+ * 动森日期选择器的面板挂载在触发器内部，并通过 absolute 向下展开。
+ * 日常状态仍保持设置区的边界裁剪；仅在面板打开时释放必要的溢出空间，
+ * 避免日历被设置卡片、弹窗内容滚动区或弹窗主体提前截断。
+ */
+.calendar-settings-content:has(.animal-date-picker__panel),
+.animal-modal__content:has(.calendar-settings-content .animal-date-picker__panel),
+.animal-modal__body:has(.calendar-settings-content .animal-date-picker__panel),
+.calendar-settings-content .exception-settings-section:has(.animal-date-picker__panel) {
+  overflow: visible;
+}
+
+.calendar-settings-content .settings-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 14px;
+  padding-left: 12px;
+  box-sizing: border-box;
+}
+
+.calendar-settings-content .settings-section-heading > div:first-child {
+  min-width: 0;
+}
+
+.calendar-settings-content .settings-heading-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-settings-content .settings-section-heading h4 {
+  margin: 0;
+  color: var(--el-text-color-primary);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.calendar-settings-content .settings-section-heading p {
+  margin: 3px 0 0;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.calendar-settings-content .settings-section-heading p {
+  overflow-wrap: anywhere;
+}
+
+.calendar-settings-content .settings-section-heading .ui-animal-button {
+  flex: 0 0 auto;
+}
+
+.calendar-settings-content .override-form,
+.calendar-settings-content .override-form-row {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.calendar-settings-content .override-form {
+  padding: 4px 0 0;
+}
+
+.calendar-settings-content .override-form-row {
+  display: grid;
+  align-items: start;
+  gap: 12px 16px;
+}
+
+.calendar-settings-content .override-main-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr);
+}
+
+.calendar-settings-content .override-detail-row {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 118px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--el-border-color-extra-light);
+}
+
+.calendar-settings-content .override-form-row .el-form-item {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.calendar-settings-content .override-form-row .el-form-item__label {
+  width: auto !important;
+  padding-bottom: 6px;
+  color: var(--el-text-color-regular);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.calendar-settings-content .override-form-row .el-form-item__content {
+  width: 100%;
+  min-width: 0;
+  margin-left: 0 !important;
+}
+
+.calendar-settings-content .override-form-row .animal-date-picker,
+.calendar-settings-content .override-form-row .animal-select,
+.calendar-settings-content .override-form-row .el-date-editor,
+.calendar-settings-content .override-form-row .el-select,
+.calendar-settings-content .override-form-row .el-input {
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.calendar-settings-content .report-rule-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-height: 40px;
+}
+
+.calendar-settings-content .report-rule-hint {
+  overflow-wrap: anywhere;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: normal;
+}
+
+.calendar-settings-content .override-action {
+  align-self: end;
+  justify-self: end;
+}
+
+.calendar-settings-content .override-action .ui-animal-button,
+.calendar-settings-content .override-action .el-button {
+  min-width: 118px;
+}
+
+.calendar-settings-content .override-table {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.calendar-settings-content .override-table .el-table,
+.calendar-settings-content .override-table .el-table__header-wrapper,
+.calendar-settings-content .override-table .el-table__body-wrapper {
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.calendar-settings-content .override-table .el-table__body-wrapper {
+  overflow-x: auto;
+}
+
+html.dark .calendar-settings-content .settings-note {
+  border-color: rgba(92, 211, 199, 0.32);
+  background: rgba(92, 211, 199, 0.1);
+}
+
+html.dark .calendar-settings-content .settings-note strong,
+html.dark .calendar-settings-content .settings-section-heading h4 {
+  color: #f5ead1;
+}
+
+html.dark .calendar-settings-content .settings-note p,
+html.dark .calendar-settings-content .settings-section-heading p {
+  color: #b9c9c2;
+}
+
+html.dark .calendar-settings-content .settings-section {
+  border-color: rgba(115, 153, 145, 0.42);
+  background: #2b3a39;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 14%);
+}
+
+html.dark .calendar-settings-content .override-detail-row {
+  border-top-color: rgba(115, 153, 145, 0.3);
+}
+
+@media (max-width: 760px) {
+  .daily-report-form .el-form-item,
+  .calendar-settings-content .override-main-row,
+  .calendar-settings-content .override-detail-row {
+    grid-template-columns: 1fr;
+  }
+
+  .daily-report-form .el-form-item__label,
+  .daily-report-form .el-form-item:first-child .el-form-item__label {
+    padding-top: 0;
+    text-align: left;
+  }
+
+  .calendar-settings-content .override-detail-row {
+    margin-top: 10px;
+  }
+
+  .calendar-settings-content .override-action {
+    justify-self: start;
   }
 }
 

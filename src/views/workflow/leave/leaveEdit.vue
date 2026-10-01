@@ -62,6 +62,7 @@
 
 <script setup name="Leave" lang="ts">
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { addLeave, getLeave, submitAndFlowStart, updateLeave } from '@/api/workflow/leave';
 import { LeaveForm, LeaveQuery, LeaveVO } from '@/api/workflow/leave/types';
 import { startWorkFlow } from '@/api/workflow/task';
@@ -73,6 +74,7 @@ import modal from '@/plugins/modal';
 import tab from '@/plugins/tab';
 import router from '@/router';
 
+const { t } = useI18n();
 const route = useRoute();
 
 const buttonLoading = ref(false);

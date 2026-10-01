@@ -1,34 +1,34 @@
 <template>
   <div class="p-2 app-container department-person-page">
-    <el-card shadow="hover" class="search-panel">
+    <UiCard shadow="hover" class="search-panel">
       <el-form :model="queryParams" :inline="true" class="query-form">
         <el-form-item label="人员">
-          <el-input v-model="queryParams.userName" clearable placeholder="账号或姓名" @keyup.enter="handleQuery" />
+          <UiInput v-model="queryParams.userName" clearable placeholder="账号或姓名" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="岗位">
-          <el-input v-model="queryParams.jobTitle" clearable placeholder="岗位名称" @keyup.enter="handleQuery" />
+          <UiInput v-model="queryParams.jobTitle" clearable placeholder="岗位名称" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item>
           <el-checkbox v-model="queryParams.includeHistory">包含已结束服务关系</el-checkbox>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <UiButton type="primary" icon="Search" @click="handleQuery">查询</UiButton>
+          <UiButton icon="Refresh" @click="resetQuery">重置</UiButton>
         </el-form-item>
       </el-form>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="hover" class="table-panel mt-2">
+    <UiCard shadow="hover" class="table-panel mt-2">
       <template #header>
         <DepartmentPanelHeader kicker="Department People" title="人员档案" description="展示科室成员、工号、岗位及基础信息；基础数据由用户管理统一维护">
-          <el-button v-hasPermi="['department:person:add']" type="primary" plain icon="Plus" @click="handleAdd">新增人员档案</el-button>
-          <el-button v-hasPermi="['department:person:query']" type="success" plain icon="Calendar" @click="openLeaveManager">休假安排</el-button>
-          <el-button v-hasPermi="['department:person:export']" type="warning" plain icon="Download" @click="handleExport">导出</el-button>
-          <el-button v-hasPermi="['department:person:import']" type="info" plain icon="Upload" @click="handleImport">导入</el-button>
+          <UiButton v-hasPermi="['department:person:add']" type="primary" plain icon="Plus" @click="handleAdd">新增人员档案</UiButton>
+          <UiButton v-hasPermi="['department:person:query']" type="success" plain icon="Calendar" @click="openLeaveManager">休假安排</UiButton>
+          <UiButton v-hasPermi="['department:person:export']" type="warning" plain icon="Download" @click="handleExport">导出</UiButton>
+          <UiButton v-hasPermi="['department:person:import']" type="info" plain icon="Upload" @click="handleImport">导入</UiButton>
         </DepartmentPanelHeader>
       </template>
 
-      <DepartmentDataTable v-loading="loading" border :data="personList">
+      <DepartmentDataTable :loading="loading" border :data="personList">
         <el-table-column label="账号" prop="userName" width="140" />
         <el-table-column label="姓名" prop="nickName" width="120" />
         <el-table-column label="部门" prop="deptName" min-width="160" show-overflow-tooltip />
@@ -43,17 +43,17 @@
         </el-table-column>
         <el-table-column label="服务状态" prop="memberStatus" width="120" class-name="person-status-column">
           <template #default="scope">
-            <el-tag :type="scope.row.memberStatus === 'ENDED' ? 'info' : 'success'" size="small">
+            <UiTag :type="scope.row.memberStatus === 'ENDED' ? 'info' : 'success'" size="small">
               {{ scope.row.memberStatus === 'ENDED' ? '已结束' : '服务中' }}
-            </el-tag>
+            </UiTag>
           </template>
         </el-table-column>
         <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip />
         <el-table-column label="操作" fixed="right" width="210" align="center">
           <template #default="scope">
             <DepartmentTableActions>
-              <el-button v-hasPermi="['department:person:edit']" link type="primary" icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
-              <el-button
+              <UiButton v-hasPermi="['department:person:edit']" link type="primary" icon="Edit" @click="handleEdit(scope.row)">编辑</UiButton>
+              <UiButton
                 v-if="scope.row.memberStatus !== 'ENDED'"
                 v-hasPermi="['department:person:remove']"
                 link
@@ -62,24 +62,24 @@
                 @click="handleDelete(scope.row)"
               >
                 结束服务
-              </el-button>
+              </UiButton>
               <span v-else class="text-secondary">已结束</span>
             </DepartmentTableActions>
           </template>
         </el-table-column>
       </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="560px" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="560px">
+      <el-form ref="formRef" class="person-form" :model="form" :rules="rules" label-width="110px">
         <el-form-item label="系统用户" prop="userId">
           <div class="selected-user-field">
             <div v-if="selectedUsers.length" class="selected-user-list">
@@ -91,7 +91,7 @@
                     <span v-if="user.employeeNo"> · 工号 {{ user.employeeNo }}</span>
                   </div>
                 </div>
-                <el-button
+                <UiButton
                   v-if="dialog.mode === 'add'"
                   link
                   type="danger"
@@ -101,21 +101,18 @@
                 />
               </div>
             </div>
-            <el-button v-if="dialog.mode === 'add' && !selectedUsers.length" type="primary" plain icon="Search" @click="openUserPicker">选择系统用户</el-button>
-            <el-button v-if="dialog.mode === 'add' && selectedUsers.length" link type="primary" @click="openUserPicker">重新选择</el-button>
+            <UiButton v-if="dialog.mode === 'add' && !selectedUsers.length" type="primary" plain icon="Search" @click="openUserPicker">选择系统用户</UiButton>
+            <UiButton v-if="dialog.mode === 'add' && selectedUsers.length" link type="primary" @click="openUserPicker">重新选择</UiButton>
           </div>
         </el-form-item>
         <el-form-item label="加入日期" prop="joinDate">
-          <el-date-picker v-model="form.joinDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="选择纳入科室日期" />
+          <UiDatePicker v-model="form.joinDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="选择纳入科室日期" />
         </el-form-item>
         <el-form-item label="成员类型" prop="memberType">
-          <el-select v-model="form.memberType" style="width: 100%">
-            <el-option label="正式成员" value="FULL" />
-            <el-option label="临时协作" value="TEMP" />
-          </el-select>
+          <UiSelect v-model="form.memberType" :options="memberTypeOptions" style="width: 100%" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="例如：负责某项目支持、临时协作范围" />
+          <UiTextarea :model-value="form.remark || ''" :rows="3" :maxlength="500" show-word-limit placeholder="例如：负责某项目支持、临时协作范围" @update:model-value="form.remark = String($event)" />
         </el-form-item>
         <el-alert
           :title="dialog.mode === 'edit' ? '修改成员关系不会删除日报、任务或其他历史数据。加入日期调整后，日报和任务将按新日期计算。' : '加入日期当天开始纳入；离开生效日当天起不再生成日报和任务，历史数据仍保留。'"
@@ -125,13 +122,13 @@
         />
       </el-form>
       <template #footer>
-        <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ dialog.mode === 'edit' ? '保存修改' : '加入科室' }}</el-button>
-        <el-button @click="dialog.visible = false">取消</el-button>
+        <UiButton :loading="buttonLoading" type="primary" @click="submitForm">{{ dialog.mode === 'edit' ? '保存修改' : '加入科室' }}</UiButton>
+        <UiButton @click="dialog.visible = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="endDialog.visible" title="结束科室服务关系" width="480px" append-to-body>
-      <el-form ref="endFormRef" :model="endForm" :rules="endRules" label-width="100px">
+    <UiDialog v-model="endDialog.visible" title="结束科室服务关系" width="480px">
+      <el-form ref="endFormRef" class="person-end-form" :model="endForm" :rules="endRules" label-width="100px">
         <el-alert
           title="离开生效日当天起关闭日报、任务和提醒，不会删除已有日报、任务或业务记录；当天可重新加入。"
           type="warning"
@@ -140,7 +137,7 @@
           class="mb-4"
         />
         <el-form-item label="离开生效日" prop="leaveDate">
-          <el-date-picker
+          <UiDatePicker
             v-model="endForm.leaveDate"
             type="date"
             value-format="YYYY-MM-DD"
@@ -149,16 +146,16 @@
           />
         </el-form-item>
         <el-form-item label="结束原因" prop="reason">
-          <el-input v-model="endForm.reason" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="例如：项目支持结束、调离科室" />
+          <UiTextarea :model-value="endForm.reason || ''" :rows="3" :maxlength="500" show-word-limit placeholder="例如：项目支持结束、调离科室" @update:model-value="endForm.reason = String($event)" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button :loading="buttonLoading" type="danger" @click="submitEnd">确认结束服务</el-button>
-        <el-button @click="endDialog.visible = false">取消</el-button>
+        <UiButton :loading="buttonLoading" type="danger" @click="submitEnd">确认结束服务</UiButton>
+        <UiButton @click="endDialog.visible = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="leaveDialog.visible" title="人员休假安排" width="900px" class="leave-manager-dialog" append-to-body>
+    <UiDialog v-model="leaveDialog.visible" title="人员休假安排" width="900px" class="leave-manager-dialog">
       <div class="leave-dialog-summary">
         <div class="leave-dialog-summary-main">
           <div class="leave-dialog-summary-icon"><el-icon><Calendar /></el-icon></div>
@@ -169,7 +166,7 @@
         </div>
         <div class="leave-dialog-summary-actions">
           <span class="leave-record-count">{{ leaves.length }} 条记录</span>
-          <el-button v-hasPermi="['department:person:add']" type="primary" icon="Plus" @click="openLeaveForm()">新增休假</el-button>
+          <UiButton v-hasPermi="['department:person:add']" type="primary" icon="Plus" @click="openLeaveForm()">新增休假</UiButton>
         </div>
       </div>
 
@@ -178,8 +175,8 @@
         <span>休假日期包含开始日和结束日；保存后会自动补齐对应工作日的休假日报。</span>
       </div>
 
-      <div v-if="leaves.length" v-loading="leaveLoading" class="leave-table-shell">
-        <el-table :data="leaves" border size="small" class="leave-table">
+      <div v-if="leaves.length" class="leave-table-shell">
+        <DepartmentDataTable :loading="leaveLoading" :data="leaves" border size="small" class="leave-table" row-key="id">
           <el-table-column label="人员" min-width="180">
             <template #default="scope">{{ scope.row.nickName || scope.row.userName }}<span class="leave-user-account">（{{ scope.row.userName }}）</span></template>
           </el-table-column>
@@ -190,59 +187,56 @@
           <el-table-column prop="reason" label="说明" min-width="220" show-overflow-tooltip />
           <el-table-column label="操作" width="140" align="center">
             <template #default="scope">
-              <el-button v-hasPermi="['department:person:edit']" link type="primary" @click="openLeaveForm(scope.row)">编辑</el-button>
-              <el-button v-hasPermi="['department:person:remove']" link type="danger" @click="removeLeave(scope.row)">删除</el-button>
+              <UiButton v-hasPermi="['department:person:edit']" link type="primary" @click="openLeaveForm(asPersonLeaveRow(scope.row))">编辑</UiButton>
+              <UiButton v-hasPermi="['department:person:remove']" link type="danger" @click="removeLeave(asPersonLeaveRow(scope.row))">删除</UiButton>
             </template>
           </el-table-column>
-        </el-table>
+        </DepartmentDataTable>
       </div>
       <div v-else v-loading="leaveLoading" class="leave-empty-state">
         <div class="leave-empty-icon"><el-icon><Calendar /></el-icon></div>
         <div class="leave-empty-title">暂无休假安排</div>
         <div class="leave-empty-text">为科室成员新增休假后，系统会自动生成对应的休假日报。</div>
-        <el-button v-hasPermi="['department:person:add']" type="primary" plain icon="Plus" @click="openLeaveForm()">新增第一条休假</el-button>
+        <UiButton v-hasPermi="['department:person:add']" type="primary" plain icon="Plus" @click="openLeaveForm()">新增第一条休假</UiButton>
       </div>
       <template #footer>
         <div class="leave-dialog-footer">
           <span>休假记录仅影响日报生成，不会删除历史数据。</span>
-          <el-button @click="leaveDialog.visible = false">关闭</el-button>
+          <UiButton @click="leaveDialog.visible = false">关闭</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="leaveFormDialog.visible" :title="leaveForm.id ? '编辑休假' : '新增休假'" width="560px" append-to-body>
-      <el-form ref="leaveFormRef" :model="leaveForm" :rules="leaveRules" label-width="100px">
+    <UiDialog v-model="leaveFormDialog.visible" :title="leaveForm.id ? '编辑休假' : '新增休假'" width="560px">
+      <el-form ref="leaveFormRef" class="person-leave-form" :model="leaveForm" :rules="leaveRules" label-width="100px">
         <el-form-item label="休假人员" prop="userId">
-          <el-select v-model="leaveForm.userId" filterable placeholder="搜索并选择人员" style="width: 100%">
-            <el-option v-for="item in leaveMembers" :key="item.userId" :label="`${item.nickName || item.userName}（${item.userName}）`" :value="item.userId" />
-          </el-select>
+          <UiSelect v-model="leaveForm.userId" filterable :options="leaveMemberOptions" placeholder="搜索并选择人员" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="开始日期" prop="startDate"><el-date-picker v-model="leaveForm.startDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
-        <el-form-item label="结束日期" prop="endDate"><el-date-picker v-model="leaveForm.endDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
+        <el-form-item label="开始日期" prop="startDate"><UiDatePicker v-model="leaveForm.startDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
+        <el-form-item label="结束日期" prop="endDate"><UiDatePicker v-model="leaveForm.endDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
         <el-form-item label="休假类型" prop="leaveType">
-          <el-select
+          <UiSelect
             v-model="leaveForm.leaveType"
+            :options="leaveTypeOptions"
             :loading="!dm_leave_type.length"
             :disabled="!dm_leave_type.length"
             placeholder="请选择休假类型"
             style="width: 100%"
-          >
-            <el-option v-for="item in dm_leave_type" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+          />
         </el-form-item>
-        <el-form-item label="休假说明"><el-input v-model="leaveForm.reason" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="补充休假原因或说明" /></el-form-item>
+        <el-form-item label="休假说明"><UiTextarea :model-value="leaveForm.reason || ''" :rows="3" :maxlength="500" show-word-limit placeholder="补充休假原因或说明" @update:model-value="leaveForm.reason = String($event)" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button v-hasPermi="[leaveForm.id ? 'department:person:edit' : 'department:person:add']" type="primary" :loading="leaveSaving" @click="saveLeave">保存并生成日报</el-button>
-        <el-button @click="leaveFormDialog.visible = false">取消</el-button>
+        <UiButton v-hasPermi="[leaveForm.id ? 'department:person:edit' : 'department:person:add']" type="primary" :loading="leaveSaving" @click="saveLeave">保存并生成日报</UiButton>
+        <UiButton @click="leaveFormDialog.visible = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="userPicker.visible" title="选择系统用户" width="min(980px, calc(100vw - 32px))" class="person-user-picker-dialog" append-to-body>
+    <UiDialog v-model="userPicker.visible" title="选择系统用户" width="min(980px, calc(100vw - 32px))" class="person-user-picker-dialog">
       <div class="user-picker-dialog">
         <el-form :inline="true" @submit.prevent="handleUserPickerQuery">
           <el-form-item label="搜索人员">
-            <el-input
+            <UiInput
               v-model="userPicker.keyword"
               clearable
               placeholder="账号、姓名或工号"
@@ -262,24 +256,25 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleUserPickerQuery">查询</el-button>
+            <UiButton type="primary" icon="Search" @click="handleUserPickerQuery">查询</UiButton>
           </el-form-item>
         </el-form>
         <div class="user-picker-selection">
           <div class="user-picker-selection-heading">
             <span>已选用户</span>
-            <el-tag type="primary" size="small">{{ pickerSelectedUsers.length }} 人</el-tag>
-            <el-button v-if="pickerSelectedUsers.length" link type="primary" @click="clearPickerSelection">清空</el-button>
+            <UiTag type="primary" size="small">{{ pickerSelectedUsers.length }} 人</UiTag>
+            <UiButton v-if="pickerSelectedUsers.length" link type="primary" @click="clearPickerSelection">清空</UiButton>
           </div>
           <div v-if="pickerSelectedUsers.length" class="user-picker-selection-tags">
-            <el-tag v-for="user in pickerSelectedUsers" :key="String(user.userId)" closable @close="removePickerUser(user.userId)">
-              {{ user.nickName || user.userName }}（{{ user.userName }}）
-            </el-tag>
+            <div v-for="user in pickerSelectedUsers" :key="String(user.userId)" class="user-picker-selection-tag">
+              <UiTag type="primary" size="small">{{ user.nickName || user.userName }}（{{ user.userName }}）</UiTag>
+              <UiButton link type="danger" icon="Close" title="移除" @click="removePickerUser(user.userId)" />
+            </div>
           </div>
           <span v-else class="user-picker-selection-empty">请从下方列表勾选需要纳入当前科室的人员，可跨页保留选择</span>
         </div>
-        <el-table
-          v-loading="userPicker.loading"
+        <DepartmentDataTable
+          :loading="userPicker.loading"
           :data="userPickerOptions"
           row-key="userId"
           highlight-current-row
@@ -296,9 +291,9 @@
             </template>
             <template #default="scope">
               <el-checkbox
-                :model-value="isPickerUserSelected(scope.row)"
+                :model-value="isPickerUserSelected(asPersonUserOptionRow(scope.row))"
                 @click.stop
-                @change="handlePickerCheckboxChange(scope.row, $event)"
+                @change="handlePickerCheckboxChange(asPersonUserOptionRow(scope.row), $event)"
               />
             </template>
           </el-table-column>
@@ -306,8 +301,8 @@
           <el-table-column label="姓名" prop="nickName" min-width="130" />
           <el-table-column label="工号" prop="employeeNo" width="130" />
           <el-table-column label="部门" prop="deptName" min-width="180" show-overflow-tooltip />
-        </el-table>
-        <pagination
+        </DepartmentDataTable>
+        <UiPagination
           v-show="userPicker.total > 0"
           v-model:page="userPicker.pageNum"
           v-model:limit="userPicker.pageSize"
@@ -317,13 +312,13 @@
       </div>
       <template #footer>
         <div class="user-picker-footer-summary">已选择 {{ pickerSelectedUsers.length }} 人，翻页或筛选不会清除已选项</div>
-        <el-button type="primary" :disabled="!pickerSelectedUsers.length" @click="confirmUserPicker">确定选择</el-button>
-        <el-button @click="userPicker.visible = false">取消</el-button>
+        <UiButton type="primary" :disabled="!pickerSelectedUsers.length" @click="confirmUserPicker">确定选择</UiButton>
+        <UiButton @click="userPicker.visible = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="upload.open" :title="upload.title" width="420px" append-to-body>
-      <el-upload
+    <UiDialog v-model="upload.open" :title="upload.title" width="420px">
+      <UiUpload
         ref="uploadRef"
         drag
         :limit="1"
@@ -337,13 +332,13 @@
       >
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
         <div class="el-upload__text">拖拽 Excel 文件到此处，或点击上传</div>
-      </el-upload>
+      </UiUpload>
       <div class="upload-template-link" @click="downloadTemplate">下载导入模板</div>
       <template #footer>
-        <el-button type="primary" :loading="upload.isUploading" @click="submitUpload">开始导入</el-button>
-        <el-button @click="upload.open = false">取消</el-button>
+        <UiButton type="primary" :loading="upload.isUploading" @click="submitUpload">开始导入</UiButton>
+        <UiButton @click="upload.open = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -381,6 +376,7 @@ import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload, globalHeaders } from '@/utils/request';
 import { useDict } from '@/utils/dict';
+import { UiButton, UiCard, UiDatePicker, UiDialog, UiInput, UiPagination, UiSelect, UiTag, UiTextarea, UiUpload } from '@/components/UiKit';
 
 const { loading, withLoading } = useLoading(true);
 const personList = ref<PersonProfileVO[]>([]);
@@ -390,6 +386,9 @@ const pickerSelectedUsers = ref<PersonUserOptionVO[]>([]);
 const deptOptions = ref<DeptTreeVO[]>([]);
 const leaves = ref<PersonLeaveVO[]>([]);
 const leaveMembers = ref<PersonUserOptionVO[]>([]);
+/** 表格插槽默认行类型较宽，在进入人员业务动作时恢复具体类型。 */
+const asPersonLeaveRow = (row: unknown): PersonLeaveVO => row as PersonLeaveVO;
+const asPersonUserOptionRow = (row: unknown): PersonUserOptionVO => row as PersonUserOptionVO;
 const total = ref(0);
 const buttonLoading = ref(false);
 const leaveLoading = ref(false);
@@ -398,6 +397,15 @@ const formRef = ref<ElFormInstance>();
 const leaveFormRef = ref<ElFormInstance>();
 const uploadRef = ref<ElUploadInstance>();
 const { dm_leave_type } = toRefs<any>(useDict('dm_leave_type'));
+const memberTypeOptions = [
+  { value: 'FULL', label: '正式成员' },
+  { value: 'TEMP', label: '临时协作' }
+];
+const leaveTypeOptions = computed(() => (dm_leave_type.value || []).map((item: DictDataOption) => ({ value: item.value, label: item.label })));
+const leaveMemberOptions = computed(() => leaveMembers.value.map(item => ({
+  value: item.userId,
+  label: `${item.nickName || item.userName}（${item.userName}）`
+})));
 const queryParams = reactive<PersonProfileQuery>({ pageNum: 1, pageSize: 10, userName: undefined, jobTitle: undefined, includeHistory: false });
 const form = reactive<PersonProfileForm>({
   id: undefined,
@@ -826,7 +834,8 @@ onMounted(() => {
       margin-bottom: 4px;
     }
 
-    .el-pagination {
+    :deep(.pagination-container),
+    :deep(.ui-pagination-animal) {
       margin-top: 12px;
     }
   }
@@ -1204,7 +1213,8 @@ onMounted(() => {
       font-weight: 600;
     }
 
-    .user-picker-selection-heading .el-button {
+    .user-picker-selection-heading .el-button,
+    .user-picker-selection-heading .ui-animal-button {
       margin-left: auto;
     }
 
@@ -1215,6 +1225,13 @@ onMounted(() => {
       gap: 6px;
       margin-top: 9px;
       overflow-y: auto;
+    }
+
+    .user-picker-selection-tag {
+      display: inline-flex;
+      min-width: 0;
+      align-items: center;
+      gap: 2px;
     }
 
     .user-picker-selection-empty {
@@ -1236,7 +1253,8 @@ onMounted(() => {
       }
     }
 
-    .el-pagination {
+    :deep(.pagination-container),
+    :deep(.ui-pagination-animal) {
       margin-top: 12px;
     }
   }
@@ -1341,5 +1359,143 @@ html.dark .person-user-picker-dialog .user-picker-selection-heading {
 
 html.dark .person-user-picker-dialog .user-picker-selection-empty {
   color: var(--app-text-muted);
+}
+
+/* UiDialog 在动森模式下会把内容 Teleport 到统一 Modal，业务 class 不会落在外层；
+ * 使用表单语义类补齐复杂弹窗的布局，保证标签、控件和提示信息不会再次挤压或横向溢出。 */
+.animal-modal:has(.person-form) .person-form,
+.animal-modal:has(.person-end-form) .person-end-form,
+.animal-modal:has(.person-leave-form) .person-leave-form {
+  min-width: 0;
+}
+
+.animal-modal:has(.person-form) .person-form .el-form-item,
+.animal-modal:has(.person-end-form) .person-end-form .el-form-item,
+.animal-modal:has(.person-leave-form) .person-leave-form .el-form-item {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.animal-modal:has(.person-form) .person-form .el-form-item__label,
+.animal-modal:has(.person-end-form) .person-end-form .el-form-item__label,
+.animal-modal:has(.person-leave-form) .person-leave-form .el-form-item__label {
+  width: auto !important;
+  padding-right: 14px;
+  color: var(--animal-text-color, #725d42);
+  white-space: nowrap;
+}
+
+.animal-modal:has(.person-form) .person-form .el-form-item__content,
+.animal-modal:has(.person-end-form) .person-end-form .el-form-item__content,
+.animal-modal:has(.person-leave-form) .person-leave-form .el-form-item__content {
+  min-width: 0;
+  margin-left: 0 !important;
+}
+
+.animal-modal:has(.person-form) .person-form .el-form-item__content > *,
+.animal-modal:has(.person-end-form) .person-end-form .el-form-item__content > *,
+.animal-modal:has(.person-leave-form) .person-leave-form .el-form-item__content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.animal-modal:has(.person-form) .person-form .selected-user-field,
+.animal-modal:has(.person-end-form) .person-end-form .ui-animal-textarea-wrap,
+.animal-modal:has(.person-leave-form) .person-leave-form .ui-animal-textarea-wrap {
+  width: 100%;
+}
+
+.animal-modal:has(.person-form) .person-form .el-alert,
+.animal-modal:has(.person-end-form) .person-end-form .el-alert {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+
+.animal-modal:has(.leave-table) .leave-table-shell {
+  overflow: hidden;
+}
+
+.animal-modal:has(.leave-table) .leave-table-shell .ui-animal-table-shell {
+  border: 0;
+  box-shadow: none;
+}
+
+.animal-modal:has(.leave-table) .leave-table-shell .ui-animal-table__th {
+  min-height: 42px;
+  background: color-mix(in srgb, var(--animal-primary-color-bg, #e6f9f6) 70%, var(--animal-bg-color, #f8f8f0));
+}
+
+.animal-modal:has(.leave-table) .leave-table-shell .ui-animal-table__cell {
+  min-height: 48px;
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog,
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form,
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .user-picker-selection {
+  min-width: 0;
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-bottom: 14px;
+  padding: 14px 16px 2px;
+  border: 2px solid var(--animal-border-color-light, #e8e2d6);
+  border-radius: 16px;
+  background: var(--animal-bg-color-secondary, #fffdf7);
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form-item {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form-item__label {
+  width: auto !important;
+  padding-right: 12px;
+  color: var(--animal-text-color, #725d42);
+  white-space: nowrap;
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form-item__content {
+  min-width: 0;
+  margin-left: 0 !important;
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form-item__content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .user-picker-selection {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 2px solid color-mix(in srgb, var(--animal-primary-color, #19c8b9) 28%, var(--animal-border-color-light, #e8e2d6));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--animal-primary-color-bg, #e6f9f6) 72%, var(--animal-bg-color, #f8f8f0));
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .user-picker-selection-tag {
+  max-width: 100%;
+}
+
+.animal-modal:has(.user-picker-dialog) .user-picker-dialog .user-picker-selection-tag .animal-btn {
+  flex: 0 0 auto;
+}
+
+html[data-color-mode='dark'] .animal-modal:has(.person-form) .person-form .el-form-item__label,
+html[data-color-mode='dark'] .animal-modal:has(.person-end-form) .person-end-form .el-form-item__label,
+html[data-color-mode='dark'] .animal-modal:has(.person-leave-form) .person-leave-form .el-form-item__label,
+html[data-color-mode='dark'] .animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form-item__label {
+  color: var(--animal-text-color, #f5ead1);
+}
+
+html[data-color-mode='dark'] .animal-modal:has(.user-picker-dialog) .user-picker-dialog .el-form {
+  border-color: var(--animal-border-color, #78918a);
+  background: color-mix(in srgb, var(--animal-bg-color, #2b3a39) 88%, #14231f);
 }
 </style>

@@ -110,6 +110,28 @@ const replyStyle = computed(() => (props.isRoot ? undefined : { '--reply-depth':
 :global(html.dark) .comment-media-thumb,
 :global(.dark) .comment-media-thumb { background: #243247; }
 
+/* 动森深色模式不复用办公蓝色评论文字，统一使用动森语义变量。 */
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-item) { border-top-color: var(--animal-overlay-border); }
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-item--reply) { border-top-color: color-mix(in srgb, var(--animal-overlay-border) 82%, transparent); }
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-line),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-content) { color: var(--animal-overlay-text) !important; }
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-line strong) { color: var(--animal-text-color) !important; }
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-time),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-dept) { color: var(--animal-overlay-muted) !important; }
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-meta-divider),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-separator) { color: color-mix(in srgb, var(--animal-overlay-muted) 78%, transparent) !important; }
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .reply-context) { color: var(--animal-primary-color) !important; }
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-actions .el-button) {
+  color: var(--animal-primary-color) !important;
+}
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-actions .el-button:hover) {
+  color: var(--animal-primary-color-hover) !important;
+}
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-actions .el-button--danger) {
+  color: var(--animal-danger-color, #ee6a5f) !important;
+}
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-media-thumb) { background: var(--animal-bg-color-input); }
+
 @media (max-width: 560px) {
   .comment-item--reply { margin-left: calc((var(--reply-depth, 1) - 1) * 18px); }
   .comment-meta { align-items: flex-start; gap: 6px; }

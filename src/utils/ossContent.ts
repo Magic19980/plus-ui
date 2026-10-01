@@ -5,7 +5,7 @@ const OSS_MARKER_RE = /oss:\/\/([\w-]+)/g;
 /**
  * 将 HTML 中的 oss://{ossId} 标记批量解析为真实的 OSS 授权 URL
  *
- * 适用于富文本内容展示场景（Editor 组件 / 详情页只读渲染等）
+ * 适用于富文本内容展示场景（TiptapEditor 组件 / 详情页只读渲染等）
  *
  * @example
  * const html = await resolveOssContent('<p><img src="oss://12345"/></p>');

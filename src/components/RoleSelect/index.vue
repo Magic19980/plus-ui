@@ -86,9 +86,9 @@
             </vxe-column>
           </vxe-table>
 
-          <pagination
+          <UiPagination
             v-if="total > 0"
-            v-model:total="total"
+            :total="total"
             v-model:page="queryParams.pageNum"
             v-model:limit="queryParams.pageSize"
             @pagination="pageList"
@@ -112,6 +112,7 @@ import { useDialogState } from '@/hooks/dialog/useDialogState';
 import { useDateRangeQuery } from '@/hooks/form/useDateRangeQuery';
 import { useDict } from '@/utils/dict';
 import { parseTime } from '@/utils/ruoyi';
+import { UiPagination } from '@/components/UiKit';
 
 interface PropType {
   modelValue?: RoleVO[] | RoleVO | undefined;

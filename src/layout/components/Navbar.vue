@@ -25,18 +25,18 @@
     <div class="right-menu flex align-center">
       <template v-if="appStore.device !== 'mobile'">
         <search-menu ref="searchMenuRef" />
-        <el-tooltip :content="$t('navbar.search')" effect="dark" placement="bottom">
+        <UiTooltip :title="$t('navbar.search')" placement="bottom" :teleported="false">
           <div class="right-menu-item hover-effect" @click="openSearchMenu">
             <svg-icon class-name="search-icon" icon-class="search" />
           </div>
-        </el-tooltip>
-        <el-tooltip content="问题与建议" effect="dark" placement="bottom">
+        </UiTooltip>
+        <UiTooltip title="问题与建议" placement="bottom" :teleported="false">
           <div class="right-menu-item hover-effect feedback-trigger" @click="openPlatformFeedback">
             <el-icon><ChatDotRound /></el-icon>
           </div>
-        </el-tooltip>
+        </UiTooltip>
         <!-- 消息 -->
-        <el-tooltip :content="$t('navbar.message')" effect="dark" placement="bottom">
+        <UiTooltip :title="$t('navbar.message')" placement="bottom" :teleported="false">
           <div>
             <el-popover placement="bottom" trigger="click" transition="el-zoom-in-top" :width="300" :persistent="false">
               <template #reference>
@@ -51,18 +51,18 @@
               </template>
             </el-popover>
           </div>
-        </el-tooltip>
-        <el-tooltip :content="$t('navbar.full')" effect="dark" placement="bottom">
+        </UiTooltip>
+        <UiTooltip :title="$t('navbar.full')" placement="bottom" :teleported="false">
           <screenfull id="screenfull" class="right-menu-item hover-effect" />
-        </el-tooltip>
+        </UiTooltip>
 
-        <el-tooltip :content="$t('navbar.language')" effect="dark" placement="bottom">
+        <UiTooltip :title="$t('navbar.language')" placement="bottom" :teleported="false">
           <lang-select id="lang-select" class="right-menu-item hover-effect" />
-        </el-tooltip>
+        </UiTooltip>
 
-        <el-tooltip :content="$t('navbar.layoutSize')" effect="dark" placement="bottom">
+        <UiTooltip :title="$t('navbar.layoutSize')" placement="bottom" :teleported="false">
           <size-select id="size-select" class="right-menu-item hover-effect" />
-        </el-tooltip>
+        </UiTooltip>
       </template>
       <div v-if="departmentContexts.length" class="department-context-container">
         <el-dropdown
@@ -142,6 +142,7 @@ import { useDepartmentStore } from '@/store/modules/department';
 import { useNoticeStore } from '@/store/modules/notice';
 import { useSettingsStore } from '@/store/modules/settings';
 import { useUserStore } from '@/store/modules/user';
+import { UiTooltip } from '@/components/UiKit';
 import notice from './notice/index.vue';
 import TopBar from './TopBar/index.vue';
 import SearchMenu from './TopBar/search.vue';
@@ -323,11 +324,27 @@ onMounted(loadDepartmentContexts);
 }
 
 :deep(.el-badge__content.is-fixed) {
-  top: 8px;
-  right: 6px;
+  // Element Plus 默认会把徽标向触发器外侧平移 100%，在导航栏中会被
+  // 下一个图标按钮盖住；消息徽标固定在图标右上角，保证数字完整可见。
+  top: 1px;
+  right: 1px;
+  z-index: 50;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--app-navbar-bg, #ffffff);
+  border-radius: 999px;
+  box-sizing: border-box;
+  color: #ffffff;
+  background-color: var(--animal-status-danger, var(--el-color-danger)) !important;
+  line-height: 14px;
+  transform: none;
+  pointer-events: none;
 }
 
 :deep(.el-badge) {
+  position: relative;
+  z-index: 45;
   display: inline-flex;
   align-items: center;
 }
@@ -758,5 +775,51 @@ html.dark {
   #app .navbar .right-menu .avatar-container .avatar-arrow {
     color: var(--app-text-muted) !important;
   }
+}
+
+/*
+ * 动森深色模式的导航图标不能沿用办公模式的浅色 hover 背景。
+ * 统一使用深色控件底、薄荷色描边和轻微光晕，让悬停状态足够明确，
+ * 同时避免搜索、消息等图标出现突兀的白色圆块。
+ */
+html[data-ui-theme='animal'][data-color-mode='dark'] #app .navbar .right-menu .right-menu-item {
+  color: var(--animal-text-color-secondary) !important;
+  background: var(--animal-bg-color-input) !important;
+  border-color: var(--animal-border-color) !important;
+  box-shadow: 0 2px 0 var(--animal-shadow-soft) !important;
+  transition:
+    transform 0.18s ease,
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] #app .navbar .right-menu .right-menu-item:hover {
+  color: var(--animal-primary-color) !important;
+  background: color-mix(in srgb, var(--animal-primary-color) 14%, var(--animal-bg-color-input)) !important;
+  border-color: color-mix(in srgb, var(--animal-primary-color) 72%, var(--animal-border-color)) !important;
+  box-shadow:
+    0 3px 0 var(--animal-shadow-soft),
+    0 0 0 3px color-mix(in srgb, var(--animal-primary-color) 16%, transparent),
+    0 0 14px color-mix(in srgb, var(--animal-primary-color) 18%, transparent) !important;
+  transform: translateY(-1px);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] #app .navbar .right-menu .right-menu-item:active {
+  box-shadow: 0 1px 0 var(--animal-shadow-soft) !important;
+  transform: translateY(0);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] #app .navbar .right-menu .right-menu-item:focus-visible {
+  color: var(--animal-primary-color) !important;
+  background: color-mix(in srgb, var(--animal-primary-color) 14%, var(--animal-bg-color-input)) !important;
+  border-color: var(--animal-primary-color) !important;
+  box-shadow: var(--animal-focus-ring) !important;
+  outline: none;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] #app .navbar .right-menu .right-menu-item:hover :is(.svg-icon, svg, .el-icon) {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--animal-primary-color) 58%, transparent));
 }
 </style>

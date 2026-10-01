@@ -41,11 +41,11 @@
           <el-dropdown-item command="closeAll">{{ t('common.tagsViewCloseAll') }}</el-dropdown-item>
           <el-dropdown-item command="fullscreen" divided>
             <template v-if="!isFullscreen">
-              <FullScreen />
+              <el-icon class="tags-dropdown-icon"><FullScreen /></el-icon>
               <span>{{ t('common.tagsViewFullscreen') }}</span>
             </template>
             <template v-else>
-              <CloseBold />
+              <el-icon class="tags-dropdown-icon"><CloseBold /></el-icon>
               <span>{{ t('common.tagsViewExitFullscreen') }}</span>
             </template>
           </el-dropdown-item>
@@ -485,10 +485,10 @@ onBeforeUnmount(() => {
   align-items: center;
   height: 40px;
   width: 100%;
-  background: linear-gradient(180deg, #fbfdff 0%, #f4f8fc 100%);
-  border: 1px solid #e3ebf4;
+  background: var(--app-navbar-bg);
+  border: 1px solid var(--app-navbar-border);
   border-radius: 14px;
-  box-shadow: 0 6px 16px rgba(38, 71, 105, 0.06), inset 0 1px 0 #fff;
+  box-shadow: var(--app-navbar-shadow), inset 0 1px 0 color-mix(in srgb, var(--app-surface-bg) 72%, transparent);
 
   $btn-width: 26px;
   $btn-hover-bg: var(--el-fill-color-light);
@@ -505,8 +505,8 @@ onBeforeUnmount(() => {
     cursor: pointer;
     color: var(--app-text-muted);
     user-select: none;
-    background: #fff;
-    border: 1px solid #e7eef5;
+    background: var(--app-elevated-soft-bg);
+    border: 1px solid var(--app-surface-border);
     border-radius: 9px;
     transition:
       box-shadow 0.2s ease,
@@ -560,8 +560,8 @@ onBeforeUnmount(() => {
 
       &:hover {
         color: var(--el-color-primary);
-        border-color: #d6e8f8;
-        background: #fff;
+        border-color: var(--el-color-primary-light-5);
+        background: var(--app-surface-bg);
         box-shadow: 0 4px 10px rgba(44, 81, 119, 0.07);
         transform: translateY(-1px);
       }
@@ -575,7 +575,7 @@ onBeforeUnmount(() => {
       }
 
       &.active {
-        background: linear-gradient(135deg, #3297e2 0%, #4eb5df 100%) !important;
+        background: var(--el-color-primary) !important;
         color: var(--el-color-white);
         border-color: transparent !important;
         box-shadow: 0 5px 12px rgba(54, 145, 211, 0.24);
@@ -623,8 +623,8 @@ onBeforeUnmount(() => {
     cursor: pointer;
     color: var(--app-text-muted);
     user-select: none;
-    background: #fff;
-    border: 1px solid #e7eef5;
+    background: var(--app-elevated-soft-bg);
+    border: 1px solid var(--app-surface-border);
     border-radius: 9px;
     transition:
       box-shadow 0.2s ease,
@@ -677,7 +677,7 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="scss">
-html.dark .tags-view-container {
+html[data-ui-theme='office'][data-color-mode='dark'] .tags-view-container {
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.94) 0%, rgba(15, 23, 42, 0.9) 100%);
   border-color: rgba(71, 85, 105, 0.48);
   box-shadow:
@@ -735,6 +735,26 @@ html.dark .tags-view-container {
       }
     }
   }
+}
+
+// 下拉菜单通过 teleport 渲染到 body，图标尺寸需要在全局样式中约束。
+// 直接插入 SVG 会继承动森主题的内容尺寸，导致“全屏显示”菜单项被异常撑高。
+.tags-dropdown-menu .tags-dropdown-icon {
+  display: inline-flex;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tags-dropdown-menu .tags-dropdown-icon svg {
+  display: block;
+  width: 1em;
+  height: 1em;
 }
 
 body.tags-fullscreen-mode {

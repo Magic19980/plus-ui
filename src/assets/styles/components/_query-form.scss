@@ -44,12 +44,14 @@
   flex-wrap: nowrap;
 }
 
-.query-form .el-form-item:last-child .el-button {
+.query-form .el-form-item:last-child .el-button,
+.query-form .el-form-item:last-child .ui-animal-button {
   margin-left: 0 !important;
   flex-shrink: 0;
 }
 
-.query-form .el-form-item:last-child .el-button + .el-button {
+.query-form .el-form-item:last-child .el-button + .el-button,
+.query-form .el-form-item:last-child .ui-animal-button + .ui-animal-button {
   margin-left: 0 !important;
 }
 
@@ -76,11 +78,16 @@
 .query-form .el-cascader .el-input__wrapper,
 .query-form .el-input-number,
 .query-form .el-input-number__decrease,
-.query-form .el-input-number__increase {
+.query-form .el-input-number__increase,
+.query-form .ui-animal-input-wrap,
+.query-form .ui-animal-select,
+.query-form .ui-animal-number-input,
+.query-form .ui-animal-textarea-wrap {
   border-radius: var(--app-radius-md) !important;
 }
 
-.query-form .el-button {
+.query-form .el-button,
+.query-form .ui-animal-button {
   border-radius: var(--app-radius-md) !important;
 }
 
@@ -127,6 +134,13 @@ html.dark .query-form .el-button--primary {
   .query-form .el-date-editor,
   .query-form .el-cascader,
   .query-form .el-input-number {
+    width: 100% !important;
+  }
+
+  .query-form .ui-animal-input-wrap,
+  .query-form .ui-animal-select,
+  .query-form .ui-animal-number-input,
+  .query-form .ui-animal-datetime-picker {
     width: 100% !important;
   }
 

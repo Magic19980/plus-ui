@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 system-role-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,7 +12,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.roleName')" prop="roleName">
-            <el-input
+            <UiInput
               v-model="queryParams.roleName"
               :placeholder="$t('common.placeholderInputRoleName')"
               clearable
@@ -20,15 +20,13 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.permission')" prop="roleKey">
-            <el-input v-model="queryParams.roleKey" :placeholder="$t('common.placeholderInputRoleKey')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.roleKey" :placeholder="$t('common.placeholderInputRoleKey')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="queryParams.status" :placeholder="$t('common.menuStatus')" clearable>
-              <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.status" :options="sys_normal_disable" :placeholder="$t('common.menuStatus')" clearable />
           </el-form-item>
           <el-form-item :label="$t('common.createTime')" style="width: 308px">
-            <el-date-picker
+            <UiDatePicker
               v-model="dateRange"
               value-format="YYYY-MM-DD HH:mm:ss"
               type="daterange"
@@ -36,18 +34,18 @@
               :start-placeholder="$t('common.placeholderStartDate')"
               :end-placeholder="$t('common.placeholderEndDate')"
               :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
-            ></el-date-picker>
+            />
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" @click="handleQuery"><el-icon><Search /></el-icon>{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton @click="resetQuery"><el-icon><Refresh /></el-icon>{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -56,44 +54,47 @@
             <p>{{ $t("common.recordCountRole", { total }) }}</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:role:add']" type="primary" plain icon="Plus" @click="handleAdd()">
+            <UiButton v-hasPermi="['system:role:add']" type="primary" plain @click="handleAdd()">
+              <el-icon><Plus /></el-icon>
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:role:edit']"
               type="success"
               plain
               :disabled="single"
-              icon="Edit"
               @click="handleUpdate()"
             >
+              <el-icon><Edit /></el-icon>
               {{ $t('common.btnEdit') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:role:remove']"
               type="danger"
               plain
               :disabled="ids.length === 0"
-              icon="Delete"
               @click="handleDelete()"
             >
+              <el-icon><Delete /></el-icon>
               {{ $t('common.btnDelete') }}
-            </el-button>
-            <el-button v-hasPermi="['system:role:export']" type="warning" plain icon="Download" @click="handleExport">
+            </UiButton>
+            <UiButton v-hasPermi="['system:role:export']" type="warning" plain @click="handleExport">
+              <el-icon><Download /></el-icon>
               {{ $t('common.btnExport') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
       <table-skeleton v-if="loading && !roleList?.length" />
-      <el-table
+      <DepartmentDataTable
         v-else
         border
         class="data-table"
-        v-loading="loading"
+        :loading="loading"
         :data="roleList"
+        row-key="roleId"
         @selection-change="handleSelectionChange"
       >
         <template #empty><empty-state /></template>
@@ -104,12 +105,12 @@
         <el-table-column :label="$t('common.sort')" prop="roleSort" width="100" />
         <el-table-column :label="$t('common.status')" align="center" width="100">
           <template #default="scope">
-            <el-switch
+            <UiSwitch
               v-model="scope.row.status"
               active-value="0"
               inactive-value="1"
               @change="handleStatusChange(scope.row)"
-            ></el-switch>
+            />
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.createTime')" align="center" prop="createTime">
@@ -118,104 +119,102 @@
           </template>
         </el-table-column>
 
-        <el-table-column fixed="right" :label="$t('common.operation')" width="180">
+        <el-table-column fixed="right" :label="$t('common.operation')" width="216" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipModify')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+            <UiTooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipModify')" placement="bottom">
+              <UiButton
                 v-hasPermi="['system:role:edit']"
                 link
                 type="primary"
                 icon="Edit"
                 @click="handleUpdate(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
+              ></UiButton>
+            </UiTooltip>
+            <UiTooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipDelete')" placement="bottom">
+              <UiButton
                 v-hasPermi="['system:role:remove']"
                 link
                 type="primary"
                 icon="Delete"
                 @click="handleDelete(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipAssignPermission')" placement="top">
-              <el-button
+              ></UiButton>
+            </UiTooltip>
+            <UiTooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipAssignPermission')" placement="bottom">
+              <UiButton
                 v-hasPermi="['system:role:edit']"
                 link
                 type="primary"
                 icon="CircleCheck"
                 @click="handleDataScope(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipAssignUser')" placement="top">
-              <el-button
+              ></UiButton>
+            </UiTooltip>
+            <UiTooltip v-if="scope.row.roleId !== 1761300000000000001" :content="$t('common.tooltipAssignUser')" placement="bottom">
+              <UiButton
                 v-hasPermi="['system:role:edit']"
                 link
                 type="primary"
                 icon="User"
                 @click="handleAuthUser(scope.row)"
-              ></el-button>
-            </el-tooltip>
+              ></UiButton>
+            </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-if="total > 0"
-        v-model:total="total"
+        :total="total"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="720px" append-to-body>
-      <el-form ref="roleFormRef" :model="form" :rules="rules" label-width="100px" class="dialog-grid-form">
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="720px" append-to-body>
+      <el-form ref="roleFormRef" :model="form" :rules="rules" label-width="100px" class="dialog-grid-form role-dialog-form">
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item :label="$t('common.roleName')" prop="roleName">
-              <el-input v-model="form.roleName" :placeholder="$t('common.placeholderInputRoleName')" />
+              <UiInput v-model="form.roleName" :placeholder="$t('common.placeholderInputRoleName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item prop="roleKey">
               <template #label>
                 <span>
-                  <el-tooltip content="控制器中定义的权限字符，如：@SaCheckRole('admin')" placement="top">
+                  <UiTooltip content="控制器中定义的权限字符，如：@SaCheckRole('admin')" placement="bottom">
                     <el-icon><question-filled /></el-icon>
-                  </el-tooltip>{{ $t('common.permissionLabel') }}</span>
+                  </UiTooltip>{{ $t('common.permissionLabel') }}</span>
               </template>
-              <el-input v-model="form.roleKey" :placeholder="$t('common.placeholderInputRoleKey')" />
+              <UiInput v-model="form.roleKey" :placeholder="$t('common.placeholderInputRoleKey')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.roleSort')" prop="roleSort">
-              <el-input-number v-model="form.roleSort" controls-position="right" :min="0" class="w-full" />
+              <UiNumberInput v-model="form.roleSort" :min="0" class="w-full" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.status')">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.status" :options="sys_normal_disable" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item :label="$t('common.remark')">
-              <el-input v-model="form.remark" type="textarea" :rows="3" :placeholder="$t('common.placeholderInputContent')"></el-input>
+            <UiTextarea v-model="form.remark" :rows="3" :placeholder="$t('common.placeholderInputContent')" />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
     <!-- 分配角色权限对话框 -->
     <el-dialog v-model="openDataScope" :title="dialog.title" width="760px" append-to-body @close="handleDataScopeClose">
@@ -356,6 +355,7 @@
 
 <script setup name="Role" lang="ts">
 import { useRouter } from 'vue-router';
+import { Delete, Download, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
 import { roleMenuTreeselect } from '@/api/system/menu';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
@@ -384,6 +384,22 @@ import { download as requestDownload } from '@/utils/request';
 import { parseTime } from '@/utils/ruoyi';
 import EmptyState from '@/components/EmptyState/index.vue';
 import TableSkeleton from '@/components/TableSkeleton/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import {
+  UiButton,
+  UiCard,
+  UiDatePicker,
+  UiDialog,
+  UiInput,
+  UiNumberInput,
+  UiPagination,
+  UiRadioGroup,
+  UiSelect,
+  UiSwitch,
+  UiTextarea,
+  UiTooltip
+} from '@/components/UiKit';
 
 const router = useRouter();
 const { sys_normal_disable } = toRefs<any>(useDict('sys_normal_disable'));
@@ -1114,7 +1130,7 @@ const handleDataScope = async (row: Partial<RoleVO>) => {
     const menuRes = menuResponse.data;
     form.value = {
       ...initForm,
-      roleId,
+      roleId: String(roleId),
       roleName: row.roleName ?? '',
       roleKey: row.roleKey ?? '',
       roleSort: Number(row.roleSort ?? initForm.roleSort),
@@ -1221,6 +1237,43 @@ onMounted(() => {
 
   :deep(.el-input-number.w-full) {
     width: 100%;
+  }
+}
+
+// 动森弹窗会把表单内容收窄；标签固定占位，控件列使用剩余空间，避免中文标签逐字换行。
+.role-dialog-form {
+  :deep(.el-row) {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  :deep(.el-col) {
+    min-width: 0;
+  }
+
+  :deep(.el-form-item) {
+    display: grid;
+    grid-template-columns: 100px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  :deep(.el-form-item__label) {
+    box-sizing: border-box;
+    width: auto !important;
+    padding-right: 12px;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  :deep(.el-form-item__content) {
+    min-width: 0;
+    margin-left: 0 !important;
+  }
+
+  :deep(.ui-animal-input-wrap),
+  :deep(.ui-animal-textarea-wrap),
+  :deep(.ui-animal-number-input) {
+    min-width: 0;
   }
 }
 

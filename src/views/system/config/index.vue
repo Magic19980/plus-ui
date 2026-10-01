@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container system-config-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,7 +12,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.parameterName')" prop="configName">
-            <el-input
+            <UiInput
               v-model="queryParams.configName"
               :placeholder="$t('common.placeholderInputConfigName')"
               clearable
@@ -20,7 +20,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.configKey')" prop="configKey">
-            <el-input
+            <UiInput
               v-model="queryParams.configKey"
               :placeholder="$t('common.placeholderInputConfigKey')"
               clearable
@@ -28,14 +28,14 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card v-loading="loading" shadow="hover" class="table-panel config-panel">
+    <UiCard v-loading="loading" shadow="hover" class="table-panel config-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -44,13 +44,13 @@
             <p>共 {{ total }} 条记录，支持键值维护、导出和缓存刷新。</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:config:add']" type="primary" plain icon="Plus" @click="handleAdd">
+            <UiButton v-hasPermi="['system:config:add']" type="primary" plain icon="Plus" @click="handleAdd">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button v-hasPermi="['system:config:export']" type="warning" plain icon="Download" @click="handleExport">
+            </UiButton>
+            <UiButton v-hasPermi="['system:config:export']" type="warning" plain icon="Download" @click="handleExport">
               {{ $t('common.btnExport') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:config:remove']"
               type="danger"
               plain
@@ -58,28 +58,31 @@
               @click="handleRefreshCache"
             >
               刷新缓存
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
       <div class="config-body">
-        <el-tabs v-model="activeTab" tab-position="left" class="config-tabs" @tab-change="handleTabChange">
-          <el-tab-pane :label="$t('common.all')" name="" />
-          <el-tab-pane :label="$t('common.systemBuiltIn')" name="Y" />
-          <el-tab-pane :label="$t('common.tabCustomConfig')" name="N" />
-        </el-tabs>
+        <UiTabs
+          v-model="activeTab"
+          class="config-tabs"
+          :items="configTabs"
+          contentless
+          aria-label="配置类型"
+          @change="handleTabChange"
+        />
 
         <div class="config-content">
           <table-skeleton v-if="loading && !configList?.length" />
-          <el-table v-else :data="configList" :border="false">
+          <DepartmentDataTable v-else :data="configList" :loading="loading" :border="false">
             <template #empty><empty-state /></template>
             <el-table-column :label="$t('common.parameterName')" prop="configName" min-width="160" />
             <el-table-column :label="$t('common.configKey')" prop="configKey" min-width="160" />
             <el-table-column :label="$t('common.configValue')" min-width="160">
               <template #default="{ row }">
-                <el-input
+                <UiInput
                   v-model="row.configValue"
                   :placeholder="$t('common.placeholderInputConfigValue')"
                   @blur="handleInlineSave(row)"
@@ -94,28 +97,30 @@
             </el-table-column>
             <el-table-column :label="$t('common.operation')" width="80" align="center">
               <template #default="{ row }">
-                <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-                  <el-button
+                <DepartmentTableActions>
+                  <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                    <UiButton
                     v-hasPermi="['system:config:edit']"
                     link
                     type="primary"
                     icon="Edit"
                     @click="handleUpdate(row)"
-                  ></el-button>
-                </el-tooltip>
-                <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-                  <el-button
+                    />
+                  </UiTooltip>
+                  <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                    <UiButton
                     v-hasPermi="['system:config:remove']"
                     link
                     type="danger"
                     icon="Delete"
                     @click="handleDelete(row)"
-                  ></el-button>
-                </el-tooltip>
+                    />
+                  </UiTooltip>
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
-          <pagination
+          </DepartmentDataTable>
+          <UiPagination
             v-show="total > 0"
             v-model:page="queryParams.pageNum"
             v-model:limit="queryParams.pageSize"
@@ -124,36 +129,34 @@
           />
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
     <!-- 添加或修改参数配置对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
-      <el-form ref="configFormRef" :model="form" :rules="rules" label-width="80px">
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
+      <el-form ref="configFormRef" :model="form" :rules="rules" label-width="110px">
         <el-form-item :label="$t('common.parameterName')" prop="configName">
-          <el-input v-model="form.configName" :placeholder="$t('common.placeholderInputConfigName')" />
+          <UiInput v-model="form.configName" :placeholder="$t('common.placeholderInputConfigName')" />
         </el-form-item>
         <el-form-item :label="$t('common.configKey')" prop="configKey">
-          <el-input v-model="form.configKey" :placeholder="$t('common.placeholderInputConfigKey')" />
+          <UiInput v-model="form.configKey" :placeholder="$t('common.placeholderInputConfigKey')" />
         </el-form-item>
         <el-form-item :label="$t('common.configValue')" prop="configValue">
-          <el-input v-model="form.configValue" type="textarea" :placeholder="$t('common.placeholderInputConfigValue')" />
+          <UiTextarea v-model="form.configValue" :placeholder="$t('common.placeholderInputConfigValue')" />
         </el-form-item>
         <el-form-item :label="$t('common.systemBuiltIn')" prop="configType">
-          <el-radio-group v-model="form.configType">
-            <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
-          </el-radio-group>
+          <UiRadioGroup v-model="form.configType" :options="sys_yes_no" />
         </el-form-item>
         <el-form-item :label="$t('common.remark')" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')" />
+          <UiTextarea v-model="form.remark" :placeholder="$t('common.placeholderInputContent')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -171,6 +174,9 @@ import { useDict } from '@/utils/dict';
 import { download as requestDownload } from '@/utils/request';
 import EmptyState from '@/components/EmptyState/index.vue';
 import TableSkeleton from '@/components/TableSkeleton/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDialog, UiInput, UiPagination, UiRadioGroup, UiTabs, UiTextarea, UiTooltip } from '@/components/UiKit';
 
 const { sys_yes_no } = toRefs<any>(useDict('sys_yes_no'));
 
@@ -179,6 +185,11 @@ const { loading, withLoading } = useLoading(true);
 const { showSearch } = useSearchToggle();
 const total = ref(0);
 const activeTab = ref('');
+const configTabs = computed(() => [
+  { key: '', label: t('common.all') },
+  { key: 'Y', label: t('common.systemBuiltIn') },
+  { key: 'N', label: t('common.tabCustomConfig') }
+]);
 
 const queryFormRef = ref<ElFormInstance>();
 const configFormRef = ref<ElFormInstance>();

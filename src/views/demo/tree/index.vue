@@ -55,7 +55,7 @@
         <el-table-column :label="$t('common.treeNodeName')" align="center" prop="treeName" />
         <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="bottom">
               <el-button
                 v-hasPermi="['demo:tree:edit']"
                 link
@@ -64,10 +64,10 @@
                 @click="handleUpdate(scope.row)"
               />
             </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipAdd')" placement="top">
+            <el-tooltip :content="$t('common.tooltipAdd')" placement="bottom">
               <el-button v-hasPermi="['demo:tree:add']" link type="primary" icon="Plus" @click="handleAdd(scope.row)" />
             </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="bottom">
               <el-button
                 v-hasPermi="['demo:tree:remove']"
                 link

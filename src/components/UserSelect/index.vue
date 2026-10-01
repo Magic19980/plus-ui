@@ -34,7 +34,7 @@
               </template>
               <div class="tree-panel-body">
                 <div class="selector-side-hint">选择组织后显示该组织及下级人员</div>
-                <el-input
+                <UiInput
                   v-model="deptName"
                   class="selector-dept-input"
                   placeholder="搜索组织名称"
@@ -86,10 +86,14 @@
                     </div>
                     <el-form ref="queryFormRef" :model="queryParams" class="query-form">
                       <el-form-item v-for="field in userFilterFields" :key="field.key" :label="field.label" :prop="field.key">
-                        <el-select v-if="field.key === 'status'" v-model="queryParams[field.key]" clearable :placeholder="field.placeholder">
-                          <el-option v-for="item in sys_normal_disable" :key="item.value" :label="item.label" :value="item.value" />
-                        </el-select>
-                        <el-input
+                        <UiSelect
+                          v-if="field.key === 'status'"
+                          v-model="queryParams[field.key]"
+                          :options="sys_normal_disable.map(item => ({ value: item.value, label: item.label }))"
+                          clearable
+                          :placeholder="field.placeholder"
+                        />
+                        <UiInput
                           v-else
                           v-model="queryParams[field.key]"
                           :placeholder="field.placeholder"
@@ -98,8 +102,8 @@
                         />
                       </el-form-item>
                       <el-form-item class="query-actions">
-                        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                        <el-button icon="Refresh" @click="() => resetQuery()">重置</el-button>
+                        <UiButton type="primary" @click="handleQuery">搜索</UiButton>
+                        <UiButton @click="() => resetQuery()">重置</UiButton>
                       </el-form-item>
                     </el-form>
                   </el-card>
@@ -168,7 +172,7 @@
                   class="selector-empty-hint"
                 />
 
-                <pagination
+                <UiPagination
                   v-show="total > 0"
                   v-model:page="queryParams.pageNum"
                   v-model:limit="queryParams.pageSize"
@@ -182,8 +186,8 @@
       </div>
 
       <template #footer>
-        <el-button @click="close">取消</el-button>
-        <el-button type="primary" @click="confirm">确定</el-button>
+        <UiButton @click="close">取消</UiButton>
+        <UiButton type="primary" @click="confirm">确定</UiButton>
       </template>
     </el-dialog>
   </div>
@@ -200,6 +204,7 @@ import { useDialogState } from '@/hooks/dialog/useDialogState';
 import { useDateRangeQuery } from '@/hooks/form/useDateRangeQuery';
 import { useDict } from '@/utils/dict';
 import type { AxiosPromise } from '@/utils/api-types';
+import { UiButton, UiInput, UiPagination, UiSelect } from '@/components/UiKit';
 
 type UserFilterKey = 'userName' | 'nickName' | 'employeeNo' | 'email' | 'phoneNumber' | 'status';
 type UserListLoader = (query: UserQuery) => AxiosPromise<PageResult<UserVO>>;

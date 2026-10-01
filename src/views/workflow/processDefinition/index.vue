@@ -19,7 +19,7 @@
         :class="{ 'is-tree-collapsed': treeCollapsed }"
       >
         <div class="search-wrap">
-          <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+          <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
                 <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -27,7 +27,7 @@
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="120px" class="query-form">
               <el-form-item :label="$t('common.processDefinitionName')" prop="flowName">
-                <el-input
+                <UiInput
                   v-model="queryParams.flowName"
                   :placeholder="$t('common.placeholderInputFlowName')"
                   clearable
@@ -35,7 +35,7 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.processDefinitionCode')" prop="flowCode">
-                <el-input
+                <UiInput
                   v-model="queryParams.flowCode"
                   :placeholder="$t('common.placeholderInputFlowCode')"
                   clearable
@@ -43,23 +43,23 @@
                 />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+                <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+                <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
               </el-form-item>
             </el-form>
-          </el-card>
+          </UiCard>
         </div>
-        <el-card shadow="hover" class="table-panel">
+        <UiCard shadow="hover" class="table-panel">
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
                 <h3>{{ $t('common.sectionFlowDefinition') }}</h3>
               </div>
               <div class="toolbar-actions">
-                <el-button v-hasPermi="['workflow:definition:add']" type="primary" icon="Plus" @click="handleAdd()">
+                <UiButton v-hasPermi="['workflow:definition:add']" type="primary" icon="Plus" @click="handleAdd()">
                   添加
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['workflow:definition:edit']"
                   type="success"
                   icon="Edit"
@@ -67,8 +67,8 @@
                   @click="handleUpdate()"
                 >
                   {{ $t('common.btnEdit') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['workflow:definition:remove']"
                   type="danger"
                   icon="Delete"
@@ -76,16 +76,16 @@
                   @click="handleDelete()"
                 >
                   {{ $t('common.btnDelete') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['workflow:definition:import']"
                   type="primary"
                   icon="UploadFilled"
                   @click="openUploadDialog()"
                 >
                   部署流程文件
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['workflow:definition:export']"
                   type="warning"
                   icon="Download"
@@ -93,7 +93,7 @@
                   @click="handleExportDef"
                 >
                   {{ $t('common.btnExport') }}
-                </el-button>
+                </UiButton>
                 <right-toolbar
                   v-model:show-search="showSearch"
                   :search="false"
@@ -102,10 +102,9 @@
               </div>
             </div>
           </template>
-          <el-tabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
-            <el-tab-pane label="已发布" name="0"></el-tab-pane>
-            <el-tab-pane label="未发布" name="1"></el-tab-pane>
-            <el-table
+          <UiTabs v-model="activeName" :items="definitionTabs" contentless aria-label="流程定义状态" @change="handleClick" />
+          <div class="definition-table-content">
+            <DepartmentDataTable
               v-loading="loading"
               border
               class="data-table"
@@ -137,7 +136,7 @@
               </el-table-column>
               <el-table-column align="center" prop="activityStatus" :label="$t('common.activeStatus')" width="130">
                 <template #default="scope">
-                  <el-switch
+                  <UiSwitch
                     v-hasPermi="['workflow:definition:active']"
                     v-model="scope.row.activityStatus"
                     :active-value="1"
@@ -148,9 +147,9 @@
               </el-table-column>
               <el-table-column align="center" prop="isPublish" :label="$t('common.publishStatus')" width="100">
                 <template #default="scope">
-                  <el-tag v-if="scope.row.isPublish == 0" type="danger">{{ $t('common.tagUnpublished') }}</el-tag>
-                  <el-tag v-else-if="scope.row.isPublish == 1" type="success">{{ $t('common.tagPublished') }}</el-tag>
-                  <el-tag v-else type="danger">{{ $t('common.tagExpired') }}</el-tag>
+                  <UiTag v-if="scope.row.isPublish == 0" type="danger">{{ $t('common.tagUnpublished') }}</UiTag>
+                  <UiTag v-else-if="scope.row.isPublish == 1" type="success">{{ $t('common.tagPublished') }}</UiTag>
+                  <UiTag v-else type="danger">{{ $t('common.tagExpired') }}</UiTag>
                 </template>
               </el-table-column>
               <el-table-column
@@ -161,30 +160,30 @@
                 class-name="small-padding fixed-width"
               >
                 <template #default="scope">
-                  <div class="process-action-group">
-                    <el-button
+                  <DepartmentTableActions class="process-action-group">
+                    <UiButton
                       v-hasPermi="['workflow:definition:remove']"
-                      link
+                      :link="true"
                       type="primary"
                       size="small"
                       icon="Delete"
                       @click="handleDelete(scope.row)"
                     >
                       删除流程
-                    </el-button>
-                    <el-button
+                    </UiButton>
+                    <UiButton
                       v-hasPermi="['workflow:definition:copy']"
-                      link
+                      :link="true"
                       type="primary"
                       size="small"
                       icon="CopyDocument"
                       @click="handleCopyDef(scope.row)"
                     >
                       {{ $t('common.btnCopyDefinition') }}
-                    </el-button>
-                    <el-button
+                    </UiButton>
+                    <UiButton
                       v-hasPermi="['workflow:definition:query']"
-                      link
+                      :link="true"
                       type="primary"
                       v-if="scope.row.isPublish === 0"
                       icon="Pointer"
@@ -192,10 +191,10 @@
                       @click="design(scope.row)"
                     >
                       流程设计
-                    </el-button>
-                    <el-button
+                    </UiButton>
+                    <UiButton
                       v-hasPermi="['workflow:definition:query']"
-                      link
+                      :link="true"
                       type="primary"
                       v-else
                       icon="View"
@@ -203,10 +202,10 @@
                       @click="designView(scope.row)"
                     >
                       查看流程
-                    </el-button>
-                    <el-button
+                    </UiButton>
+                    <UiButton
                       v-hasPermi="['workflow:definition:publish']"
-                      link
+                      :link="true"
                       type="primary"
                       v-if="scope.row.isPublish !== 1"
                       size="small"
@@ -214,20 +213,20 @@
                       @click="handlePublish(scope.row)"
                     >
                       发布流程
-                    </el-button>
-                  </div>
+                    </UiButton>
+                  </DepartmentTableActions>
                 </template>
               </el-table-column>
-            </el-table>
-            <pagination
+            </DepartmentDataTable>
+            <UiPagination
               v-show="total > 0"
               v-model:page="queryParams.pageNum"
               v-model:limit="queryParams.pageSize"
               :total="total"
               @pagination="getPageList"
             />
-          </el-tabs>
-        </el-card>
+          </div>
+        </UiCard>
       </el-col>
     </el-row>
 
@@ -289,10 +288,10 @@
           />
         </el-form-item>
         <el-form-item :label="$t('common.processCode')" prop="flowCode">
-          <el-input v-model="form.flowCode" :placeholder="$t('common.placeholderInputFlowCode_')" maxlength="40" show-word-limit />
+          <UiInput v-model="form.flowCode" :placeholder="$t('common.placeholderInputFlowCode_')" :maxlength="40" show-word-limit />
         </el-form-item>
         <el-form-item :label="$t('common.processName')" prop="flowName">
-          <el-input v-model="form.flowName" :placeholder="$t('common.placeholderInputFlowName_')" maxlength="100" show-word-limit />
+          <UiInput v-model="form.flowName" :placeholder="$t('common.placeholderInputFlowName_')" :maxlength="100" show-word-limit />
         </el-form-item>
         <el-form-item :label="$t('common.designerMode')" prop="modelValue">
           <el-radio-group v-model="form.modelValue" :disabled="!!form.id" class="definition-radio-group">
@@ -310,13 +309,13 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="$t('common.formPath')" prop="formPath">
-          <el-input v-model="form.formPath" :placeholder="$t('common.placeholderInputFormPath')" maxlength="100" show-word-limit />
+          <UiInput v-model="form.formPath" :placeholder="$t('common.placeholderInputFormPath')" :maxlength="100" show-word-limit />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="closeModelDialog()">{{ $t('common.btnCancel') }}</el-button>
-          <el-button type="primary" @click="handleSubmit">{{ $t('common.btnSave') }}</el-button>
+          <UiButton @click="closeModelDialog()">{{ $t('common.btnCancel') }}</UiButton>
+          <UiButton type="primary" @click="handleSubmit">{{ $t('common.btnSave') }}</UiButton>
         </div>
       </template>
     </el-dialog>
@@ -324,7 +323,7 @@
 </template>
 
 <script setup name="processDefinition" lang="ts">
-import type { ElMessageBoxOptions, TabsPaneContext, UploadRequestOptions } from 'element-plus';
+import type { ElMessageBoxOptions, UploadRequestOptions } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { categoryTree } from '@/api/workflow/category';
@@ -343,6 +342,9 @@ import {
 } from '@/api/workflow/definition';
 import { FlowDefinitionQuery, FlowDefinitionVo, FlowDefinitionForm } from '@/api/workflow/definition/types';
 import TreePanel from '@/components/TreePanel/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiInput, UiPagination, UiSwitch, UiTabs, UiTag } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDialogState } from '@/hooks/dialog/useDialogState';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
@@ -355,6 +357,7 @@ import { download as requestDownload } from '@/utils/request';
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
 const queryFormRef = ref<ElFormInstance>();
 const treePanelRef = ref<InstanceType<typeof TreePanel>>();
@@ -371,6 +374,10 @@ const autoPass = ref(false);
 const selectCategory = ref();
 const defFormRef = ref<ElFormInstance>();
 const activeName = ref('0');
+const definitionTabs = computed(() => [
+  { key: '0', label: '已发布' },
+  { key: '1', label: '未发布' }
+]);
 
 // 查询参数
 const queryParams = ref<FlowDefinitionQuery>({
@@ -445,9 +452,8 @@ const getTreeselect = async () => {
   const res = await categoryTree();
   categoryOptions.value = res.data;
 };
-const handleClick = (tab: TabsPaneContext, event: Event) => {
-  // v-model处理有延迟 需要手动处理
-  activeName.value = tab.index;
+const handleClick = (tab: string) => {
+  activeName.value = tab;
   handleQuery();
 };
 /** 搜索按钮操作 */
@@ -690,6 +696,13 @@ const handleExportDef = () => {
 
 .content-main {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.definition-table-content {
+  display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 12px;
 }

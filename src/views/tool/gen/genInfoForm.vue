@@ -320,6 +320,8 @@ import { useI18n } from 'vue-i18n';
 import { propTypes } from '@/utils/propTypes';
 import { handleTree } from '@/utils/ruoyi';
 
+const { t } = useI18n();
+
 interface MenuOptionsType {
   menuId: number | string;
   menuName: string;

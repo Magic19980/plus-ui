@@ -7,6 +7,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <link rel="icon" type="image/svg+xml" href="/tei-logo.svg" />
     <title>%VITE_APP_TITLE%</title>
+    <script>
+      // 在 Vue 挂载前恢复主题，避免刷新时先闪现办公蓝再切到动森色。
+      (() => {
+        try {
+          const saved = JSON.parse(localStorage.getItem('layout-setting') || '{}');
+          const theme = saved.uiTheme === 'animal' ? 'animal' : 'office';
+          const dark = saved.dark === true || saved.dark === 'true';
+          document.documentElement.dataset.uiTheme = theme;
+          document.documentElement.dataset.colorMode = dark ? 'dark' : 'light';
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (_) {
+          document.documentElement.dataset.uiTheme = 'office';
+          document.documentElement.dataset.colorMode = 'light';
+        }
+      })();
+    </script>
     <!--[if lt IE 11]>
       <script>
         window.location.href = '/ie.html';

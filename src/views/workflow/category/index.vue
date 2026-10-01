@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container workflow-category-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -9,7 +9,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.categoryName')" prop="categoryName">
-            <el-input
+            <UiInput
               v-model="queryParams.categoryName"
               :placeholder="$t('common.placeholderInputCategoryName')"
               clearable
@@ -17,31 +17,31 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
             <h3>{{ $t('common.sectionFlowCategory') }}</h3>
           </div>
           <div class="toolbar-actions">
-            <el-button type="primary" plain icon="Plus" @click="handleAdd()" v-hasPermi="['workflow:category:add']">
+            <UiButton type="primary" plain icon="Plus" @click="handleAdd()" v-hasPermi="['workflow:category:add']">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button type="info" plain icon="Sort" @click="handleToggleExpandAll">{{ $t('common.checkboxExpandCollapse') }}</el-button>
+            </UiButton>
+            <UiButton type="info" plain icon="Sort" @click="handleToggleExpandAll">{{ $t('common.checkboxExpandCollapse') }}</UiButton>
             <right-toolbar v-model:showSearch="showSearch" :search="false" @queryTable="getList"></right-toolbar>
           </div>
         </div>
       </template>
-      <el-table
+      <DepartmentDataTable
         ref="categoryTableRef"
-        v-loading="loading"
+        :loading="loading"
         class="data-table"
         :data="categoryList"
         row-key="categoryId"
@@ -54,39 +54,41 @@
         <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="180" />
         <el-table-column :label="$t('common.operation')" fixed="right" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                <UiButton
                 link
                 type="primary"
                 icon="Edit"
                 @click="handleUpdate(scope.row)"
                 v-hasPermi="['workflow:category:edit']"
-              />
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipAdd')" placement="top">
-              <el-button
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipAdd')" placement="bottom">
+                <UiButton
                 link
                 type="primary"
                 icon="Plus"
                 @click="handleAdd(scope.row)"
                 v-hasPermi="['workflow:category:add']"
-              />
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
                 link
                 type="primary"
                 icon="Delete"
                 @click="handleDelete(scope.row)"
                 v-hasPermi="['workflow:category:remove']"
-              />
-            </el-tooltip>
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
-    </el-card>
-    <el-dialog :title="dialog.title" v-model="dialog.visible" width="500px" append-to-body>
-      <el-form ref="categoryFormRef" :model="form" :rules="rules" label-width="80px">
+      </DepartmentDataTable>
+    </UiCard>
+    <UiDialog :title="dialog.title" v-model="dialog.visible" width="560px" show-footer>
+      <el-form ref="categoryFormRef" :model="form" :rules="rules" label-width="100px" class="category-form">
         <el-form-item :label="$t('common.parentCategory')" prop="parentId">
           <el-tree-select
             v-model="form.parentId"
@@ -97,26 +99,26 @@
             check-strictly
           />
         </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <div class="category-form-grid">
+          <div>
             <el-form-item :label="$t('common.categoryName')" prop="categoryName">
-              <el-input v-model="form.categoryName" :placeholder="$t('common.placeholderInputCategoryName')" />
+              <UiInput v-model="form.categoryName" :placeholder="$t('common.placeholderInputCategoryName')" />
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
+          </div>
+          <div>
             <el-form-item :label="$t('common.sort')" prop="orderNum">
-              <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
+              <UiNumberInput v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
-          </el-col>
-        </el-row>
+          </div>
+        </div>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -132,6 +134,9 @@ import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import { useTreeTableExpand } from '@/hooks/tree/useTreeTableExpand';
 import modal from '@/plugins/modal';
 import { handleTree } from '@/utils/ruoyi';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDialog, UiInput, UiNumberInput, UiTooltip } from '@/components/UiKit';
 
 type CategoryOption = {
   categoryId: number;
@@ -279,3 +284,31 @@ onMounted(() => {
   getList();
 });
 </script>
+
+<style lang="scss" scoped>
+.category-form {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.category-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+
+:deep(.category-form .el-form-item),
+:deep(.category-form .el-form-item__content),
+:deep(.category-form .el-form-item__content > *) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .category-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+</style>

@@ -1,0 +1,544 @@
+/*
+ * 全局浮层主题层。
+ *
+ * Element Plus 的 Dialog、Drawer、Popper、Message 等默认会 teleport 到 body，
+ * 因此页面局部的主题样式无法覆盖它们。这里统一使用动森语义变量，保证
+ * 页签切换、打开弹窗和展开下拉后，浮层仍与当前主题保持同一套色阶。
+ */
+
+// Tooltip 默认会 teleport 到 body；不能依赖触发器所在表格的局部层级，
+// 否则固定列、抽屉或页签内容可能把气泡盖住。层级只作用于提示气泡，
+// 不会改变下拉框、日期面板等其它浮层的层级关系。
+:where(.el-popper[role='tooltip'],
+.el-tooltip__popper[role='tooltip'],
+.ui-tooltip-popper,
+.animal-tooltip__bubble) {
+  z-index: 100000 !important;
+}
+
+// 统一浮层层级：提示气泡高于下拉/日期面板，避免在表格固定列、抽屉和弹窗
+// 之间出现“已经打开但看不见”的状态。具体浮层仍由组件库负责定位。
+:where(.el-popper:not([role='tooltip']), .el-dropdown-menu, .el-select-dropdown, .el-picker-panel) {
+  z-index: 99990 !important;
+}
+
+html[data-ui-theme='animal'] {
+  --el-bg-color-overlay: var(--animal-overlay-bg);
+  --el-bg-color: var(--animal-overlay-bg);
+  --el-bg-color-page: var(--app-shell-bg);
+  --el-fill-color-blank: var(--animal-overlay-bg);
+  --el-fill-color-light: var(--animal-overlay-hover);
+  --el-fill-color-lighter: color-mix(in srgb, var(--animal-overlay-hover) 68%, var(--animal-overlay-bg));
+  --el-border-color: var(--animal-overlay-border);
+  --el-border-color-light: color-mix(in srgb, var(--animal-overlay-border) 76%, transparent);
+  --el-border-color-lighter: color-mix(in srgb, var(--animal-overlay-border) 54%, transparent);
+  --el-text-color-primary: var(--animal-overlay-text);
+  --el-text-color-regular: var(--animal-overlay-text);
+  --el-text-color-secondary: var(--animal-overlay-muted);
+  --el-text-color-placeholder: var(--animal-overlay-muted);
+
+  .el-overlay {
+    background-color: var(--animal-overlay-mask) !important;
+  }
+
+  .el-dialog,
+  .el-drawer,
+  .el-message-box,
+  .el-notification,
+  .el-popover.el-popper,
+  .el-dropdown-menu,
+  .el-select-dropdown,
+  .el-cascader__dropdown,
+  .el-tree-select__popper,
+  .el-autocomplete-suggestion,
+  .el-picker-panel,
+  .el-time-panel {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+    border-color: var(--animal-overlay-border);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .el-dialog,
+  .el-drawer,
+  .el-message-box {
+    border: 1px solid var(--animal-overlay-border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  // 动森适配器使用自己的 Modal DOM，不会命中 Element Plus 的 .el-dialog
+  // 规则。这里补齐同一套浮层语义变量，避免深色模式下回退到浅色容器，
+  // 同时让日报等表单在宽屏弹窗中保持可读的布局宽度。
+  .animal-modal__body {
+    box-sizing: border-box;
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+    border: 1px solid var(--animal-overlay-border);
+    border-radius: 20px;
+    box-shadow: var(--app-shadow-lg);
+    // 组件库默认使用 objectBoundingBox clipPath 绘制“岛屿”外轮廓。
+    // 复杂表格/表单弹层会被该轮廓裁掉标题、分页和右侧操作，因此统一改为
+    // 可预测的圆角面板，同时保留动森的边框、阴影与主题色。
+    clip-path: none !important;
+    overflow: hidden;
+  }
+
+  .animal-modal__header {
+    box-sizing: border-box;
+    min-height: 64px;
+    padding: 18px 24px 14px;
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-surface);
+    border-bottom: 1px solid var(--animal-overlay-border);
+  }
+
+  .animal-modal__title {
+    color: var(--animal-overlay-text);
+    font-size: 20px;
+    line-height: 1.35;
+  }
+
+  .animal-modal__content {
+    box-sizing: border-box;
+    min-height: 0;
+    padding: 20px 24px 24px;
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .animal-modal__footer {
+    box-sizing: border-box;
+    min-height: 68px;
+    padding: 14px 24px 18px;
+    color: var(--animal-overlay-muted);
+    background: var(--animal-overlay-surface);
+    border-top: 1px solid var(--animal-overlay-border);
+  }
+
+  .animal-modal .el-form {
+    width: 100%;
+  }
+
+  .animal-modal .el-form-item {
+    width: 100%;
+  }
+
+  .animal-modal .el-form-item__label {
+    color: var(--animal-overlay-text) !important;
+    padding-right: 16px;
+  }
+
+  .animal-modal .el-form-item__content {
+    min-width: 0;
+    color: var(--animal-overlay-text);
+  }
+
+  // Element Plus 图标会继承项目全局 svg 尺寸规则；放进动森标签后如果不
+  // 限制尺寸，会把标签文本撑成大块区域，导致首页标签溢出。
+  .animal-tag__text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
+  }
+
+  .animal-tag__text > svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex: 0 0 auto;
+  }
+
+  .el-dialog__header,
+  .el-drawer__header,
+  .el-message-box__header {
+    margin: 0;
+    padding: 18px 22px;
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-surface);
+    border-bottom: 1px solid var(--animal-overlay-border);
+  }
+
+  .el-dialog__title,
+  .el-drawer__title,
+  .el-message-box__title {
+    color: var(--animal-overlay-text);
+    font-weight: 800;
+  }
+
+  .el-dialog__headerbtn,
+  .el-drawer__close-btn,
+  .el-message-box__headerbtn {
+    color: var(--animal-overlay-muted);
+  }
+
+  .el-dialog__headerbtn:hover,
+  .el-drawer__close-btn:hover,
+  .el-message-box__headerbtn:hover {
+    color: var(--animal-primary-color);
+  }
+
+  .el-dialog__body,
+  .el-drawer__body,
+  .el-message-box__content,
+  .el-message-box__message {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+  }
+
+  .el-dialog__footer,
+  .el-message-box__btns {
+    color: var(--animal-overlay-muted);
+    background: var(--animal-overlay-surface);
+    border-top: 1px solid var(--animal-overlay-border);
+  }
+
+  .el-popper__arrow::before,
+  .el-popover.el-popper .el-popper__arrow::before,
+  .el-select-dropdown.el-popper .el-popper__arrow::before {
+    background: var(--animal-overlay-bg);
+    border-color: var(--animal-overlay-border);
+  }
+
+  .el-dropdown-menu__item,
+  .el-select-dropdown__item,
+  .el-cascader-node,
+  .el-tree-node__content,
+  .el-autocomplete-suggestion li {
+    color: var(--animal-overlay-text);
+  }
+
+  .el-dropdown-menu__item:not(.is-disabled):hover,
+  .el-select-dropdown__item.hover,
+  .el-select-dropdown__item:hover,
+  .el-cascader-node:not(.is-disabled):hover,
+  .el-tree-node__content:hover,
+  .el-autocomplete-suggestion li:hover {
+    color: var(--animal-primary-color);
+    background: var(--animal-overlay-hover);
+  }
+
+  .el-select-dropdown__item.selected,
+  .el-cascader-node.in-active-path,
+  .el-tree-node.is-current > .el-tree-node__content {
+    color: var(--animal-primary-color);
+    background: var(--animal-overlay-hover);
+    font-weight: 800;
+  }
+
+  .el-popper,
+  .el-tooltip__popper,
+  .el-tooltip__popper.is-dark,
+  .el-popover.el-popper {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+    border-color: var(--animal-overlay-border);
+  }
+
+  // Tooltip 会 teleport 到 body；统一提高层级，避免被表格固定列、抽屉或页签内容盖住。
+  .el-popper[role='tooltip'],
+  .el-tooltip__popper[role='tooltip'],
+  .animal-tooltip__bubble {
+    z-index: 100000 !important;
+  }
+
+  // Animal Tooltip 的默认样式来自组件库，岛屿 SVG 使用了固定的浅色值。
+  // 统一改用主题变量，保证动森浅色/深色模式的气泡结构和对比度一致。
+  .animal-tooltip__bubble {
+    color: var(--animal-overlay-text) !important;
+    background: var(--animal-overlay-bg) !important;
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .animal-tooltip__bubble:not(.animal-tooltip__bubble--island)::after {
+    background: var(--animal-overlay-bg) !important;
+    border-color: var(--animal-overlay-border) !important;
+  }
+
+  .animal-tooltip__bubble--island .animal-tooltip__island-content,
+  .animal-tooltip__bubble--island .animal-tooltip__island-content .animal-tooltip__content {
+    color: var(--animal-overlay-text) !important;
+  }
+
+  .animal-tooltip__bubble--island .animal-tooltip__island-body > svg path {
+    fill: var(--animal-overlay-bg) !important;
+    stroke: var(--animal-overlay-border) !important;
+  }
+
+  .animal-tooltip__bubble--island .animal-tooltip__tail {
+    background: var(--animal-overlay-bg) !important;
+    border-color: var(--animal-overlay-border) !important;
+  }
+
+  // Animal Island 的日期/时间面板由组件自身绝对定位在触发器旁边，
+  // 不会像 Element Plus Popper 一样 teleport 到 body。页面卡片、表格和弹窗
+  // 经常为了圆角而使用 overflow:hidden，结果面板打开后只剩下边缘可见。
+  // 仅在面板实际打开时解除可能的裁切，并提升当前容器层级，避免影响常态
+  // 的圆角和页面滚动行为。
+  :where(.ui-animal-card,
+    .animal-card,
+    .el-card,
+    .animal-modal__body,
+    .animal-modal__content,
+    .el-dialog__body,
+    .el-drawer__body,
+    .el-card__body,
+    .ui-animal-card__body,
+    .search-panel,
+    .query-form,
+    .el-form,
+    .el-form-item__content,
+    .ui-animal-table-shell,
+    .el-table,
+    .el-table__body-wrapper,
+    .el-tabs__content,
+    .el-scrollbar__wrap,
+    .ui-animal-select,
+    .ui-animal-multi-select,
+    .animal-select):has(
+    .animal-date-picker__panel--visible,
+    .animal-time-picker__panel--visible,
+    .ui-animal-select__dropdown,
+    .ui-animal-multi-select__dropdown,
+    .animal-select__dropdown
+  ) {
+    position: relative;
+    z-index: 40;
+    overflow: visible !important;
+  }
+
+  .animal-date-picker__panel,
+  .animal-time-picker__panel,
+  .ui-animal-select__dropdown,
+  .ui-animal-multi-select__dropdown,
+  .animal-select__dropdown {
+    z-index: 100000 !important;
+  }
+
+  // el-table 的 show-overflow-tooltip 由 Element Plus 内部创建，无法经过
+  // 页面模板的 UiTooltip 解析器；保留其行为，但统一成动森气泡的视觉语言。
+  .el-popper.is-dark[role='tooltip'],
+  .el-tooltip__popper[role='tooltip'] {
+    min-height: 34px;
+    padding: 8px 12px;
+    border: 2px solid var(--animal-overlay-border);
+    border-radius: 14px 14px 14px 6px;
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+    box-shadow: var(--app-shadow-lg);
+    font-family: var(--animal-font-family, 'Nunito', 'Noto Sans SC', sans-serif);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .el-picker-panel__body,
+  .el-date-picker,
+  .el-time-panel__content,
+  .el-time-panel__footer {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+  }
+
+  .el-date-table td.available:hover,
+  .el-month-table td .cell:hover,
+  .el-year-table td .cell:hover,
+  .el-time-spinner__item:hover:not(.disabled) {
+    color: var(--animal-primary-color);
+    background: var(--animal-overlay-hover);
+  }
+
+  .el-date-table td.current:not(.disabled) .text,
+  .el-month-table td.current:not(.disabled) .cell,
+  .el-year-table td.current:not(.disabled) .cell,
+  .el-time-spinner__item.active:not(.disabled) {
+    color: var(--animal-primary-color);
+    font-weight: 800;
+  }
+
+  .el-picker-panel__icon-btn,
+  .el-date-picker__header-label,
+  .el-time-panel__btn,
+  .el-date-table th,
+  .el-picker-panel__shortcut {
+    color: var(--animal-overlay-muted);
+  }
+
+  .el-picker-panel__icon-btn:hover,
+  .el-date-picker__header-label:hover,
+  .el-time-panel__btn:hover,
+  .el-picker-panel__shortcut:hover {
+    color: var(--animal-primary-color);
+  }
+
+  .el-message,
+  .el-notification {
+    border-radius: 16px;
+  }
+
+  .el-message__content,
+  .el-notification__title,
+  .el-notification__content,
+  .el-message-box__message p {
+    color: var(--animal-overlay-text);
+  }
+
+  .el-message__closeBtn,
+  .el-notification__closeBtn,
+  .el-notification .el-icon {
+    color: var(--animal-overlay-muted);
+  }
+
+  .el-upload-dragger {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-surface);
+    border-color: var(--animal-overlay-border);
+  }
+
+  .el-upload-dragger:hover,
+  .el-upload-dragger.is-dragover {
+    border-color: var(--animal-primary-color);
+    background: var(--animal-overlay-hover);
+  }
+
+  .el-upload-list__item,
+  .el-upload__tip,
+  .el-empty__description,
+  .el-form-item__error {
+    color: var(--animal-overlay-muted);
+  }
+
+  .el-upload-list__item:hover {
+    background: var(--animal-overlay-hover);
+  }
+
+  .el-empty__image {
+    opacity: .82;
+    filter: saturate(.78);
+  }
+
+  // 表格、分页和折叠面板同样可能被页面组件直接使用；统一接入主题变量，
+  // 避免动森模式下出现“内容卡片已换肤、表头和分页仍沿用办公蓝”的割裂感。
+  .el-table {
+    --el-table-bg-color: var(--animal-overlay-bg);
+    --el-table-tr-bg-color: var(--animal-overlay-bg);
+    --el-table-header-bg-color: var(--animal-overlay-surface);
+    --el-table-row-hover-bg-color: var(--animal-overlay-hover);
+    --el-table-current-row-bg-color: var(--animal-overlay-hover);
+    --el-table-border-color: var(--animal-overlay-border);
+    --el-table-text-color: var(--animal-overlay-text);
+    --el-table-header-text-color: var(--animal-overlay-text);
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+  }
+
+  .el-table th.el-table__cell,
+  .el-table td.el-table__cell,
+  .el-table__body tr,
+  .el-table__fixed,
+  .el-table__fixed-right,
+  .el-table__fixed-right-patch,
+  .el-table__inner-wrapper::before {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+    border-color: var(--animal-overlay-border);
+  }
+
+  .el-table th.el-table__cell,
+  .el-table__header-wrapper,
+  .el-table__fixed-header-wrapper {
+    background: var(--animal-overlay-surface);
+  }
+
+  .el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell,
+  .el-table__body tr.current-row > td.el-table__cell {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-hover);
+  }
+
+  .el-table__empty-text {
+    color: var(--animal-overlay-muted);
+  }
+
+  .el-pagination {
+    --el-pagination-text-color: var(--animal-overlay-muted);
+    --el-pagination-button-color: var(--animal-overlay-text);
+    --el-pagination-button-bg-color: var(--animal-overlay-surface);
+    --el-pagination-hover-color: var(--animal-primary-color);
+    color: var(--animal-overlay-muted);
+  }
+
+  .el-pagination button,
+  .el-pagination .el-pager li {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-surface);
+    border-color: var(--animal-overlay-border);
+  }
+
+  .el-pagination button:disabled {
+    color: var(--animal-overlay-muted);
+    background: var(--animal-overlay-bg);
+  }
+
+  .el-pagination .el-pager li.is-active,
+  .el-pagination .el-pager li:hover {
+    color: #fff;
+    background: var(--animal-primary-color);
+  }
+
+  .el-collapse,
+  .el-collapse-item__header,
+  .el-collapse-item__wrap,
+  .el-collapse-item__content {
+    color: var(--animal-overlay-text);
+    background: var(--animal-overlay-bg);
+    border-color: var(--animal-overlay-border);
+  }
+
+  .el-collapse-item__header:hover {
+    color: var(--animal-primary-color);
+  }
+
+  .el-alert {
+    color: var(--animal-overlay-text);
+    border-color: var(--animal-overlay-border);
+    background: var(--animal-overlay-surface);
+  }
+
+  .el-alert__title,
+  .el-alert__description,
+  .el-alert__icon {
+    color: inherit;
+  }
+
+  .el-divider {
+    border-color: var(--animal-overlay-border);
+  }
+
+  .el-form-item__label {
+    color: var(--animal-overlay-text);
+  }
+
+  .el-slider__runway {
+    background: var(--animal-overlay-border);
+  }
+
+  .el-slider__bar {
+    background: var(--animal-primary-color);
+  }
+
+  .el-slider__button {
+    border-color: var(--animal-primary-color);
+  }
+
+  .el-color-picker__trigger {
+    border-color: var(--animal-overlay-border);
+    background: var(--animal-overlay-surface);
+  }
+
+  .el-overlay-dialog,
+  .el-drawer__container {
+    color: var(--animal-overlay-text);
+  }
+}

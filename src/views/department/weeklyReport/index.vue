@@ -1,10 +1,10 @@
 <template>
   <div class="p-2 app-container department-weekly-report-page">
-    <el-card shadow="hover" class="search-panel">
+    <UiCard shadow="hover" class="search-panel">
       <div class="query-toolbar">
         <div class="week-date-control">
           <span class="week-date-label">周报日期</span>
-          <el-date-picker
+          <UiDatePicker
             v-model="weekStart"
             class="week-date-picker"
             type="date"
@@ -17,20 +17,18 @@
           <span class="week-date-hint">自动统计该日期所在周</span>
         </div>
         <div class="query-actions">
-          <el-button type="primary" icon="Search" @click="loadSummary">获取汇总</el-button>
-          <el-button v-hasPermi="['department:weeklyReport:add']" type="success" icon="DocumentAdd" @click="handleGenerate">
-            生成周报快照
-          </el-button>
+          <UiButton type="primary" icon="Search" @click="loadSummary">获取汇总</UiButton>
+          <UiButton v-hasPermi="['department:weeklyReport:add']" type="success" icon="DocumentAdd" @click="handleGenerate">生成周报快照</UiButton>
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-card v-loading="summaryLoading" shadow="hover" class="summary-panel mt-2">
+    <UiCard v-loading="summaryLoading" shadow="hover" class="summary-panel mt-2">
       <template #header>
         <DepartmentPanelHeader kicker="Weekly Department Report" :title="`${summary?.weekStart || weekStart} 至 ${summary?.weekEnd || '—'}`" description="运维指标与周报快照" />
       </template>
 
-      <el-divider content-position="left">运维指标</el-divider>
+      <UiDivider type="dashed-teal">运维指标</UiDivider>
       <DepartmentMetricGrid v-if="summary?.operationSummary" :columns="5">
         <DepartmentMetricCard :value="summary.operationSummary.totalCount" label="运维总量" tone="blue" />
         <DepartmentMetricCard :value="summary.operationSummary.resolvedCount" label="已解决记录" tone="green" />
@@ -39,32 +37,36 @@
         <DepartmentMetricCard :value="`${summary.operationSummary.onlineRate}%`" label="系统在线率" tone="red" />
       </DepartmentMetricGrid>
 
-      <el-empty v-if="!summary" description="请选择日期获取周报汇总" />
-    </el-card>
+      <UiEmpty v-if="!summary" description="请选择日期获取周报汇总" />
+    </UiCard>
 
-    <el-card shadow="hover" class="history-panel mt-2">
+    <UiCard shadow="hover" class="history-panel mt-2">
       <template #header>
         <DepartmentPanelHeader title="周报快照历史" description="快照用于保证历史周报不随台账后续修改而漂移">
-          <el-button icon="Refresh" @click="getList">刷新</el-button>
+          <UiButton icon="Refresh" @click="getList">刷新</UiButton>
         </DepartmentPanelHeader>
       </template>
-      <DepartmentDataTable v-loading="loading" border :data="reportList">
-        <el-table-column label="周报周期" min-width="220" align="center">
-          <template #default="scope">{{ scope.row.weekStart }} 至 {{ scope.row.weekEnd }}</template>
-        </el-table-column>
-        <el-table-column label="标题" prop="title" min-width="260" show-overflow-tooltip />
-        <el-table-column label="生成时间" prop="createTime" width="180" align="center" />
-        <el-table-column label="操作" fixed="right" width="190" align="center">
-          <template #default="scope">
-            <DepartmentTableActions>
-              <el-button v-hasPermi="['department:weeklyReport:export']" link type="primary" icon="Download" @click="handleExport(scope.row)">导出 PPT</el-button>
-              <el-button v-hasPermi="['department:weeklyReport:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
-            </DepartmentTableActions>
-          </template>
-        </el-table-column>
-      </DepartmentDataTable>
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
-    </el-card>
+      <div class="history-table">
+        <DepartmentDataTable :loading="loading" border :data="reportList">
+          <el-table-column label="周报周期" min-width="220" align="center">
+            <template #default="scope">{{ scope.row.weekStart }} 至 {{ scope.row.weekEnd }}</template>
+          </el-table-column>
+          <el-table-column label="标题" prop="title" min-width="260" show-overflow-tooltip />
+          <el-table-column label="生成时间" prop="createTime" width="180" align="center" />
+          <el-table-column label="操作" fixed="right" width="190" align="center">
+            <template #default="scope">
+              <DepartmentTableActions>
+                <UiButton v-hasPermi="['department:weeklyReport:export']" link type="primary" icon="Download" @click="handleExport(asWeeklyReportRow(scope.row))">导出 PPT</UiButton>
+                <UiButton v-hasPermi="['department:weeklyReport:remove']" link type="danger" icon="Delete" @click="handleDelete(asWeeklyReportRow(scope.row))">删除</UiButton>
+              </DepartmentTableActions>
+            </template>
+          </el-table-column>
+        </DepartmentDataTable>
+      </div>
+      <div v-show="total > 0" class="history-pagination">
+        <UiPagination v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      </div>
+    </UiCard>
   </div>
 </template>
 
@@ -77,6 +79,7 @@ import DepartmentMetricGrid from '@/components/Department/MetricGrid.vue';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDatePicker, UiDivider, UiEmpty, UiPagination } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload } from '@/utils/request';
@@ -88,6 +91,8 @@ const total = ref(0);
 const summary = ref<WeeklyReportSummaryVO>();
 const weekStart = ref(getCurrentMonday());
 const queryParams = reactive({ pageNum: 1, pageSize: 10, beginDate: undefined as string | undefined, endDate: undefined as string | undefined });
+/** 将表格动作参数限定为周报实体，避免操作方法接收通用 DefaultRow。 */
+const asWeeklyReportRow = (row: unknown): WeeklyReportVO => row as WeeklyReportVO;
 
 function getCurrentMonday() {
   const date = new Date();

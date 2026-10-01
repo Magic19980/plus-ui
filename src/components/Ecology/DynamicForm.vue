@@ -10,14 +10,14 @@
     <div v-if="fields.length" class="dynamic-form__grid">
       <div v-for="field in fields" :key="field.key" class="dynamic-field" :class="fieldClass(field)">
         <label class="dynamic-field__label"><span><span v-if="field.required" class="required-mark">*</span>{{ field.label }}</span><small v-if="!field.required">选填</small></label>
-        <el-input v-if="field.controlType === 'TEXT'" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请输入${field.label}`" @update:model-value="setValue(field.key, $event)" />
-        <el-input v-else-if="field.controlType === 'TEXTAREA'" type="textarea" :rows="4" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请输入${field.label}`" @update:model-value="setValue(field.key, $event)" />
-        <el-input-number v-else-if="field.controlType === 'NUMBER'" class="dynamic-field__number" :model-value="toNumber(localModel[field.key])" controls-position="right" :placeholder="field.placeholder || `请输入${field.label}`" @update:model-value="setValue(field.key, $event)" />
-        <el-select v-else-if="field.controlType === 'SELECT'" class="dynamic-field__control" :model-value="localModel[field.key]" :multiple="field.multiple === true" collapse-tags collapse-tags-tooltip clearable filterable :placeholder="field.placeholder || `请选择${field.label}`" @update:model-value="setValue(field.key, $event)"><el-option v-for="option in field.options || []" :key="option.oaValue" :label="option.label" :value="option.oaValue" /></el-select>
-        <el-radio-group v-else-if="field.controlType === 'RADIO'" :model-value="localModel[field.key]" @update:model-value="setValue(field.key, $event)"><el-radio v-for="option in field.options || []" :key="option.oaValue" :value="option.oaValue">{{ option.label }}</el-radio></el-radio-group>
-        <el-date-picker v-else-if="field.controlType === 'DATE'" class="dynamic-field__control" type="date" value-format="YYYY-MM-DD" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请选择${field.label}`" @update:model-value="setValue(field.key, $event)" />
-        <el-date-picker v-else-if="field.controlType === 'DATETIME'" class="dynamic-field__control" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请选择${field.label}`" @update:model-value="setValue(field.key, $event)" />
-        <div v-else-if="field.controlType === 'USER_SINGLE' || field.controlType === 'USER_MULTI'" class="dynamic-user-field"><el-button plain @click="openUserSelector(field)"><el-icon><User /></el-icon>{{ userSelectionText(field) }}</el-button><div v-if="selectedUsers[field.key]?.length" class="dynamic-user-field__tags"><el-tag v-for="user in selectedUsers[field.key]" :key="user.userId" closable @close="removeUser(field, user.userId)">{{ user.nickName }}</el-tag></div></div>
+        <UiInput v-if="field.controlType === 'TEXT'" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请输入${field.label}`" @update:model-value="setValue(field.key, $event)" />
+        <UiTextarea v-else-if="field.controlType === 'TEXTAREA'" :rows="4" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请输入${field.label}`" @update:model-value="setValue(field.key, $event)" />
+        <UiNumberInput v-else-if="field.controlType === 'NUMBER'" class="dynamic-field__number" :model-value="toNumber(localModel[field.key])" controls-position="right" :aria-label="field.label" @update:model-value="setValue(field.key, $event)" />
+        <UiSelect v-else-if="field.controlType === 'SELECT'" class="dynamic-field__control" :model-value="localModel[field.key]" :options="fieldOptions(field)" :multiple="field.multiple === true" clearable filterable :placeholder="field.placeholder || `请选择${field.label}`" @update:model-value="setValue(field.key, $event)" />
+        <UiRadioGroup v-else-if="field.controlType === 'RADIO'" :model-value="localModel[field.key]" :options="fieldOptions(field)" @update:model-value="setValue(field.key, $event)" />
+        <UiDatePicker v-else-if="field.controlType === 'DATE'" class="dynamic-field__control" type="date" value-format="YYYY-MM-DD" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请选择${field.label}`" @update:model-value="setValue(field.key, $event)" />
+        <UiDatePicker v-else-if="field.controlType === 'DATETIME'" class="dynamic-field__control" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" :model-value="localModel[field.key]" :placeholder="field.placeholder || `请选择${field.label}`" @update:model-value="setValue(field.key, $event)" />
+        <div v-else-if="field.controlType === 'USER_SINGLE' || field.controlType === 'USER_MULTI'" class="dynamic-user-field"><UiButton plain @click="openUserSelector(field)"><el-icon><User /></el-icon>{{ userSelectionText(field) }}</UiButton><div v-if="selectedUsers[field.key]?.length" class="dynamic-user-field__tags"><el-tag v-for="user in selectedUsers[field.key]" :key="user.userId" closable @close="removeUser(field, user.userId)">{{ user.nickName }}</el-tag></div></div>
         <FileUpload v-else-if="field.controlType === 'FILE'" :model-value="attachmentValue('FILE')" :limit="10" :is-show-tip="false" @update:model-value="updateAttachments('FILE', $event)" />
         <ImageUpload v-else-if="field.controlType === 'IMAGE'" :model-value="attachmentValue('IMAGE')" :limit="10" :is-show-tip="false" @update:model-value="updateAttachments('IMAGE', $event)" />
         <div v-if="field.controlType === 'SELECT' && field.multiple" class="dynamic-field__hint">支持多选</div>
@@ -37,6 +37,7 @@ import ImageUpload from '@/components/ImageUpload/index.vue';
 import UserSelect from '@/components/UserSelect/index.vue';
 import type { UserVO } from '@/api/system/user/types';
 import type { OaFormFieldDefinition, OaFormFieldSchema } from '@/api/ecology/types';
+import { UiButton, UiDatePicker, UiInput, UiNumberInput, UiRadioGroup, UiSelect, UiTextarea } from '@/components/UiKit';
 
 const props = withDefaults(defineProps<{ schemaJson?: string; modelValue?: Record<string, any>; attachments?: Array<{ ossId: string | number; attachmentType?: string }> }>(), { schemaJson: '', modelValue: () => ({}), attachments: () => [] });
 const emit = defineEmits<{ (event: 'update:modelValue', value: Record<string, any>): void; (event: 'update:attachments', value: Array<{ ossId: string | number; attachmentType?: string }>): void }>();
@@ -51,6 +52,7 @@ const activeUserIds = computed(() => activeUserField.value ? (Array.isArray(loca
 watch(() => props.modelValue, (value) => { Object.keys(localModel).forEach((key) => delete localModel[key]); Object.assign(localModel, value || {}); }, { deep: true, immediate: true });
 const setValue = (key: string, value: any) => { localModel[key] = value; emit('update:modelValue', { ...localModel }); };
 const toNumber = (value: any) => value === '' || value === null || value === undefined ? undefined : Number(value);
+const fieldOptions = (field: OaFormFieldDefinition) => (field.options || []).map(option => ({ value: option.oaValue, label: option.label }));
 const fieldClass = (field: OaFormFieldDefinition) => ({
   'dynamic-field--wide': ['TEXTAREA', 'FILE', 'IMAGE', 'USER_MULTI'].includes(field.controlType),
   'dynamic-field--choice': ['SELECT', 'RADIO'].includes(field.controlType),

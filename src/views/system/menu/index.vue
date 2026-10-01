@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container system-menu-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,7 +12,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.menuName')" prop="menuName">
-            <el-input
+            <UiInput
               v-model="queryParams.menuName"
               :placeholder="$t('common.placeholderInputMenuName')"
               clearable
@@ -20,19 +20,22 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="queryParams.status" :placeholder="$t('common.menuStatus')" clearable>
-              <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+          <UiSelect
+            v-model="queryParams.status"
+            :options="menuStatusOptions"
+            :placeholder="$t('common.menuStatus')"
+            clearable
+          />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -41,10 +44,10 @@
             <p>{{ $t('common.descMenuList') }}</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:menu:add']" type="primary" plain icon="Plus" @click="handleAdd()">
+            <UiButton v-hasPermi="['system:menu:add']" type="primary" plain icon="Plus" @click="handleAdd()">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:menu:remove']"
               type="danger"
               plain
@@ -53,26 +56,26 @@
               :loading="deleteLoading"
             >
               {{ $t('common.btnBatchDelete') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
       <table-skeleton v-if="loading && !menuList?.length" />
-      <el-table
+      <DepartmentDataTable
         v-else
         ref="menuTableRef"
-        v-loading="loading"
         class="data-table"
         :data="menuList"
         row-key="menuId"
         border
+        max-height="calc(100vh - 340px)"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         :default-expand-all="false"
         lazy
         :load="getChildrenList"
-        :expand-change="expandMenuHandle"
+        @expand-change="expandMenuHandle"
       >
         <template #empty><empty-state /></template>
         <el-table-column prop="menuName" :label="$t('common.menuName')" :show-overflow-tooltip="true" width="220">
@@ -85,9 +88,9 @@
         </el-table-column>
         <el-table-column :label="$t('common.type')" width="100" align="center">
           <template #default="scope">
-            <el-tag :type="getMenuTypeMeta(scope.row).type" size="small">
+            <UiTag :type="getMenuTypeMeta(scope.row).type" size="small">
               {{ getMenuTypeMeta(scope.row).label }}
-            </el-tag>
+            </UiTag>
           </template>
         </el-table-column>
         <el-table-column prop="orderNum" :label="$t('common.sort')" width="60"></el-table-column>
@@ -98,41 +101,43 @@
             <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
           </template>
         </el-table-column>
-        <el-table-column fixed="right" :label="$t('common.operation')" width="180">
+        <el-table-column fixed="right" :label="$t('common.operation')" width="216" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:menu:edit']"
                 link
                 type="primary"
                 icon="Edit"
                 @click="handleUpdate(scope.row)"
-              />
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipAdd')" placement="top">
-              <el-button
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipAdd')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:menu:add']"
                 link
                 type="primary"
                 icon="Plus"
                 @click="handleAdd(scope.row)"
-              />
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:menu:remove']"
                 link
                 type="primary"
                 icon="Delete"
                 @click="handleDelete(scope.row)"
-              />
-            </el-tooltip>
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
-    </el-card>
+      </DepartmentDataTable>
+    </UiCard>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" destroy-on-close append-to-body width="800px">
+    <UiDialog v-model="dialog.visible" :title="dialog.title" append-to-body width="800px">
       <el-form ref="menuFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
@@ -149,11 +154,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item :label="$t('common.menuType')" prop="menuType">
-              <el-radio-group v-model="form.menuType">
-                <el-radio value="M">{{ $t('common.menuTypeDirectory') }}</el-radio>
-                <el-radio value="C">{{ $t('common.menuTypeMenu') }}</el-radio>
-                <el-radio value="F">{{ $t('common.menuTypeButton') }}</el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.menuType" :options="menuTypeOptions" />
             </el-form-item>
           </el-col>
           <el-col v-if="form.menuType !== 'F'" :span="24">
@@ -164,12 +165,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.menuName')" prop="menuName">
-              <el-input v-model="form.menuName" :placeholder="$t('common.placeholderInputMenuNameCn')" />
+              <UiInput v-model="form.menuName" :placeholder="$t('common.placeholderInputMenuNameCn')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.sort')" prop="orderNum">
-              <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
+              <UiNumberInput v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
           </el-col>
           <template v-if="form.menuType !== 'F'">
@@ -185,7 +186,7 @@
                   <div class="i18n-card-grid">
                     <div v-for="cfg in LOCALE_CONFIG" :key="cfg.locale" class="i18n-card-field">
                       <label class="i18n-card-label">{{ cfg.label }}</label>
-                      <el-input
+                      <UiInput
                         v-model="i18nForm[cfg.locale]"
                         :placeholder="cfg.placeholder"
                         clearable
@@ -200,74 +201,70 @@
             <el-form-item>
               <template #label>
                 <span>
-                  <el-tooltip :content="$t('common.tooltipSelectOutlink')" placement="top">
+                  <UiTooltip :content="$t('common.tooltipSelectOutlink')" placement="bottom">
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.isExternalLink') }}</span>
+                  </UiTooltip>{{ $t('common.isExternalLink') }}</span>
               </template>
-              <el-radio-group v-model="form.isFrame">
-                <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.isFrame" :options="yesNoOptions" />
             </el-form-item>
           </el-col>
           <el-col v-if="form.menuType !== 'F'" :span="12">
             <el-form-item prop="path">
               <template #label>
                 <span>
-                  <el-tooltip
+                  <UiTooltip
                     :content="$t('common.tooltipRouteAddress')"
-                    placement="top"
+                    placement="bottom"
                   >
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.routeAddress') }}</span>
+                  </UiTooltip>{{ $t('common.routeAddress') }}</span>
               </template>
-              <el-input v-model="form.path" :placeholder="$t('common.placeholderInputRouteAddress')" />
+              <UiInput v-model="form.path" :placeholder="$t('common.placeholderInputRouteAddress')" />
             </el-form-item>
           </el-col>
           <el-col v-if="form.menuType === 'C'" :span="12">
             <el-form-item prop="component">
               <template #label>
                 <span>
-                  <el-tooltip :content="$t('common.tooltipComponentPath')" placement="top">
+                  <UiTooltip :content="$t('common.tooltipComponentPath')" placement="bottom">
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.componentPath') }}</span>
+                  </UiTooltip>{{ $t('common.componentPath') }}</span>
               </template>
-              <el-input v-model="form.component" :placeholder="$t('common.placeholderInputComponentPath')" />
+              <UiInput v-model="form.component" :placeholder="$t('common.placeholderInputComponentPath')" />
             </el-form-item>
           </el-col>
           <el-col v-if="form.menuType !== 'M'" :span="12">
             <el-form-item>
-              <el-input v-model="form.perms" :placeholder="$t('common.placeholderInputPermission')" maxlength="100" />
+              <UiInput v-model="form.perms" :placeholder="$t('common.placeholderInputPermission')" :maxlength="100" />
               <template #label>
                 <span>
-                  <el-tooltip
+                  <UiTooltip
                     :content="$t('common.tooltipPermission')"
-                    placement="top"
+                    placement="bottom"
                   >
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.permissionLabel') }}</span>
+                  </UiTooltip>{{ $t('common.permissionLabel') }}</span>
               </template>
             </el-form-item>
           </el-col>
           <el-col v-if="form.menuType === 'C'" :span="12">
             <el-form-item>
-              <el-input v-model="form.queryParam" :placeholder="$t('common.placeholderInputRouteParams')" maxlength="255" />
+              <UiInput v-model="form.queryParam" :placeholder="$t('common.placeholderInputRouteParams')" :maxlength="255" />
               <template #label>
                 <span>
-                  <el-tooltip :content="$t('common.tooltipRouteParams')" placement="top">
+                  <UiTooltip :content="$t('common.tooltipRouteParams')" placement="bottom">
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.routeParams') }}</span>
+                  </UiTooltip>{{ $t('common.routeParams') }}</span>
               </template>
             </el-form-item>
           </el-col>
@@ -275,84 +272,73 @@
             <el-form-item>
               <template #label>
                 <span>
-                  <el-tooltip
+                  <UiTooltip
                     :content="$t('common.tooltipIsCache')"
-                    placement="top"
+                    placement="bottom"
                   >
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.isCache') }}</span>
+                  </UiTooltip>{{ $t('common.isCache') }}</span>
               </template>
-              <el-radio-group v-model="form.isCache">
-                <el-radio value="Y">{{ $t('common.yes') }}</el-radio>
-                <el-radio value="N">{{ $t('common.no') }}</el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.isCache" :options="yesNoCacheOptions" />
             </el-form-item>
           </el-col>
           <el-col v-if="form.menuType !== 'F'" :span="12">
             <el-form-item>
               <template #label>
                 <span>
-                  <el-tooltip :content="$t('common.tooltipDisplayStatus')" placement="top">
+                  <UiTooltip :content="$t('common.tooltipDisplayStatus')" placement="bottom">
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.displayStatus') }}</span>
+                  </UiTooltip>{{ $t('common.displayStatus') }}</span>
               </template>
-              <el-radio-group v-model="form.visible">
-                <el-radio v-for="dict in sys_show_hide" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.visible" :options="showHideOptions" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item>
               <template #label>
                 <span>
-                  <el-tooltip :content="$t('common.tooltipMenuStatus')" placement="top">
+                  <UiTooltip :content="$t('common.tooltipMenuStatus')" placement="bottom">
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.menuStatus') }}</span>
+                  </UiTooltip>{{ $t('common.menuStatus') }}</span>
               </template>
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.status" :options="menuStatusOptions" />
             </el-form-item>
           </el-col>
           <el-col v-if="form.visible !== '0'" :span="12">
             <el-form-item :label="$t('common.activeMenu')" prop="activeMenu">
               <template #label>
                 <span>
-                  <el-tooltip :content="$t('common.tooltipActiveMenu')" placement="top">
+                  <UiTooltip :content="$t('common.tooltipActiveMenu')" placement="bottom">
                     <el-icon>
                       <question-filled />
                     </el-icon>
-                  </el-tooltip>{{ $t('common.activePath') }}</span>
+                  </UiTooltip>{{ $t('common.activePath') }}</span>
               </template>
-              <el-input v-model="form.activeMenu" :placeholder="$t('common.placeholderInputActivePath')" />
+              <UiInput v-model="form.activeMenu" :placeholder="$t('common.placeholderInputActivePath')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.remark')" prop="remark">
-              <el-input v-model="form.remark" :placeholder="$t('common.placeholderInputRemark')" maxlength="500" />
+              <UiInput v-model="form.remark" :placeholder="$t('common.placeholderInputRemark')" :maxlength="500" />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="deleteDialog.visible" :title="deleteDialog.title" destroy-on-close append-to-body width="750px">
+    <UiDialog v-model="deleteDialog.visible" :title="deleteDialog.title" append-to-body width="750px">
       <el-tree
         ref="menuTreeRef"
         class="tree-border"
@@ -366,11 +352,11 @@
       />
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitDeleteForm" :loading="deleteLoading">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancelCascade">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitDeleteForm" :loading="deleteLoading">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancelCascade">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -390,6 +376,19 @@ import { useDict } from '@/utils/dict';
 import { handleTree } from '@/utils/ruoyi';
 import EmptyState from '@/components/EmptyState/index.vue';
 import TableSkeleton from '@/components/TableSkeleton/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import {
+  UiButton,
+  UiCard,
+  UiDialog,
+  UiInput,
+  UiNumberInput,
+  UiRadioGroup,
+  UiSelect,
+  UiTag,
+  UiTooltip
+} from '@/components/UiKit';
 
 interface MenuOptionsType {
   menuId: number;
@@ -400,6 +399,19 @@ interface MenuOptionsType {
 const { sys_show_hide, sys_normal_disable, sys_yes_no } = toRefs<any>(
   useDict('sys_show_hide', 'sys_normal_disable', 'sys_yes_no')
 );
+
+const menuStatusOptions = computed(() => sys_normal_disable.value.map((item: any) => ({ value: item.value, label: item.label })));
+const showHideOptions = computed(() => sys_show_hide.value.map((item: any) => ({ value: item.value, label: item.label })));
+const yesNoOptions = computed(() => sys_yes_no.value.map((item: any) => ({ value: item.value, label: item.label })));
+const menuTypeOptions = computed(() => [
+  { value: 'M', label: t('common.menuTypeDirectory') },
+  { value: 'C', label: t('common.menuTypeMenu') },
+  { value: 'F', label: t('common.menuTypeButton') }
+]);
+const yesNoCacheOptions = computed(() => [
+  { value: 'Y', label: t('common.yes') },
+  { value: 'N', label: t('common.no') }
+]);
 
 /** 国际化语言配置，新增语言只需追加一项 */
 const LOCALE_CONFIG = [
@@ -476,7 +488,10 @@ const data = reactive<PageData<MenuForm, MenuQuery>>({
   }
 });
 
-const menuTableRef = ref<ElTableInstance>();
+type MenuTableMethods = {
+  updateKeyChildren?: (key: number | string, children: Record<string, unknown>[]) => void;
+};
+const menuTableRef = ref<MenuTableMethods>();
 
 const { queryParams, form, rules } = toRefs<PageData<MenuForm, MenuQuery>>(data);
 const { dialog, openDialog, closeDialog, setTitle } = useDialogState();
@@ -527,11 +542,15 @@ const getChildrenList = async (row: any, treeNode: unknown, resolve: (data: any[
   resolve(children);
 };
 
-/** 收起菜单时从menuExpandMap中删除对应菜单id数据 */
-const expandMenuHandle = async (row: any, expanded: boolean) => {
-  if (!expanded) {
-    menuExpandMap.value[row.menuId] = undefined;
-  }
+/** 收起菜单时从 menuExpandMap 中删除对应菜单 id 数据。 */
+const expandMenuHandle = (row: MenuVO, expandedRows: unknown) => {
+  const expanded = Array.isArray(expandedRows)
+    ? expandedRows.some(item => {
+      if (item && typeof item === 'object' && 'menuId' in item) return String((item as MenuVO).menuId) === String(row.menuId);
+      return String(item) === String(row.menuId);
+    })
+    : Boolean(expandedRows);
+  if (!expanded) menuExpandMap.value[row.menuId] = undefined;
 };
 
 /** 刷新展开的菜单数据 */
@@ -688,7 +707,7 @@ const cancelCascade = () => {
 /** 删除提交按钮 */
 const submitDeleteForm = async () => {
   const menuIds = menuTreeRef.value?.getCheckedKeys();
-  if (menuIds.length < 0) {
+  if (!menuIds?.length) {
     modal.msgWarning(t('common.msgboxSelectMenuToDelete'));
     return;
   }
@@ -711,15 +730,38 @@ onMounted(() => {
 @include pageShell.table-crud-page;
 
 .data-table {
+  :deep(.ui-animal-table__cell.is-tree-label) {
+    padding-right: 20px;
+  }
+
+  :deep(.ui-animal-tree-prefix__toggle) {
+    width: 22px;
+    height: 22px;
+    margin-right: 0;
+    border-radius: 50%;
+    font-size: 16px;
+  }
+
   .menu-name-cell {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .menu-name-cell :deep(.svg-icon) {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
   }
 
   .menu-name-text {
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container role-auth-user-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -9,7 +9,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.userName')" prop="userName">
-            <el-input
+            <UiInput
               v-model="queryParams.userName"
               :placeholder="$t('common.placeholderInputUserName')"
               clearable
@@ -17,7 +17,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
-            <el-input
+            <UiInput
               v-model="queryParams.phoneNumber"
               :placeholder="$t('common.placeholderInputPhone')"
               clearable
@@ -25,23 +25,23 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
             <h3>{{ $t('common.authorizedUsers') }}</h3>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:role:add']" type="primary" plain icon="Plus" @click="openSelectUser">
+            <UiButton v-hasPermi="['system:role:add']" type="primary" plain icon="Plus" @click="openSelectUser">
               添加用户
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:role:remove']"
               type="danger"
               plain
@@ -50,14 +50,14 @@
               @click="cancelAuthUserAll"
             >
               批量取消授权
-            </el-button>
-            <el-button type="warning" plain icon="Close" @click="handleClose">{{ $t('common.btnClose') }}</el-button>
+            </UiButton>
+            <UiButton type="warning" plain icon="Close" @click="handleClose">{{ $t('common.btnClose') }}</UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         border
         class="data-table"
         :data="userList"
@@ -80,20 +80,22 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipCancelAuth')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipCancelAuth')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:role:remove']"
                 link
-                type="primary"
+                type="danger"
                 icon="CircleClose"
                 @click="cancelAuthUser(scope.row)"
-              ></el-button>
-            </el-tooltip>
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
@@ -101,7 +103,7 @@
         @pagination="getList"
       />
       <select-user ref="selectRef" :role-id="queryParams.roleId" @ok="handleQuery" />
-    </el-card>
+    </UiCard>
   </div>
 </template>
 
@@ -112,6 +114,8 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { UserQuery } from '@/api/system/user/types';
 import { UserVO } from '@/api/system/user/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
 import { useSearchToggle } from '@/hooks/form/useSearchToggle';
@@ -119,6 +123,7 @@ import { useTableSelection } from '@/hooks/table/useTableSelection';
 import modal from '@/plugins/modal';
 import tab from '@/plugins/tab';
 import { useDict } from '@/utils/dict';
+import { UiButton, UiCard, UiInput, UiPagination, UiTooltip } from '@/components/UiKit';
 import SelectUser from './selectUser.vue';
 
 const route = useRoute();

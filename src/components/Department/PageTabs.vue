@@ -133,4 +133,67 @@ const handleTabChange = (value: TabPaneName) => emit('tabChange', value);
     }
   }
 }
+
+/* Animal 模式统一使用协作社区的分段页签外观；办公模式继续沿用上面的 Element Tabs 样式。 */
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__header) {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px;
+  overflow: visible;
+  border: 1px solid color-mix(in srgb, var(--animal-primary-color, #19c8b9) 13%, var(--animal-border-color-light, #e8e2d6));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--animal-primary-color, #19c8b9) 5%, var(--animal-bg-color-secondary, #f0e8d8));
+}
+
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__nav-wrap) {
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__nav-wrap::after) { display: none; }
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__nav) { display: flex; align-items: stretch; gap: 4px; border: 0; }
+
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__item) {
+  display: inline-flex;
+  min-width: 0;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--animal-text-color-secondary, #71809a);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  transition: color .2s, background-color .2s, box-shadow .2s, transform .2s;
+}
+
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__item:hover) {
+  color: var(--animal-primary-color, #19c8b9);
+  background: color-mix(in srgb, var(--animal-primary-color, #19c8b9) 12%, transparent);
+}
+
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__item.is-active),
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__item.is-active:hover) {
+  color: #fff;
+  background: var(--animal-primary-color, #19c8b9);
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--animal-primary-color, #19c8b9) 22%, transparent);
+  transform: translateY(-1px);
+}
+
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__active-bar) { display: none; }
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__content) { padding-top: 12px; }
+:global(html[data-ui-theme='animal'] .department-page-tabs .el-tab-pane) { padding-top: 0; }
+
+@media (max-width: 720px) {
+  :global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__header) { width: 100%; }
+  :global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__nav) { width: 100%; }
+  :global(html[data-ui-theme='animal'] .department-page-tabs .el-tabs__item) { flex: 1 1 0; padding-right: 8px; padding-left: 8px; }
+}
 </style>

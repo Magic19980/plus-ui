@@ -2,28 +2,24 @@
   <div class="approval-plan-panel">
     <el-form :inline="true" @submit.prevent>
       <el-form-item label="审批方式">
-        <el-select v-model="query.workflowConfigId" clearable filterable placeholder="全部审批方式" style="width: 250px">
-          <el-option v-for="item in workflowConfigs" :key="item.id" :label="item.workflowName" :value="item.id" />
-        </el-select>
+        <UiSelect v-model="query.workflowConfigId" :options="workflowSelectOptions" clearable filterable placeholder="全部审批方式" style="width: 250px" />
       </el-form-item>
       <el-form-item label="业务类型">
-        <el-select v-model="query.businessType" clearable filterable placeholder="全部业务类型" style="width: 220px">
-          <el-option v-for="item in businessTypes" :key="item.id" :label="businessTypeLabel(item)" :value="item.businessType" />
-        </el-select>
+        <UiSelect v-model="query.businessType" :options="businessTypeSelectOptions" clearable filterable placeholder="全部业务类型" style="width: 220px" />
       </el-form-item>
-      <el-form-item label="来源模块"><el-input v-model="query.sourceModule" clearable placeholder="可选" style="width: 160px" /></el-form-item>
+      <el-form-item label="来源模块"><UiInput v-model="query.sourceModule" clearable placeholder="可选" style="width: 160px" /></el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="loadList">查询</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <UiButton type="primary" icon="Search" @click="loadList">查询</UiButton>
+        <UiButton icon="Refresh" @click="resetQuery">重置</UiButton>
       </el-form-item>
     </el-form>
 
     <div class="toolbar">
       <div class="toolbar__hint">审批方案绑定一个表单下的审批方式，并复用该业务的审批人员；一次性差异可在发起申请时临时指定。</div>
-      <el-button v-hasPermi="['ecology:departmentApproval:add']" type="primary" icon="Plus" @click="openAdd">新增审批方案</el-button>
+      <UiButton v-hasPermi="['ecology:departmentApproval:add']" type="primary" icon="Plus" @click="openAdd">新增审批方案</UiButton>
     </div>
 
-    <DepartmentDataTable v-loading="loading" :data="rows" border>
+    <DepartmentDataTable :loading="loading" :data="rows" border>
       <el-table-column label="方案名称" prop="planName" min-width="180" show-overflow-tooltip />
       <el-table-column label="业务类型" prop="businessType" width="190" show-overflow-tooltip>
         <template #default="scope">{{ businessTypeName(scope.row.businessType) }}</template>
@@ -44,18 +40,18 @@
       </el-table-column>
       <el-table-column label="优先级" prop="priority" width="80" align="center" />
       <el-table-column label="状态" width="80" align="center">
-        <template #default="scope"><el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</el-tag></template>
+        <template #default="scope"><UiTag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</UiTag></template>
       </el-table-column>
       <el-table-column label="操作" fixed="right" width="170" align="center">
         <template #default="scope">
           <DepartmentTableActions>
-            <el-button v-hasPermi="['ecology:departmentApproval:edit']" link type="primary" @click="openEdit(scope.row)">修改</el-button>
-            <el-button v-hasPermi="['ecology:departmentApproval:remove']" link type="danger" @click="remove(scope.row)">删除</el-button>
+            <UiButton v-hasPermi="['ecology:departmentApproval:edit']" link type="primary" @click="openEdit(scope.row)">修改</UiButton>
+            <UiButton v-hasPermi="['ecology:departmentApproval:remove']" link type="danger" @click="remove(scope.row)">删除</UiButton>
           </DepartmentTableActions>
         </template>
       </el-table-column>
     </DepartmentDataTable>
-    <el-empty v-if="!loading && rows.length === 0" description="暂无审批方案" />
+    <UiEmpty v-if="!loading && rows.length === 0" description="暂无审批方案" />
 
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="880px" append-to-body destroy-on-close class="approval-plan-dialog">
       <div class="approval-plan-intro">
@@ -64,7 +60,7 @@
           <strong>配置一套可复用的审批方案</strong>
           <p>先选择业务和审批方式，再配置审批人员；提交申请时可直接复用。</p>
         </div>
-        <el-tag v-if="selectedWorkflowConfig" type="primary" effect="plain">{{ selectedApprovalName }}</el-tag>
+        <UiTag v-if="selectedWorkflowConfig" type="primary" effect="plain">{{ selectedApprovalName }}</UiTag>
       </div>
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="approval-plan-form">
         <section class="form-section">
@@ -74,19 +70,15 @@
           </div>
           <div class="form-section__body form-grid">
             <el-form-item label="审批方式" prop="workflowConfigId" class="form-grid__half">
-              <el-select v-model="form.workflowConfigId" filterable popper-class="approval-plan-dialog-popper" placeholder="选择已配置的审批方式" style="width: 100%" @change="workflowChanged">
-                <el-option v-for="item in workflowConfigs" :key="item.id" :label="`${item.formName || '泛微表单'} · ${item.approvalName || item.workflowName}`" :value="item.id" />
-              </el-select>
+              <UiSelect v-model="form.workflowConfigId" :options="workflowFormSelectOptions" filterable popper-class="approval-plan-dialog-popper" placeholder="选择已配置的审批方式" style="width: 100%" @change="workflowChanged" />
               <span class="form-tip">节点和泛微字段由流程配置统一维护。</span>
             </el-form-item>
             <el-form-item label="业务类型" prop="businessType" class="form-grid__half">
-              <el-select v-model="form.businessType" filterable popper-class="approval-plan-dialog-popper" placeholder="选择已配置的业务类型" style="width: 100%">
-                <el-option v-for="item in businessTypes" :key="item.id" :label="businessTypeLabel(item)" :value="item.businessType" :disabled="item.status !== 'ENABLED' && item.businessType !== form.businessType" />
-              </el-select>
+              <UiSelect v-model="form.businessType" :options="businessTypeFormSelectOptions" filterable popper-class="approval-plan-dialog-popper" placeholder="选择已配置的业务类型" style="width: 100%" />
               <span class="form-tip">业务类型由统一配置维护，方案只选择，不手工填写。</span>
             </el-form-item>
-            <el-form-item label="方案名称" prop="planName" class="form-grid__half"><el-input v-model="form.planName" maxlength="100" placeholder="如：财务复核、部门负责人审批" /></el-form-item>
-            <el-form-item label="来源模块" class="form-grid__half"><el-input v-model="form.sourceModule" maxlength="64" placeholder="可选；留空表示该业务通用方案" /></el-form-item>
+            <el-form-item label="方案名称" prop="planName" class="form-grid__half"><UiInput v-model="form.planName" :maxlength="100" placeholder="如：财务复核、部门负责人审批" /></el-form-item>
+            <el-form-item label="来源模块" class="form-grid__half"><UiInput v-model="form.sourceModule" :maxlength="64" placeholder="可选；留空表示该业务通用方案" /></el-form-item>
             <el-form-item label="业务归属组织" class="form-grid__full">
               <el-tree-select
                 v-model="form.businessDeptId"
@@ -123,14 +115,14 @@
         <section class="form-section form-section--people">
           <div class="form-section__head">
             <div class="form-section__heading"><span class="form-section__index">02</span><div><h3>审批人员</h3><p>按流程节点配置审批人，人员顺序将直接影响审批顺序。</p></div></div>
-            <el-tag v-if="stageDefinitions.length" type="success" effect="plain">{{ stageDefinitions.length }} 个节点</el-tag>
+            <UiTag v-if="stageDefinitions.length" type="success" effect="plain">{{ stageDefinitions.length }} 个节点</UiTag>
           </div>
           <el-alert v-if="!stageDefinitions.length" title="当前审批方式还没有配置审批节点，请先到“流程配置”中维护节点字段。" type="warning" :closable="false" show-icon class="section-alert" />
           <div v-else class="stage-grid">
             <div v-for="stage in stageDefinitions" :key="stage.code" class="stage-card">
-              <div class="stage-card__head"><div><strong>{{ stage.name }}</strong><span>{{ stage.code }}</span></div><el-tag size="small" :type="stage.required ? 'warning' : 'info'" effect="plain">{{ stage.required ? '必填' : '可选' }}</el-tag></div>
+              <div class="stage-card__head"><div><strong>{{ stage.name }}</strong><span>{{ stage.code }}</span></div><UiTag size="small" :type="stage.required ? 'warning' : 'info'" effect="plain">{{ stage.required ? '必填' : '可选' }}</UiTag></div>
               <div class="stage-card__meta">{{ stage.mode === 'COUNTERSIGN' ? '会签节点，可多选' : '按当前顺序依次审批' }}</div>
-              <div class="ordered-users__toolbar"><el-button type="primary" plain size="small" @click="openStageSelect(stage.code)">选择人员</el-button><span>{{ userListForStage(stage.code).length ? `已选 ${userListForStage(stage.code).length} 人` : '暂未配置' }}</span></div>
+              <div class="ordered-users__toolbar"><UiButton type="primary" plain size="small" @click="openStageSelect(stage.code)">选择人员</UiButton><span>{{ userListForStage(stage.code).length ? `已选 ${userListForStage(stage.code).length} 人` : '暂未配置' }}</span></div>
               <stage-list
                 :users="userListForStage(stage.code)"
                 :sortable="stage.mode !== 'COUNTERSIGN'"
@@ -139,9 +131,9 @@
               />
             </div>
             <div class="stage-card stage-card--copy">
-              <div class="stage-card__head"><div><strong>抄送人员</strong><span>COPY</span></div><el-tag size="small" type="info" effect="plain">可选</el-tag></div>
+              <div class="stage-card__head"><div><strong>抄送人员</strong><span>COPY</span></div><UiTag size="small" type="info" effect="plain">可选</UiTag></div>
               <div class="stage-card__meta">仅接收结果通知，不参与审批。</div>
-              <div class="ordered-users__toolbar"><el-button plain size="small" @click="openStageSelect('COPY')">选择人员</el-button><span>{{ copyUsers.length ? `已选 ${copyUsers.length} 人` : '暂未配置' }}</span></div>
+              <div class="ordered-users__toolbar"><UiButton plain size="small" @click="openStageSelect('COPY')">选择人员</UiButton><span>{{ copyUsers.length ? `已选 ${copyUsers.length} 人` : '暂未配置' }}</span></div>
               <stage-list :users="copyUsers" :sortable="false" @remove="(id) => removeUser(copyUsers, id)" />
             </div>
           </div>
@@ -152,28 +144,26 @@
             <div class="form-section__heading"><span class="form-section__index">03</span><div><h3>策略设置</h3><p>控制多套方案同时可用时的选择优先级。</p></div></div>
           </div>
           <div class="policy-grid">
-            <div class="policy-field"><div><strong>自动匹配优先级</strong><span>数值越大，匹配时越优先</span></div><el-input-number v-model="form.priority" :min="0" :max="999" controls-position="right" /></div>
-            <div class="policy-field"><div><strong>方案状态</strong><span>停用后不会参与自动匹配</span></div><el-switch v-model="form.status" active-value="ENABLED" inactive-value="DISABLED" inline-prompt active-text="启用" inactive-text="停用" /></div>
+            <div class="policy-field"><div><strong>自动匹配优先级</strong><span>数值越大，匹配时越优先</span></div><UiNumberInput v-model="form.priority" :min="0" :max="999" :step="1" aria-label="自动匹配优先级" /></div>
+            <div class="policy-field"><div><strong>方案状态</strong><span>停用后不会参与自动匹配</span></div><UiSwitch v-model="form.status" active-value="ENABLED" inactive-value="DISABLED" inline-prompt active-text="启用" inactive-text="停用" /></div>
           </div>
           <div class="advanced-section">
-            <el-collapse v-model="advancedOpen" class="advanced-collapse">
-              <el-collapse-item name="advanced">
-                <template #title><div class="advanced-title"><span class="advanced-title__icon"><el-icon><Setting /></el-icon></span><div><strong>高级匹配条件</strong><span>可选 · 管理员配置</span></div></div></template>
-                <div class="advanced-content">
-                  <div class="advanced-content__tip"><el-icon><InfoFilled /></el-icon><span>普通场景无需填写。仅当同一业务需要根据申请表单字段区分多套审批方案时使用；留空表示该业务下的通用方案。</span></div>
-                  <el-input v-model="form.matchConditionJson" type="textarea" :rows="4" placeholder='例如：{"settlementType":"MONTHLY"}' />
-                  <span class="form-tip">填写 JSON 对象，只有申请表单字段全部匹配时才会使用本方案。</span>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
+            <UiCollapse v-model="advancedOpen" class="advanced-collapse">
+              <template #title><div class="advanced-title"><span class="advanced-title__icon"><el-icon><Setting /></el-icon></span><div><strong>高级匹配条件</strong><span>可选 · 管理员配置</span></div></div></template>
+              <div class="advanced-content">
+                <div class="advanced-content__tip"><el-icon><InfoFilled /></el-icon><span>普通场景无需填写。仅当同一业务需要根据申请表单字段区分多套审批方案时使用；留空表示该业务下的通用方案。</span></div>
+                <UiTextarea v-model="form.matchConditionJson" :rows="4" placeholder='例如：{"settlementType":"MONTHLY"}' />
+                <span class="form-tip">填写 JSON 对象，只有申请表单字段全部匹配时才会使用本方案。</span>
+              </div>
+            </UiCollapse>
           </div>
         </section>
 
         <section class="form-section form-section--remark">
-          <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="2" maxlength="1000" show-word-limit placeholder="补充这套审批方案的使用说明（可选）" /></el-form-item>
+          <el-form-item label="备注"><UiTextarea v-model="form.remark" :rows="2" :maxlength="1000" show-word-limit placeholder="补充这套审批方案的使用说明（可选）" /></el-form-item>
         </section>
       </el-form>
-      <template #footer><el-button type="primary" :loading="saving" @click="save">保存</el-button><el-button @click="dialog.visible = false">取消</el-button></template>
+      <template #footer><UiButton type="primary" :loading="saving" @click="save">保存</UiButton><UiButton @click="dialog.visible = false">取消</UiButton></template>
     </el-dialog>
 
     <UserSelect ref="activeStageSelectRef" multiple :data="activeStageUsers.map((item) => item.userId)" @confirm-call-back="setActiveStageUsers" />
@@ -186,6 +176,7 @@ import { computed, h, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import modal from '@/plugins/modal';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCollapse, UiEmpty, UiInput, UiNumberInput, UiSelect, UiSwitch, UiTag, UiTextarea } from '@/components/UiKit';
 import UserSelect from '@/components/UserSelect/index.vue';
 import type { UserVO } from '@/api/system/user/types';
 import { delOaDepartmentApproval, getOaDepartmentApproval, listOaApprovalOrganizations, listOaBusinessTypes, listOaDepartmentApprovals, listOaWorkflowConfigs, saveOaDepartmentApproval } from '@/api/ecology';
@@ -206,7 +197,7 @@ const activeStageSelectRef = ref<InstanceType<typeof UserSelect>>();
 const activeStageCode = ref('');
 const stageUsers = reactive<Record<string, UserVO[]>>({});
 const copyUsers = ref<UserVO[]>([]);
-const advancedOpen = ref<string[]>([]);
+const advancedOpen = ref(false);
 const organizationTree = ref<DeptVO[]>([]);
 const organizationRootTree = ref<DeptVO[]>([]);
 const organizationCache = ref<DeptVO[]>([]);
@@ -224,6 +215,14 @@ const rules = { workflowConfigId: [{ required: true, message: '请选择审批�
 
 const selectedWorkflowConfig = computed(() => workflowConfigs.value.find((item) => String(item.id) === String(form.workflowConfigId)));
 const selectedApprovalName = computed(() => selectedWorkflowConfig.value?.approvalName || selectedWorkflowConfig.value?.workflowName || '未选择审批方式');
+const workflowSelectOptions = computed(() => workflowConfigs.value.map((item) => ({ value: item.id, label: item.workflowName })));
+const workflowFormSelectOptions = computed(() => workflowConfigs.value.map((item) => ({ value: item.id, label: `${item.formName || '泛微表单'} · ${item.approvalName || item.workflowName}` })));
+const businessTypeSelectOptions = computed(() => businessTypes.value.map((item) => ({ value: item.businessType, label: businessTypeLabel(item) })));
+const businessTypeFormSelectOptions = computed(() => businessTypes.value.map((item) => ({
+  value: item.businessType,
+  label: businessTypeLabel(item),
+  disabled: item.status !== 'ENABLED' && item.businessType !== form.businessType
+})));
 const stageDefinitions = computed<StageDefinition[]>(() => {
   try {
     const mapping = JSON.parse(selectedWorkflowConfig.value?.participantMappingJson || '{}');
@@ -251,7 +250,7 @@ const loadList = async () => { loading.value = true; try { const res = await lis
 const resetQuery = () => { query.workflowConfigId = undefined; query.businessType = undefined; query.sourceModule = undefined; loadList(); };
 watch(() => props.initialBusinessType, (businessType) => { query.businessType = businessType; void loadList(); });
 const resetUsers = () => { Object.keys(stageUsers).forEach((key) => delete stageUsers[key]); copyUsers.value = []; activeStageCode.value = ''; };
-const resetForm = () => { Object.assign(form, { id: undefined, workflowConfigId: undefined, businessType: '', planName: '', sourceModule: '', businessDeptId: undefined, matchConditionJson: '', priority: 0, status: 'ENABLED', remark: '', users: [] }); resetUsers(); advancedOpen.value = []; organizationTree.value = []; organizationRootTree.value = []; organizationCache.value = []; organizationLabel.value = ''; organizationLoaded.value = false; organizationSearchMode.value = false; organizationSearching.value = false; organizationRequestId++; organizationSearchRequestId++; };
+const resetForm = () => { Object.assign(form, { id: undefined, workflowConfigId: undefined, businessType: '', planName: '', sourceModule: '', businessDeptId: undefined, matchConditionJson: '', priority: 0, status: 'ENABLED', remark: '', users: [] }); resetUsers(); advancedOpen.value = false; organizationTree.value = []; organizationRootTree.value = []; organizationCache.value = []; organizationLabel.value = ''; organizationLoaded.value = false; organizationSearchMode.value = false; organizationSearching.value = false; organizationRequestId++; organizationSearchRequestId++; };
 const workflowChanged = () => { resetUsers(); };
 const loadOrganizations = async (deptIds?: Array<string | number>) => {
   const requestId = ++organizationRequestId;
@@ -732,6 +731,95 @@ html.dark .approval-plan-dialog-popper .el-tree-node.is-current > .el-tree-node_
 html.dark .approval-plan-dialog-popper .el-select-dropdown__empty,
 html.dark .approval-plan-dialog-popper .el-tree__empty-text {
   color: #91a4bf;
+}
+
+/* 动森深色模式：复用全局语义色，覆盖旧办公蓝规则的高优先级声明。 */
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog.el-dialog {
+  --approval-dialog-bg: var(--animal-overlay-bg);
+  --approval-dialog-panel: var(--animal-overlay-surface);
+  --approval-dialog-panel-soft: var(--animal-overlay-hover);
+  --approval-dialog-input: var(--animal-bg-color-input);
+  --approval-dialog-line: var(--animal-overlay-border);
+  --approval-dialog-line-soft: color-mix(in srgb, var(--animal-overlay-border) 72%, transparent);
+  --approval-dialog-text: var(--animal-overlay-text);
+  --approval-dialog-muted: var(--animal-overlay-muted);
+  border-color: var(--animal-overlay-border);
+  background: var(--approval-dialog-bg);
+  box-shadow: var(--app-shadow-lg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-dialog__header,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-dialog__footer {
+  background: var(--animal-overlay-surface);
+  border-color: var(--approval-dialog-line-soft);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-dialog__body {
+  background: var(--approval-dialog-bg);
+  scrollbar-color: var(--app-scrollbar-thumb) transparent;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .approval-plan-intro {
+  border-color: color-mix(in srgb, var(--animal-primary-color) 42%, var(--animal-overlay-border));
+  background: linear-gradient(135deg, #244c49, var(--animal-overlay-surface));
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .approval-plan-intro__icon,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .form-section__index {
+  background: var(--animal-primary-color-bg);
+  color: var(--animal-primary-color);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .organization-selected,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .advanced-content__tip .el-icon {
+  color: var(--animal-primary-color);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .stage-card--copy {
+  border-color: color-mix(in srgb, var(--animal-overlay-border) 88%, transparent);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .advanced-collapse .el-collapse-item__header:hover {
+  background: var(--animal-accent-soft);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-input__wrapper,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-select__wrapper,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-input-number,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-textarea__inner {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-bg-color-input);
+  box-shadow: 0 0 0 1px var(--animal-overlay-border) inset;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-input__wrapper:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-select__wrapper:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-input-number:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-textarea__inner:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-input__wrapper.is-focus,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-select__wrapper.is-focused,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog .el-textarea__inner:focus {
+  border-color: var(--animal-primary-color);
+  box-shadow: 0 0 0 1px var(--animal-primary-color) inset, 0 0 0 3px var(--animal-accent-soft);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog-popper {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-surface);
+  box-shadow: var(--app-shadow-lg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog-popper .el-select-dropdown__item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog-popper .el-tree-node__content {
+  color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog-popper .el-select-dropdown__item.hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog-popper .el-select-dropdown__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog-popper .el-tree-node__content:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .approval-plan-dialog-popper .el-tree-node.is-current > .el-tree-node__content {
+  background: var(--animal-overlay-hover);
+  color: var(--animal-primary-color);
 }
 
 @media (max-width: 720px) {

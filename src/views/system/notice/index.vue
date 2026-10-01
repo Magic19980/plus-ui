@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container system-notice-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,7 +12,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.noticeTitle')" prop="noticeTitle">
-            <el-input
+            <UiInput
               v-model="queryParams.noticeTitle"
               :placeholder="$t('common.placeholderInputNoticeTitle')"
               clearable
@@ -20,7 +20,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.operator')" prop="createByName">
-            <el-input
+            <UiInput
               v-model="queryParams.createByName"
               :placeholder="$t('common.placeholderInputOperName')"
               clearable
@@ -28,19 +28,22 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.type')" prop="noticeType">
-            <el-select v-model="queryParams.noticeType" :placeholder="$t('common.placeholderSelectNoticeType')" clearable>
-              <el-option v-for="dict in sys_notice_type" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+            <UiSelect
+              v-model="queryParams.noticeType"
+              :options="sys_notice_type"
+              :placeholder="$t('common.placeholderSelectNoticeType')"
+              clearable
+            />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -49,10 +52,10 @@
             <p>共 {{ total }} 条记录，支持类型筛选、内容编辑和状态管理。</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:notice:add']" type="primary" plain icon="Plus" @click="handleAdd">
+            <UiButton v-hasPermi="['system:notice:add']" type="primary" plain icon="Plus" @click="handleAdd">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:notice:edit']"
               type="success"
               plain
@@ -61,8 +64,8 @@
               @click="handleUpdate()"
             >
               {{ $t('common.btnEdit') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:notice:remove']"
               type="danger"
               plain
@@ -71,19 +74,20 @@
               @click="handleDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
       <table-skeleton v-if="loading && !noticeList?.length" />
-      <el-table
+      <DepartmentDataTable
         v-else
-        v-loading="loading"
+        :loading="loading"
         border
         class="data-table"
         :data="noticeList"
+        row-key="noticeId"
         @selection-change="handleSelectionChange"
       >
         <template #empty><empty-state /></template>
@@ -106,43 +110,45 @@
             <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
+        <el-table-column fixed="right" :label="$t('common.operation')" align="center" width="180" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipDetail')" placement="top">
-              <el-button link type="primary" icon="View" @click="handleDetail(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipDetail')" placement="bottom">
+                <UiButton link type="primary" icon="View" @click="handleDetail(scope.row)"></UiButton>
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:notice:edit']"
                 link
                 type="primary"
                 icon="Edit"
                 @click="handleUpdate(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
+                ></UiButton>
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:notice:remove']"
                 link
                 type="primary"
                 icon="Delete"
                 @click="handleDelete(scope.row)"
-              ></el-button>
-            </el-tooltip>
+                ></UiButton>
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
     <!-- 添加或修改公告对话框 -->
-    <el-dialog
+    <UiDialog
       v-model="dialog.visible"
       :title="dialog.title"
       width="780px"
@@ -154,46 +160,41 @@
         <el-row>
           <el-col :span="12">
             <el-form-item :label="$t('common.noticeTitle')" prop="noticeTitle">
-              <el-input v-model="form.noticeTitle" :placeholder="$t('common.placeholderInputNoticeTitle')" />
+              <UiInput v-model="form.noticeTitle" :placeholder="$t('common.placeholderInputNoticeTitle')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.noticeType')" prop="noticeType">
-              <el-select v-model="form.noticeType" :placeholder="$t('common.placeholderSelect')">
-                <el-option
-                  v-for="dict in sys_notice_type"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                ></el-option>
-              </el-select>
+              <UiSelect v-model="form.noticeType" :options="sys_notice_type" :placeholder="$t('common.placeholderSelect')" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item :label="$t('common.status')">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_notice_status" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.status" :options="sys_notice_status" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item :label="$t('common.content')">
-              <editor v-model="form.noticeContent" :min-height="192" />
+              <TiptapEditor
+                v-model="form.noticeContent"
+                preset="notice"
+                :min-height="192"
+                :max-length="50000"
+                :placeholder="$t('common.placeholderInputNoticeContent')"
+              />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog
+    <UiDialog
       v-model="detailDialog.visible"
       :title="$t('common.dialogNoticeDetail')"
       width="820px"
@@ -222,10 +223,10 @@
             </div>
           </div>
         </div>
-        <el-divider />
+        <UiDivider />
         <div class="notice-detail__content" v-html="safeNoticeContent"></div>
       </div>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -248,6 +249,10 @@ import { parseTime } from '@/utils/ruoyi';
 import { sanitizeHtml } from '@/utils/sanitize';
 import EmptyState from '@/components/EmptyState/index.vue';
 import TableSkeleton from '@/components/TableSkeleton/index.vue';
+import TiptapEditor from '@/components/TiptapEditor/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDialog, UiDivider, UiInput, UiPagination, UiRadioGroup, UiSelect, UiTooltip } from '@/components/UiKit';
 
 const { sys_notice_status, sys_notice_type } = toRefs<any>(useDict('sys_notice_status', 'sys_notice_type'));
 const route = useRoute();
@@ -273,7 +278,7 @@ const initFormData: NoticeForm = {
   createByName: ''
 };
 const detailForm = ref<NoticeVO>({} as NoticeVO);
-const safeNoticeContent = computed(() => sanitizeHtml(detailForm.value.noticeContent || emptyNoticeContent));
+const safeNoticeContent = computed(() => sanitizeHtml(detailForm.value.noticeContent || emptyNoticeContent.value));
 const data = reactive<PageData<NoticeForm, NoticeQuery>>({
   form: { ...initFormData },
   queryParams: {

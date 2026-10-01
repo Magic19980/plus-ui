@@ -1,0 +1,1296 @@
+/* 动森模式主题桥：只覆盖语义变量和应用壳，组件库自身的 animal-* 样式保持隔离。 */
+
+html[data-ui-theme='animal'] {
+  --app-shell-bg: #bfe3bf;
+  --app-surface-bg: #fffdf5;
+  --app-surface-border: #e8dcc8;
+  --app-elevated-soft-bg: #f7f3df;
+  --app-text-title: #6f5131;
+  --app-text-muted: #9f927d;
+  --app-sidebar-light-bg: #f7f3df;
+  --app-sidebar-dark-bg: #2c3d3b;
+  --app-sidebar-border: #d4c9b4;
+  --app-navbar-bg: #fffdf5;
+  --app-navbar-border: #e8dcc8;
+  --app-shadow-sm: 0 2px 4px rgba(61, 52, 40, 0.08);
+  --app-shadow-md: 0 4px 12px rgba(61, 52, 40, 0.12);
+  --app-shadow-lg: 0 8px 24px rgba(61, 52, 40, 0.16);
+  --app-radius-base: 20px;
+  --app-accent-strong: #19c8b9;
+  --app-accent-soft: rgba(25, 200, 185, 0.14);
+  --animal-status-success: #55a86b;
+  --animal-status-warning: #c88b2b;
+  --animal-status-danger: #cf625c;
+  --animal-status-info: #5c91c9;
+  --animal-focus-ring: 0 0 0 3px rgba(25, 200, 185, 0.28);
+  --animal-radius-control: 16px;
+  --animal-radius-card: 20px;
+  --el-color-primary: #19c8b9;
+  --el-color-primary-light-3: #66d9cf;
+  --el-color-primary-light-5: #8de4dc;
+  --el-color-primary-light-7: #b8eee8;
+  --el-color-primary-light-8: #d1f4ef;
+  --el-color-primary-light-9: #e6f9f6;
+  --animal-primary-color: #19c8b9;
+  --animal-primary-color-hover: #3dd4c6;
+  --animal-primary-color-active: #0ea89c;
+  --animal-primary-color-bg: #e6f9f6;
+  --animal-text-color: #794f27;
+  --animal-text-color-secondary: #9f927d;
+  // 表单占位文字不能直接复用过浅的辅助文字色，否则弹窗遮罩下会出现笔画丢失的观感。
+  --animal-placeholder-color: #866b4a;
+  --animal-border-color: #aaa69d;
+  --animal-border-color-light: #e8e2d6;
+  --animal-bg-color: #f8f8f0;
+  --animal-bg-color-secondary: #f0e8d8;
+  --animal-bg-color-input: #fffbe7;
+  --animal-shadow-soft: #d4c9b4;
+  --animal-overlay-mask: rgba(64, 91, 74, 0.34);
+  --animal-overlay-bg: #fffdf5;
+  --animal-overlay-surface: #f8f8f0;
+  --animal-overlay-border: #e8dcc8;
+  --animal-overlay-text: #6f5131;
+  --animal-overlay-muted: #9f927d;
+  --animal-overlay-hover: #e6f9f6;
+  --app-scrollbar-track: #bfe3bf;
+  --app-scrollbar-thumb: rgba(76, 118, 93, 0.36);
+  --app-scrollbar-thumb-hover: rgba(76, 118, 93, 0.54);
+  background: #bfe3bf;
+
+  body {
+    background: var(--app-shell-bg);
+    color: var(--app-text-title);
+    font-family: var(--animal-font-family, 'Nunito', 'Noto Sans SC', sans-serif);
+  }
+
+  .app-wrapper {
+    background: var(--app-shell-bg);
+  }
+
+  .layout-header {
+    // 顶部导航本身已经是独立卡片，壳体不再叠加奶油色渐变，
+    // 避免它与侧栏卡片在左上角交界处形成断层。
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  // 展开后的筛选卡片需要让控件阴影完整伸展；收起时继续保留动画所需的裁切。
+  // 这样不会改变筛选项排列，只消除输入框下沿被卡片内容区截掉的视觉断层。
+  .search-panel:not(.is-collapsed) .el-card__body,
+  .search-panel:not(.is-collapsed) .ui-animal-card__body {
+    overflow: visible;
+    padding-bottom: 16px !important;
+  }
+
+  .search-panel.is-collapsed .el-card__body,
+  .search-panel.is-collapsed .ui-animal-card__body {
+    overflow: hidden;
+  }
+
+  // 动森模式的页面内容不能只依赖内部表格滚动：当页面自身内容较长，
+  // 主容器也需要提供可见的纵向滚动，避免展开树、长表单或操作区被裁切。
+  // AppMain 组件本身带有作用域 overflow:hidden；提高选择器层级并补齐视口高度，
+  // 让长页面由主容器统一滚动，而不是被固定布局裁切。
+  #app .app-main {
+    height: calc(100vh - 64px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    // 页面滚动是最外层兜底；内部表格滚到边界时允许滚轮自然传递到这里。
+    overscroll-behavior-y: auto;
+    scrollbar-gutter: stable;
+    scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
+  }
+
+  #app .app-main.with-tags-view:not(.with-fixed-header) {
+    height: calc(100vh - 105px);
+  }
+
+  #app .app-main.with-fixed-header {
+    // 固定 Header 已脱离文档流，主内容区从视口顶部开始，不能再次扣除 Header 高度。
+    height: 100vh;
+  }
+
+  #app .app-main.with-fixed-header.with-tags-view {
+    height: 100vh;
+  }
+
+  #app .app-main::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  #app .app-main::-webkit-scrollbar-track {
+    background: var(--app-scrollbar-track);
+  }
+
+  #app .app-main::-webkit-scrollbar-thumb {
+    min-height: 36px;
+    border: 2px solid var(--app-scrollbar-track);
+    border-radius: 999px;
+    background: var(--app-scrollbar-thumb);
+  }
+
+  #app .app-main::-webkit-scrollbar-thumb:hover {
+    background: var(--app-scrollbar-thumb-hover);
+  }
+
+  .sidebar-shell {
+    border-width: 1px;
+    border-color: var(--app-sidebar-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(61, 52, 40, 0.1);
+  }
+
+  .el-card,
+  .panel,
+  .search,
+  .tree-border {
+    border-width: 2px;
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .el-button {
+    border-radius: 999px;
+    font-family: inherit;
+    font-weight: 700;
+  }
+
+  // 筛选控件采用“岛屿卡片”质感：圆角适中、边框清楚、阴影向四周扩散，
+  // 避免原先胶囊形和硬质底边叠在一起产生下沿被切掉的错觉。
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .animal-input,
+  .animal-select__trigger,
+  .animal-date-picker__trigger,
+  .ui-animal-select__trigger,
+  .ui-animal-multi-select__trigger {
+    box-sizing: border-box;
+    min-height: 40px;
+    border: 1.5px solid color-mix(in srgb, var(--animal-border-color) 76%, var(--animal-bg-color-input));
+    border-radius: var(--animal-radius-control, 16px) !important;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--animal-bg-color-secondary) 44%, var(--animal-bg-color-input)), var(--animal-bg-color-input));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 38%), 0 3px 10px color-mix(in srgb, var(--animal-shadow-soft) 48%, transparent);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .el-input__wrapper,
+  .el-select__wrapper {
+    height: 40px;
+  }
+
+  .el-textarea__inner {
+    border: 1.5px solid color-mix(in srgb, var(--animal-border-color) 76%, var(--animal-bg-color-input));
+    border-radius: 18px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--animal-bg-color-secondary) 44%, var(--animal-bg-color-input)), var(--animal-bg-color-input));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 38%), 0 3px 10px color-mix(in srgb, var(--animal-shadow-soft) 48%, transparent);
+  }
+
+  .el-input__wrapper:hover,
+  .el-select__wrapper:hover,
+  .el-textarea__inner:hover,
+  .animal-input:hover,
+  .animal-select__trigger:hover,
+  .animal-date-picker__trigger:hover,
+  .ui-animal-select__trigger:hover,
+  .ui-animal-multi-select__trigger:hover {
+    border-color: color-mix(in srgb, var(--animal-primary-color) 66%, var(--animal-border-color));
+  }
+
+  .animal-input__inner,
+  .ui-animal-input-wrap .animal-input__inner,
+  .ui-animal-select__value,
+  .ui-animal-multi-select__value,
+  .animal-date-picker__value {
+    color: var(--animal-text-color);
+    caret-color: var(--animal-primary-color);
+  }
+
+  .animal-input__inner::placeholder,
+  .ui-animal-input-wrap .animal-input__inner::placeholder,
+  .ui-animal-select__value.is-placeholder,
+  .ui-animal-multi-select__value.is-placeholder,
+  .animal-date-picker__placeholder {
+    color: var(--animal-placeholder-color, var(--animal-text-color-secondary)) !important;
+    opacity: 1;
+    -webkit-text-fill-color: var(--animal-placeholder-color, var(--animal-text-color-secondary));
+  }
+
+  // 文本域不能使用输入框的胶囊形圆角；过大的左上圆角会裁掉首行文字笔画。
+  // 单独设置内边距和行高，保证日报长文本的首字、换行和计数器都保持舒适间距。
+  .el-textarea__inner {
+    border-radius: 18px;
+    padding: 12px 18px;
+    line-height: 1.6;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--animal-bg-color-secondary) 44%, var(--animal-bg-color-input)), var(--animal-bg-color-input));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 38%), 0 3px 10px color-mix(in srgb, var(--animal-shadow-soft) 48%, transparent);
+  }
+
+  .el-input__inner::placeholder,
+  .el-textarea__inner::placeholder {
+    color: var(--animal-placeholder-color);
+    font-family: inherit;
+    font-weight: 500;
+    opacity: 1;
+    -webkit-text-fill-color: var(--animal-placeholder-color);
+  }
+
+  // Animal Button 对 danger + link/text 默认使用白色文字；浅色表格背景下
+  // 会导致“结束服务/删除”等操作几乎不可见，统一改用危险语义色。
+  .animal-btn--danger.animal-btn--link,
+  .animal-btn--danger.animal-btn--text,
+  .animal-btn--danger.animal-btn--link:hover:not(:disabled),
+  .animal-btn--danger.animal-btn--text:hover:not(:disabled),
+  .animal-btn--danger.animal-btn--link:active:not(:disabled),
+  .animal-btn--danger.animal-btn--text:active:not(:disabled) {
+    color: var(--animal-status-danger) !important;
+  }
+}
+
+/*
+ * 动森模式按钮基线：统一 UiButton/Animal Button 与历史页面中的 Element Button。
+ * 两套按钮的默认高度和圆角不同，是“新增/查询/重置”等同名操作看起来不一致的
+ * 主要原因。小号、文字、链接、圆形按钮属于特殊交互，明确排除，避免压缩行内操作。
+ */
+html[data-ui-theme='animal'] {
+  .ui-animal-button:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link),
+  .animal-btn:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link),
+  .el-button:not(.is-circle):not(.is-round):not(.el-button--small):not(.el-button--large):not(.is-text):not(.is-link) {
+    min-width: 0;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 13px !important;
+    border-width: 1.5px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 700;
+    line-height: 1 !important;
+    letter-spacing: 0.01em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 2px 0 var(--animal-shadow-soft) !important;
+    transition:
+      transform 0.18s ease,
+      color 0.18s ease,
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .ui-animal-button:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link),
+  .animal-btn:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link),
+  .el-button:not(.is-circle):not(.is-round):not(.el-button--small):not(.el-button--large):not(.is-text):not(.is-link) {
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+    border-color: var(--animal-border-color) !important;
+  }
+
+  .ui-animal-button:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link):hover:not(:disabled),
+  .animal-btn:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link):hover:not(:disabled),
+  .el-button:not(.is-circle):not(.is-round):not(.el-button--small):not(.el-button--large):not(.is-text):not(.is-link):hover:not(:disabled):not(.is-disabled) {
+    transform: translateY(-1px);
+    color: var(--animal-primary-color) !important;
+    background: var(--animal-primary-color-bg) !important;
+    border-color: var(--animal-primary-color) !important;
+    box-shadow: 0 3px 0 var(--animal-shadow-soft) !important;
+  }
+
+  .ui-animal-button:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link):active:not(:disabled),
+  .animal-btn:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link):active:not(:disabled),
+  .el-button:not(.is-circle):not(.is-round):not(.el-button--small):not(.el-button--large):not(.is-text):not(.is-link):active:not(:disabled):not(.is-disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 0 var(--animal-shadow-soft) !important;
+  }
+
+  .ui-animal-button:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link):disabled,
+  .animal-btn:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--small):not(.animal-btn--large):not(.animal-btn--text):not(.animal-btn--link):disabled,
+  .el-button:not(.is-circle):not(.is-round):not(.el-button--small):not(.el-button--large):not(.is-text):not(.is-link).is-disabled {
+    transform: none;
+    cursor: not-allowed;
+    opacity: 0.58;
+    box-shadow: 0 1px 0 var(--animal-shadow-soft) !important;
+  }
+
+  // 主操作统一使用薄荷色实心按钮。
+  .ui-animal-button--primary:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .animal-btn--primary:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .el-button--primary:not(.is-circle):not(.is-round):not(.is-link):not(.is-text) {
+    color: #174841 !important;
+    background: var(--animal-primary-color) !important;
+    border-color: var(--animal-primary-color) !important;
+    box-shadow: 0 2px 0 var(--animal-primary-color-active) !important;
+  }
+
+  .ui-animal-button--primary:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .animal-btn--primary:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .el-button--primary:not(.is-circle):not(.is-round):not(.is-link):not(.is-text):hover:not(:disabled):not(.is-disabled) {
+    color: #174841 !important;
+    background: var(--animal-primary-color-hover) !important;
+    border-color: var(--animal-primary-color-hover) !important;
+    box-shadow: 0 3px 0 var(--animal-primary-color-active) !important;
+  }
+
+  // 成功、提醒、危险和信息动作使用浅色语义底，保证同名按钮在不同页面仍可辨识。
+  .ui-animal-button--success:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .animal-btn--success:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .el-button--success:not(.is-circle):not(.is-round):not(.is-link):not(.is-text) {
+    color: var(--animal-status-success) !important;
+    background: color-mix(in srgb, var(--animal-status-success) 12%, var(--animal-bg-color-input)) !important;
+    border-color: color-mix(in srgb, var(--animal-status-success) 62%, var(--animal-border-color)) !important;
+  }
+
+  .ui-animal-button--warning:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .animal-btn--warning:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .el-button--warning:not(.is-circle):not(.is-round):not(.is-link):not(.is-text) {
+    color: var(--animal-status-warning) !important;
+    background: color-mix(in srgb, var(--animal-status-warning) 12%, var(--animal-bg-color-input)) !important;
+    border-color: color-mix(in srgb, var(--animal-status-warning) 62%, var(--animal-border-color)) !important;
+  }
+
+  .ui-animal-button--danger:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .animal-btn--danger:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .el-button--danger:not(.is-circle):not(.is-round):not(.is-link):not(.is-text) {
+    color: var(--animal-status-danger) !important;
+    background: color-mix(in srgb, var(--animal-status-danger) 11%, var(--animal-bg-color-input)) !important;
+    border-color: color-mix(in srgb, var(--animal-status-danger) 62%, var(--animal-border-color)) !important;
+  }
+
+  .ui-animal-button--info:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .animal-btn--dashed:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text),
+  .el-button--info:not(.is-circle):not(.is-round):not(.is-link):not(.is-text) {
+    color: var(--animal-status-info) !important;
+    background: color-mix(in srgb, var(--animal-status-info) 10%, var(--animal-bg-color-input)) !important;
+    border-color: color-mix(in srgb, var(--animal-status-info) 58%, var(--animal-border-color)) !important;
+  }
+
+  .ui-animal-button--success:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .animal-btn--success:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .el-button--success:not(.is-circle):not(.is-round):not(.is-link):not(.is-text):hover:not(:disabled):not(.is-disabled),
+  .ui-animal-button--warning:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .animal-btn--warning:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .el-button--warning:not(.is-circle):not(.is-round):not(.is-link):not(.is-text):hover:not(:disabled):not(.is-disabled),
+  .ui-animal-button--danger:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .animal-btn--danger:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .el-button--danger:not(.is-circle):not(.is-round):not(.is-link):not(.is-text):hover:not(:disabled):not(.is-disabled),
+  .ui-animal-button--info:not(.ui-animal-button--circle):not(.ui-animal-button--round):not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .animal-btn--dashed:not(.animal-btn--circle):not(.animal-btn--round):not(.animal-btn--link):not(.animal-btn--text):hover:not(:disabled),
+  .el-button--info:not(.is-circle):not(.is-round):not(.is-link):not(.is-text):hover:not(:disabled):not(.is-disabled) {
+    background: color-mix(in srgb, currentColor 20%, var(--animal-bg-color-input)) !important;
+    border-color: currentColor !important;
+  }
+
+  .ui-animal-button .animal-btn__icon,
+  .animal-btn .animal-btn__icon,
+  .el-button .el-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .ui-animal-button .animal-btn__icon svg,
+  .animal-btn .animal-btn__icon svg,
+  .el-button .el-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ui-animal-button:focus-visible,
+  .animal-btn:focus-visible,
+  .el-button:focus-visible {
+    box-shadow: var(--animal-focus-ring), 0 2px 0 var(--animal-shadow-soft) !important;
+  }
+
+  .query-form .el-form-item:last-child .el-form-item__content,
+  .toolbar-actions,
+  .toolbar-actions .toolbar-row,
+  .toolbar-actions .el-dropdown,
+  .query-actions,
+  .filter-actions,
+  .workspace-tools {
+    gap: 6px;
+  }
+}
+
+// Cursor 组件常驻在应用壳上，避免切换主题时重建 router-view；
+// 办公模式只保留组件的结构，不启用动森光标。
+html[data-ui-theme='office'] .animal-cursor.animal-cursor--scoped {
+  cursor: auto !important;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] {
+  --app-shell-bg: #1f2c2d;
+  --app-surface-bg: #2b3a39;
+  --app-surface-border: #526b65;
+  --app-elevated-soft-bg: #344a46;
+  --app-text-title: #f5ead1;
+  --app-text-muted: #b9c9bd;
+  --app-sidebar-light-bg: #344a46;
+  --app-sidebar-dark-bg: #253634;
+  --app-sidebar-border: #526b65;
+  --app-navbar-bg: #2b3a39;
+  --app-navbar-border: #526b65;
+  --app-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.22);
+  --app-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.28);
+  --app-shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.34);
+  // 深色办公令牌位于通用主题样式之后，必须在动森深色模式中重新声明强调色，
+  // 否则 Element Plus 和页面业务变量会回退到默认的天空蓝。
+  --app-accent-soft: rgba(25, 200, 185, 0.16);
+  --app-accent-strong: #19c8b9;
+  --animal-status-success: #7bc88e;
+  --animal-status-warning: #e4b66a;
+  --animal-status-danger: #ed8b82;
+  --animal-status-info: #8bb9ea;
+  --animal-focus-ring: 0 0 0 3px rgba(127, 228, 211, 0.34);
+  --el-color-primary: #19c8b9;
+  --el-color-primary-light-3: #66d9cf;
+  --el-color-primary-light-5: #8de4dc;
+  --el-color-primary-light-7: #b8eee8;
+  --el-color-primary-light-8: #d1f4ef;
+  --el-color-primary-light-9: #e6f9f6;
+  --animal-primary-color: #19c8b9;
+  --animal-primary-color-hover: #3dd4c6;
+  --animal-primary-color-active: #0ea89c;
+  --animal-primary-color-bg: #244946;
+  --animal-text-color: #f5ead1;
+  --animal-text-color-secondary: #b9c9bd;
+  // 深色输入框使用更亮的占位色，避免与绿色底色和弹窗遮罩混在一起。
+  --animal-placeholder-color: #c4d5cc;
+  --animal-text-color-disabled: #788b82;
+  --animal-border-color: #78918a;
+  --animal-border-color-light: #526b65;
+  --animal-bg-color: #344a46;
+  --animal-bg-color-secondary: #405650;
+  --animal-bg-color-disabled: #2b3a39;
+  --animal-bg-color-input: #263a38;
+  --animal-shadow-soft: #1a2525;
+  --animal-shadow-soft-hover: #172120;
+  --animal-shadow-soft-strong: #101818;
+  --animal-overlay-mask: rgba(4, 10, 12, 0.72);
+  --animal-overlay-bg: #2b3a39;
+  --animal-overlay-surface: #344a46;
+  --animal-overlay-border: #526b65;
+  --animal-overlay-text: #f5ead1;
+  --animal-overlay-muted: #b9c9bd;
+  --animal-overlay-hover: #405650;
+  // 表格表头单独拉开与内容区的层级，避免深色背景下标题文字被压低。
+  // 这两个变量同时被 Element Plus 的表头样式和固定列样式读取。
+  --tableHeaderBg: #405650;
+  --tableHeaderTextColor: #fff6df;
+  --app-scrollbar-track: #1f2c2d;
+  --app-scrollbar-thumb: rgba(120, 145, 138, 0.62);
+  --app-scrollbar-thumb-hover: rgba(143, 174, 164, 0.82);
+  background: #1f2c2d;
+
+  body {
+    background: var(--app-shell-bg);
+  }
+
+  .layout-header {
+    // 深色模式同样保持统一的深色画布，由导航卡片自身承担层次感。
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  // 搜索卡片需要给控件的柔和底部阴影留出空间，避免输入框像被卡片边缘截断。
+  .search-panel:not(.is-collapsed) .ui-animal-card__body,
+  .search-panel:not(.is-collapsed) .el-card__body {
+    overflow: visible;
+    padding-bottom: 16px !important;
+  }
+
+  .search-panel.is-collapsed .ui-animal-card__body,
+  .search-panel.is-collapsed .el-card__body {
+    overflow: hidden;
+  }
+
+  .el-card,
+  .panel,
+  .search,
+  .tree-border {
+    background: var(--app-surface-bg);
+  }
+
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .el-textarea__inner {
+    border: 1px solid color-mix(in srgb, var(--animal-border-color) 76%, var(--animal-bg-color-input));
+    border-radius: 16px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--animal-bg-color-secondary) 42%, var(--animal-bg-color-input)), var(--animal-bg-color-input));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 3px 10px rgb(0 0 0 / 18%);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .el-input__inner::placeholder,
+  .el-textarea__inner::placeholder {
+    color: var(--animal-placeholder-color);
+    font-family: inherit;
+    font-weight: 500;
+    opacity: 1;
+    -webkit-text-fill-color: var(--animal-placeholder-color);
+  }
+
+  // Animal Island 的基础样式使用固定浅色值；这里统一接入深色语义变量，
+  // 保证日期、下拉、输入和开关等适配组件不会出现“页面已变暗、浮层仍是白色”的断层。
+  .animal-input,
+  .animal-select__trigger,
+  .animal-date-picker__trigger,
+  .ui-animal-select__trigger,
+  .ui-animal-multi-select__trigger {
+    box-sizing: border-box;
+    min-height: 40px;
+    color: var(--animal-text-color);
+    border: 1px solid color-mix(in srgb, var(--animal-border-color) 76%, var(--animal-bg-color-input));
+    border-radius: 16px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--animal-bg-color-secondary) 42%, var(--animal-bg-color-input)), var(--animal-bg-color-input));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 3px 10px rgb(0 0 0 / 18%);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .animal-input:hover,
+  .animal-select__trigger:hover,
+  .animal-date-picker__trigger:hover,
+  .ui-animal-select__trigger:hover,
+  .ui-animal-multi-select__trigger:hover {
+    border-color: color-mix(in srgb, var(--animal-primary-color) 70%, var(--animal-border-color));
+  }
+
+  .animal-input__inner,
+  .ui-animal-input-wrap .animal-input__inner,
+  .ui-animal-select__value,
+  .ui-animal-multi-select__value {
+    color: var(--animal-text-color);
+    caret-color: var(--animal-primary-color);
+  }
+
+  .ui-animal-input-wrap .animal-input {
+    width: 100%;
+    height: 40px;
+    padding-inline: 16px;
+  }
+
+  .animal-input__inner,
+  .animal-select__value,
+  .animal-date-picker__value {
+    color: var(--animal-text-color);
+  }
+
+  .animal-input__inner::placeholder,
+  .ui-animal-input-wrap .animal-input__inner::placeholder,
+  .animal-select__value--placeholder,
+  .animal-date-picker__placeholder,
+  .ui-animal-select__value.is-placeholder,
+  .ui-animal-multi-select__value.is-placeholder,
+  .animal-date-picker__week-cell,
+  .animal-date-picker__nav-btn,
+  .animal-date-picker__calendar-icon {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .animal-select__dropdown,
+  .animal-date-picker__panel {
+    color: var(--animal-text-color);
+    background: var(--animal-bg-color);
+    border-color: var(--animal-border-color-light);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .animal-select__option,
+  .animal-date-picker__day-cell,
+  .animal-date-picker__month-cell,
+  .animal-date-picker__year-cell {
+    color: var(--animal-text-color);
+  }
+
+  .animal-select__option--hovered,
+  .animal-select__option--active,
+  .animal-date-picker__day-cell:hover,
+  .animal-date-picker__month-cell:hover,
+  .animal-date-picker__year-cell:hover {
+    background: var(--animal-primary-color-bg);
+    color: var(--animal-primary-color);
+  }
+
+  .animal-date-picker__day-cell--selected,
+  .animal-date-picker__day-cell--selected:hover,
+  .animal-date-picker__month-cell--selected,
+  .animal-date-picker__month-cell--selected:hover,
+  .animal-date-picker__year-cell--selected,
+  .animal-date-picker__year-cell--selected:hover {
+    color: #fff;
+    background: var(--animal-primary-color);
+  }
+
+  .animal-date-picker__day-cell--outside,
+  .animal-date-picker__day-cell--disabled,
+  .animal-date-picker__day-cell--disabled:hover {
+    color: var(--animal-text-color-disabled);
+  }
+
+  .animal-date-picker__footer {
+    border-top-color: var(--animal-border-color-light);
+  }
+
+  .animal-date-picker__today-btn,
+  .animal-date-picker__confirm-btn,
+  .animal-date-picker__label-btn,
+  .animal-date-picker__year-label {
+    color: var(--animal-text-color);
+  }
+
+  // Animal Island 按钮和分页的默认样式包含固定浅色值；深色模式必须重新接入
+  // 当前主题令牌，否则页面背景已变暗，操作控件仍会显示成白色胶囊。
+  .animal-btn--default:not(.animal-btn--danger),
+  .animal-btn--dashed:not(.animal-btn--danger) {
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+    border-color: var(--animal-border-color) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .animal-btn--default:not(.animal-btn--danger):hover:not(:disabled),
+  .animal-btn--dashed:not(.animal-btn--danger):hover:not(:disabled) {
+    color: var(--animal-primary-color) !important;
+    background: var(--animal-bg-color-secondary) !important;
+    border-color: var(--animal-primary-color) !important;
+  }
+
+  .animal-btn--primary:not(.animal-btn--danger) {
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+    border-color: var(--animal-primary-color) !important;
+    box-shadow: 0 4px 0 var(--animal-primary-color-active) !important;
+  }
+
+  .animal-btn--primary:not(.animal-btn--danger):hover:not(:disabled) {
+    background: var(--animal-primary-color-hover) !important;
+    border-color: var(--animal-primary-color-hover) !important;
+    box-shadow: 0 5px 0 var(--animal-primary-color-active) !important;
+  }
+
+  .animal-btn--text {
+    color: var(--animal-text-color) !important;
+  }
+
+  .animal-btn--text:hover:not(:disabled) {
+    color: var(--animal-primary-color) !important;
+    background: var(--animal-bg-color-secondary) !important;
+  }
+
+  .animal-btn--link {
+    color: var(--animal-primary-color) !important;
+  }
+
+  // 组件库对 danger + link/text 按钮默认使用白色文字，
+  // 但动森浅色模式下按钮背景是透明的，白字会与页面背景融在一起。
+  // 改用危险语义色，保证“结束服务/删除”等操作在浅色和深色模式都清晰可读。
+  .animal-btn--danger.animal-btn--link,
+  .animal-btn--danger.animal-btn--text,
+  .animal-btn--danger.animal-btn--link:hover:not(:disabled),
+  .animal-btn--danger.animal-btn--text:hover:not(:disabled),
+  .animal-btn--danger.animal-btn--link:active:not(:disabled),
+  .animal-btn--danger.animal-btn--text:active:not(:disabled) {
+    color: var(--animal-status-danger) !important;
+  }
+
+  .animal-pagination {
+    color: var(--animal-text-color-secondary) !important;
+  }
+
+  .animal-pagination__item {
+    color: var(--animal-text-color) !important;
+  }
+
+  .animal-pagination__item:disabled {
+    color: var(--animal-text-color-disabled) !important;
+  }
+
+  .animal-pagination__item--active,
+  .animal-pagination--teal .animal-pagination__item--active {
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+  }
+
+  .animal-pagination__size-trigger {
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+    border-color: var(--animal-border-color-light) !important;
+  }
+
+  .animal-pagination__size-trigger:hover:not(:disabled) {
+    background: var(--animal-bg-color-secondary) !important;
+    border-color: var(--animal-primary-color) !important;
+  }
+
+  .animal-pagination__size-list {
+    background: var(--animal-bg-color) !important;
+    border: 1px solid var(--animal-border-color-light);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .animal-pagination__size-option {
+    color: var(--animal-text-color) !important;
+  }
+
+  .animal-pagination__size-option:hover {
+    color: var(--animal-primary-color) !important;
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .animal-pagination__jumper {
+    color: var(--animal-text-color-secondary) !important;
+  }
+
+  .animal-pagination__jumper-input {
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .animal-pagination__jumper-input::placeholder {
+    color: var(--animal-text-color-disabled) !important;
+  }
+
+  .animal-switch {
+    background: var(--animal-bg-color-secondary);
+    border-color: var(--animal-border-color);
+  }
+
+  .animal-switch__handle {
+    background: var(--animal-bg-color-input);
+    border-color: var(--animal-border-color);
+  }
+
+  .animal-switch__inner {
+    color: var(--animal-text-color);
+    text-shadow: none;
+  }
+
+  .animal-switch--checked {
+    background: var(--animal-success-color, #6fba2c);
+    border-color: var(--animal-success-color, #6fba2c);
+  }
+
+  // Checkbox 的发布包使用固定浅色值；覆盖为主题变量，避免深色模式下选项与容器脱节。
+  .animal-checkbox__cbx input[type='checkbox'] {
+    border-color: var(--animal-border-color);
+    background: var(--animal-bg-color-input);
+  }
+
+  .animal-checkbox__cbx input[type='checkbox']:checked {
+    border-color: var(--animal-primary-color);
+  }
+
+  .animal-checkbox__label,
+  .animal-checkbox--checked .animal-checkbox__label {
+    color: var(--animal-text-color);
+  }
+
+  .animal-checkbox--disabled .animal-checkbox__cbx input[type='checkbox'] {
+    background: var(--animal-bg-color-disabled);
+    border-color: var(--animal-border-color-light);
+  }
+
+  .animal-checkbox--disabled .animal-checkbox__label {
+    color: var(--animal-text-color-disabled);
+  }
+
+  // Radio 同样依赖发布包内的固定浅色值，统一改为深色主题变量。
+  .animal-radio__cbx input[type='radio'] {
+    border-color: var(--animal-border-color);
+    background: var(--animal-bg-color-input);
+  }
+
+  .animal-radio__cbx input[type='radio']:checked {
+    border-color: var(--animal-primary-color);
+    background: var(--animal-primary-color);
+  }
+
+  .animal-radio__label,
+  .animal-radio--checked .animal-radio__label {
+    color: var(--animal-text-color);
+  }
+
+  .animal-radio--disabled .animal-radio__cbx input[type='radio'] {
+    background: var(--animal-bg-color-disabled);
+    border-color: var(--animal-border-color-light);
+  }
+
+  .animal-radio--disabled .animal-radio__label {
+    color: var(--animal-text-color-disabled);
+  }
+}
+
+/* 自定义控件与原生 Element 控件共用同一套可见焦点样式。 */
+html[data-ui-theme='animal'] :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 0;
+  box-shadow: var(--animal-focus-ring) !important;
+}
+
+/*
+ * 输入框的可见焦点落在内部原生 input 上时，直接套用 focus ring 会形成
+ * 一块矩形高亮，破坏动森输入框的胶囊轮廓。将焦点提示提升到外层容器，
+ * 内部输入只负责文字编辑；办公模式仍沿用 Element Plus 默认焦点样式。
+ */
+html[data-ui-theme='animal'] {
+  .el-input__inner:focus,
+  .el-input__inner:focus-visible,
+  .animal-input__inner:focus,
+  .animal-input__inner:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .el-input:focus-within .el-input__wrapper,
+  .animal-input:focus-within {
+    outline: none !important;
+    // 使用柔和扩散阴影，避免原先硬质底边在深色背景下产生“下沿被切掉”的错觉。
+    box-shadow: var(--animal-focus-ring), 0 4px 12px rgb(0 0 0 / 20%) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-ui-theme='animal'] *,
+  html[data-ui-theme='animal'] *::before,
+  html[data-ui-theme='animal'] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/*
+ * 应用壳体也属于工作模式的一部分。
+ * 之前只有内容区读取了 Animal 变量，顶部栏、菜单和页签仍沿用办公壳体，
+ * 因而切换后会出现“内容变绿、导航没变”的割裂感。这里统一使用 Animal 的
+ * 圆角、描边、纹理和层级，不改变菜单的路由和交互逻辑。
+ */
+html[data-ui-theme='animal'] {
+  .navbar {
+    border: 2px solid var(--animal-border-color-light);
+    border-radius: 24px;
+    background: var(--animal-bg-color);
+    box-shadow: 0 5px 0 var(--animal-shadow-soft), var(--app-shadow-md);
+    // 动森 Tooltip 在触发器内部渲染，气泡需要越过导航卡片显示到下方。
+    overflow: visible;
+    position: relative;
+    z-index: 20;
+  }
+
+  // 顶部图标的提示气泡不能被导航栏或页签内容盖住。
+  .navbar .animal-tooltip {
+    position: relative;
+    z-index: 30;
+  }
+
+  .navbar .animal-tooltip__bubble {
+    z-index: 10000 !important;
+  }
+
+  .navbar .hamburger-shell,
+  .navbar .breadcrumb-container,
+  .navbar .right-menu .right-menu-item,
+  .navbar .avatar-wrapper,
+  .navbar .department-context-wrapper {
+    border: 2px solid var(--animal-border-color-light);
+    border-radius: 18px;
+    background: var(--animal-bg-color-input);
+    box-shadow: 0 2px 0 var(--animal-shadow-soft);
+  }
+
+  .navbar .hamburger-shell:hover,
+  .navbar .right-menu .right-menu-item:hover,
+  .navbar .avatar-wrapper:hover,
+  .navbar .department-context-wrapper:hover {
+    border-color: var(--animal-primary-color);
+    background: var(--animal-primary-color-bg);
+    box-shadow: 0 3px 0 var(--animal-shadow-soft);
+  }
+
+  .navbar .breadcrumb-container,
+  .navbar .right-menu .right-menu-item {
+    color: var(--animal-text-color);
+  }
+
+  .sidebar-shell {
+    border: 2px solid var(--animal-border-color-light);
+    border-radius: 24px;
+    background:
+      radial-gradient(circle, rgb(130 213 187 / 13%) 1.5px, transparent 1.5px),
+      var(--animal-bg-color);
+    background-size: 28px 28px;
+    box-shadow: 0 7px 0 var(--animal-shadow-soft), var(--app-shadow-md);
+  }
+
+  .sidebar-menu {
+    background: transparent;
+  }
+
+  .sidebar-menu .el-menu-item,
+  .sidebar-menu .el-sub-menu__title {
+    margin: 3px 2px;
+    border: 2px solid transparent;
+    border-radius: 18px;
+    color: var(--animal-text-color);
+  }
+
+  .sidebar-menu .el-menu-item:hover,
+  .sidebar-menu .el-sub-menu__title:hover,
+  .sidebar-menu .el-menu-item.is-active {
+    border-color: var(--animal-border-color);
+    background: var(--animal-primary-color-bg);
+    color: var(--animal-primary-color);
+  }
+
+  .sidebar-footer {
+    border: 2px solid var(--animal-border-color-light);
+    border-radius: 18px;
+    background: var(--animal-bg-color-input);
+  }
+
+  .tags-view-container {
+    height: 44px;
+    border: 2px solid var(--animal-border-color-light);
+    border-radius: 24px;
+    background: var(--animal-bg-color);
+    box-shadow: 0 4px 0 var(--animal-shadow-soft), var(--app-shadow-sm);
+  }
+
+  .tags-view-container .tags-nav-btn,
+  .tags-view-container .tags-action-btn {
+    border: 2px solid var(--animal-border-color-light);
+    border-radius: 16px;
+    background: var(--animal-bg-color-input);
+    color: var(--animal-text-color-secondary);
+  }
+
+  .tags-view-container .tags-view-wrapper .tags-view-item {
+    border-radius: 18px;
+    color: var(--animal-text-color-secondary);
+  }
+
+  .tags-view-container .tags-view-wrapper .tags-view-item:hover,
+  .tags-view-container .tags-view-wrapper .tags-view-item.active {
+    border-color: var(--animal-primary-color);
+    background: var(--animal-primary-color);
+    color: #fff9e3;
+    box-shadow: 0 3px 0 var(--animal-shadow-soft);
+  }
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] {
+  .navbar,
+  .tags-view-container {
+    background:
+      radial-gradient(circle, rgb(130 213 187 / 10%) 1.5px, transparent 1.5px),
+      var(--animal-bg-color);
+    background-size: 28px 28px;
+  }
+
+  .navbar .hamburger-shell,
+  .navbar .breadcrumb-container,
+  .navbar .right-menu .right-menu-item,
+  .navbar .avatar-wrapper,
+  .navbar .department-context-wrapper,
+  .sidebar-footer,
+  .tags-view-container .tags-nav-btn,
+  .tags-view-container .tags-action-btn {
+    background: var(--animal-bg-color-input);
+    border-color: var(--animal-border-color);
+    color: var(--animal-text-color);
+  }
+
+  .sidebar-shell {
+    background:
+      radial-gradient(circle, rgb(130 213 187 / 9%) 1.5px, transparent 1.5px),
+      var(--animal-bg-color);
+    background-size: 28px 28px;
+  }
+
+  .sidebar-menu .el-menu-item,
+  .sidebar-menu .el-sub-menu__title {
+    color: var(--animal-text-color);
+  }
+
+  .sidebar-menu .el-menu-item:hover,
+  .sidebar-menu .el-sub-menu__title:hover,
+  .sidebar-menu .el-menu-item.is-active {
+    background: color-mix(in srgb, var(--animal-primary-color) 18%, var(--animal-bg-color));
+    color: var(--animal-text-color);
+  }
+
+  .tags-view-container .tags-view-wrapper .tags-view-item:not(.active) {
+    color: var(--animal-text-color-secondary);
+  }
+
+  // 运营管理等页面直接使用 Element Plus 表格。深色动森模式下，
+  // 默认表头会退回办公主题的暗色文字，导致表头与内容区几乎融为一体。
+  // 这里把普通表头、固定表头和排序控件统一到同一组高对比度变量。
+  .el-table {
+    --el-table-header-bg-color: var(--tableHeaderBg);
+    --el-table-header-text-color: var(--tableHeaderTextColor);
+    --el-table-tr-bg-color: var(--app-surface-bg);
+    --el-table-bg-color: var(--app-surface-bg);
+    --el-table-border-color: var(--animal-border-color-light);
+    --el-table-row-hover-bg-color: color-mix(in srgb, var(--animal-primary-color) 12%, var(--app-surface-bg));
+    --el-table-current-row-bg-color: color-mix(in srgb, var(--animal-primary-color) 18%, var(--app-surface-bg));
+    color: var(--animal-text-color);
+    background: var(--app-surface-bg);
+  }
+
+  .el-table .el-table__header-wrapper th.el-table__cell,
+  .el-table .el-table__fixed-header-wrapper th.el-table__cell,
+  .el-table .el-table__fixed-right th.el-table__cell {
+    background: var(--tableHeaderBg) !important;
+    background-color: var(--tableHeaderBg) !important;
+    color: var(--tableHeaderTextColor) !important;
+    border-bottom-color: var(--animal-border-color) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
+  }
+
+  .el-table .el-table__header-wrapper th.el-table__cell .cell,
+  .el-table .el-table__fixed-header-wrapper th.el-table__cell .cell,
+  .el-table .el-table__fixed-right th.el-table__cell .cell {
+    color: inherit;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .el-table .el-table__header-wrapper th.el-table__cell .caret-wrapper,
+  .el-table .el-table__fixed-header-wrapper th.el-table__cell .caret-wrapper {
+    color: var(--tableHeaderTextColor);
+  }
+
+  .el-table .el-table__header-wrapper th.el-table__cell:hover,
+  .el-table .el-table__fixed-header-wrapper th.el-table__cell:hover,
+  .el-table .el-table__fixed-right th.el-table__cell:hover {
+    background: color-mix(in srgb, var(--animal-primary-color) 22%, var(--tableHeaderBg)) !important;
+    color: #ffffff !important;
+  }
+
+  .el-table .el-table__body-wrapper td.el-table__cell {
+    border-bottom-color: color-mix(in srgb, var(--animal-border-color-light) 78%, transparent);
+  }
+
+  .el-table .el-table__empty-text {
+    color: var(--animal-text-color-secondary);
+  }
+
+  // 深色动森模式下，普通单元格、固定操作列和悬停状态必须同时使用实体底色；
+  // 否则 sticky/fixed 列会透出下面的内容，文字也会被浅色 hover 颜色冲淡。
+  .el-table .el-table__body-wrapper td.el-table__cell,
+  .el-table .el-table__fixed-right td.el-table__cell,
+  .el-table .el-table__fixed td.el-table__cell {
+    color: var(--animal-text-color) !important;
+    background: var(--app-surface-bg) !important;
+  }
+
+  .el-table .el-table__body tr:hover > td.el-table__cell,
+  .el-table .el-table__body tr.hover-row > td.el-table__cell,
+  .el-table .el-table__body tr.current-row > td.el-table__cell,
+  .el-table .el-table__fixed-right .el-table__body tr:hover > td.el-table__cell,
+  .el-table .el-table__fixed-right .el-table__body tr.hover-row > td.el-table__cell,
+  .el-table .el-table__fixed-right .el-table__body tr.current-row > td.el-table__cell {
+    color: var(--animal-text-color) !important;
+    background: color-mix(in srgb, var(--animal-primary-color) 18%, var(--app-surface-bg)) !important;
+  }
+
+  .el-table .el-table__body-wrapper td.el-table__cell .cell,
+  .el-table .el-table__fixed-right td.el-table__cell .cell {
+    color: inherit;
+  }
+}
+
+/*
+ * 列表场景的操作按钮使用“紧凑工具按钮”规格。
+ * Animal Button 默认 middle 尺寸较适合表单主操作，但放在筛选栏和表格工具栏
+ * 会占用过多纵向空间，也会让一排操作显得像多个大型胶囊。这里只收窄列表
+ * 场景，弹窗和普通表单仍保留原有按钮层级。
+ */
+html[data-ui-theme='animal'] {
+  .query-form .ui-animal-button,
+  .query-form .el-button:not(.is-circle),
+  .table-panel .toolbar-actions .ui-animal-button,
+  .table-panel .toolbar-actions .el-button:not(.is-circle):not(.is-link):not(.is-text) {
+    min-width: 0;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 13px !important;
+    border-width: 1.5px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 700;
+    line-height: 1 !important;
+    letter-spacing: 0.01em;
+    gap: 6px;
+    box-shadow: 0 2px 0 var(--animal-shadow-soft) !important;
+    transition:
+      transform 0.18s ease,
+      color 0.18s ease,
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .query-form .ui-animal-button:hover:not(:disabled),
+  .query-form .el-button:not(.is-circle):hover:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button:hover:not(:disabled),
+  .table-panel .toolbar-actions .el-button:not(.is-circle):not(.is-link):not(.is-text):hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 0 var(--animal-shadow-soft) !important;
+  }
+
+  .query-form .ui-animal-button:active:not(:disabled),
+  .query-form .el-button:not(.is-circle):active:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button:active:not(:disabled),
+  .table-panel .toolbar-actions .el-button:not(.is-circle):not(.is-link):not(.is-text):active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 0 var(--animal-shadow-soft) !important;
+  }
+
+  .query-form .ui-animal-button .animal-btn__icon,
+  .table-panel .toolbar-actions .ui-animal-button .animal-btn__icon,
+  .query-form .el-button .el-icon,
+  .table-panel .toolbar-actions .el-button .el-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .query-form .ui-animal-button .animal-btn__icon svg,
+  .table-panel .toolbar-actions .ui-animal-button .animal-btn__icon svg,
+  .query-form .el-button .el-icon svg,
+  .table-panel .toolbar-actions .el-button .el-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  // 主查询/新增操作使用清晰的薄荷色实心按钮，其余动作通过淡色语义底区分。
+  .query-form .ui-animal-button--primary,
+  .query-form .el-button--primary,
+  .table-panel .toolbar-actions .ui-animal-button--primary,
+  .table-panel .toolbar-actions .el-button--primary {
+    color: #174841 !important;
+    background: var(--animal-primary-color) !important;
+    border-color: var(--animal-primary-color) !important;
+    box-shadow: 0 2px 0 var(--animal-primary-color-active) !important;
+  }
+
+  .query-form .ui-animal-button--primary:hover:not(:disabled),
+  .query-form .el-button--primary:hover:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button--primary:hover:not(:disabled),
+  .table-panel .toolbar-actions .el-button--primary:hover:not(:disabled) {
+    color: #174841 !important;
+    background: var(--animal-primary-color-hover) !important;
+    border-color: var(--animal-primary-color-hover) !important;
+    box-shadow: 0 3px 0 var(--animal-primary-color-active) !important;
+  }
+
+  .query-form .ui-animal-button--default,
+  .query-form .ui-animal-button--info,
+  .query-form .el-button--default,
+  .query-form .el-button--info,
+  .table-panel .toolbar-actions .ui-animal-button--default,
+  .table-panel .toolbar-actions .ui-animal-button--info,
+  .table-panel .toolbar-actions .el-button--default,
+  .table-panel .toolbar-actions .el-button--info {
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+    border-color: var(--animal-border-color) !important;
+  }
+
+  .query-form .ui-animal-button--default:hover:not(:disabled),
+  .query-form .ui-animal-button--info:hover:not(:disabled),
+  .query-form .el-button--default:hover:not(:disabled),
+  .query-form .el-button--info:hover:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button--default:hover:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button--info:hover:not(:disabled),
+  .table-panel .toolbar-actions .el-button--default:hover:not(:disabled),
+  .table-panel .toolbar-actions .el-button--info:hover:not(:disabled) {
+    color: var(--animal-primary-color) !important;
+    background: var(--animal-primary-color-bg) !important;
+    border-color: var(--animal-primary-color) !important;
+  }
+
+  .query-form .ui-animal-button--success,
+  .query-form .el-button--success,
+  .table-panel .toolbar-actions .ui-animal-button--success,
+  .table-panel .toolbar-actions .el-button--success {
+    color: var(--animal-status-success) !important;
+    background: color-mix(in srgb, var(--animal-status-success) 12%, var(--animal-bg-color-input)) !important;
+    border-color: color-mix(in srgb, var(--animal-status-success) 62%, var(--animal-border-color)) !important;
+  }
+
+  .query-form .ui-animal-button--warning,
+  .query-form .el-button--warning,
+  .table-panel .toolbar-actions .ui-animal-button--warning,
+  .table-panel .toolbar-actions .el-button--warning {
+    color: var(--animal-status-warning) !important;
+    background: color-mix(in srgb, var(--animal-status-warning) 12%, var(--animal-bg-color-input)) !important;
+    border-color: color-mix(in srgb, var(--animal-status-warning) 62%, var(--animal-border-color)) !important;
+  }
+
+  .query-form .ui-animal-button--danger,
+  .query-form .el-button--danger,
+  .table-panel .toolbar-actions .ui-animal-button--danger,
+  .table-panel .toolbar-actions .el-button--danger {
+    color: var(--animal-status-danger) !important;
+    background: color-mix(in srgb, var(--animal-status-danger) 11%, var(--animal-bg-color-input)) !important;
+    border-color: color-mix(in srgb, var(--animal-status-danger) 62%, var(--animal-border-color)) !important;
+  }
+
+  .query-form .ui-animal-button--success:hover:not(:disabled),
+  .query-form .ui-animal-button--warning:hover:not(:disabled),
+  .query-form .ui-animal-button--danger:hover:not(:disabled),
+  .query-form .el-button--success:hover:not(:disabled),
+  .query-form .el-button--warning:hover:not(:disabled),
+  .query-form .el-button--danger:hover:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button--success:hover:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button--warning:hover:not(:disabled),
+  .table-panel .toolbar-actions .ui-animal-button--danger:hover:not(:disabled),
+  .table-panel .toolbar-actions .el-button--success:hover:not(:disabled),
+  .table-panel .toolbar-actions .el-button--warning:hover:not(:disabled),
+  .table-panel .toolbar-actions .el-button--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, currentColor 20%, var(--animal-bg-color-input)) !important;
+  }
+
+  .query-form .el-form-item:last-child .el-form-item__content,
+  .table-panel .toolbar-actions,
+  .table-panel .toolbar-actions .toolbar-row,
+  .table-panel .toolbar-actions .el-dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  // 列显隐、刷新等辅助按钮保持存在感，但不再与业务操作争夺视觉重量。
+  .table-panel .toolbar-actions .top-right-btn .el-button.is-circle {
+    width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border-width: 1.5px !important;
+    border-radius: 11px !important;
+    box-shadow: 0 2px 0 var(--animal-shadow-soft) !important;
+  }
+
+  @media (max-width: 640px) {
+    .query-form .ui-animal-button,
+    .query-form .el-button:not(.is-circle),
+    .table-panel .toolbar-actions .ui-animal-button,
+    .table-panel .toolbar-actions .el-button:not(.is-circle):not(.is-link):not(.is-text) {
+      padding-inline: 11px !important;
+    }
+
+    .query-form .el-form-item:last-child .el-form-item__content {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+}

@@ -1,6 +1,6 @@
 <template>
   <div class="app-container ecology-business-config-page">
-    <el-card shadow="never" class="workspace-hero">
+    <UiCard shadow="never" class="workspace-hero">
       <div class="workspace-hero__copy">
         <span class="workspace-eyebrow"><el-icon><SetUp /></el-icon> BUSINESS CONFIGURATION</span>
         <h2>业务配置</h2>
@@ -9,54 +9,54 @@
       <div class="workspace-hero__status">
         <span class="status-icon"><el-icon><Connection /></el-icon></span>
         <div><strong>配置状态</strong><span>{{ readyCount }} 个业务可直接提交</span></div>
-        <el-button plain @click="loadData" :loading="loading">刷新</el-button>
+        <UiButton plain @click="loadData" :loading="loading"><el-icon><Refresh /></el-icon>刷新</UiButton>
       </div>
-    </el-card>
+    </UiCard>
 
     <DepartmentPageTabs v-model="activeTab" class="config-tabs">
       <el-tab-pane name="overview">
         <template #label><span class="tab-label"><el-icon><DataAnalysis /></el-icon>业务总览</span></template>
         <div class="overview-grid">
-          <el-card v-for="item in overviewItems" :key="item.label" shadow="never" class="overview-card" :class="`overview-card--${item.tone}`">
+          <UiCard v-for="item in overviewItems" :key="item.label" shadow="never" class="overview-card" :class="`overview-card--${item.tone}`">
             <span class="overview-card__icon"><el-icon><component :is="item.icon" /></el-icon></span>
             <div><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div>
             <small>{{ item.hint }}</small>
-          </el-card>
+          </UiCard>
         </div>
 
-        <el-card shadow="never" class="workspace-card">
+        <UiCard shadow="never" class="workspace-card">
           <div class="card-heading">
             <div>
               <span class="section-kicker">BUSINESS CATALOG</span>
               <h3>业务配置目录</h3>
               <p>以业务为中心查看配置完整度，表单配置和审批方式请在“流程配置”菜单中维护。</p>
             </div>
-            <el-button v-hasPermi="['ecology:businessType:add']" type="primary" plain icon="Plus" @click="goToBusinessType">新增业务类型</el-button>
+            <UiButton v-hasPermi="['ecology:businessType:add']" type="primary" @click="goToBusinessType"><el-icon><Plus /></el-icon>新增业务类型</UiButton>
           </div>
 
           <el-alert v-if="!loading && !businessTypes.length" title="暂无业务类型，请先维护业务类型后再配置流程和审批方案。" type="warning" :closable="false" show-icon class="mb-3" />
 
-          <DepartmentDataTable v-loading="loading" :data="businessRows" border>
+          <DepartmentDataTable :loading="loading" :data="businessRows" border>
             <el-table-column label="业务名称" min-width="220">
               <template #default="scope"><div class="business-name"><span>{{ scope.row.businessName.slice(0, 1) }}</span><div><strong>{{ scope.row.businessName }}</strong><small>{{ scope.row.businessType }}</small></div></div></template>
             </el-table-column>
             <el-table-column label="审批方案" width="150" align="center"><template #default="scope"><span class="count-value">{{ scope.row.planCount }}</span><small> 个启用方案</small></template></el-table-column>
             <el-table-column label="导入模板" width="140" align="center"><template #default="scope"><span class="count-value">{{ scope.row.templateCount }}</span><small> 个模板</small></template></el-table-column>
             <el-table-column label="配置状态" min-width="190">
-              <template #default="scope"><el-tag :type="scope.row.statusType" effect="plain">{{ scope.row.statusLabel }}</el-tag><span v-if="scope.row.statusHint" class="status-hint">{{ scope.row.statusHint }}</span></template>
+              <template #default="scope"><UiTag :type="scope.row.statusType" effect="plain">{{ scope.row.statusLabel }}</UiTag><span v-if="scope.row.statusHint" class="status-hint">{{ scope.row.statusHint }}</span></template>
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="250" align="center">
               <template #default="scope">
                 <div class="row-actions">
-                  <el-button v-hasPermi="['ecology:businessType:list']" link type="primary" @click="goToBusinessType">业务类型</el-button>
-                  <el-button v-hasPermi="['ecology:departmentApproval:list']" link type="primary" @click="goToApprovalPlan(scope.row.businessType)">审批方案</el-button>
-                  <el-button v-hasPermi="['ecology:importConfig:list']" link type="success" @click="goToImportConfig(scope.row.businessType)">导入模板</el-button>
+                  <UiButton v-hasPermi="['ecology:businessType:list']" link type="primary" @click="goToBusinessType">业务类型</UiButton>
+                  <UiButton v-hasPermi="['ecology:departmentApproval:list']" link type="primary" @click="goToApprovalPlan(scope.row.businessType)">审批方案</UiButton>
+                  <UiButton v-hasPermi="['ecology:importConfig:list']" link type="success" @click="goToImportConfig(scope.row.businessType)">导入模板</UiButton>
                 </div>
               </template>
             </el-table-column>
           </DepartmentDataTable>
-          <el-empty v-if="!loading && !businessRows.length" description="暂无业务配置" />
-        </el-card>
+          <UiEmpty v-if="!loading && !businessRows.length" description="暂无业务配置" />
+        </UiCard>
 
       </el-tab-pane>
 
@@ -78,12 +78,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { CollectionTag, Connection, DataAnalysis, DocumentCopy, Finished, SetUp } from '@element-plus/icons-vue';
+import { CollectionTag, Connection, DataAnalysis, DocumentCopy, Finished, Plus, Refresh, SetUp } from '@element-plus/icons-vue';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPageTabs from '@/components/Department/PageTabs.vue';
 import BusinessTypePanel from '../center/BusinessTypePanel.vue';
 import DepartmentApprovalPanel from '../center/DepartmentApprovalPanel.vue';
 import EcologyImportConfig from '../importConfig/index.vue';
+import { UiButton, UiCard, UiEmpty, UiTag } from '@/components/UiKit';
 import { listOaBusinessTypes, listOaDepartmentApprovals, listOaFormWorkflows, listOaImportBusinessConfigs } from '@/api/ecology';
 import type { OaBusinessTypeVO, OaDepartmentApprovalVO, OaFormWorkflowVO } from '@/api/ecology/types';
 import type { OaImportBusinessConfigVO } from '@/api/ecology/importBusinessTypes';
@@ -144,7 +145,7 @@ onMounted(loadData);
 .ecology-business-config-page { --config-blue: #4b9ee8; --config-cyan: #3ca6b8; --config-green: #71ad3d; --config-orange: #d58a32; --tableHeaderBg: #f8fafc; --tableHeaderTextColor: #475569; padding: 18px 20px 30px; background: var(--app-shell-bg); }
 .workspace-hero, .workspace-card, .overview-card { border: 1px solid var(--app-surface-border); border-radius: 18px; background: var(--app-surface-bg); box-shadow: 0 12px 30px rgba(15, 23, 42, .05); }
 .workspace-hero { display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: 29px 34px; overflow: hidden; background: linear-gradient(120deg, var(--app-surface-bg), color-mix(in srgb, var(--el-color-primary) 8%, var(--app-surface-bg))); }
-.workspace-hero :deep(.el-card__body), .workspace-card :deep(.el-card__body), .overview-card :deep(.el-card__body) { padding: 0; }
+.workspace-hero :deep(.el-card__body), .workspace-hero :deep(.ui-animal-card__body), .workspace-card :deep(.el-card__body), .workspace-card :deep(.ui-animal-card__body), .overview-card :deep(.el-card__body), .overview-card :deep(.ui-animal-card__body) { padding: 0; }
 .workspace-eyebrow, .section-kicker { display: inline-flex; align-items: center; gap: 7px; color: var(--el-color-primary); font-size: 11px; font-weight: 800; letter-spacing: .16em; }
 .workspace-hero h2 { margin: 10px 0 7px; color: var(--app-text-title); font-size: 28px; line-height: 1.2; }
 .workspace-hero p, .card-heading p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; line-height: 1.7; }
@@ -287,6 +288,374 @@ html.dark .config-tabs :deep(.el-tabs__item.is-active) {
 
   .config-tabs :deep(.el-tabs__item) {
     min-width: 0;
+  }
+}
+</style>
+
+<!-- 动森模式页面皮肤：业务配置页的原始样式包含办公蓝色，按主题语义统一为奶油绿配色。 -->
+<style lang="scss">
+html[data-ui-theme='animal'] .ecology-business-config-page {
+  --config-blue: var(--animal-primary-color);
+  --config-cyan: #3aa89d;
+  --config-green: var(--animal-status-success);
+  --config-orange: var(--animal-status-warning);
+  --tableHeaderBg: #f7f3df;
+  --tableHeaderTextColor: #6f5131;
+  color: var(--animal-text-color);
+  background: transparent;
+
+  .workspace-hero,
+  .workspace-card,
+  .overview-card {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  .workspace-hero {
+    border-color: var(--animal-border-color);
+    background:
+      radial-gradient(circle at 92% 18%, rgb(25 200 185 / 14%), transparent 25%),
+      linear-gradient(118deg, #fffdf5 0%, #f0f7e8 55%, #e4f2df 100%);
+  }
+
+  .workspace-hero::after {
+    border-color: rgb(25 200 185 / 22%);
+  }
+
+  .workspace-eyebrow,
+  .section-kicker {
+    color: #3f8f83;
+  }
+
+  .workspace-hero h2,
+  .card-heading h3,
+  .overview-card > div span,
+  .business-name strong,
+  .workspace-hero__status strong {
+    color: var(--animal-text-color);
+  }
+
+  .workspace-hero p,
+  .card-heading p,
+  .workspace-hero__status div span,
+  .overview-card small,
+  .business-name small,
+  .count-value + small,
+  .status-hint {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .workspace-hero__status {
+    border-color: rgb(25 145 132 / 26%);
+    background: linear-gradient(135deg, rgb(255 255 255 / 70%), rgb(232 249 239 / 70%));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 72%), var(--app-shadow-md);
+  }
+
+  .status-icon,
+  .business-name > span {
+    border: 1px solid rgb(25 200 185 / 25%);
+    color: #168f84;
+    background: linear-gradient(145deg, #e6f9f6, #d7f1e7);
+  }
+
+  .workspace-hero__status .el-button,
+  .workspace-hero__status .ui-animal-button,
+  .card-heading > .el-button,
+  .card-heading > .ui-animal-button {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .workspace-hero__status .el-button:hover,
+  .workspace-hero__status .ui-animal-button:hover,
+  .card-heading > .el-button:hover,
+  .card-heading > .ui-animal-button:hover {
+    border-color: var(--animal-primary-color) !important;
+    color: #168f84 !important;
+    background: var(--animal-primary-color-bg) !important;
+  }
+
+  .overview-card {
+    border-radius: var(--animal-radius-card);
+    background: linear-gradient(145deg, var(--app-surface-bg), var(--animal-bg-color));
+  }
+
+  .overview-card__icon {
+    background: color-mix(in srgb, currentColor 13%, var(--app-surface-bg));
+  }
+
+  .overview-card:hover,
+  .workspace-card:hover {
+    border-color: rgb(25 200 185 / 42%);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .config-tabs .el-tabs__header {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .config-tabs .el-tabs__nav-wrap {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .config-tabs .el-tabs__item {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .config-tabs .el-tabs__item:hover,
+  .config-tabs .el-tabs__item.is-active {
+    color: var(--animal-primary-color);
+    background: var(--animal-bg-color-input);
+  }
+
+  .config-tabs .el-tabs__item.is-active {
+    box-shadow: 0 4px 12px rgb(64 91 74 / 10%), inset 0 0 0 1px rgb(25 200 185 / 22%);
+  }
+
+  .workspace-card .el-alert {
+    border-color: rgb(200 139 43 / 28%);
+    background: linear-gradient(90deg, rgb(200 139 43 / 12%), var(--animal-bg-color-secondary));
+  }
+
+  .workspace-card .el-alert__title,
+  .workspace-card .el-alert__icon {
+    color: var(--animal-status-warning);
+  }
+
+  .department-data-table {
+    --el-table-bg-color: var(--app-surface-bg);
+    --el-table-tr-bg-color: var(--app-surface-bg);
+    --el-table-header-bg-color: var(--tableHeaderBg);
+    --el-table-row-hover-bg-color: color-mix(in srgb, var(--animal-primary-color) 12%, var(--app-surface-bg));
+    --el-table-border-color: var(--animal-border-color-light);
+    --el-table-text-color: var(--animal-text-color);
+    border-color: var(--animal-border-color-light);
+  }
+
+  .department-data-table :is(.el-table__header-wrapper, .el-table__fixed-header-wrapper) th.el-table__cell {
+    color: var(--tableHeaderTextColor) !important;
+    background: var(--tableHeaderBg) !important;
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .department-data-table :is(.el-table__body-wrapper, .el-table__fixed-body-wrapper) td.el-table__cell {
+    color: var(--animal-text-color);
+    border-bottom-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+  }
+
+  .department-data-table :is(.el-table__body tr:hover > td.el-table__cell, .el-table__fixed-right tr:hover > td.el-table__cell) {
+    background: var(--el-table-row-hover-bg-color) !important;
+  }
+
+  .department-data-table :is(.el-table__fixed, .el-table__fixed-right) {
+    background: var(--app-surface-bg);
+    box-shadow: -8px 0 16px rgb(64 91 74 / 9%);
+  }
+
+  .department-data-table :is(.el-table__fixed-right th.el-table__cell, .el-table__fixed-right td.el-table__cell, .el-table__fixed-right-patch) {
+    background: var(--app-surface-bg) !important;
+  }
+
+  .department-data-table .el-table__empty-text,
+  .workspace-card .el-empty__description p {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .count-value {
+    color: var(--animal-primary-color);
+  }
+
+  .row-actions :is(.el-button--primary, .el-button--success, .ui-animal-button--primary, .ui-animal-button--success) {
+    color: #168f84 !important;
+  }
+
+  .row-actions .el-button:hover,
+  .row-actions .ui-animal-button:hover {
+    color: var(--animal-primary-color) !important;
+    background: var(--animal-primary-color-bg) !important;
+  }
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-business-config-page {
+  --tableHeaderBg: #405650;
+  --tableHeaderTextColor: #fff6df;
+
+  .workspace-hero,
+  .workspace-card,
+  .overview-card {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  .workspace-hero {
+    border-color: var(--animal-border-color);
+    background:
+      radial-gradient(circle at 88% 5%, rgb(127 228 211 / 18%), transparent 28%),
+      linear-gradient(118deg, #29433f 0%, #345751 56%, #3f6b62 100%);
+  }
+
+  .workspace-hero::after {
+    border-color: rgb(127 228 211 / 28%);
+  }
+
+  .workspace-eyebrow,
+  .section-kicker {
+    color: #8fe0d1;
+  }
+
+  .workspace-hero h2,
+  .card-heading h3,
+  .overview-card > div span,
+  .business-name strong,
+  .workspace-hero__status strong {
+    color: var(--animal-text-color);
+  }
+
+  .workspace-hero p,
+  .card-heading p,
+  .workspace-hero__status div span,
+  .overview-card small,
+  .business-name small,
+  .count-value + small,
+  .status-hint {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .workspace-hero__status {
+    border-color: rgb(127 228 211 / 28%);
+    background: linear-gradient(135deg, rgb(64 86 80 / 88%), rgb(38 58 56 / 78%));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), var(--app-shadow-md);
+  }
+
+  .status-icon,
+  .business-name > span {
+    border-color: rgb(127 228 211 / 24%);
+    color: #9be9dc;
+    background: linear-gradient(145deg, rgb(25 200 185 / 24%), rgb(25 200 185 / 9%));
+  }
+
+  .workspace-hero__status .el-button,
+  .card-heading > .el-button {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .workspace-hero__status .el-button:hover,
+  .card-heading > .el-button:hover {
+    border-color: var(--animal-primary-color) !important;
+    color: #a8f0e4 !important;
+    background: rgb(25 200 185 / 16%) !important;
+  }
+
+  .overview-card {
+    background: linear-gradient(145deg, #2f4542, #263937);
+  }
+
+  .overview-card__icon {
+    background: color-mix(in srgb, currentColor 20%, var(--app-surface-bg));
+  }
+
+  .overview-card:hover,
+  .workspace-card:hover {
+    border-color: rgb(127 228 211 / 52%);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .config-tabs .el-tabs__header {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .config-tabs .el-tabs__nav-wrap {
+    border-color: var(--animal-border-color);
+    background: var(--animal-bg-color-secondary);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 22%);
+  }
+
+  .config-tabs .el-tabs__item {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .config-tabs .el-tabs__item:hover,
+  .config-tabs .el-tabs__item.is-active {
+    color: #a8f0e4;
+    background: var(--animal-bg-color-input);
+  }
+
+  .config-tabs .el-tabs__item.is-active {
+    box-shadow: 0 4px 12px rgb(0 0 0 / 22%), inset 0 0 0 1px rgb(127 228 211 / 28%);
+  }
+
+  .workspace-card .el-alert {
+    border-color: rgb(228 182 106 / 28%);
+    background: linear-gradient(90deg, rgb(228 182 106 / 13%), var(--animal-bg-color-secondary));
+  }
+
+  .workspace-card .el-alert__title,
+  .workspace-card .el-alert__icon {
+    color: var(--animal-status-warning);
+  }
+
+  .department-data-table {
+    --el-table-bg-color: var(--app-surface-bg);
+    --el-table-tr-bg-color: var(--app-surface-bg);
+    --el-table-header-bg-color: var(--tableHeaderBg);
+    --el-table-row-hover-bg-color: rgb(25 200 185 / 14%);
+    --el-table-border-color: var(--animal-border-color-light);
+    --el-table-text-color: var(--animal-text-color);
+    border-color: var(--animal-border-color-light);
+  }
+
+  .department-data-table :is(.el-table__header-wrapper, .el-table__fixed-header-wrapper) th.el-table__cell {
+    color: var(--tableHeaderTextColor) !important;
+    background: var(--tableHeaderBg) !important;
+    border-bottom-color: var(--animal-border-color);
+  }
+
+  .department-data-table :is(.el-table__body-wrapper, .el-table__fixed-body-wrapper) td.el-table__cell {
+    color: var(--animal-text-color);
+    border-bottom-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+  }
+
+  .department-data-table :is(.el-table__body tr:hover > td.el-table__cell, .el-table__fixed-right tr:hover > td.el-table__cell) {
+    background: var(--el-table-row-hover-bg-color) !important;
+  }
+
+  .department-data-table :is(.el-table__fixed, .el-table__fixed-right) {
+    background: var(--app-surface-bg);
+    box-shadow: -8px 0 16px rgb(0 0 0 / 22%);
+  }
+
+  .department-data-table :is(.el-table__fixed-right th.el-table__cell, .el-table__fixed-right td.el-table__cell, .el-table__fixed-right-patch) {
+    background: var(--app-surface-bg) !important;
+  }
+
+  .department-data-table .el-table__empty-text,
+  .workspace-card .el-empty__description p {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .count-value {
+    color: #8fe0d1;
+  }
+
+  .row-actions :is(.el-button--primary, .el-button--success) {
+    color: #9be9dc !important;
+  }
+
+  .row-actions .el-button:hover {
+    color: #a8f0e4 !important;
+    background: rgb(25 200 185 / 16%) !important;
   }
 }
 </style>

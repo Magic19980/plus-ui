@@ -5,7 +5,7 @@
     class="tree-panel-col"
     :class="{ 'is-collapsed': modelCollapsed }"
   >
-    <el-card shadow="hover" class="side-panel tree-panel-shell" :class="{ 'is-collapsed': modelCollapsed }">
+    <UiCard shadow="hover" class="side-panel tree-panel-shell" :class="{ 'is-collapsed': modelCollapsed }">
       <template #header>
         <div
           class="panel-heading search-panel-toggle tree-panel-header"
@@ -18,7 +18,7 @@
         </div>
       </template>
       <template v-if="!modelCollapsed">
-        <el-input v-model="filterText" :placeholder="placeholder" prefix-icon="Search" clearable />
+        <UiInput v-model="filterText" :placeholder="placeholder" prefix-icon="Search" clearable />
         <div ref="treeWrapRef" class="dept-tree-wrap">
           <el-tree-v2
             ref="treeRef"
@@ -36,20 +36,21 @@
             <template #default="{ node }">
               <span class="tree-node-label" :class="{ 'is-disabled': isNodeDisabled(node.data) }">
                 <span>{{ node.label }}</span>
-                <el-tooltip v-if="isNodeDisabled(node.data)" content="停用" placement="top">
+                <UiTooltip v-if="isNodeDisabled(node.data)" content="停用" placement="bottom">
                   <el-icon class="tree-node-disabled-icon"><CircleCloseFilled /></el-icon>
-                </el-tooltip>
+                </UiTooltip>
               </span>
             </template>
           </el-tree-v2>
         </div>
       </template>
-    </el-card>
+    </UiCard>
   </el-col>
 </template>
 
 <script setup lang="ts">
 import type { TreeKey, TreeV2Instance } from 'element-plus';
+import { UiCard, UiInput, UiTooltip } from '@/components/UiKit';
 
 const props = withDefaults(
   defineProps<{
@@ -226,12 +227,14 @@ $mobile-breakpoint: 900px;
   --tree-panel-max-height: 620px;
 }
 
-.tree-panel-shell :deep(.el-card__header) {
+.tree-panel-shell :deep(.el-card__header),
+.tree-panel-shell :deep(.ui-animal-card__header) {
   display: block;
   padding: 12px 16px !important;
 }
 
-.tree-panel-shell :deep(.el-card__body) {
+.tree-panel-shell :deep(.el-card__body),
+.tree-panel-shell :deep(.ui-animal-card__body) {
   display: flex;
   flex-direction: column;
   height: var(--tree-panel-max-height);
@@ -260,11 +263,13 @@ $mobile-breakpoint: 900px;
   justify-content: center;
 }
 
-.side-panel.is-collapsed :deep(.el-card__body) {
+.side-panel.is-collapsed :deep(.el-card__body),
+.side-panel.is-collapsed :deep(.ui-animal-card__body) {
   display: none;
 }
 
-.tree-panel-shell.is-collapsed :deep(.el-card__header) {
+.tree-panel-shell.is-collapsed :deep(.el-card__header),
+.tree-panel-shell.is-collapsed :deep(.ui-animal-card__header) {
   padding: 12px 0 !important;
 }
 

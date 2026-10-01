@@ -19,7 +19,7 @@
         :class="{ 'is-tree-collapsed': treeCollapsed }"
       >
         <div class="search-wrap">
-          <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+          <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
                 <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -27,16 +27,16 @@
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="120px" class="query-form">
               <el-form-item :label="$t('common.processDefinitionCode')" prop="flowCode">
-                <el-input v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
+                <UiInput v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+                <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+                <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
               </el-form-item>
             </el-form>
-          </el-card>
+          </UiCard>
         </div>
-        <el-card shadow="hover" class="table-panel">
+        <UiCard shadow="hover" class="table-panel">
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
@@ -52,8 +52,8 @@
             </div>
           </template>
 
-          <el-table
-            v-loading="loading"
+          <DepartmentDataTable
+            :loading="loading"
             border
             class="data-table"
             :data="processInstanceList"
@@ -75,8 +75,8 @@
             </el-table-column>
             <el-table-column v-if="tab === 'running'" align="center" prop="isSuspended" :label="$t('common.status')" min-width="70">
               <template #default="scope">
-                <el-tag v-if="!scope.row.isSuspended" type="success">{{ $t('common.tagActive') }}</el-tag>
-                <el-tag v-else type="danger">{{ $t('common.tagSuspended') }}</el-tag>
+                <UiTag v-if="!scope.row.isSuspended" type="success">{{ $t('common.tagActive') }}</UiTag>
+                <UiTag v-else type="danger">{{ $t('common.tagSuspended') }}</UiTag>
               </template>
             </el-table-column>
             <el-table-column align="center" :label="$t('common.processStatus')" min-width="70">
@@ -85,62 +85,59 @@
               </template>
             </el-table-column>
             <el-table-column align="center" prop="createTime" :label="$t('common.launchTime')" width="160"></el-table-column>
-            <el-table-column :label="$t('common.operation')" align="center" width="162">
+            <el-table-column :label="$t('common.operation')" align="center" width="250">
               <template #default="scope">
-                <el-row :gutter="10" class="mb8">
-                  <el-col
-                    :span="1.5"
+                <DepartmentTableActions>
+                  <UiButton
                     v-if="
                       scope.row.flowStatus === 'draft' ||
                       scope.row.flowStatus === 'cancel' ||
                       scope.row.flowStatus === 'back'
                     "
+                    type="primary"
+                    size="small"
+                    icon="Edit"
+                    @click="handleOpen(scope.row, 'update')"
                   >
-                    <el-button type="primary" size="small" icon="Edit" @click="handleOpen(scope.row, 'update')">
-                      编辑
-                    </el-button>
-                  </el-col>
-                  <el-col
-                    :span="1.5"
+                    编辑
+                  </UiButton>
+                  <UiButton
                     v-if="
                       scope.row.flowStatus === 'draft' ||
                       scope.row.flowStatus === 'cancel' ||
                       scope.row.flowStatus === 'back'
                     "
+                    type="danger"
+                    size="small"
+                    icon="Delete"
+                    @click="handleDelete(scope.row)"
                   >
-                    <el-button type="primary" size="small" icon="Delete" @click="handleDelete(scope.row)">
-                      {{ $t('common.btnDelete') }}
-                    </el-button>
-                  </el-col>
-                </el-row>
-                <el-row :gutter="10" class="mb8">
-                  <el-col :span="1.5">
-                    <el-button type="primary" size="small" icon="View" @click="handleOpen(scope.row, 'view')">
-                      查看
-                    </el-button>
-                  </el-col>
-                  <el-col :span="1.5" v-if="scope.row.flowStatus === 'waiting'">
-                    <el-button
-                      type="primary"
-                      size="small"
-                      icon="Notification"
-                      @click="handleCancelProcessApply(scope.row.businessId)"
-                    >
-                      撤销
-                    </el-button>
-                  </el-col>
-                </el-row>
+                    {{ $t('common.btnDelete') }}
+                  </UiButton>
+                  <UiButton type="primary" size="small" icon="View" @click="handleOpen(scope.row, 'view')">
+                    查看
+                  </UiButton>
+                  <UiButton
+                    v-if="scope.row.flowStatus === 'waiting'"
+                    type="warning"
+                    size="small"
+                    icon="Notification"
+                    @click="handleCancelProcessApply(scope.row.businessId)"
+                  >
+                    撤销
+                  </UiButton>
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
-          <pagination
+          </DepartmentDataTable>
+          <UiPagination
             v-show="total > 0"
             v-model:page="queryParams.pageNum"
             v-model:limit="queryParams.pageSize"
             :total="total"
             @pagination="getList"
           />
-        </el-card>
+        </UiCard>
       </el-col>
     </el-row>
     <!-- 提交组件 -->
@@ -157,12 +154,15 @@ import { pageByCurrent, deleteByInstanceIds, cancelProcessApply } from '@/api/wo
 import { FlowInstanceQuery, FlowInstanceVO } from '@/api/workflow/instance/types';
 import workflowCommon from '@/api/workflow/workflowCommon';
 import { RouterJumpVo } from '@/api/workflow/workflowCommon/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import TreePanel from '@/components/TreePanel/index.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
 import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import { useTableSelection } from '@/hooks/table/useTableSelection';
 import { useTreeCollapsed } from '@/hooks/tree/useTreeCollapsed';
+import { UiButton, UiCard, UiInput, UiPagination, UiTag } from '@/components/UiKit';
 import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 

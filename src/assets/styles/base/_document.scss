@@ -1,16 +1,5 @@
 /* Global document styles and lightweight utility helpers. */
 
-// --- 暗黑模式切换过渡（仅切换期间激活，避免路由过渡干扰） ---
-:root.dark-transitioning,
-:root.dark-transitioning * {
-  transition:
-    background-color 0.35s ease,
-    border-color 0.3s ease,
-    color 0.3s ease,
-    box-shadow 0.35s ease,
-    fill 0.3s ease !important;
-}
-
 // --- 自定义选中色 ---
 ::selection {
   background: var(--app-accent-soft);

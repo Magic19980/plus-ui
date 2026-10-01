@@ -1,6 +1,6 @@
 <template>
   <div class="p-2 import-business-page" :class="{ 'is-embedded': props.embedded }">
-    <el-card v-if="!props.embedded" shadow="never" class="intro-card">
+    <UiCard v-if="!props.embedded" shadow="never" class="intro-card">
       <div class="intro-content">
         <div>
           <div class="eyebrow"><span class="eyebrow-dot" /> IMPORT TO ECOLOGY</div>
@@ -10,12 +10,12 @@
         <div class="intro-aside">
           <span class="intro-aside-label">WORKFLOW READY</span>
           <strong>泛微业务导入中心</strong>
-          <el-tag type="success" effect="plain">人员来自泛微同步用户</el-tag>
+          <UiTag type="success" effect="plain">人员来自泛微同步用户</UiTag>
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="main-card mt-2">
+    <UiCard shadow="never" class="main-card mt-2">
       <div class="workspace-heading">
         <div>
           <div class="panel-kicker"><span class="kicker-dot" /> IMPORT BATCHES</div>
@@ -30,29 +30,29 @@
 
       <div class="overview-grid">
         <div class="overview-item overview-item--blue"><span class="overview-icon">ALL</span><div><strong>{{ total }}</strong><span>全部批次</span></div><small>当前筛选结果</small></div>
-        <div class="overview-item overview-item--orange"><span class="overview-icon">TODO</span><div><strong>{{ pendingCount }}</strong><span>待处理</span></div><small>需要继续处理</small></div>
+        <div class="overview-item overview-item--orange"><span class="overview-icon"><el-icon :size="17"><Timer /></el-icon></span><div><strong>{{ pendingCount }}</strong><span>待处理</span></div><small>需要继续处理</small></div>
         <div class="overview-item overview-item--green"><span class="overview-icon">DONE</span><div><strong>{{ submittedCount }}</strong><span>已提交</span></div><small>已进入泛微</small></div>
       </div>
 
       <div class="filter-panel">
         <div class="filter-heading"><strong>筛选批次</strong><span>先选择业务模板，再上传对应 Excel 文件</span></div>
         <el-form :model="query" :inline="true" @submit.prevent>
-          <el-form-item label="业务模板" required><el-select v-model="query.configId" clearable filterable placeholder="必须先选择业务模板" style="width: 260px" @change="handleConfigChange"><el-option v-for="item in configs" :key="item.id" :label="item.businessName" :value="item.id"><div class="template-option"><span>{{ item.businessName }}</span><small v-if="item.remark">{{ item.remark }}</small></div></el-option></el-select></el-form-item>
-          <el-form-item label="批次号"><el-input v-model="query.batchNo" clearable placeholder="导入批次号" @keyup.enter="search" /></el-form-item>
-          <el-form-item label="状态"><el-select v-model="query.status" clearable placeholder="全部状态" style="width: 140px"><el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
-          <el-form-item><el-button type="primary" icon="Search" @click="search">查询</el-button><el-button icon="Refresh" @click="resetQuery">重置</el-button></el-form-item>
+          <el-form-item label="业务模板" required><UiSelect v-model="query.configId" :options="configOptions" clearable filterable placeholder="必须先选择业务模板" style="width: 260px" @change="handleConfigChange" /></el-form-item>
+          <el-form-item label="批次号"><UiInput v-model="query.batchNo" clearable placeholder="导入批次号" @keyup.enter="search" /></el-form-item>
+          <el-form-item label="状态"><UiSelect v-model="query.status" :options="statusOptions" clearable placeholder="全部状态" style="width: 140px" /></el-form-item>
+          <el-form-item><UiButton type="primary" @click="search">查询</UiButton><UiButton @click="resetQuery">重置</UiButton></el-form-item>
         </el-form>
       </div>
 
       <div class="toolbar">
         <div class="toolbar-hint"><span class="toolbar-dot" />{{ selectedConfig ? `当前选择：${selectedConfig.businessName}。系统只按该业务模板解析 Excel。` : '请先选择明确的业务模板，再上传对应 Excel。' }}</div>
         <div>
-          <el-button plain icon="Download" :disabled="!query.configId" @click="downloadTemplate">下载模板</el-button>
-          <el-button v-hasPermi="['ecology:importBusiness:import']" type="primary" icon="Upload" :disabled="!query.configId" @click="openUpload">导入 Excel</el-button>
-          <el-button icon="Refresh" @click="loadList">刷新</el-button>
+          <UiButton plain icon="Download" :disabled="!query.configId" @click="downloadTemplate">下载模板</UiButton>
+          <UiButton v-hasPermi="['ecology:importBusiness:import']" type="primary" icon="Upload" :disabled="!query.configId" @click="openUpload">导入 Excel</UiButton>
+          <UiButton icon="Refresh" @click="loadList">刷新</UiButton>
         </div>
       </div>
-      <el-table v-if="batches.length > 0 || loading" v-loading="loading" :data="batches" border class="batch-table">
+      <DepartmentDataTable v-if="batches.length > 0 || loading" :loading="loading" :data="batches" border class="batch-table">
         <el-table-column label="批次号" prop="batchNo" width="190" show-overflow-tooltip />
         <el-table-column label="业务" min-width="190"><template #default="scope"><div class="business-cell"><span class="business-mark">{{ businessInitial(scope.row.businessName || scope.row.businessType) }}</span><div><strong>{{ scope.row.businessName || scope.row.businessType }}</strong><small>{{ scope.row.businessType || '已配置业务模板' }}</small></div></div></template></el-table-column>
         <el-table-column label="来源文件" min-width="220" show-overflow-tooltip><template #default="scope"><div class="source-cell"><span class="source-icon">XLS</span><span>{{ scope.row.sourceFileName || '未记录文件名' }}</span></div></template></el-table-column>
@@ -62,27 +62,27 @@
         <el-table-column label="处理提示" min-width="260" show-overflow-tooltip><template #default="scope"><span class="message-cell">{{ scope.row.message || '暂无处理提示' }}</span></template></el-table-column>
         <el-table-column label="操作" fixed="right" width="330" align="center">
           <template #default="scope">
-            <div class="table-actions"><el-button link type="primary" @click="openDetail(scope.row)">查看明细</el-button><el-button v-if="canMap(scope.row)" v-hasPermi="['ecology:importBusiness:map']" link type="warning" @click="openMapping(scope.row)">处理组织</el-button><el-button v-if="canSubmit(scope.row)" v-hasPermi="['ecology:importBusiness:submit']" link type="success" @click="openSubmit(scope.row)">提交泛微</el-button><el-button v-if="canRemoveBatch(scope.row)" v-hasPermi="['ecology:importBusiness:remove']" link type="danger" @click="removeBatch(scope.row)">删除</el-button></div>
+            <DepartmentTableActions><UiButton link type="primary" @click="openDetail(scope.row)">查看明细</UiButton><UiButton v-if="canMap(scope.row)" v-hasPermi="['ecology:importBusiness:map']" link type="warning" @click="openMapping(scope.row)">处理组织</UiButton><UiButton v-if="canSubmit(scope.row)" v-hasPermi="['ecology:importBusiness:submit']" link type="success" @click="openSubmit(scope.row)">提交泛微</UiButton><UiButton v-if="canRemoveBatch(scope.row)" v-hasPermi="['ecology:importBusiness:remove']" link type="danger" @click="removeBatch(scope.row)">删除</UiButton></DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
       <div v-else class="table-empty empty-panel">
         <span class="empty-mark"><i /><i /><i /></span>
         <strong>暂无导入批次</strong>
         <p>{{ query.configId ? '导入 Excel 后，批次记录会显示在这里。' : '先选择业务模板，再开始导入 Excel。' }}</p>
-        <el-button type="primary" plain icon="Upload" :disabled="!query.configId" @click="openUpload">导入第一批数据</el-button>
+        <UiButton type="primary" plain icon="Upload" :disabled="!query.configId" @click="openUpload">导入第一批数据</UiButton>
       </div>
-      <pagination v-show="total > 0" v-model:page="query.pageNum" v-model:limit="query.pageSize" :total="total" @pagination="loadList" />
-    </el-card>
+      <UiPagination v-show="total > 0" v-model:page="query.pageNum" v-model:limit="query.pageSize" :total="total" @pagination="loadList" />
+    </UiCard>
 
     <el-dialog v-model="uploadDialog.visible" title="导入业务 Excel" width="560px" append-to-body destroy-on-close>
       <el-alert :title="selectedConfig ? `当前业务：${selectedConfig.businessName}` : '请先选择业务模板'" type="info" :closable="false" class="mb-3" />
-      <el-upload ref="uploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="globalHeaders()" :action="uploadUrl" :auto-upload="false" :disabled="uploadDialog.loading" :on-change="handleUploadChange" :on-remove="handleUploadRemove" :on-success="handleUploadSuccess" :on-error="handleUploadError">
+      <UiUpload ref="uploadRef" drag :limit="1" accept=".xlsx,.xls" :headers="globalHeaders()" :action="uploadUrl" :auto-upload="false" :disabled="uploadDialog.loading" :on-change="handleUploadChange" :on-remove="handleUploadRemove" :on-success="handleUploadSuccess" :on-error="handleUploadError">
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
         <div class="el-upload__text">拖拽 Excel 到这里，或点击选择文件</div>
         <template #tip><div class="el-upload__tip">系统会按业务模板配置的工作表和表头读取数据，单批次最多 20000 行。</div></template>
-      </el-upload>
-      <template #footer><el-button type="primary" :loading="uploadDialog.loading" @click="submitUpload">开始导入</el-button><el-button @click="uploadDialog.visible = false">取消</el-button></template>
+      </UiUpload>
+      <template #footer><UiButton type="primary" :loading="uploadDialog.loading" @click="submitUpload">开始导入</UiButton><UiButton @click="uploadDialog.visible = false">取消</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="detailDialog.visible" title="导入批次明细" width="1120px" append-to-body destroy-on-close>
@@ -101,22 +101,22 @@
         <el-alert v-else :title="detail.message || '业务归属组织已全部匹配，可以提交泛微'" :type="detail.status === 'SUBMITTED' ? 'success' : 'info'" :closable="false" class="mt-3" />
       </div>
       <div class="detail-groups-tip"><el-icon><InfoFilled /></el-icon><span>以下按分组展示提交结果：每个分组对应一份泛微申请，分组下的明细统一继承该分组状态。</span></div>
-      <el-table v-loading="detailDialog.loading" :data="detail?.groups || []" border max-height="560px" class="mt-3 detail-groups-table" row-key="groupKey">
+      <DepartmentDataTable :loading="detailDialog.loading" :data="detail?.groups || []" border max-height="560px" class="mt-3 detail-groups-table" row-key="groupKey">
         <el-table-column type="expand" width="52" fixed="left">
           <template #default="scope">
             <div class="group-records-panel">
               <div class="group-records-panel__heading"><strong>{{ scope.row.groupName || '未命名分组' }} · 明细数据</strong><span>{{ scope.row.recordCount || 0 }} 条明细，以下数据统一使用该分组的泛微提交结果</span></div>
-              <el-table :data="groupRecords(scope.row.groupKey)" border size="small" class="group-records-table">
+              <DepartmentDataTable :data="groupRecords(scope.row.groupKey)" border size="small" class="group-records-table" :max-height="360">
                 <el-table-column label="行号" prop="rowNo" width="70" />
                 <el-table-column label="泛微组织" prop="deptName" min-width="150" show-overflow-tooltip />
                 <el-table-column v-for="field in detailFields" :key="field.code" :label="field.header" :min-width="field.header.length > 8 ? 150 : 110" show-overflow-tooltip><template #default="recordScope">{{ recordScope.row.data?.[field.code] ?? '—' }}</template></el-table-column>
                 <el-table-column label="附件" width="100" align="center">
                   <template #default="recordScope">
-                    <el-button v-if="recordScope.row.attachmentOssId" link type="primary" @click="downloadGeneratedAttachment(recordScope.row)">下载附件</el-button>
+                    <UiButton v-if="recordScope.row.attachmentOssId" link type="primary" @click="downloadGeneratedAttachment(recordScope.row)">下载附件</UiButton>
                     <span v-else>—</span>
                   </template>
                 </el-table-column>
-              </el-table>
+              </DepartmentDataTable>
             </div>
           </template>
         </el-table-column>
@@ -124,12 +124,12 @@
           <template #default="scope"><div class="group-summary-cell"><strong>{{ scope.row.groupName || '未命名分组' }}</strong><small v-if="scope.row.groupKey && scope.row.groupKey !== '__ALL__'">{{ scope.row.groupKey }}</small></div></template>
         </el-table-column>
         <el-table-column label="明细" width="100" align="center"><template #default="scope"><strong class="group-number">{{ scope.row.recordCount || 0 }}</strong><span> 条</span><span v-if="scope.row.skippedCount" class="group-skipped-count">含 {{ scope.row.skippedCount }} 条跳过</span></template></el-table-column>
-        <el-table-column label="泛微申请" width="120" align="center"><template #default="scope"><el-tag v-if="scope.row.applicationCount" type="success" effect="plain">{{ scope.row.applicationCount }} 份</el-tag><span v-else class="group-muted">未提交</span></template></el-table-column>
-        <el-table-column label="状态" width="110" align="center"><template #default="scope"><el-tag :type="recordStatusType(scope.row.status)">{{ recordStatusLabel(scope.row.status) }}</el-tag></template></el-table-column>
+        <el-table-column label="泛微申请" width="120" align="center"><template #default="scope"><UiTag v-if="scope.row.applicationCount" type="success" effect="plain">{{ scope.row.applicationCount }} 份</UiTag><span v-else class="group-muted">未提交</span></template></el-table-column>
+        <el-table-column label="状态" width="110" align="center"><template #default="scope"><UiTag :type="recordStatusType(scope.row.status)">{{ recordStatusLabel(scope.row.status) }}</UiTag></template></el-table-column>
         <el-table-column label="处理说明" min-width="260" show-overflow-tooltip><template #default="scope">{{ groupStatusMessage(scope.row) }}</template></el-table-column>
-      </el-table>
+      </DepartmentDataTable>
       <div v-if="detail && !(detail.groups || []).length && !detailDialog.loading" class="detail-groups-empty">暂无可展示的分组明细</div>
-      <template #footer><el-button v-if="detail && canMap(detail)" type="warning" @click="openMapping(detail)">处理组织</el-button><el-button v-if="detail && canSubmit(detail)" type="primary" @click="openSubmit(detail)">提交泛微</el-button><el-button v-if="detail && canRemoveBatch(detail)" v-hasPermi="['ecology:importBusiness:remove']" type="danger" plain @click="removeBatch(detail)">删除批次</el-button><el-button @click="detailDialog.visible = false">关闭</el-button></template>
+      <template #footer><UiButton v-if="detail && canMap(detail)" type="warning" @click="openMapping(detail)">处理组织</UiButton><UiButton v-if="detail && canSubmit(detail)" type="primary" @click="openSubmit(detail)">提交泛微</UiButton><UiButton v-if="detail && canRemoveBatch(detail)" v-hasPermi="['ecology:importBusiness:remove']" type="danger" plain @click="removeBatch(detail)">删除批次</UiButton><UiButton @click="detailDialog.visible = false">关闭</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="mappingDialog.visible" title="匹配来源组织" width="760px" append-to-body destroy-on-close class="mapping-dialog">
@@ -156,15 +156,15 @@
               <span v-else class="mapping-placeholder"><el-icon><OfficeBuilding /></el-icon><span>选择目标泛微组织</span></span>
               <el-icon class="mapping-select__arrow"><ArrowDown /></el-icon>
             </button>
-            <el-button v-if="mappingValues[name]" link type="danger" class="mapping-clear" @click="clearMapping(name)">清除</el-button>
-            <el-button v-else-if="!mappingSkipped[name]" link type="warning" class="mapping-skip" @click="skipSourceDepartment(name)">跳过本批次</el-button>
-            <el-button v-else link type="primary" class="mapping-skip" @click="restoreSourceDepartment(name)">恢复处理</el-button>
+            <UiButton v-if="mappingValues[name]" link type="danger" class="mapping-clear" @click="clearMapping(name)">清除</UiButton>
+            <UiButton v-else-if="!mappingSkipped[name]" link type="warning" class="mapping-skip" @click="skipSourceDepartment(name)">跳过本批次</UiButton>
+            <UiButton v-else link type="primary" class="mapping-skip" @click="restoreSourceDepartment(name)">恢复处理</UiButton>
           </div>
           <div v-if="mappingSkipped[name]" class="mapping-skip-note"><span>跳过原因</span><el-input v-model="mappingSkipReasons[name]" size="small" maxlength="500" show-word-limit placeholder="例如：组织暂未同步" /></div>
           </div>
         </div>
       </div>
-      <template #footer><el-button type="primary" :loading="mappingDialog.loading" @click="saveMapping">保存处理结果</el-button><el-button @click="mappingDialog.visible = false">取消</el-button></template>
+      <template #footer><UiButton type="primary" :loading="mappingDialog.loading" @click="saveMapping">保存处理结果</UiButton><UiButton @click="mappingDialog.visible = false">取消</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="organizationPicker.visible" title="选择泛微组织" width="720px" append-to-body destroy-on-close class="organization-picker-dialog">
@@ -176,7 +176,7 @@
         <el-input v-model="organizationPicker.keyword" clearable placeholder="输入组织名称或印尼语名称" @keyup.enter="searchOrganizationOptions(organizationPicker.keyword)" @clear="restoreOrganizationTree">
           <template #prefix><el-icon><Search /></el-icon></template>
         </el-input>
-        <el-button type="primary" icon="Search" :loading="organizationPicker.loading" @click="searchOrganizationOptions(organizationPicker.keyword)">搜索组织</el-button>
+        <UiButton type="primary" :loading="organizationPicker.loading" @click="searchOrganizationOptions(organizationPicker.keyword)">搜索组织</UiButton>
       </div>
       <div class="picker-tip"><el-icon><InfoFilled /></el-icon>搜索结果会直接显示在组织树中，并自动展开命中组织的上级路径；也可以逐级展开查看下级组织。</div>
       <div v-loading="organizationTreeLoading" class="organization-tree-panel">
@@ -185,7 +185,7 @@
             <strong>泛微组织架构</strong>
             <span>{{ organizationPicker.mode === 'search' ? '当前显示搜索结果及其上级路径' : '展开节点查看下级组织，点击组织即可选中' }}</span>
           </div>
-          <el-tag size="small" effect="plain" :type="organizationPicker.mode === 'search' ? 'warning' : 'info'">{{ organizationPicker.mode === 'search' ? '搜索结果' : '懒加载' }}</el-tag>
+          <UiTag size="small" effect="plain" :type="organizationPicker.mode === 'search' ? 'warning' : 'info'">{{ organizationPicker.mode === 'search' ? '搜索结果' : '懒加载' }}</UiTag>
         </div>
         <el-tree
           v-if="organizationTreeInitialized"
@@ -213,7 +213,7 @@
           </template>
         </el-tree>
       </div>
-      <template #footer><el-button type="primary" :disabled="!organizationPicker.selectedDeptId" @click="confirmOrganizationSelection">确认选择</el-button><el-button @click="organizationPicker.visible = false">取消</el-button></template>
+      <template #footer><UiButton type="primary" :disabled="!organizationPicker.selectedDeptId" @click="confirmOrganizationSelection">确认选择</UiButton><UiButton @click="organizationPicker.visible = false">取消</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="submitDialog.visible" title="提交泛微审批" width="1080px" class="submit-dialog" append-to-body destroy-on-close>
@@ -261,16 +261,16 @@
               <div class="submit-preview-card__group">{{ row.groupName }} · {{ row.count }} 条明细</div>
             </div>
             <div class="submit-preview-card__actions">
-              <el-tag :type="approvalStatusType(row.approval?.status)">{{ approvalStatusLabel(row.approval?.status) }}</el-tag>
+              <UiTag :type="approvalStatusType(row.approval?.status)">{{ approvalStatusLabel(row.approval?.status) }}</UiTag>
               <template v-if="row.attachmentStatus === 'GENERATED' && row.attachmentOssId">
-                <el-button link type="primary" @click="downloadGeneratedAttachment(row)">下载附件</el-button>
-                <el-button v-if="!row.applicationId" link type="warning" :loading="attachmentUploadGroupKey === row.groupKey" @click="selectAttachmentUpload(row)">上传修改版</el-button>
+                <UiButton link type="primary" @click="downloadGeneratedAttachment(row)">下载附件</UiButton>
+                <UiButton v-if="!row.applicationId" link type="warning" :loading="attachmentUploadGroupKey === row.groupKey" @click="selectAttachmentUpload(row)">上传修改版</UiButton>
               </template>
               <template v-else-if="row.attachmentStatus === 'PENDING'">
-                <el-button link type="primary" :loading="attachmentDownloadGroupKey === row.groupKey" @click="downloadPendingAttachment(row)">生成并下载</el-button>
-                <el-button link type="warning" :loading="attachmentUploadGroupKey === row.groupKey" @click="selectAttachmentUpload(row)">上传修改版</el-button>
+                <UiButton link type="primary" :loading="attachmentDownloadGroupKey === row.groupKey" @click="downloadPendingAttachment(row)">生成并下载</UiButton>
+                <UiButton link type="warning" :loading="attachmentUploadGroupKey === row.groupKey" @click="selectAttachmentUpload(row)">上传修改版</UiButton>
               </template>
-              <el-tag v-else :type="row.attachmentStatus === 'MISSING' ? 'danger' : row.attachmentStatus === 'NONE' ? 'info' : 'warning'">{{ attachmentStatusLabel(row.attachmentStatus) }}</el-tag>
+              <UiTag v-else :type="row.attachmentStatus === 'MISSING' ? 'danger' : row.attachmentStatus === 'NONE' ? 'info' : 'warning'">{{ attachmentStatusLabel(row.attachmentStatus) }}</UiTag>
             </div>
           </div>
           <div class="submit-preview-card__body">
@@ -294,9 +294,9 @@
         </div>
       <el-form label-width="120px" class="submit-form">
         <el-form-item v-for="parameter in submitParameters" :key="parameter.code" :label="parameter.label || parameter.code" :required="parameter.required">
-          <el-date-picker v-if="parameter.type === 'DATE'" v-model="parameterValues[parameter.code]" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
-          <el-input-number v-else-if="parameter.type === 'NUMBER'" v-model="parameterValues[parameter.code]" controls-position="right" style="width: 100%" />
-          <el-input v-else v-model="parameterValues[parameter.code]" :placeholder="parameter.defaultValue || `请输入${parameter.label || parameter.code}`" />
+          <UiDatePicker v-if="parameter.type === 'DATE'" v-model="parameterValues[parameter.code]" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <UiNumberInput v-else-if="parameter.type === 'NUMBER'" v-model="parameterValues[parameter.code]" style="width: 100%" />
+          <UiInput v-else v-model="parameterValues[parameter.code]" :placeholder="parameter.defaultValue || `请输入${parameter.label || parameter.code}`" />
         </el-form-item>
         <el-checkbox v-model="submitConfirmed" class="submit-confirmation">我已确认业务模板、组织分组、明细数据、审批配置和附件无误，同意提交泛微审批</el-checkbox>
       </el-form>
@@ -305,8 +305,8 @@
         <div class="submit-dialog__footer">
           <span v-if="!submitApprovalReady && !submitApprovalLoading" class="submit-dialog__footer-hint">请先完成所有结算部门的审批方案配置</span>
           <div class="submit-dialog__footer-actions">
-            <el-button @click="submitDialog.visible = false">取消</el-button>
-            <el-button type="primary" :loading="submitDialog.loading" :disabled="!submitConfirmed || submitApprovalLoading || !submitApprovalReady" @click="submitBatch">确认提交</el-button>
+            <UiButton @click="submitDialog.visible = false">取消</UiButton>
+            <UiButton type="primary" :loading="submitDialog.loading" :disabled="!submitConfirmed || submitApprovalLoading || !submitApprovalReady" @click="submitBatch">确认提交</UiButton>
           </div>
         </div>
       </template>
@@ -319,7 +319,7 @@
 <script setup name="EcologyImportBusiness" lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { ArrowDown, InfoFilled, OfficeBuilding, Search, UploadFilled } from '@element-plus/icons-vue';
+import { ArrowDown, InfoFilled, OfficeBuilding, Search, Timer, UploadFilled } from '@element-plus/icons-vue';
 import modal from '@/plugins/modal';
 import { globalHeaders } from '@/utils/request';
 import { delOaImportBatch, downloadOaImportAttachment, downloadOaImportBusinessTemplate, getOaImportBatch, getOaImportBusinessConfig, listOaImportBatches, listAvailableOaImportBusinessConfigs, mapOaImportDepartments, previewOaImportApprovals, submitOaImportBatch, uploadOaImportAttachment } from '@/api/ecology';
@@ -329,6 +329,9 @@ import userApi from '@/api/system/user';
 import type { DeptVO } from '@/api/system/dept/types';
 import type { OaDepartmentApprovalUserVO } from '@/api/ecology/types';
 import type { OaImportApprovalPreviewVO, OaImportBatchQuery, OaImportBatchVO, OaImportBusinessConfigVO, OaImportFieldDefinition, OaImportParameterDefinition, OaImportSubmitForm } from '@/api/ecology/importBusinessTypes';
+import { UiButton, UiCard, UiDatePicker, UiInput, UiNumberInput, UiPagination, UiSelect, UiTag, UiUpload } from '@/components/UiKit';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 
 const route = useRoute();
 const props = withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
@@ -380,6 +383,7 @@ const statusOptions = [
   { value: 'READY', label: '待提交' }, { value: 'NEED_MAPPING', label: '待匹配组织' }, { value: 'SUBMITTING', label: '提交中' },
   { value: 'SUBMITTED', label: '已提交' }, { value: 'PARTIAL_FAILED', label: '部分失败' }, { value: 'FAILED', label: '失败' }, { value: 'SKIPPED', label: '已跳过' }
 ];
+const configOptions = computed(() => configs.value.map(item => ({ value: item.id, label: item.businessName })));
 const statusLabel = (value?: string) => statusOptions.find((item) => item.value === value)?.label || value || '未知';
 const statusType = (value?: string) => ({ READY: 'info', NEED_MAPPING: 'warning', SUBMITTING: 'warning', SUBMITTED: 'success', PARTIAL_FAILED: 'warning', FAILED: 'danger', SKIPPED: 'info' }[value || ''] || 'info') as 'success' | 'warning' | 'danger' | 'info';
 const businessInitial = (name?: string) => (name || 'B').trim().slice(0, 1).toUpperCase();
@@ -847,7 +851,8 @@ onMounted(async () => {
       radial-gradient(circle at 96% 10%, rgba(14, 165, 233, 0.12), transparent 27%),
       var(--import-hero-bg);
 
-    :deep(.el-card__body) {
+    :deep(.el-card__body),
+    :deep(.ui-animal-card__body) {
       padding: 25px 28px !important;
     }
   }
@@ -936,7 +941,8 @@ onMounted(async () => {
     white-space: nowrap;
   }
 
-  .intro-aside .el-tag {
+  .intro-aside .el-tag,
+  .intro-aside :deep(.animal-tag) {
     max-width: 100%;
     margin-top: 9px;
     overflow: hidden;
@@ -944,7 +950,8 @@ onMounted(async () => {
     white-space: nowrap;
   }
 
-  .main-card :deep(.el-card__body) {
+  .main-card :deep(.el-card__body),
+  .main-card :deep(.ui-animal-card__body) {
     padding: 23px 20px 18px !important;
   }
 
@@ -1141,7 +1148,8 @@ onMounted(async () => {
     gap: 8px;
   }
 
-  .toolbar .el-button {
+  .toolbar .el-button,
+  .toolbar .ui-animal-button {
     min-height: 32px;
     border-radius: 9px;
   }
@@ -1358,7 +1366,8 @@ onMounted(async () => {
     gap: 5px;
     white-space: nowrap;
 
-    .el-button {
+    .el-button,
+    .ui-animal-button {
       height: 28px;
       margin-left: 0;
       padding: 0 8px;
@@ -1430,7 +1439,8 @@ onMounted(async () => {
       font-size: 12px;
     }
 
-    .el-button {
+    .el-button,
+    .ui-animal-button {
       min-height: 32px;
       border-radius: 9px;
     }
@@ -1926,7 +1936,8 @@ onMounted(async () => {
       border-radius: 10px;
     }
 
-    .el-button {
+    .el-button,
+    .ui-animal-button {
       min-height: 38px;
       flex: 0 0 auto;
       border-radius: 10px;
@@ -2411,12 +2422,14 @@ onMounted(async () => {
   flex: 0 0 auto;
   gap: 7px;
 
-  :deep(.el-button) {
+  :deep(.el-button),
+  :deep(.ui-animal-button) {
     padding: 4px 2px;
     font-size: 12px;
   }
 
-  :deep(.el-tag) {
+  :deep(.el-tag),
+  :deep(.animal-tag) {
     border-radius: 999px;
   }
 }

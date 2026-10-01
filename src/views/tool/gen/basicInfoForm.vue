@@ -32,8 +32,10 @@
 
 <script setup lang="ts">
 import type { FormInstance } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { propTypes } from '@/utils/propTypes';
 
+const { t } = useI18n();
 const prop = defineProps({
   info: propTypes.any.def({})
 });

@@ -1,6 +1,7 @@
 import type { ComponentInternalInstance as ComponentInstance } from 'vue';
 import { LanguageEnum } from '@/enums/LanguageEnum';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
+import { UiThemeEnum } from '@/enums/UiThemeEnum';
 
 declare global {
   /** vue Instance */
@@ -127,6 +128,17 @@ declare global {
      * 主题模式
      */
     theme: string;
+
+    /**
+     * 是否启用暗黑模式。
+     * 与布局配置一起持久化，避免刷新或重新进入系统后出现主题闪烁。
+     */
+    dark: boolean;
+
+    /**
+     * 工作模式：office | animal。
+     */
+    uiTheme: UiThemeEnum;
     /**
      * 页面圆角大小
      */

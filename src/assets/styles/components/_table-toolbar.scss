@@ -2,6 +2,8 @@
 
 .top-right-btn {
   margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .panel-heading {
@@ -34,6 +36,7 @@
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .table-heading p {
@@ -46,26 +49,35 @@
 .toolbar-actions {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  align-content: center;
   gap: 8px;
   margin-left: auto;
-  white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 2px;
-}
-
-.toolbar-actions::-webkit-scrollbar {
-  height: 0;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  padding: 2px 0;
 }
 
 .toolbar-actions > * {
   flex-shrink: 0;
+  max-width: 100%;
 }
 
 .toolbar-actions .top-right-btn {
   margin-left: 0;
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* RightToolbar 内部的图标组也允许折行，避免被父级操作栏再次撑出横向滚动。 */
+.toolbar-actions .toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .toolbar-actions .el-button + .el-button,
@@ -81,4 +93,20 @@
 
 .table-panel .toolbar-actions .el-button:not(.is-circle):not(.is-link) {
   border-radius: var(--app-radius-md) !important;
+}
+
+@media (max-width: 900px) {
+  .toolbar-shell {
+    align-items: flex-start;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .toolbar-actions .toolbar-row {
+    justify-content: flex-start;
+  }
 }

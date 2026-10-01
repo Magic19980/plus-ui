@@ -14,11 +14,13 @@
   "scripts": {
     "build": "vite build --mode production",
     "build:dev": "vite build --mode development",
-    "build:prod": "vite build --mode production",
+    "build:prod": "npm run build",
     "dev": "vite serve --mode development",
     "fmt": "oxfmt .",
+    "test:unit": "vitest run",
     "lint": "oxlint src",
     "lint:fix": "oxlint --fix src",
+    "theme:check": "node scripts/check-animal-theme.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -35,8 +37,7 @@
     "@tiptap/starter-kit": "^3.31.3",
     "@tiptap/vue-3": "^3.31.3",
     "@vueuse/core": "14.3.0",
-    "@wangeditor-next/editor": "5.7.16",
-    "@wangeditor-next/editor-for-vue": "5.1.14",
+    "animal-island-vue": "^1.2.0",
     "animate.css": "4.1.1",
     "await-to-js": "3.0.0",
     "axios": "1.18.1",

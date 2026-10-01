@@ -1,12 +1,12 @@
 <template>
   <div class="p-2 app-container department-task-page">
-    <el-card shadow="never" class="task-intro">
+    <UiCard shadow="never" class="task-intro">
       <DepartmentPanelHeader kicker="DEPARTMENT TASK CENTER" title="任务管理" description="按成员分配 SCORE、5WHY 等周期任务，以及按个人工作日执行的日报任务；未分配任务的成员不产生完成要求。">
-        <el-tag type="info" effect="plain">当前周期自动统计</el-tag>
+        <UiTag type="info" effect="plain">当前周期自动统计</UiTag>
       </DepartmentPanelHeader>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="task-card mt-2">
+    <UiCard shadow="never" class="task-card mt-2">
       <DepartmentPageTabs v-model="activeTab">
         <el-tab-pane label="我的任务" name="my">
           <div class="tab-heading">
@@ -15,7 +15,7 @@
                <p>只显示分配给当前登录人的任务；日报按今天的个人工作日判断，未分配任务不计入提醒和缺报。</p>
             </div>
             <div class="tab-heading__actions">
-              <el-button icon="Refresh" @click="refreshMyTasks">刷新</el-button>
+              <UiButton icon="Refresh" @click="refreshMyTasks">刷新</UiButton>
             </div>
           </div>
           <section v-if="reviewTasks.length" class="review-tasks" aria-label="待处理的 SCORE 提案">
@@ -25,7 +25,7 @@
                 <h4>SCORE 提案审核</h4>
                 <p>需要你处理的提案会集中显示在这里，完成后任务将自动更新。</p>
               </div>
-              <el-tag type="warning" effect="plain" round>{{ reviewTasks.length }} 项待处理</el-tag>
+              <UiTag type="warning" effect="plain" round>{{ reviewTasks.length }} 项待处理</UiTag>
             </div>
             <div v-loading="reviewTaskLoading" class="review-tasks__list">
               <div v-for="task in reviewTasks" :key="task.id" class="review-task-item">
@@ -33,27 +33,27 @@
                 <div class="review-task-item__content">
                   <div class="review-task-item__title">{{ task.proposerName || task.taskTitle || '未命名提案' }}</div>
                   <div class="review-task-item__meta">
-                    <el-tag size="small" :type="task.stage === 'CONFIRM' ? 'success' : 'warning'" effect="light">{{ task.stageLabel }}</el-tag>
+                    <UiTag size="small" :type="task.stage === 'CONFIRM' ? 'success' : 'warning'" effect="light">{{ task.stageLabel }}</UiTag>
                     <span>版本 V{{ task.revisionNo }}</span>
                     <span>{{ task.mainCategory || '未分类' }}</span>
                     <span>{{ formatReviewTaskTime(task.createTime) }}</span>
                   </div>
                 </div>
-                <el-button type="primary" plain @click="openScoreReviewTask(task)">处理</el-button>
+                <UiButton type="primary" plain @click="openScoreReviewTask(task)">处理</UiButton>
               </div>
             </div>
           </section>
-          <DepartmentDataTable v-loading="myLoading" :data="myTasks" border>
+          <DepartmentDataTable :loading="myLoading" :data="myTasks" border>
             <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
             <el-table-column label="任务类型" width="130" align="center"><template #default="scope">{{ taskTypeLabel(scope.row.taskType) }}</template></el-table-column>
             <el-table-column label="执行方式" width="120" align="center"><template #default="scope">{{ cycleLabel(scope.row.cycleType, scope.row.taskType) }}</template></el-table-column>
             <el-table-column label="日期/周期" min-width="210" align="center"><template #default="scope">{{ scope.row.periodStart }} 至 {{ scope.row.periodEnd }}</template></el-table-column>
             <el-table-column label="完成情况" width="120" align="center"><template #default="scope">{{ scope.row.completedCount }}/{{ scope.row.requiredCount }}</template></el-table-column>
             <el-table-column label="截止时间" width="180" align="center" prop="deadline" />
-            <el-table-column label="状态" width="110" align="center"><template #default="scope"><el-tag :type="taskStatusType(scope.row.status)">{{ scope.row.statusLabel || taskStatusLabel(scope.row.status) }}</el-tag></template></el-table-column>
+            <el-table-column label="状态" width="110" align="center"><template #default="scope"><UiTag :type="taskStatusType(scope.row.status)">{{ scope.row.statusLabel || taskStatusLabel(scope.row.status) }}</UiTag></template></el-table-column>
             <el-table-column label="提醒" min-width="160" show-overflow-tooltip><template #default="scope">{{ scope.row.reminderText || '—' }}</template></el-table-column>
           </DepartmentDataTable>
-          <el-empty v-if="!myLoading && myTasks.length === 0" description="当前没有分配给你的周期任务" />
+          <UiEmpty v-if="!myLoading && myTasks.length === 0" description="当前没有分配给你的周期任务" />
         </el-tab-pane>
 
         <el-tab-pane label="任务规则" name="rules" lazy>
@@ -63,28 +63,28 @@
                <p>先定义周期任务或日报任务，再通过“成员”按钮明确分配；日报按成员个人工作日逐日检查。</p>
             </div>
             <div class="tab-heading__actions">
-              <el-button v-hasPermi="['department:task:add']" type="primary" icon="Plus" @click="openRuleAdd">新增任务规则</el-button>
+              <UiButton v-hasPermi="['department:task:add']" type="primary" icon="Plus" @click="openRuleAdd">新增任务规则</UiButton>
             </div>
           </div>
-          <DepartmentDataTable v-loading="ruleLoading" :data="taskRules" border>
+          <DepartmentDataTable :loading="ruleLoading" :data="taskRules" border>
             <el-table-column label="任务名称" prop="taskName" min-width="180" show-overflow-tooltip />
             <el-table-column label="任务类型" width="125" align="center"><template #default="scope">{{ taskTypeLabel(scope.row.taskType) }}</template></el-table-column>
             <el-table-column label="执行方式" width="150" align="center"><template #default="scope">{{ ruleExecutionLabel(scope.row) }}</template></el-table-column>
             <el-table-column label="截止规则" min-width="190"><template #default="scope">{{ deadlineLabel(scope.row) }}</template></el-table-column>
             <el-table-column label="统计口径" width="115" align="center"><template #default="scope">{{ countModeLabel(scope.row) }}</template></el-table-column>
-            <el-table-column label="已分配" width="90" align="center"><template #default="scope"><el-tag type="info">{{ scope.row.assignmentCount || 0 }} 人</el-tag></template></el-table-column>
-            <el-table-column label="状态" width="90" align="center"><template #default="scope"><el-tag :type="scope.row.status === 'DISABLED' ? 'info' : 'success'">{{ scope.row.status === 'DISABLED' ? '停用' : '启用' }}</el-tag></template></el-table-column>
+            <el-table-column label="已分配" width="90" align="center"><template #default="scope"><UiTag type="info">{{ scope.row.assignmentCount || 0 }} 人</UiTag></template></el-table-column>
+            <el-table-column label="状态" width="90" align="center"><template #default="scope"><UiTag :type="scope.row.status === 'DISABLED' ? 'info' : 'success'">{{ scope.row.status === 'DISABLED' ? '停用' : '启用' }}</UiTag></template></el-table-column>
             <el-table-column label="操作" fixed="right" width="220" align="center">
               <template #default="scope">
                 <DepartmentTableActions>
-                  <el-button v-hasPermi="['department:task:edit']" link type="success" icon="User" @click="openAssignmentDialog(scope.row)">成员</el-button>
-                  <el-button v-hasPermi="['department:task:edit']" link type="primary" icon="Edit" @click="openRuleEdit(scope.row)">编辑</el-button>
-                  <el-button v-hasPermi="['department:task:remove']" link type="danger" icon="Delete" @click="removeRule(scope.row)" />
+                  <UiButton v-hasPermi="['department:task:edit']" link type="success" icon="User" @click="openAssignmentDialog(scope.row)">成员</UiButton>
+                  <UiButton v-hasPermi="['department:task:edit']" link type="primary" icon="Edit" @click="openRuleEdit(scope.row)">编辑</UiButton>
+                  <UiButton v-hasPermi="['department:task:remove']" link type="danger" icon="Delete" @click="removeRule(scope.row)" />
                 </DepartmentTableActions>
               </template>
             </el-table-column>
           </DepartmentDataTable>
-          <el-empty v-if="!ruleLoading && taskRules.length === 0" description="暂无任务规则" />
+          <UiEmpty v-if="!ruleLoading && taskRules.length === 0" description="暂无任务规则" />
         </el-tab-pane>
 
         <el-tab-pane label="审核人配置" name="review" lazy>
@@ -94,29 +94,29 @@
               <p>SCORE 和 5WHY 使用独立审核人配置；未配置时，业务审核接口会拒绝审核。</p>
             </div>
             <div class="tab-heading__actions">
-              <el-button v-hasPermi="['department:task:reviewConfig']" type="primary" icon="Plus" @click="openReviewAdd">新增审核配置</el-button>
+              <UiButton v-hasPermi="['department:task:reviewConfig']" type="primary" icon="Plus" @click="openReviewAdd">新增审核配置</UiButton>
             </div>
           </div>
-          <DepartmentDataTable v-loading="reviewLoading" :data="reviewRules" border>
+          <DepartmentDataTable :loading="reviewLoading" :data="reviewRules" border>
             <el-table-column label="业务" width="150" align="center"><template #default="scope">{{ taskTypeLabel(scope.row.taskType) }}</template></el-table-column>
             <el-table-column label="主审核人" prop="reviewerName" min-width="160" />
             <el-table-column label="备用审核人" prop="backupReviewerName" min-width="160"><template #default="scope">{{ scope.row.backupReviewerName || '—' }}</template></el-table-column>
             <el-table-column label="生效时间" min-width="210" align="center"><template #default="scope">{{ scope.row.effectiveStart || '立即' }} 至 {{ scope.row.effectiveEnd || '长期' }}</template></el-table-column>
-            <el-table-column label="状态" width="90" align="center"><template #default="scope"><el-tag :type="scope.row.status === 'DISABLED' ? 'info' : 'success'">{{ scope.row.status === 'DISABLED' ? '停用' : '启用' }}</el-tag></template></el-table-column>
+            <el-table-column label="状态" width="90" align="center"><template #default="scope"><UiTag :type="scope.row.status === 'DISABLED' ? 'info' : 'success'">{{ scope.row.status === 'DISABLED' ? '停用' : '启用' }}</UiTag></template></el-table-column>
             <el-table-column label="备注" min-width="180" show-overflow-tooltip />
             <el-table-column label="操作" fixed="right" width="150" align="center">
               <template #default="scope">
                 <DepartmentTableActions>
-                  <el-button v-hasPermi="['department:task:reviewConfig']" link type="primary" icon="Edit" @click="openReviewEdit(scope.row)">编辑</el-button>
-                  <el-button v-hasPermi="['department:task:reviewConfig']" link type="danger" icon="Delete" @click="removeReview(scope.row)" />
+                  <UiButton v-hasPermi="['department:task:reviewConfig']" link type="primary" icon="Edit" @click="openReviewEdit(scope.row)">编辑</UiButton>
+                  <UiButton v-hasPermi="['department:task:reviewConfig']" link type="danger" icon="Delete" @click="removeReview(scope.row)" />
                 </DepartmentTableActions>
               </template>
             </el-table-column>
           </DepartmentDataTable>
-          <el-empty v-if="!reviewLoading && reviewRules.length === 0" description="暂无审核人配置" />
+          <UiEmpty v-if="!reviewLoading && reviewRules.length === 0" description="暂无审核人配置" />
         </el-tab-pane>
       </DepartmentPageTabs>
-    </el-card>
+    </UiCard>
 
     <TaskRuleDialog
       v-model="ruleDialog.visible"
@@ -144,20 +144,20 @@
       @remove="removeAssignment"
     />
 
-    <el-dialog v-model="reviewDialog.visible" :title="reviewDialog.title" width="560px" append-to-body>
-      <el-form ref="reviewFormRef" :model="reviewForm" :rules="reviewRulesForm" label-width="110px">
-        <el-form-item label="业务类型" prop="taskType"><el-select v-model="reviewForm.taskType" style="width: 100%"><el-option label="SCORE提案" value="SCORE_PROPOSAL" /><el-option label="5WHY分析" value="FIVE_WHY" /></el-select></el-form-item>
-        <el-form-item label="主审核人" prop="reviewerUserId"><el-select v-model="reviewForm.reviewerUserId" filterable placeholder="选择主审核人" style="width: 100%"><el-option v-for="item in userOptions" :key="item.userId" :label="`${item.nickName || item.userName}（${item.userName}）`" :value="item.userId" /></el-select></el-form-item>
-        <el-form-item label="备用审核人"><el-select v-model="reviewForm.backupReviewerUserId" filterable clearable placeholder="可选" style="width: 100%"><el-option v-for="item in userOptions" :key="item.userId" :label="`${item.nickName || item.userName}（${item.userName}）`" :value="item.userId" /></el-select></el-form-item>
+    <UiDialog v-model="reviewDialog.visible" :title="reviewDialog.title" width="560px" show-footer append-to-body>
+      <el-form ref="reviewFormRef" :model="reviewForm" :rules="reviewRulesForm" label-width="110px" class="review-form">
+        <el-form-item label="业务类型" prop="taskType"><UiSelect v-model="reviewForm.taskType" :options="reviewTypeOptions" style="width: 100%" /></el-form-item>
+        <el-form-item label="主审核人" prop="reviewerUserId"><UiSelect v-model="reviewForm.reviewerUserId" :options="reviewerOptions" filterable placeholder="选择主审核人" style="width: 100%" /></el-form-item>
+        <el-form-item label="备用审核人"><UiSelect v-model="reviewForm.backupReviewerUserId" :options="reviewerOptions" filterable clearable placeholder="可选" style="width: 100%" /></el-form-item>
         <el-row :gutter="16">
-          <el-col :span="12"><el-form-item label="生效开始"><el-date-picker v-model="reviewForm.effectiveStart" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="生效结束"><el-date-picker v-model="reviewForm.effectiveEnd" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="生效开始"><UiDatePicker v-model="reviewForm.effectiveStart" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="生效结束"><UiDatePicker v-model="reviewForm.effectiveEnd" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item></el-col>
         </el-row>
-        <el-form-item label="状态"><el-radio-group v-model="reviewForm.status"><el-radio label="ENABLED">启用</el-radio><el-radio label="DISABLED">停用</el-radio></el-radio-group></el-form-item>
-        <el-form-item label="备注"><el-input v-model="reviewForm.remark" type="textarea" :rows="3" maxlength="500" show-word-limit /></el-form-item>
+        <el-form-item label="状态"><UiRadioGroup v-model="reviewForm.status" :options="reviewStatusOptions" /></el-form-item>
+        <el-form-item label="备注"><UiTextarea v-model="reviewForm.remark" :rows="3" :maxlength="500" show-word-limit /></el-form-item>
       </el-form>
-      <template #footer><el-button type="primary" :loading="buttonLoading" @click="saveReview">保存</el-button><el-button @click="reviewDialog.visible = false">取消</el-button></template>
-    </el-dialog>
+      <template #footer><UiButton type="primary" :loading="buttonLoading" @click="saveReview">保存</UiButton><UiButton @click="reviewDialog.visible = false">取消</UiButton></template>
+    </UiDialog>
   </div>
 </template>
 
@@ -171,6 +171,7 @@ import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import TaskAssignmentDialog from './components/TaskAssignmentDialog.vue';
 import TaskRuleDialog from './components/TaskRuleDialog.vue';
+import { UiButton, UiCard, UiDatePicker, UiDialog, UiEmpty, UiRadioGroup, UiSelect, UiTag, UiTextarea } from '@/components/UiKit';
 import { addDepartmentReviewRule, addDepartmentTaskAssignment, addDepartmentTaskRule, delDepartmentReviewRule, delDepartmentTaskAssignment, delDepartmentTaskRule, listDepartmentReviewRules, listDepartmentTaskAssignments, listDepartmentTaskRules, listMyDepartmentTasks, listMyScoreProposalReviewTasks, updateDepartmentReviewRule, updateDepartmentTaskAssignment, updateDepartmentTaskRule } from '@/api/department/task';
 import type { DepartmentReviewRuleForm, DepartmentReviewRuleVO, DepartmentTaskAssignmentForm, DepartmentTaskAssignmentVO, DepartmentTaskProgressVO, DepartmentTaskRuleForm, DepartmentTaskRuleVO, ScoreProposalReviewTaskVO } from '@/api/department/task/types';
 import { listPersonMemberOptions } from '@/api/department/person';
@@ -206,6 +207,9 @@ const assignmentWorkDays = ref<string[]>(['1', '2', '3', '4', '5']);
 const weekOptions = [{ value: '1', label: '周一' }, { value: '2', label: '周二' }, { value: '3', label: '周三' }, { value: '4', label: '周四' }, { value: '5', label: '周五' }, { value: '6', label: '周六' }, { value: '7', label: '周日' }];
 const reviewForm = reactive<DepartmentReviewRuleForm>({ taskType: 'SCORE_PROPOSAL', reviewerUserId: undefined, backupReviewerUserId: undefined, status: 'ENABLED' });
 const reviewRulesForm = { taskType: [{ required: true, message: '请选择业务类型', trigger: 'change' }], reviewerUserId: [{ required: true, message: '请选择主审核人', trigger: 'change' }] };
+const reviewTypeOptions = [{ value: 'SCORE_PROPOSAL', label: 'SCORE提案' }, { value: 'FIVE_WHY', label: '5WHY分析' }];
+const reviewerOptions = computed(() => userOptions.value.map(item => ({ value: item.userId, label: `${item.nickName || item.userName}（${item.userName}）` })));
+const reviewStatusOptions = [{ value: 'ENABLED', label: '启用' }, { value: 'DISABLED', label: '停用' }];
 
 const taskTypeLabel = (value?: string) => ({ SCORE_PROPOSAL: 'SCORE提案', FIVE_WHY: '5WHY分析', DAILY_REPORT: '日报' })[value || ''] || value || '—';
 const cycleLabel = (value?: string, taskType?: string) => taskType === 'DAILY_REPORT' || value === 'DAY'
@@ -493,12 +497,14 @@ onMounted(async () => { await Promise.all([loadMyTasks(), loadReviewTasks()]); }
   @media (max-width: 760px) {
     .tab-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
     .tab-heading__actions { width: 100%; }
-    .tab-heading__actions .el-button { width: 100%; }
+    .tab-heading__actions .el-button,
+    .tab-heading__actions .ui-animal-button { width: 100%; }
     .daily-rule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .daily-rule-grid > div:nth-child(2) { border-right: 0; }
     .daily-rule-grid > div:nth-child(-n + 2) { border-bottom: 1px solid var(--el-border-color-lighter); }
     .review-task-item { align-items: flex-start; flex-wrap: wrap; }
-    .review-task-item > .el-button { margin-left: 46px; }
+    .review-task-item > .el-button,
+    .review-task-item > .ui-animal-button { margin-left: 46px; }
   }
   @media (max-width: 520px) {
     .rule-form { padding: 0; }
@@ -550,6 +556,59 @@ onMounted(async () => { await Promise.all([loadMyTasks(), loadReviewTasks()]); }
     padding: 16px 28px 22px;
     border-top: 1px solid var(--el-border-color-lighter);
   }
+}
+
+/* UiDialog 在动森模式使用 Animal Modal，外层 class 会被适配器剥离；
+ * 通过表单语义类定位浮层，确保任务弹窗仍有稳定的滚动和内边距。 */
+.animal-modal:has(.rule-form) .animal-modal__body,
+.animal-modal:has(.assignment-dialog) .animal-modal__body {
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+.animal-modal:has(.rule-form) .animal-modal__content,
+.animal-modal:has(.assignment-dialog) .animal-modal__content {
+  max-height: min(70vh, 640px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.animal-modal:has(.rule-form) .rule-form,
+.animal-modal:has(.assignment-dialog) .assignment-dialog {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.animal-modal:has(.rule-form) .animal-modal__footer,
+.animal-modal:has(.assignment-dialog) .animal-modal__footer,
+.animal-modal:has(.review-form) .animal-modal__footer {
+  padding-top: 14px;
+}
+
+/* Element Row 的 gutter 通过负 margin 实现，放入 Animal Modal 的收窄内容区后
+ * 会把表单撑出水平滚动条；动森模式改为同等间距的 CSS Grid。 */
+.animal-modal:has(.rule-form) .rule-form > .el-row,
+.animal-modal:has(.review-form) .review-form > .el-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 18px;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+.animal-modal:has(.rule-form) .rule-form > .el-row > .el-col,
+.animal-modal:has(.review-form) .review-form > .el-row > .el-col {
+  width: auto !important;
+  max-width: none !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+.animal-modal:has(.review-form) .review-form {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .rule-form {
@@ -745,10 +804,41 @@ onMounted(async () => { await Promise.all([loadMyTasks(), loadReviewTasks()]); }
 .assignment-workdays .el-checkbox { margin-right: 0; }
 .assignment-form__action { display: flex; grid-column: 2; align-items: flex-end; justify-content: flex-end; min-height: 32px; padding-bottom: 12px; }
 .assignment-form__action .el-button { min-width: 108px; }
+.assignment-form__action .ui-animal-button { min-width: 108px; }
 .assignment-list { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--el-border-color-lighter); }
 .assignment-list__heading { margin-bottom: 12px; }
 .assignment-table { border-radius: 11px; overflow: hidden; }
 .assignment-table .assignment-member-name { color: var(--el-text-color-primary); font-weight: 600; }
+
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-dialog,
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-block-heading h4,
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-field .el-form-item__label {
+  color: var(--animal-overlay-text, var(--el-text-color-primary));
+}
+
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-dialog__intro,
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-form-card {
+  border-color: var(--animal-overlay-border, var(--el-border-color-lighter));
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .animal-modal:has(.assignment-dialog) .assignment-dialog__intro {
+  background: linear-gradient(135deg, var(--animal-overlay-surface, #344442), color-mix(in srgb, var(--animal-primary-color, #19c8b9) 8%, var(--animal-overlay-bg, #253230)));
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .animal-modal:has(.assignment-dialog) .assignment-form-card {
+  border-color: color-mix(in srgb, var(--animal-primary-color, #19c8b9) 42%, var(--animal-overlay-border, #526b65));
+  background: color-mix(in srgb, var(--animal-primary-color, #19c8b9) 11%, var(--animal-overlay-bg, #253230));
+}
+
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-block-heading p,
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-block-heading__step,
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-dialog__intro-content p {
+  color: var(--animal-overlay-muted, var(--el-text-color-secondary));
+}
+
+html[data-ui-theme='animal'] .animal-modal:has(.assignment-dialog) .assignment-list {
+  border-top-color: var(--animal-overlay-border, var(--el-border-color-lighter));
+}
 
 /* 成员分配弹窗通过 Teleport 挂载到 body，单独补齐暗色主题，避免表单卡片和控件继续使用浅色背景。 */
 html.dark .task-assignment-dialog.el-dialog {
@@ -878,12 +968,14 @@ html.dark .task-assignment-dialog .assignment-table .el-table__body tr:hover > t
   .assignment-field--time,
   .assignment-form__action { grid-column: 1; }
   .assignment-form__action { justify-content: flex-start; padding-bottom: 12px; }
+  .animal-modal:has(.assignment-dialog) .animal-modal__content { max-height: min(72vh, 640px); }
 }
 
 @media (max-width: 520px) {
   .task-assignment-dialog .el-dialog__header { padding-right: 20px; padding-left: 20px; }
   .assignment-dialog__intro { align-items: flex-start; flex-wrap: wrap; }
-  .assignment-dialog__intro > .el-tag { margin-left: 46px; }
+  .assignment-dialog__intro > .el-tag,
+  .assignment-dialog__intro > .animal-tag { margin-left: 46px; }
   .assignment-form-card { padding-right: 13px; padding-left: 13px; }
   .assignment-block-heading { gap: 8px; }
 }
@@ -894,13 +986,16 @@ html.dark .task-assignment-dialog .assignment-table .el-table__body tr:hover > t
   .daily-rule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .daily-rule-grid > div:nth-child(2) { border-right: 0; }
   .daily-rule-grid > div:nth-child(-n + 2) { border-bottom: 1px solid var(--el-border-color-lighter); }
+  .animal-modal:has(.rule-form) .rule-form > .el-row,
+  .animal-modal:has(.review-form) .review-form > .el-row { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 520px) {
   .task-rule-dialog .el-dialog__header { padding-right: 20px; padding-left: 20px; }
   .daily-rule-panel { padding: 13px; }
   .daily-rule-panel__heading { align-items: flex-start; flex-wrap: wrap; }
-  .daily-rule-panel__heading .el-tag { margin-left: 44px; }
+  .daily-rule-panel__heading .el-tag,
+  .daily-rule-panel__heading .animal-tag { margin-left: 44px; }
   .daily-rule-grid { grid-template-columns: 1fr; }
   .daily-rule-grid > div,
   .daily-rule-grid > div:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--el-border-color-lighter); }

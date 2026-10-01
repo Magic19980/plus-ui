@@ -1,6 +1,6 @@
 <template>
   <div class="app-container department-document-page">
-    <el-card shadow="never" class="document-hero">
+    <UiCard class="document-hero" color="app-teal" pattern="none">
       <div class="hero-content">
         <div>
           <span class="hero-kicker">DEPARTMENT KNOWLEDGE HUB</span>
@@ -13,22 +13,23 @@
           <div><strong>{{ projectOptions.length }}</strong><span>关联项目</span></div>
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="document-card mt-2">
+    <UiCard class="document-card mt-2" type="default" pattern="app-teal">
       <template #header>
         <DepartmentPanelHeader kicker="DOCUMENT LIBRARY" :title="activeTab === 'category' ? '资料分类配置' : '资料库'" :description="activeTab === 'category' ? '维护资料库使用的多级分类，启用后即可用于资料归档。' : '支持项目归档、版本管理和权限保护的科室资料空间。'">
             <template v-if="activeTab === 'category'">
-              <el-button v-hasPermi="['department:documentCategory:add']" type="primary" icon="Plus" @click="handleAddCategory">新增顶级分类</el-button>
+              <UiButton v-hasPermi="['department:documentCategory:add']" type="primary" icon="Plus" @click="handleAddCategory">新增顶级分类</UiButton>
             </template>
             <template v-else>
-              <el-button v-hasPermi="['department:document:add']" type="primary" icon="Upload" @click="handleAdd">上传资料</el-button>
-              <el-button v-hasPermi="['department:document:query']" plain icon="Refresh" @click="getList">刷新</el-button>
+              <UiButton v-hasPermi="['department:document:add']" type="primary" icon="Upload" @click="handleAdd">上传资料</UiButton>
+              <UiButton v-hasPermi="['department:document:query']" plain icon="Refresh" @click="getList">刷新</UiButton>
             </template>
         </DepartmentPanelHeader>
       </template>
 
-      <DepartmentPageTabs v-model="activeTab" @tab-change="handleTabChange">
+      <UiTabs v-if="isAnimalMode" v-model="activeTab" :items="documentTabItems" contentless aria-label="资料中心标签" @change="handleTabChange" />
+      <DepartmentPageTabs v-else v-model="activeTab" @tab-change="handleTabChange">
         <el-tab-pane label="资料库" name="active" />
         <el-tab-pane label="回收站" name="recycle" />
         <el-tab-pane v-hasPermi="['department:documentCategory:list']" name="category" lazy>
@@ -36,43 +37,31 @@
           <DepartmentDocumentCategoryPanel ref="categoryPanelRef" embedded />
         </el-tab-pane>
       </DepartmentPageTabs>
+      <DepartmentDocumentCategoryPanel v-if="isAnimalMode && activeTab === 'category'" ref="categoryPanelRef" embedded />
 
       <template v-if="activeTab !== 'category'">
       <el-form :inline="true" :model="queryParams" class="query-form">
         <el-form-item label="关键词">
-          <el-input v-model="queryParams.title" clearable placeholder="标题或标签" @keyup.enter="handleQuery" />
+          <UiInput v-model="queryParams.title" clearable placeholder="标题或标签" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="分类">
           <el-tree-select v-model="queryParams.categoryId" :data="categories" node-key="id" check-strictly clearable filterable style="width: 190px" :props="{ label: 'categoryName', children: 'children' }" placeholder="全部分类" />
         </el-form-item>
         <el-form-item label="项目">
-          <el-select v-model="queryParams.projectId" clearable filterable placeholder="全部项目" style="width: 190px">
-            <el-option v-for="item in projectOptions" :key="item.id" :label="item.projectName" :value="item.id" />
-          </el-select>
+          <UiSelect v-model="queryParams.projectId" :options="projectFilterOptions" clearable filterable placeholder="全部项目" style="width: 190px" />
         </el-form-item>
         <el-form-item label="类型">
-          <el-select v-model="queryParams.fileSuffix" clearable placeholder="全部类型" style="width: 130px">
-            <el-option v-for="item in fileTypes" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+          <UiSelect v-model="queryParams.fileSuffix" :options="fileTypeOptions" clearable placeholder="全部类型" style="width: 130px" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" clearable placeholder="全部状态" style="width: 130px">
-            <el-option label="已发布" value="PUBLISHED" />
-            <el-option label="草稿" value="DRAFT" />
-            <el-option label="已归档" value="ARCHIVED" />
-          </el-select>
+          <UiSelect v-model="queryParams.status" :options="statusFilterOptions" clearable placeholder="全部状态" style="width: 130px" />
         </el-form-item>
         <el-form-item label="排序">
-          <el-select v-model="queryParams.sortBy" placeholder="最近更新" style="width: 140px" @change="handleQuery">
-            <el-option label="最近更新" value="updatedDesc" />
-            <el-option label="最早更新" value="updatedAsc" />
-            <el-option label="名称升序" value="nameAsc" />
-            <el-option label="文件从大到小" value="sizeDesc" />
-          </el-select>
+          <UiSelect v-model="queryParams.sortBy" :options="sortOptions" placeholder="最近更新" style="width: 140px" @change="handleQuery" />
         </el-form-item>
         <div class="query-actions">
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <UiButton type="primary" icon="Search" @click="handleQuery">查询</UiButton>
+          <UiButton icon="Refresh" @click="resetQuery">重置</UiButton>
         </div>
       </el-form>
 
@@ -83,7 +72,7 @@
               <span class="sidebar-kicker">BROWSE</span>
               <strong>资料导航</strong>
             </div>
-            <el-tag size="small" effect="plain">{{ categoryCount }} 个分类</el-tag>
+            <UiTag size="small" effect="plain">{{ categoryCount }} 个分类</UiTag>
           </div>
           <div class="quick-nav">
             <button class="quick-nav-item" :class="{ active: !queryParams.categoryId && !queryParams.status }" type="button" @click="selectQuickFilter(undefined)">
@@ -125,7 +114,7 @@
           <div v-else class="category-empty">
             <el-icon><FolderOpened /></el-icon>
             <span>暂无可用分类</span>
-            <el-button v-hasPermi="['department:documentCategory:add']" link type="primary" @click="handleAddCategory">创建分类</el-button>
+            <UiButton v-hasPermi="['department:documentCategory:add']" link type="primary" @click="handleAddCategory">创建分类</UiButton>
           </div>
         </aside>
 
@@ -136,9 +125,9 @@
               <span v-if="selectedIds.length">已选择 {{ selectedIds.length }} 份资料</span>
             </div>
             <div v-if="selectedIds.length" class="selection-actions">
-              <el-button v-if="activeTab === 'active'" v-hasPermi="['department:document:remove']" size="small" type="danger" plain @click="batchDelete">移入回收站</el-button>
-              <el-button v-else v-hasPermi="['department:document:restore']" size="small" type="primary" plain @click="batchRestore">批量恢复</el-button>
-              <el-button size="small" link @click="clearSelection">取消选择</el-button>
+              <UiButton v-if="activeTab === 'active'" v-hasPermi="['department:document:remove']" size="small" type="danger" plain @click="batchDelete">移入回收站</UiButton>
+              <UiButton v-else v-hasPermi="['department:document:restore']" size="small" type="primary" plain @click="batchRestore">批量恢复</UiButton>
+              <UiButton size="small" link @click="clearSelection">取消选择</UiButton>
             </div>
           </div>
           <div class="library-toolbar">
@@ -153,15 +142,15 @@
             </div>
             <div class="library-toolbar-tools">
               <span class="result-count">共 {{ total }} 份资料</span>
-              <el-button-group class="view-switch">
-                <el-button :type="viewMode === 'grid' ? 'primary' : 'default'" title="卡片视图" @click="viewMode = 'grid'"><el-icon><Grid /></el-icon></el-button>
-                <el-button :type="viewMode === 'list' ? 'primary' : 'default'" title="列表视图" @click="viewMode = 'list'"><el-icon><List /></el-icon></el-button>
-              </el-button-group>
+              <div class="view-switch">
+                <UiButton :type="viewMode === 'grid' ? 'primary' : 'default'" size="small" title="卡片视图" @click="viewMode = 'grid'"><el-icon><Grid /></el-icon></UiButton>
+                <UiButton :type="viewMode === 'list' ? 'primary' : 'default'" size="small" title="列表视图" @click="viewMode = 'list'"><el-icon><List /></el-icon></UiButton>
+              </div>
             </div>
           </div>
 
           <div v-if="viewMode === 'grid'" v-loading="loading" class="document-grid">
-            <article v-for="row in documentList" :key="row.id" class="document-card-item" :class="{ selected: isSelected(row.id) }" @click="openQuickView(row)">
+            <UiCard v-for="row in documentList" :key="row.id" class="document-card-item" :class="{ selected: isSelected(row.id) }" type="default" pattern="app-teal" hoverable @click="openQuickView(row)">
               <div class="document-cover" :class="fileIconClass(row.currentFileSuffix)">
                 <div class="card-select" @click.stop><el-checkbox :model-value="isSelected(row.id)" @change="(checked: boolean) => toggleSelection(row.id, checked)" /></div>
                 <div class="cover-glow" />
@@ -172,23 +161,23 @@
                   <span>{{ fileIconText(row.currentFileSuffix) }}</span>
                 </div>
                 <div class="cover-footer"><span>{{ mediaKindLabel(row.currentFileSuffix) }}</span><span>v{{ row.versionNo || 1 }}</span></div>
-                <div class="cover-hover"><el-button type="primary" circle title="预览" @click.stop="handlePreview(row)"><el-icon><View /></el-icon></el-button></div>
+                <div class="cover-hover"><UiButton type="primary" circle title="预览" @click.stop="handlePreview(row)"><el-icon><View /></el-icon></UiButton></div>
               </div>
               <div class="document-card-body">
                 <div class="document-card-title" :title="row.title">{{ row.title }}</div>
                 <div class="document-card-file" :title="row.currentOriginalName">{{ row.currentOriginalName || '未命名文件' }}</div>
                 <div v-if="expiryState(row) !== 'normal'" class="document-card-expiry" :class="expiryState(row)"><el-icon><WarningFilled /></el-icon>{{ expiryLabel(row) }}</div>
                 <div v-if="tagList(row.tags).length" class="document-card-tags">
-                  <el-tag v-for="tag in tagList(row.tags).slice(0, 2)" :key="tag" size="small" effect="plain">{{ tag }}</el-tag>
+                  <UiTag v-for="tag in tagList(row.tags).slice(0, 2)" :key="tag" size="small" effect="plain">{{ tag }}</UiTag>
                   <span v-if="tagList(row.tags).length > 2" class="more-tags">+{{ tagList(row.tags).length - 2 }}</span>
                 </div>
                 <div class="document-card-meta"><span>{{ row.categoryName || '未分类' }}</span><i /><span>{{ row.updateTime || '暂无更新记录' }}</span></div>
                 <div class="document-card-footer">
                   <span><el-icon><User /></el-icon>{{ row.createByName || '未知上传人' }}</span>
-                  <el-tag :type="statusTagType(row.status)" effect="light" size="small">{{ statusLabel(row.status) }}</el-tag>
+                  <UiTag :type="statusTagType(row.status)" effect="light" size="small">{{ statusLabel(row.status) }}</UiTag>
                 </div>
               </div>
-            </article>
+            </UiCard>
             <el-empty v-if="!loading && !documentList.length" class="grid-empty" description="当前分类暂无资料" />
           </div>
 
@@ -203,29 +192,31 @@
               </div>
               <div class="list-file-owner"><span>{{ row.createByName || '未知上传人' }}</span><small>{{ row.updateTime || '—' }}</small></div>
               <span v-if="expiryState(row) !== 'normal'" class="list-expiry" :class="expiryState(row)"><el-icon><WarningFilled /></el-icon>{{ expiryLabel(row) }}</span>
-              <el-tag :type="statusTagType(row.status)" effect="light">{{ statusLabel(row.status) }}</el-tag>
+              <UiTag :type="statusTagType(row.status)" effect="light">{{ statusLabel(row.status) }}</UiTag>
               <div class="list-file-actions" @click.stop>
                 <template v-if="activeTab === 'active'">
-                  <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handlePreview(row)">预览</el-button>
-                  <el-button v-hasPermi="['department:document:download']" link type="primary" @click="handleDownload(row)">下载</el-button>
+                  <UiButton v-hasPermi="['department:document:query']" link type="primary" @click="handlePreview(row)">预览</UiButton>
+                  <UiButton v-hasPermi="['department:document:download']" link type="primary" @click="handleDownload(row)">下载</UiButton>
                   <el-dropdown v-hasPermi="['department:document:edit']" @command="(command: string) => handleMoreCommand(command, row)">
-                    <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+                    <UiButton link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></UiButton>
                     <template #dropdown><el-dropdown-menu><el-dropdown-item command="version">上传新版本</el-dropdown-item><el-dropdown-item command="edit">编辑信息</el-dropdown-item></el-dropdown-menu></template>
                   </el-dropdown>
-                  <el-button v-hasPermi="['department:document:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
+                  <UiButton v-hasPermi="['department:document:remove']" link type="danger" @click="handleDelete(row)">删除</UiButton>
                 </template>
-                <el-button v-else v-hasPermi="['department:document:restore']" link type="primary" @click="handleRestore(row)">恢复</el-button>
+                <UiButton v-else v-hasPermi="['department:document:restore']" link type="primary" @click="handleRestore(row)">恢复</UiButton>
               </div>
             </div>
             <el-empty v-if="!loading && !documentList.length" description="当前分类暂无资料" />
           </div>
 
-          <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+          <div class="document-pagination">
+            <UiPagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+          </div>
         </main>
       </div>
 
       </template>
-    </el-card>
+    </UiCard>
 
     <el-drawer v-model="quickView.visible" class="document-quick-view" size="420px" append-to-body :with-header="false" @close="closeQuickView">
       <div v-if="quickView.row" class="quick-view-content">
@@ -234,7 +225,7 @@
             <span class="quick-view-kicker">QUICK PREVIEW</span>
             <h3>资料信息</h3>
           </div>
-          <el-button text circle aria-label="关闭详情" @click="closeQuickView"><el-icon><Close /></el-icon></el-button>
+          <UiButton text circle aria-label="关闭详情" @click="closeQuickView"><el-icon><Close /></el-icon></UiButton>
         </div>
         <div v-if="quickPreviewUrl && isQuickPreviewMedia(quickView.row.currentFileSuffix)" class="quick-view-media" @click="handlePreview(quickView.row)">
           <video v-if="isVideoFile(quickView.row.currentFileSuffix)" :key="quickPreviewUrl" :src="quickPreviewUrl" class="quick-view-media-video" muted autoplay loop playsinline preload="auto" @error="handleQuickPreviewError" />
@@ -256,17 +247,17 @@
         <div class="quick-view-title-row">
           <div class="quick-view-title" :title="quickView.row.title">{{ quickView.row.title }}</div>
           <div class="quick-view-statuses">
-            <el-tag :type="statusTagType(quickView.row.status)" effect="light" size="small">{{ statusLabel(quickView.row.status) }}</el-tag>
-            <el-tag v-if="expiryState(quickView.row) !== 'normal'" :type="expiryTagType(quickView.row)" effect="light" size="small">{{ expiryLabel(quickView.row) }}</el-tag>
+            <UiTag :type="statusTagType(quickView.row.status)" effect="light" size="small">{{ statusLabel(quickView.row.status) }}</UiTag>
+            <UiTag v-if="expiryState(quickView.row) !== 'normal'" :type="expiryTagType(quickView.row)" effect="light" size="small">{{ expiryLabel(quickView.row) }}</UiTag>
           </div>
         </div>
         <div class="quick-view-file-name" :title="quickView.row.currentOriginalName">{{ quickView.row.currentOriginalName || '未命名文件' }}</div>
         <div v-if="tagList(quickView.row.tags).length" class="quick-view-tags">
-          <el-tag v-for="tag in tagList(quickView.row.tags)" :key="tag" size="small" effect="plain">{{ tag }}</el-tag>
+          <UiTag v-for="tag in tagList(quickView.row.tags)" :key="tag" size="small" effect="plain">{{ tag }}</UiTag>
         </div>
         <div class="quick-view-actions">
-          <el-button v-hasPermi="['department:document:query']" type="primary" @click="handlePreview(quickView.row)"><el-icon><View /></el-icon>在线预览</el-button>
-          <el-button v-hasPermi="['department:document:download']" @click="handleDownload(quickView.row)"><el-icon><Download /></el-icon>下载资料</el-button>
+          <UiButton v-hasPermi="['department:document:query']" type="primary" @click="handlePreview(quickView.row)"><el-icon><View /></el-icon>在线预览</UiButton>
+          <UiButton v-hasPermi="['department:document:download']" @click="handleDownload(quickView.row)"><el-icon><Download /></el-icon>下载资料</UiButton>
         </div>
         <div class="quick-view-divider" />
         <dl class="quick-view-meta">
@@ -283,9 +274,9 @@
           <p>{{ quickView.row.description || '暂无资料说明' }}</p>
         </div>
         <div class="quick-view-footer-actions">
-          <el-button v-hasPermi="['department:document:query']" link type="primary" @click="handleDetail(quickView.row)">查看版本记录</el-button>
+          <UiButton v-hasPermi="['department:document:query']" link type="primary" @click="handleDetail(quickView.row)">查看版本记录</UiButton>
           <el-dropdown v-hasPermi="['department:document:edit']" @command="handleQuickMoreCommand">
-            <el-button link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+            <UiButton link type="primary">更多<el-icon class="el-icon--right"><ArrowDown /></el-icon></UiButton>
             <template #dropdown><el-dropdown-menu><el-dropdown-item command="version">上传新版本</el-dropdown-item><el-dropdown-item command="edit">编辑信息</el-dropdown-item></el-dropdown-menu></template>
           </el-dropdown>
         </div>
@@ -311,19 +302,19 @@
             <el-radio value="ARCHIVED">已归档</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="失效日期"><el-date-picker v-model="editForm.expireDate" type="date" value-format="YYYY-MM-DD" clearable style="width: 100%" /></el-form-item>
+        <el-form-item label="失效日期"><UiDatePicker v-model="editForm.expireDate" type="date" value-format="YYYY-MM-DD" clearable style="width: 100%" /></el-form-item>
         <el-form-item label="标签"><el-input v-model="editForm.tags" maxlength="500" placeholder="多个标签用逗号分隔" /></el-form-item>
         <el-form-item label="资料说明"><el-input v-model="editForm.description" type="textarea" :rows="3" maxlength="1000" show-word-limit placeholder="补充资料用途、适用范围或注意事项" /></el-form-item>
         <el-form-item v-if="!editForm.id" label="选择文件" required>
-          <el-upload drag :auto-upload="false" :limit="1" :file-list="editFileList" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar,.7z,.mp4,.webm,.ogg" :on-change="handleEditFileChange" :on-remove="clearEditFile">
+          <UiUpload drag :auto-upload="false" :limit="1" :file-list="editFileList" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar,.7z,.mp4,.webm,.ogg" :on-change="handleEditFileChange" :on-remove="clearEditFile">
             <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
             <div class="el-upload__text">拖拽文件到这里，或点击选择</div>
             <template #tip><div class="el-upload__tip">普通资料不超过 50MB，视频不超过 500MB；支持常见文档、图片、压缩包和 MP4/WebM/Ogg 视频。</div></template>
-          </el-upload>
+          </UiUpload>
         </el-form-item>
       </el-form>
       <el-progress v-if="buttonLoading && uploadProgress > 0" :percentage="uploadProgress" :stroke-width="6" class="upload-progress" />
-      <template #footer><el-button v-if="uploadingFile" @click="cancelUpload">取消上传</el-button><el-button type="primary" :loading="buttonLoading" :disabled="buttonLoading" @click="submitEdit">保存</el-button><el-button :disabled="buttonLoading" @click="editDialog.visible = false">取消</el-button></template>
+      <template #footer><UiButton v-if="uploadingFile" @click="cancelUpload">取消上传</UiButton><UiButton type="primary" :loading="buttonLoading" :disabled="buttonLoading" @click="submitEdit">保存</UiButton><UiButton :disabled="buttonLoading" @click="editDialog.visible = false">取消</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="versionDialog.visible" class="document-version-dialog" title="上传资料新版本" width="520px" append-to-body>
@@ -331,14 +322,14 @@
       <el-form label-width="90px">
         <el-form-item label="版本说明"><el-input v-model="versionForm.versionNote" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="说明本次版本的修改内容" /></el-form-item>
         <el-form-item label="新文件" required>
-          <el-upload drag :auto-upload="false" :limit="1" :file-list="versionFileList" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar,.7z,.mp4,.webm,.ogg" :on-change="handleVersionFileChange" :on-remove="clearVersionFile">
+          <UiUpload drag :auto-upload="false" :limit="1" :file-list="versionFileList" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar,.7z,.mp4,.webm,.ogg" :on-change="handleVersionFileChange" :on-remove="clearVersionFile">
             <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
             <div class="el-upload__text">选择新版本文件</div>
-          </el-upload>
+          </UiUpload>
         </el-form-item>
       </el-form>
       <el-progress v-if="buttonLoading && uploadProgress > 0" :percentage="uploadProgress" :stroke-width="6" class="upload-progress" />
-      <template #footer><el-button v-if="uploadingFile" @click="cancelUpload">取消上传</el-button><el-button type="primary" :loading="buttonLoading" :disabled="buttonLoading" @click="submitVersion">上传版本</el-button><el-button :disabled="buttonLoading" @click="versionDialog.visible = false">取消</el-button></template>
+      <template #footer><UiButton v-if="uploadingFile" @click="cancelUpload">取消上传</UiButton><UiButton type="primary" :loading="buttonLoading" :disabled="buttonLoading" @click="submitVersion">上传版本</UiButton><UiButton :disabled="buttonLoading" @click="versionDialog.visible = false">取消</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="detailDialog.visible" class="document-detail-dialog" title="资料详情" width="760px" append-to-body>
@@ -352,7 +343,7 @@
         <el-descriptions-item label="资料说明" :span="2"><div class="detail-description">{{ detailData.description || '—' }}</div></el-descriptions-item>
       </el-descriptions>
       <el-divider content-position="left">版本记录</el-divider>
-      <DepartmentDataTable v-loading="detailLoading" border :data="versions" size="small">
+      <DepartmentDataTable :loading="detailLoading" border :data="versions" size="small">
         <el-table-column label="版本" width="80" align="center"><template #default="scope">v{{ scope.row.versionNo }}</template></el-table-column>
         <el-table-column label="文件名" prop="originalName" min-width="220" show-overflow-tooltip />
         <el-table-column label="大小" width="100" align="center"><template #default="scope">{{ formatFileSize(scope.row.fileSize) }}</template></el-table-column>
@@ -361,12 +352,12 @@
         <el-table-column label="时间" prop="createTime" width="165" align="center" />
         <el-table-column label="操作" width="90" align="center">
           <template #default="scope">
-            <el-button v-if="isVideoFile(scope.row.fileSuffix)" v-hasPermi="['department:document:query']" link type="primary" @click="handleVersionPreview(toVersion(scope.row))">预览</el-button>
+            <UiButton v-if="isVideoFile(scope.row.fileSuffix)" v-hasPermi="['department:document:query']" link type="primary" @click="handleVersionPreview(toVersion(scope.row))">预览</UiButton>
             <span v-else class="version-operation-placeholder">—</span>
           </template>
         </el-table-column>
       </DepartmentDataTable>
-      <template #footer><el-button @click="detailDialog.visible = false">关闭</el-button></template>
+      <template #footer><UiButton @click="detailDialog.visible = false">关闭</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="previewDialog.visible" :title="previewDialog.title" class="document-preview-dialog" width="min(1120px, 92vw)" append-to-body destroy-on-close>
@@ -389,7 +380,7 @@
             <strong>视频暂时无法播放</strong>
             <p>{{ previewErrorMessage }}</p>
             <span>{{ previewErrorHint }}</span>
-            <el-button type="primary" plain @click="retryPreview">重新加载</el-button>
+            <UiButton type="primary" plain @click="retryPreview">重新加载</UiButton>
           </div>
           <img v-else-if="previewKind === 'image' && previewUrl" :src="previewUrl" alt="资料预览" class="preview-image" />
           <iframe v-else-if="previewKind === 'pdf' && previewUrl" :src="previewUrl" title="资料预览" class="preview-frame" />
@@ -397,7 +388,7 @@
           <el-empty v-else description="当前文件格式暂不支持页面内预览，请下载后查看" />
         </div>
       </div>
-      <template #footer><el-button v-if="previewDialog.row && !previewDialog.versionId" type="primary" @click="handleDownload(previewDialog.row)">下载文件</el-button><el-button @click="closePreview">关闭</el-button></template>
+      <template #footer><UiButton v-if="previewDialog.row && !previewDialog.versionId" type="primary" @click="handleDownload(previewDialog.row)">下载文件</UiButton><UiButton @click="closePreview">关闭</UiButton></template>
     </el-dialog>
   </div>
 </template>
@@ -415,6 +406,7 @@ import DepartmentPageTabs from '@/components/Department/PageTabs.vue';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDatePicker, UiInput, UiPagination, UiSelect, UiTabs, UiTag, UiUpload } from '@/components/UiKit';
 import DepartmentDocumentCategoryPanel from '../documentCategory/CategoryPanel.vue';
 import {
   delDepartmentDocument,
@@ -432,7 +424,9 @@ import {
   uploadDepartmentDocumentVersion
 } from '@/api/department/document';
 import type { DepartmentDocumentForm, DepartmentDocumentQuery, DepartmentDocumentVersionVO, DepartmentDocumentVO } from '@/api/department/document/types';
+import { UiThemeEnum } from '@/enums/UiThemeEnum';
 import modal from '@/plugins/modal';
+import { useSettingsStore } from '@/store/modules/settings';
 import { saveBlob } from '@/utils/save';
 
 const fileTypes = [
@@ -445,6 +439,17 @@ const fileTypes = [
   { label: '视频（WebM）', value: '.webm' },
   { label: '视频（Ogg）', value: '.ogg' }
 ];
+const statusFilterOptions = [
+  { label: '已发布', value: 'PUBLISHED' },
+  { label: '草稿', value: 'DRAFT' },
+  { label: '已归档', value: 'ARCHIVED' }
+];
+const sortOptions = [
+  { label: '最近更新', value: 'updatedDesc' },
+  { label: '最早更新', value: 'updatedAsc' },
+  { label: '名称升序', value: 'nameAsc' },
+  { label: '文件从大到小', value: 'sizeDesc' }
+];
 const supportedFileSuffixes = new Set([
   '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv',
   '.jpg', '.jpeg', '.png', '.gif', '.zip', '.rar', '.7z', '.mp4', '.webm', '.ogg'
@@ -454,6 +459,13 @@ const maxFileSize = 50 * 1024 * 1024;
 const maxVideoFileSize = 500 * 1024 * 1024;
 
 const loading = ref(false);
+const settingsStore = useSettingsStore();
+const isAnimalMode = computed(() => settingsStore.uiTheme === UiThemeEnum.ANIMAL);
+const documentTabItems = [
+  { key: 'active', label: '资料库' },
+  { key: 'recycle', label: '回收站' },
+  { key: 'category', label: '资料分类配置' }
+];
 const buttonLoading = ref(false);
 const uploadProgress = ref(0);
 const uploadingFile = ref(false);
@@ -505,6 +517,8 @@ const previewLoadingTimer = ref<ReturnType<typeof setTimeout>>();
 
 const countCategories = (nodes: DepartmentDocumentCategoryVO[]): number => nodes.reduce((count, node) => count + 1 + countCategories(node.children || []), 0);
 const categoryCount = computed(() => countCategories(categories.value));
+const projectFilterOptions = computed(() => projectOptions.value.map(item => ({ label: item.projectName, value: item.id })));
+const fileTypeOptions = computed(() => fileTypes);
 const allPageSelected = computed(() => documentList.value.length > 0 && documentList.value.every((row) => isSelected(row.id)));
 const somePageSelected = computed(() => documentList.value.some((row) => isSelected(row.id)));
 const breadcrumbSegments = computed(() => {
@@ -1132,6 +1146,76 @@ onMounted(() => {
   .hero-stats strong { font-size: 28px; line-height: 1.15; }
   .hero-stats span { margin-top: 8px; color: rgba(255, 255, 255, 0.66); font-size: 12px; }
   .document-card { border-radius: 12px; }
+  :global(html[data-ui-theme='animal'] .department-document-page .document-hero) {
+    border: 2px solid var(--animal-border-color);
+    background: var(--animal-primary-color);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  :global(html[data-ui-theme='animal'] .department-document-page .document-card) {
+    border-color: var(--animal-border-color);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  :global(html[data-ui-theme='animal'] .department-document-page .query-form) {
+    grid-template-columns: minmax(240px, 1.45fr) repeat(5, minmax(142px, 1fr)) auto;
+    border-color: var(--animal-border-color-light);
+    background: var(--app-elevated-soft-bg);
+  }
+
+  :global(html[data-ui-theme='animal'] .department-document-page .query-actions) {
+    grid-column: auto;
+    justify-content: flex-end;
+    padding-top: 0;
+  }
+
+  :global(html[data-ui-theme='animal'] .department-document-page .view-switch) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  :global(html[data-ui-theme='animal'] .department-document-page .view-switch .animal-btn) {
+    min-width: 38px;
+    padding: 0 10px;
+  }
+
+  :global(html[data-ui-theme='animal'] .department-document-page .document-card-tags .animal-tag) {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .document-hero) {
+    background: linear-gradient(135deg, #315b55 0%, #2d766b 52%, #3b8d83 100%);
+  }
+
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .document-card) {
+    background: var(--app-surface-bg);
+  }
+
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .query-form) {
+    background: var(--app-elevated-soft-bg);
+  }
+
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .quick-nav-item.active),
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .category-tree .is-current > .el-tree-node__content) {
+    color: var(--animal-text-color);
+    background: color-mix(in srgb, var(--animal-primary-color) 24%, var(--app-surface-bg));
+  }
+
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .quick-nav-item:hover),
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .category-tree .el-tree-node__content:hover) {
+    color: var(--animal-text-color);
+    background: color-mix(in srgb, var(--animal-primary-color) 14%, var(--app-surface-bg));
+  }
+
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .document-list-item),
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .library-sidebar) {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+  }
   .library-layout { display: grid; grid-template-columns: 228px minmax(0, 1fr); gap: 20px; min-width: 0; }
   .library-sidebar { min-height: 540px; padding: 18px 12px; border: 1px solid var(--app-surface-border); border-radius: 16px; background: var(--app-surface-bg); }
   .sidebar-heading, .category-heading, .library-toolbar, .document-card-footer, .list-file-meta, .list-file-owner { display: flex; align-items: center; }
@@ -1167,7 +1251,7 @@ onMounted(() => {
   .card-select :deep(.el-checkbox__label), .list-select :deep(.el-checkbox__label) { display: none; }
   .card-select :deep(.el-checkbox__inner) { border-color: rgba(255, 255, 255, 0.84); background: transparent; }
   .card-select :deep(.el-checkbox__input.is-checked .el-checkbox__inner) { border-color: var(--el-color-primary); background: var(--el-color-primary); }
-  .library-toolbar { gap: 16px; min-height: 40px; margin-bottom: 14px; }
+  .library-toolbar { gap: 16px; min-height: 44px; margin-bottom: 12px; padding: 0 2px; }
   .library-breadcrumb { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--app-text-muted); font-size: 13px; }
   .library-breadcrumb > .el-icon:first-child { color: var(--el-color-primary); font-size: 17px; }
   .breadcrumb-parent { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1175,8 +1259,9 @@ onMounted(() => {
   .breadcrumb-arrow { color: var(--app-text-muted); font-size: 13px; }
   .library-toolbar-tools { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
   .result-count { color: var(--app-text-muted); font-size: 12px; }
-  .view-switch .el-button { width: 34px; height: 32px; padding: 0; }
-  .document-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 320px)); align-content: start; align-items: stretch; gap: 20px; min-height: 260px; padding: 2px; }
+  .view-switch .el-button,
+  .view-switch .ui-animal-button { width: 34px; height: 32px; padding: 0; }
+  .document-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-content: start; align-items: stretch; gap: 18px; min-height: 260px; padding: 2px; }
   .document-card-item { position: relative; display: flex; min-width: 0; min-height: 302px; flex-direction: column; overflow: hidden; border: 1px solid var(--app-surface-border); border-radius: 18px; background: linear-gradient(180deg, var(--app-surface-bg) 0%, color-mix(in srgb, var(--app-surface-bg) 88%, var(--el-color-primary-light-9)) 100%); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
   .document-card-item::before { position: absolute; z-index: 1; top: 0; right: 18px; left: 18px; height: 3px; border-radius: 0 0 6px 6px; background: color-mix(in srgb, var(--el-color-primary) 72%, transparent); content: ''; opacity: 0.7; }
   .document-card-item:hover { border-color: color-mix(in srgb, var(--el-color-primary) 48%, var(--app-surface-border)); box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14); transform: translateY(-2px); }
@@ -1197,7 +1282,8 @@ onMounted(() => {
   .cover-footer span { padding: 4px 7px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; background: rgba(9, 18, 34, 0.22); box-shadow: 0 4px 10px rgba(7, 15, 30, 0.1); backdrop-filter: blur(5px); }
   .cover-hover { position: absolute; z-index: 2; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; background: linear-gradient(180deg, rgba(8, 15, 30, 0.12), rgba(8, 15, 30, 0.5)); transition: opacity 0.2s ease; }
   .document-card-item:hover .cover-hover { opacity: 1; }
-  .cover-hover .el-button { width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, 0.5); color: #fff; background: rgba(255, 255, 255, 0.18); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); backdrop-filter: blur(5px); }
+  .cover-hover .el-button,
+  .cover-hover .ui-animal-button { width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, 0.5); color: #fff; background: rgba(255, 255, 255, 0.18); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); backdrop-filter: blur(5px); }
   .document-card-body { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 13px 15px 12px; }
   .document-card-title, .document-card-file, .document-card-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .document-card-title { color: var(--app-text-title); font-size: 14px; font-weight: 700; line-height: 1.4; }
@@ -1206,13 +1292,15 @@ onMounted(() => {
   .document-card-expiry.expiring { color: var(--el-color-warning); }
   .document-card-expiry.expired { color: var(--el-color-danger); }
   .document-card-tags { display: flex; align-items: center; gap: 5px; min-height: 22px; margin-top: 8px; overflow: hidden; }
-  .document-card-tags .el-tag { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+  .document-card-tags .el-tag,
+  .document-card-tags :deep(.animal-tag) { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
   .more-tags { color: var(--app-text-muted); font-size: 11px; }
   .document-card-meta { display: flex; align-items: center; gap: 7px; margin-top: 8px; color: var(--app-text-muted); font-size: 11px; }
   .document-card-meta i, .list-file-meta i { width: 3px; height: 3px; flex: 0 0 auto; border-radius: 50%; background: var(--app-text-muted); }
   .document-card-footer { justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 10px; color: var(--app-text-muted); font-size: 11px; }
   .document-card-footer > span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .grid-empty { grid-column: 1 / -1; min-height: 260px; }
+  .document-pagination { display: flex; justify-content: flex-end; margin-top: 18px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--app-surface-border) 74%, transparent); }
   .document-list-view { display: grid; align-content: start; gap: 10px; min-height: 260px; }
   .document-list-item { position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 88px; padding: 11px 14px; border: 1px solid var(--app-surface-border); border-radius: 14px; background: var(--app-surface-bg); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04); cursor: pointer; transition: 0.18s ease; }
   .document-list-item::before { position: absolute; top: 50%; left: 0; width: 3px; height: 30px; border-radius: 0 4px 4px 0; background: color-mix(in srgb, var(--el-color-primary) 72%, transparent); content: ''; opacity: 0.8; transform: translateY(-50%); }
@@ -1238,17 +1326,18 @@ onMounted(() => {
   .list-expiry.expired { color: var(--el-color-danger); }
   .list-file-actions { display: flex; align-items: center; flex: 0 0 auto; gap: 1px; opacity: 0.82; transition: opacity 0.18s ease; }
   .document-list-item:hover .list-file-actions, .document-list-item:focus-within .list-file-actions { opacity: 1; }
-  .list-file-actions .el-button { padding: 6px 7px; font-size: 12px; }
+  .list-file-actions .el-button,
+  .list-file-actions .ui-animal-button { padding: 6px 7px; font-size: 12px; }
   .document-list-view > .el-empty { grid-column: 1 / -1; }
   .document-tab-label { display: inline-flex; align-items: center; gap: 6px; }
   :deep(.department-document-category-panel.is-embedded .table-panel) { border: 0; box-shadow: none; }
   .toolbar-actions, .query-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .query-form { display: grid; grid-template-columns: minmax(230px, 1.3fr) repeat(5, minmax(130px, 1fr)) auto; align-items: center; gap: 12px 14px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--app-surface-border) 82%, transparent); border-radius: 12px; background: var(--el-fill-color-light); }
+  .query-form { display: grid; grid-template-columns: minmax(240px, 1.45fr) repeat(5, minmax(142px, 1fr)) auto; align-items: center; gap: 10px 14px; margin: 0 0 18px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--app-surface-border) 82%, transparent); border-radius: 16px; background: var(--el-fill-color-light); }
   :deep(.query-form .el-form-item) { min-width: 0; margin: 0; }
-  :deep(.query-form .el-form-item__label) { flex: 0 0 auto; padding-right: 8px; white-space: nowrap; }
+  :deep(.query-form .el-form-item__label) { flex: 0 0 auto; padding-right: 7px; color: var(--app-text-muted); font-size: 12px; white-space: nowrap; }
   :deep(.query-form .el-form-item__content) { min-width: 0; flex: 1; }
   :deep(.query-form .el-input), :deep(.query-form .el-select), :deep(.query-form .el-tree-select) { width: 100% !important; }
-  .query-actions { align-items: center; justify-content: flex-end; margin: 0; }
+  .query-actions { align-items: center; justify-content: flex-end; min-width: 150px; margin: 0; }
   .title-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .file-icon { display: inline-flex; flex: 0 0 42px; align-items: center; justify-content: center; width: 42px; height: 46px; border-radius: 10px; color: #fff; font-size: 10px; font-weight: 800; }
   .file-icon.pdf { background: linear-gradient(135deg, #ef5757, #b72745); }
@@ -1264,6 +1353,46 @@ onMounted(() => {
   .upload-progress { margin: 0 0 8px; }
   .detail-description { white-space: pre-wrap; line-height: 1.7; }
   .version-operation-placeholder { color: var(--el-text-color-placeholder); }
+
+  /* 资料页的页签只承担导航，保持轻量的顶部节奏，避免和筛选面板抢视觉层级。 */
+  :global(.department-document-page .ui-animal-tabs) {
+    margin: 0 0 14px;
+  }
+
+  :global(.department-document-page .ui-animal-tabs .animal-tabs__list) {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  :global(.department-document-page .ui-animal-tabs .animal-tabs__item) {
+    min-height: 40px;
+    padding: 8px 16px;
+  }
+
+  :global(.department-document-page .ui-animal-tabs.ui-tabs-contentless) {
+    border-radius: 18px;
+  }
+
+  :global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .ui-animal-tabs .animal-tabs__list) {
+    background: color-mix(in srgb, var(--app-elevated-soft-bg) 92%, transparent) !important;
+  }
+
+  :global(.department-document-page .document-grid .document-card-item) {
+    width: 100%;
+  }
+
+  @media (min-width: 1200px) {
+    .document-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 1500px) and (min-width: 901px) {
+    /* 1280px 左右的桌面宽度下，筛选器优先保持一行，避免操作按钮单独掉到下一行。 */
+    .query-form { display: flex; flex-wrap: nowrap; gap: 8px; padding: 12px 14px; }
+    :deep(.query-form .el-form-item) { display: flex; min-width: 0; flex: 1 1 0; overflow: hidden; }
+    :deep(.query-form .el-form-item__content) { min-width: 0; overflow: hidden; }
+    .query-actions { min-width: 0; flex: 0 0 auto; flex-wrap: nowrap; }
+  }
+
   @media (max-width: 900px) {
     .library-layout { grid-template-columns: 1fr; }
     .library-sidebar { min-height: 0; }
@@ -1271,16 +1400,21 @@ onMounted(() => {
     .category-tree { max-height: 230px; overflow-y: auto; }
     .hero-content { align-items: flex-start; flex-direction: column; }
     .hero-stats { width: 100%; justify-content: space-between; padding-right: 0; }
-    .query-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .query-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .query-actions { grid-column: 1 / -1; justify-content: flex-end; }
   }
   @media (max-width: 700px) {
     .selection-toolbar { align-items: flex-start; flex-direction: column; }
     .library-toolbar { align-items: flex-start; flex-direction: column; }
     .library-toolbar-tools { justify-content: space-between; width: 100%; }
+    .hero-content { gap: 16px; padding: 0; }
+    .hero-content p { max-width: none; }
+    .hero-stats { gap: 12px; }
+    .hero-stats div { min-width: 0; flex: 1; }
     .query-form { grid-template-columns: 1fr; gap: 10px; }
     .query-actions { grid-column: auto; justify-content: flex-start; }
-    .document-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .selection-actions { flex-wrap: wrap; }
+    .document-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
     .document-cover { height: 124px; flex-basis: 124px; }
     .document-card-body { padding: 11px; }
     .document-list-item { align-items: flex-start; flex-wrap: wrap; }
@@ -1288,7 +1422,37 @@ onMounted(() => {
     .list-file-owner { flex: 1; align-items: flex-start; margin-left: 60px; }
     .list-file-actions { margin-left: auto; }
     .list-expiry { margin-left: 60px; }
+    .document-pagination { justify-content: flex-start; overflow-x: auto; padding-bottom: 4px; }
   }
+}
+
+/* 窄屏下弹层不能继续使用固定宽度，避免表单被挤压或出现横向滚动。 */
+@media (max-width: 700px) {
+  :global(.el-drawer.document-quick-view) {
+    width: min(420px, 100vw) !important;
+  }
+
+  :global(.el-dialog.document-edit-dialog),
+  :global(.el-dialog.document-version-dialog),
+  :global(.el-dialog.document-detail-dialog),
+  :global(.el-dialog.document-preview-dialog) {
+    width: calc(100vw - 24px) !important;
+    margin: 12px auto !important;
+  }
+
+  :global(.el-dialog.document-edit-dialog .el-dialog__body),
+  :global(.el-dialog.document-version-dialog .el-dialog__body),
+  :global(.el-dialog.document-detail-dialog .el-dialog__body) {
+    max-height: calc(100vh - 156px);
+    overflow-y: auto;
+  }
+
+  :global(.el-dialog.document-preview-dialog .el-dialog__body) {
+    max-height: calc(100vh - 138px);
+    overflow-y: auto;
+  }
+
+  .quick-view-content { padding: 18px; }
 }
 
 :global(.el-drawer.document-quick-view) { background: var(--el-bg-color); }
@@ -1324,7 +1488,8 @@ onMounted(() => {
 .quick-view-file-name { margin-top: 5px; overflow: hidden; color: var(--app-text-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .quick-view-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .quick-view-actions { display: flex; gap: 10px; margin-top: 20px; }
-.quick-view-actions .el-button { flex: 1; }
+.quick-view-actions .el-button,
+.quick-view-actions .ui-animal-button { flex: 1; }
 .quick-view-divider { margin: 22px 0; }
 .quick-view-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; margin: 0; }
 .quick-view-meta div { min-width: 0; }
@@ -1334,6 +1499,109 @@ onMounted(() => {
 .quick-view-description > span { color: var(--app-text-muted); font-size: 11px; }
 .quick-view-description p { margin: 8px 0 0; color: var(--app-text-title); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
 .quick-view-footer-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+/*
+ * 资料页的抽屉和弹窗都会 append-to-body，不能依赖页面容器上的主题继承。
+ * 这里补齐 Animal 深色模式的表面、边框和文字令牌，避免主页面已变暗，
+ * 打开详情后却出现白色面板或低对比度文字。
+ */
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-drawer.document-quick-view) {
+  border-left: 1px solid var(--animal-border-color-light);
+  background: var(--app-surface-bg) !important;
+  color: var(--app-text-title);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-content) {
+  background: var(--app-surface-bg);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-header h3),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-title),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-meta dd),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-description p) {
+  color: var(--animal-text-color);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-file-name),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-meta dt),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-description > span) {
+  color: var(--animal-text-color-secondary);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-divider),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-description) {
+  border-color: var(--animal-border-color-light);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-quick-view .quick-view-cover-loading) {
+  border-color: var(--animal-border-color-light);
+  color: var(--animal-text-color-secondary);
+  background: var(--animal-bg-color-input);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-edit-dialog),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-version-dialog),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-detail-dialog),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-preview-dialog) {
+  border: 1px solid var(--animal-border-color-light);
+  background: var(--app-surface-bg) !important;
+  color: var(--animal-text-color);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-edit-dialog .el-dialog__header),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-version-dialog .el-dialog__header),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-detail-dialog .el-dialog__header) {
+  border-bottom-color: var(--animal-border-color-light);
+  background: var(--app-elevated-soft-bg);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-edit-dialog .el-dialog__title),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-version-dialog .el-dialog__title),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-detail-dialog .el-dialog__title),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-edit-dialog .el-form-item__label),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-version-dialog .el-form-item__label) {
+  color: var(--animal-text-color);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-edit-dialog .el-dialog__body),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-version-dialog .el-dialog__body),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-detail-dialog .el-dialog__body),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-edit-dialog .el-dialog__footer),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-version-dialog .el-dialog__footer),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .el-dialog.document-detail-dialog .el-dialog__footer) {
+  border-color: var(--animal-border-color-light);
+  background: var(--app-surface-bg);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .el-dialog__header) {
+  border-bottom-color: var(--animal-border-color-light);
+  background: var(--app-elevated-soft-bg);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .preview-dialog-title),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .preview-file-title) {
+  color: var(--animal-text-color);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .preview-dialog-eyebrow),
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .preview-file-meta) {
+  color: var(--animal-text-color-secondary);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .preview-file-summary) {
+  border-color: var(--animal-border-color-light);
+  background: var(--animal-bg-color-input);
+  box-shadow: var(--app-shadow-sm);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .preview-container) {
+  background: var(--animal-bg-color-input);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .document-preview-dialog .el-dialog__footer) {
+  border-top-color: var(--animal-border-color-light);
+  background: var(--app-surface-bg);
+}
 
 // el-dialog with append-to-body is teleported outside the page scope. Keep its
 // shell selectors global while the inner preview nodes retain the component scope id.
@@ -1385,6 +1653,72 @@ onMounted(() => {
  * Element Plus' dark variables alone. Keep all of them on the same palette. */
 :global(html.dark .department-document-page) {
   color: var(--app-text-title);
+}
+
+/*
+ * Animal 模式必须保留组件库的材质层级。
+ * 资料卡片此前被页面级背景规则覆盖，最终只剩下颜色变化；这里将卡片
+ * 的边框、纹理和内边距交还给 Animal 视觉，同时保持资料封面贴边布局。
+ */
+:global(html[data-ui-theme='animal'] .department-document-page .document-hero) {
+  border: 2px solid #82d5bb;
+  background: #82d5bb;
+  box-shadow: 0 8px 0 rgb(42 107 90 / 16%), 0 14px 30px rgb(42 107 90 / 12%);
+}
+
+:global(html[data-ui-theme='animal'] .department-document-page .document-card-item) {
+  min-height: 302px;
+  padding: 0;
+  border: 2px solid #82d5bb;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle, rgb(130 213 187 / 18%) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgb(170 235 210 / 12%) 1px, transparent 1px),
+    #e8faf5;
+  background-position: 0 0, 7px 7px;
+  background-size: 28px 28px, 14px 14px;
+  box-shadow: 0 8px 0 rgb(42 107 90 / 11%), 0 12px 24px rgb(42 107 90 / 10%);
+  color: #2a6b5a;
+}
+
+:global(html[data-ui-theme='animal'] .department-document-page .document-card-item:hover) {
+  border-color: #19c8b9;
+  box-shadow: 0 10px 0 rgb(42 107 90 / 12%), 0 18px 30px rgb(42 107 90 / 16%);
+}
+
+:global(html[data-ui-theme='animal'] .department-document-page .document-card-item .ui-animal-card__body),
+:global(html[data-ui-theme='animal'] .department-document-page .document-card-item .el-card__body) {
+  padding: 0;
+}
+
+:global(html[data-ui-theme='animal'] .department-document-page .document-card-item .document-card-body) {
+  background: rgb(255 255 255 / 72%);
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .document-hero) {
+  border-color: #5d9e91;
+  background:
+    radial-gradient(circle, rgb(130 213 187 / 14%) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgb(170 235 210 / 9%) 1px, transparent 1px),
+    #315b55;
+  background-position: 0 0, 7px 7px;
+  background-size: 28px 28px, 14px 14px;
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .document-card-item) {
+  border-color: #5d9e91;
+  background:
+    radial-gradient(circle, rgb(130 213 187 / 13%) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgb(170 235 210 / 8%) 1px, transparent 1px),
+    #344a46;
+  background-position: 0 0, 7px 7px;
+  background-size: 28px 28px, 14px 14px;
+  box-shadow: 0 8px 0 rgb(14 39 35 / 34%), 0 14px 28px rgb(4 10 12 / 30%);
+  color: #f5ead1;
+}
+
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .department-document-page .document-card-item .document-card-body) {
+  background: rgb(43 58 57 / 78%);
 }
 
 :global(html.dark .department-document-page .document-card.el-card) {

@@ -13,7 +13,7 @@ html.dark {
 
   --fixedHeaderBg: #0f172a;
   --tableHeaderBg: var(--el-bg-color);
-  --tableHeaderTextColor: var(--el-text-color);
+  --tableHeaderTextColor: var(--el-text-color-primary, var(--app-text-title));
 
   // --- 表格：暗色下选中行背景 ---
   --el-table-current-row-bg-color: color-mix(in srgb, var(--app-accent-strong) 16%, var(--app-surface-bg));
@@ -277,4 +277,60 @@ html.dark {
   --vxe-ui-table-fixed-scrolling-box-shadow-color: rgba(0, 0, 0, 0.5);
 
   --brder-color: #37373a;
+
+  // 办公模式仍有大量页面使用 Element Plus 原生表格；
+  // 深色下显式统一表头、hover、固定列和内容文字，避免沿用浅色表头色导致标题发灰。
+  &[data-ui-theme='office'] {
+    .el-table {
+      .el-table__header-wrapper th.el-table__cell,
+      .el-table__fixed-header-wrapper th.el-table__cell,
+      .el-table__fixed-right th.el-table__cell {
+        background: var(--tableHeaderBg) !important;
+        background-color: var(--tableHeaderBg) !important;
+        color: var(--tableHeaderTextColor) !important;
+        border-bottom-color: var(--app-surface-border) !important;
+      }
+
+      .el-table__header-wrapper th.el-table__cell .cell,
+      .el-table__fixed-header-wrapper th.el-table__cell .cell,
+      .el-table__fixed-right th.el-table__cell .cell {
+        color: inherit !important;
+        font-weight: 700;
+      }
+
+      .el-table__header-wrapper th.el-table__cell:hover,
+      .el-table__fixed-header-wrapper th.el-table__cell:hover,
+      .el-table__fixed-right th.el-table__cell:hover {
+        background: color-mix(in srgb, var(--app-accent-strong) 18%, var(--tableHeaderBg)) !important;
+        color: #ffffff !important;
+      }
+
+      .el-table__body-wrapper td.el-table__cell,
+      .el-table__fixed td.el-table__cell,
+      .el-table__fixed-right td.el-table__cell {
+        background: var(--app-surface-bg) !important;
+        color: var(--app-text-title) !important;
+      }
+
+      .el-table__body-wrapper td.el-table__cell .cell,
+      .el-table__fixed td.el-table__cell .cell,
+      .el-table__fixed-right td.el-table__cell .cell {
+        color: inherit !important;
+      }
+
+      .el-table__body tr:hover > td.el-table__cell,
+      .el-table__body tr.hover-row > td.el-table__cell,
+      .el-table__body tr.current-row > td.el-table__cell,
+      .el-table__fixed .el-table__body tr:hover > td.el-table__cell,
+      .el-table__fixed-right .el-table__body tr:hover > td.el-table__cell,
+      .el-table__fixed .el-table__body tr.hover-row > td.el-table__cell,
+      .el-table__fixed-right .el-table__body tr.hover-row > td.el-table__cell,
+      .el-table__fixed .el-table__body tr.current-row > td.el-table__cell,
+      .el-table__fixed-right .el-table__body tr.current-row > td.el-table__cell {
+        background: var(--el-table-row-hover-bg-color) !important;
+        background-color: var(--el-table-row-hover-bg-color) !important;
+        color: var(--app-text-title) !important;
+      }
+    }
+  }
 }

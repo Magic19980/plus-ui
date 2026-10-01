@@ -18,29 +18,28 @@
 @use './components/page-shell';
 @use './components/card-shell';
 @use './components/theme-helpers';
+@use './components/animal-theme';
 @use './components/table-toolbar';
 @use './components/query-form';
 @use './components/search-panel';
 
 @use './vendors/element-plus/index' as element-custom;
+@use './components/global-overlays';
+@use './components/_ecology-theme.scss';
 @use 'animate.css';
 
-// Element Plus 的基础样式会在后面重新声明滚动条颜色；这里作为最终覆盖层，
-// 保证 html/body 的视口滚动条轨道始终与页面画布一致，不在右侧形成色差。
-html,
-body,
-#app {
-  // 根层禁止继承或残留背景图，避免侧栏外沿露出另一张画布。
+// 统一主题的画布层：html、body、应用壳和主容器必须共享同一个底色。
+// 页面卡片/侧栏仍由各自的 surface token 提供层级，避免“背景一致”误变成“菜单融入背景”。
+html[data-ui-theme],
+html[data-ui-theme] body,
+html[data-ui-theme] #app,
+html[data-ui-theme] #app .app-wrapper,
+html[data-ui-theme] #app .main-container,
+html[data-ui-theme] #app .app-main {
+  // 根层禁止残留背景图，避免切换页签或滚动后露出另一张画布。
   background-color: var(--app-shell-bg) !important;
   background-image: none !important;
   scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
-}
-
-// 固定侧栏外层覆盖页面边缘空隙，内层 .sidebar-shell 继续负责菜单面板的独立层级。
-#app .app-wrapper,
-#app .sidebar-container {
-  background-color: var(--app-shell-bg) !important;
-  background-image: none !important;
 }
 
 html::-webkit-scrollbar-track,

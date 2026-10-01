@@ -1,6 +1,6 @@
 <template>
   <div class="app-container hrm-sync-page">
-    <el-card shadow="never" class="intro-card">
+    <UiCard shadow="never" class="intro-card" :body-style="{ padding: 0 }">
       <div class="intro-card__content">
         <div class="intro-card__copy">
           <span class="eyebrow"><el-icon><OfficeBuilding /></el-icon>ECOLOGY HRM DIRECTORY</span>
@@ -16,9 +16,9 @@
           <span class="intro-card__connected">已接入</span>
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="main-card mt-2">
+    <UiCard shadow="never" class="main-card mt-2" :body-style="{ padding: '0 26px 30px' }">
       <template #header>
         <div class="main-card__header">
           <div class="section-heading">
@@ -29,9 +29,9 @@
             </div>
           </div>
           <div class="action-group">
-          <el-button v-hasPermi="['ecology:hrmSync:user']" plain icon="Lock" @click="openPasswordDialog">设置人员初始密码</el-button>
-          <el-button v-hasPermi="['ecology:hrmSync:organization']" plain icon="Refresh" :loading="syncLoading" @click="syncOrganization">同步并接管组织</el-button>
-          <el-button v-hasPermi="['ecology:hrmSync:user']" type="primary" icon="User" :loading="syncLoading" @click="syncUsers">同步人员</el-button>
+          <UiButton v-hasPermi="['ecology:hrmSync:user']" plain @click="openPasswordDialog">设置人员初始密码</UiButton>
+          <UiButton v-hasPermi="['ecology:hrmSync:organization']" plain :loading="syncLoading" @click="syncOrganization">同步并接管组织</UiButton>
+          <UiButton v-hasPermi="['ecology:hrmSync:user']" type="primary" :loading="syncLoading" @click="syncUsers">同步人员</UiButton>
           </div>
         </div>
       </template>
@@ -46,7 +46,7 @@
             </div>
             <div class="tree-toolbar__actions">
               <el-checkbox v-model="includeDisabled" @change="loadOrganizationTree">显示已封存</el-checkbox>
-              <el-button plain icon="Refresh" @click="loadOrganizationTree">刷新目录</el-button>
+              <UiButton plain @click="loadOrganizationTree">刷新目录</UiButton>
             </div>
           </div>
           <el-alert title="同步后的泛微组织会自动成为本地部门树，业务科室配置不会被覆盖；岗位和人员分别写入系统主表。" type="info" :closable="false" show-icon class="sync-alert" />
@@ -57,11 +57,11 @@
                   <div class="tree-node__main">
                     <span class="tree-node__icon"><el-icon><OfficeBuilding v-if="data.nodeType === 'SUBCOMPANY'" /><Folder v-else /></el-icon></span>
                     <span class="tree-node__name">{{ data.name }}</span>
-                    <el-tag v-if="treeNodeTypeLabel(data.nodeType || data.oaSourceType)" size="small" effect="plain" class="tree-node__type-tag">
+                    <UiTag v-if="treeNodeTypeLabel(data.nodeType || data.oaSourceType)" size="small" effect="plain" class="tree-node__type-tag">
                       {{ treeNodeTypeLabel(data.nodeType || data.oaSourceType) }}
-                    </el-tag>
-                    <el-tag v-if="data.status === 'DISABLED'" size="small" type="info">已封存</el-tag>
-                    <el-tag v-if="data.treeStatus !== 'VALID'" size="small" :type="treeStatusType(data.treeStatus)">{{ treeStatusLabel(data.treeStatus) }}</el-tag>
+                    </UiTag>
+                    <UiTag v-if="data.status === 'DISABLED'" size="small" type="info">已封存</UiTag>
+                    <UiTag v-if="data.treeStatus !== 'VALID'" size="small" :type="treeStatusType(data.treeStatus)">{{ treeStatusLabel(data.treeStatus) }}</UiTag>
                   </div>
                   <div class="tree-node__meta">
                     <span v-if="data.nodeType === 'DEPARTMENT' && data.localDeptName">本地部门：{{ data.localDeptName }}</span>
@@ -71,17 +71,17 @@
                 </div>
               </template>
             </el-tree>
-            <el-empty v-if="!treeLoading && organizationTree.length === 0" description="暂无组织树，请先同步并接管组织" />
+            <UiEmpty v-if="!treeLoading && organizationTree.length === 0" description="暂无组织树，请先同步并接管组织" />
           </div>
         </el-tab-pane>
 
         <el-tab-pane name="batch" lazy>
           <template #label><span class="sync-tab-label"><el-icon><Refresh /></el-icon>同步批次</span></template>
-          <el-table v-loading="batchLoading" :data="batches" border stripe class="data-table">
+          <DepartmentDataTable :loading="batchLoading" :data="batches" border stripe class="data-table">
             <el-table-column label="批次 ID" prop="id" width="170" />
             <el-table-column label="类型" width="100"><template #default="scope">{{ scope.row.syncType === 'USER' ? '人员' : '组织' }}</template></el-table-column>
             <el-table-column label="模式" width="100"><template #default="scope">{{ scope.row.syncMode === 'FULL' ? '全量' : scope.row.syncMode === 'RETRY' ? '重试' : '增量' }}</template></el-table-column>
-            <el-table-column label="状态" width="100" align="center"><template #default="scope"><el-tag :type="batchType(scope.row.status)">{{ batchLabel(scope.row.status) }}</el-tag></template></el-table-column>
+            <el-table-column label="状态" width="100" align="center"><template #default="scope"><UiTag :type="batchType(scope.row.status)">{{ batchLabel(scope.row.status) }}</UiTag></template></el-table-column>
             <el-table-column label="总数" prop="totalCount" width="90" />
             <el-table-column label="成功" prop="successCount" width="90" />
             <el-table-column label="新增" prop="createdCount" width="90" />
@@ -91,49 +91,44 @@
             <el-table-column label="开始时间" prop="startedAt" min-width="170" />
             <el-table-column label="结束时间" prop="finishedAt" min-width="170" />
             <el-table-column label="说明" prop="message" min-width="180" show-overflow-tooltip />
-          </el-table>
-          <pagination v-show="batchTotal > 0" v-model:page="batchPage.pageNum" v-model:limit="batchPage.pageSize" :total="batchTotal" @pagination="loadBatches" />
-          <el-empty v-if="!batchLoading && batches.length === 0" description="暂无同步批次" />
+          </DepartmentDataTable>
+          <UiPagination v-show="batchTotal > 0" v-model:page="batchPage.pageNum" v-model:limit="batchPage.pageSize" :total="batchTotal" @pagination="loadBatches" />
+          <UiEmpty v-if="!batchLoading && batches.length === 0" description="暂无同步批次" />
         </el-tab-pane>
 
         <el-tab-pane name="detail" lazy>
           <template #label><span class="sync-tab-label"><el-icon><InfoFilled /></el-icon>异常明细</span></template>
           <el-form :inline="true" class="detail-query" @submit.prevent>
-            <el-form-item label="批次 ID"><el-input v-model="detailBatchId" clearable placeholder="可选" style="width: 190px" @keyup.enter="searchDetails" /></el-form-item>
+            <el-form-item label="批次 ID"><UiInput v-model="detailBatchId" clearable placeholder="可选" style="width: 190px" @keyup.enter="searchDetails" /></el-form-item>
             <el-form-item label="处理状态">
-              <el-select v-model="detailStatus" clearable placeholder="全部状态" style="width: 150px" @change="searchDetails">
-                <el-option label="待处理" value="PENDING" />
-                <el-option label="冲突" value="CONFLICT" />
-                <el-option label="失败" value="FAILED" />
-              </el-select>
+              <UiSelect v-model="detailStatus" :options="detailStatusOptions" clearable placeholder="全部状态" style="width: 150px" @change="searchDetails" />
             </el-form-item>
             <el-form-item>
-              <el-button icon="Search" @click="searchDetails">查询</el-button>
+              <UiButton @click="searchDetails">查询</UiButton>
             </el-form-item>
           </el-form>
           <el-alert title="异常明细只记录本次同步的校验、冲突和失败原因；修正泛微主数据或配置后重新执行同步。" type="info" :closable="false" show-icon class="sync-alert" />
-          <el-table v-loading="detailLoading" :data="details" border stripe class="data-table">
+          <DepartmentDataTable :loading="detailLoading" :data="details" border stripe class="data-table">
             <el-table-column label="批次 ID" prop="batchId" width="170" />
             <el-table-column label="类型" width="90"><template #default="scope">{{ scope.row.entityType === 'USER' ? '人员' : scope.row.entityType }}</template></el-table-column>
             <el-table-column label="泛微源 ID" prop="sourceId" width="130" />
             <el-table-column label="业务键" prop="sourceKey" min-width="160" show-overflow-tooltip />
             <el-table-column label="动作" prop="action" width="100" />
-            <el-table-column label="状态" width="100" align="center"><template #default="scope"><el-tag :type="detailType(scope.row.detailStatus)">{{ detailLabel(scope.row.detailStatus) }}</el-tag></template></el-table-column>
+            <el-table-column label="状态" width="100" align="center"><template #default="scope"><UiTag :type="detailType(scope.row.detailStatus)">{{ detailLabel(scope.row.detailStatus) }}</UiTag></template></el-table-column>
             <el-table-column label="说明" prop="message" min-width="260" show-overflow-tooltip />
             <el-table-column label="时间" prop="createTime" min-width="170" />
-          </el-table>
-          <pagination v-show="detailTotal > 0" v-model:page="detailPage.pageNum" v-model:limit="detailPage.pageSize" :total="detailTotal" @pagination="loadDetails" />
-          <el-empty v-if="!detailLoading && details.length === 0" description="暂无同步异常明细" />
+          </DepartmentDataTable>
+          <UiPagination v-show="detailTotal > 0" v-model:page="detailPage.pageNum" v-model:limit="detailPage.pageSize" :total="detailTotal" @pagination="loadDetails" />
+          <UiEmpty v-if="!detailLoading && details.length === 0" description="暂无同步异常明细" />
         </el-tab-pane>
       </DepartmentPageTabs>
-    </el-card>
+    </UiCard>
 
-    <el-dialog
+    <UiDialog
       v-model="passwordDialog.visible"
       :title="passwordStatus.configured ? '修改人员初始密码' : '设置人员初始密码'"
       width="560px"
       append-to-body
-      destroy-on-close
       class="password-dialog"
     >
       <div class="password-dialog__intro">
@@ -158,11 +153,11 @@
       <div v-if="passwordStatus.password" class="password-dialog__current">
         <div class="password-dialog__current-header">
           <span>当前初始密码</span>
-          <el-tag type="success" effect="plain" size="small">可用于后续新账号</el-tag>
+          <UiTag type="success" effect="plain" size="small">可用于后续新账号</UiTag>
         </div>
         <div class="password-dialog__current-value">
           <code>{{ passwordStatus.password }}</code>
-          <el-button text type="primary" icon="CopyDocument" @click="copyPassword">复制密码</el-button>
+          <UiButton text type="primary" icon="CopyDocument" @click="copyPassword">复制密码</UiButton>
         </div>
       </div>
       <div v-else-if="passwordStatus.configured && passwordStatus.source === 'PAGE'" class="password-dialog__legacy-tip">
@@ -177,7 +172,7 @@
         size="large"
       >
         <el-form-item label="初始密码" prop="password">
-          <el-input
+          <UiInput
             v-model="passwordForm.password"
             type="password"
             show-password
@@ -186,7 +181,7 @@
           />
         </el-form-item>
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
+          <UiInput
             v-model="passwordForm.confirmPassword"
             type="password"
             show-password
@@ -201,11 +196,11 @@
       </div>
       <template #footer>
         <div class="password-dialog__footer">
-          <el-button @click="closePasswordDialog">取消</el-button>
-          <el-button type="primary" :loading="passwordDialog.loading" @click="submitPassword">{{ passwordStatus.configured ? '修改并保存' : '保存设置' }}</el-button>
+          <UiButton @click="closePasswordDialog">取消</UiButton>
+          <UiButton type="primary" :loading="passwordDialog.loading" @click="submitPassword">{{ passwordStatus.configured ? '修改并保存' : '保存设置' }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
   </div>
 </template>
@@ -214,8 +209,10 @@
 import { onMounted, reactive, ref } from 'vue';
 import modal from '@/plugins/modal';
 import DepartmentPageTabs from '@/components/Department/PageTabs.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import { getOaHrmUserPasswordStatus, listOaOrganizationTree, listOaSyncBatches, listOaSyncDetails, syncOaOrganization, syncOaUsers, updateOaHrmUserPassword } from '@/api/ecology';
 import type { OaHrmUserPasswordStatusVO, OaOrganizationTreeVO, OaSyncBatchVO, OaSyncDetailVO } from '@/api/ecology/types';
+import { UiButton, UiCard, UiDialog, UiEmpty, UiInput, UiPagination, UiSelect, UiTag } from '@/components/UiKit';
 
 const activeTab = ref('tree');
 const syncLoading = ref(false);
@@ -228,6 +225,7 @@ const details = ref<OaSyncDetailVO[]>([]);
 const detailTotal = ref(0);
 const organizationTree = ref<OaOrganizationTreeVO[]>([]);
 const includeDisabled = ref(false);
+const detailStatusOptions = [{ value: 'PENDING', label: '待处理' }, { value: 'CONFLICT', label: '冲突' }, { value: 'FAILED', label: '失败' }];
 const batchPage = reactive<PageQuery>({ pageNum: 1, pageSize: 10 });
 const detailPage = reactive<PageQuery>({ pageNum: 1, pageSize: 10 });
 const detailBatchId = ref<string>();
@@ -332,7 +330,8 @@ onMounted(async () => { await loadOrganizationTree(); });
     linear-gradient(180deg, #f7faff 0%, #f3f6fb 100%);
 }
 
-:global(.hrm-sync-page .el-card) {
+:global(.hrm-sync-page .el-card),
+:global(.hrm-sync-page .ui-animal-card) {
   overflow: hidden;
   border: 1px solid rgba(218, 229, 241, 0.9);
   border-radius: 22px;
@@ -345,7 +344,8 @@ onMounted(async () => { await loadOrganizationTree(); });
   box-shadow: 0 20px 46px rgba(21, 53, 85, 0.18), 0 4px 12px rgba(21, 53, 85, 0.08);
 }
 
-:global(.hrm-sync-page .intro-card .el-card__body) { padding: 0 !important; }
+:global(.hrm-sync-page .intro-card .el-card__body),
+:global(.hrm-sync-page .intro-card .ui-animal-card__body) { padding: 0 !important; }
 
 .intro-card__content {
   position: relative;
@@ -431,17 +431,22 @@ onMounted(async () => { await loadOrganizationTree(); });
 .intro-card__connected { display: inline-flex !important; align-items: center; justify-content: center; align-self: center; min-width: 60px; height: 28px; margin-top: 0 !important; margin-left: auto; padding: 0 11px; border: 1px solid rgba(160, 241, 192, 0.5); border-radius: 999px; color: #b4f4c9; background: rgba(76, 201, 129, 0.1); box-shadow: 0 0 0 3px rgba(76, 201, 129, 0.07); font-size: 12px; font-weight: 700; line-height: 1 !important; white-space: nowrap; }
 .intro-card__connected::before { width: 5px; height: 5px; margin-right: 5px; border-radius: 50%; background: #8ce6aa; box-shadow: 0 0 0 3px rgba(140, 230, 170, 0.12); content: ''; }
 
-:global(.hrm-sync-page .main-card .el-card__header) { padding: 0; border-bottom: 1px solid var(--hrm-line); }
-:global(.hrm-sync-page .main-card .el-card__body) { padding: 0 26px 30px; }
+:global(.hrm-sync-page .main-card .el-card__header),
+:global(.hrm-sync-page .main-card .ui-animal-card__header) { padding: 0; border-bottom: 1px solid var(--hrm-line); }
+:global(.hrm-sync-page .main-card .el-card__body),
+:global(.hrm-sync-page .main-card .ui-animal-card__body) { padding: 0 26px 30px; }
 .main-card__header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 28px; background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); }
 .section-heading { display: flex; align-items: center; min-width: 0; gap: 12px; }
 .section-heading__icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; border: 1px solid #d5e9fc; border-radius: 14px; color: #438fe0; background: linear-gradient(145deg, #eff7ff, #e7f2ff); box-shadow: 0 5px 12px rgba(72, 148, 219, 0.1); font-size: 20px; }
 .section-heading h3 { margin: 0; color: var(--hrm-ink); font-size: 17px; line-height: 1.3; }
 .section-heading p { margin: 4px 0 0; overflow: hidden; color: var(--hrm-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .action-group { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 6px; border: 1px solid #e5edf6; border-radius: 14px; background: #f5f8fc; }
-.action-group .el-button { margin-left: 0; border-radius: 10px; }
-.action-group .el-button:not(.el-button--primary) { border-color: transparent; background: #fff; box-shadow: 0 2px 5px rgba(47, 75, 109, 0.05); }
-.action-group .el-button--primary { box-shadow: 0 5px 12px rgba(75, 158, 232, 0.22); }
+.action-group .el-button,
+.action-group .ui-animal-button { margin-left: 0; border-radius: 10px; }
+.action-group .el-button:not(.el-button--primary),
+.action-group .ui-animal-button:not(.animal-btn--primary) { border-color: transparent; background: #fff; box-shadow: 0 2px 5px rgba(47, 75, 109, 0.05); }
+.action-group .el-button--primary,
+.action-group .animal-btn--primary { box-shadow: 0 5px 12px rgba(75, 158, 232, 0.22); }
 
 .sync-tab-label { display: inline-flex; align-items: center; gap: 7px; }
 .sync-tab-label .el-icon { font-size: 15px; }
@@ -453,7 +458,8 @@ onMounted(async () => { await loadOrganizationTree(); });
 .tree-toolbar__copy span { color: var(--hrm-muted); font-size: 12px; line-height: 1.5; }
 .tree-toolbar__actions { display: flex; align-items: center; flex: 0 0 auto; gap: 13px; }
 .tree-toolbar__actions .el-checkbox { padding: 7px 10px; border-radius: 8px; color: #6f8196; background: #f3f7fb; }
-.tree-toolbar__actions .el-button { border-radius: 9px; }
+.tree-toolbar__actions .el-button,
+.tree-toolbar__actions .ui-animal-button { border-radius: 9px; }
 .sync-alert { margin-bottom: 14px; border: 1px solid #dfeefa; border-radius: 12px; background: linear-gradient(90deg, #f2f8ff 0%, #f8fbff 100%); }
 .sync-alert :deep(.el-alert__icon) { color: #5aa7e8; }
 .sync-alert :deep(.el-alert__title) { color: #58718e; font-size: 12px; font-weight: 500; line-height: 1.5; }
@@ -482,7 +488,8 @@ onMounted(async () => { await loadOrganizationTree(); });
 .data-table :deep(.el-table__inner-wrapper::before) { display: none; }
 .detail-query { margin-bottom: 14px; padding: 14px 16px 1px; border: 1px solid var(--hrm-line); border-radius: 14px; background: linear-gradient(105deg, #f8fbff, #ffffff); }
 .detail-query :deep(.el-form-item) { margin-bottom: 13px; }
-.detail-query :deep(.el-button) { border-radius: 8px; }
+.detail-query :deep(.el-button),
+.detail-query :deep(.ui-animal-button) { border-radius: 8px; }
 
 .table-empty { min-height: 260px; border: 1px dashed #dce7f1; border-radius: 14px; background: rgba(255, 255, 255, 0.72); }
 
@@ -498,7 +505,8 @@ onMounted(async () => { await loadOrganizationTree(); });
   .intro-card h2 { font-size: 24px; }
   .intro-card__status { width: 100%; min-width: 0; }
   .main-card__header { padding: 20px; }
-  :global(.hrm-sync-page .main-card .el-card__body) { padding: 0 14px 20px; }
+  :global(.hrm-sync-page .main-card .el-card__body),
+  :global(.hrm-sync-page .main-card .ui-animal-card__body) { padding: 0 14px 20px; }
   .tree-toolbar { align-items: flex-start; flex-direction: column; }
   .tree-toolbar__actions { width: 100%; justify-content: space-between; }
   .tree-node__meta { display: none; }
@@ -584,6 +592,7 @@ html.dark .hrm-sync-page {
     linear-gradient(180deg, #0b1220 0%, #060b16 100%);
 
   .el-card,
+  .ui-animal-card,
   .main-card {
     border-color: rgba(71, 85, 105, 0.48);
     background: var(--app-surface-bg);
@@ -608,7 +617,8 @@ html.dark .hrm-sync-page {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 28px rgba(0, 0, 0, 0.2);
   }
 
-  .main-card .el-card__header {
+  .main-card .el-card__header,
+  .main-card .ui-animal-card__header {
     border-bottom-color: var(--hrm-line);
   }
 
@@ -756,6 +766,529 @@ html.dark .hrm-sync-page {
 
   .el-empty__description p {
     color: var(--app-text-muted);
+  }
+}
+
+/* 动森模式页面皮肤：页面原有的 html.dark 样式只服务办公蓝主题，
+ * 因此在这里按 Animal 语义变量重绘同步页的所有业务区域。 */
+html[data-ui-theme='animal'] .hrm-sync-page {
+  --hrm-ink: var(--animal-text-color);
+  --hrm-muted: var(--animal-text-color-secondary);
+  --hrm-line: var(--animal-border-color-light);
+  --hrm-blue: var(--animal-primary-color);
+  --hrm-blue-soft: var(--animal-primary-color-bg);
+  color: var(--animal-text-color);
+  background: transparent;
+
+  .el-card,
+  .ui-animal-card,
+  .main-card {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  .intro-card {
+    border-color: var(--animal-border-color);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-lg);
+  }
+
+  .intro-card__content {
+    color: var(--animal-text-color);
+    background:
+      radial-gradient(circle at 80% 0%, rgb(25 200 185 / 16%), transparent 27%),
+      linear-gradient(118deg, #d7efdc 0%, #d2ece9 56%, #e7f0cf 100%);
+  }
+
+  .intro-card__content::before {
+    background: radial-gradient(circle, rgb(25 200 185 / 24%) 0 43%, rgb(25 200 185 / 5%) 44% 70%, transparent 71%);
+  }
+
+  .intro-card__content::after {
+    border-color: rgb(25 200 185 / 22%);
+    box-shadow: 0 0 0 22px rgb(25 200 185 / 4%), 0 0 0 44px rgb(25 200 185 / 3%);
+  }
+
+  .eyebrow {
+    color: #3f8f83;
+  }
+
+  .intro-card h2 {
+    color: #345e4c;
+    text-shadow: 0 2px 14px rgb(64 91 74 / 14%);
+  }
+
+  .intro-card p {
+    color: #5c806e;
+  }
+
+  .intro-card__status {
+    border-color: rgb(25 145 132 / 24%);
+    background: linear-gradient(135deg, rgb(255 255 255 / 56%), rgb(232 249 239 / 58%));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 72%), var(--app-shadow-md);
+  }
+
+  .intro-card__status-icon {
+    border-color: rgb(25 200 185 / 24%);
+    color: #218f85;
+    background: linear-gradient(145deg, rgb(25 200 185 / 20%), rgb(25 200 185 / 8%));
+  }
+
+  .intro-card__status strong {
+    color: #345e4c;
+  }
+
+  .intro-card__status div span {
+    color: #6d917f;
+  }
+
+  .intro-card__connected {
+    border-color: rgb(85 168 107 / 48%);
+    color: #43875a;
+    background: rgb(85 168 107 / 12%);
+    box-shadow: 0 0 0 3px rgb(85 168 107 / 8%);
+  }
+
+  .intro-card__connected::before {
+    background: #55a86b;
+    box-shadow: 0 0 0 3px rgb(85 168 107 / 14%);
+  }
+
+  .main-card .el-card__header,
+  .main-card .ui-animal-card__header {
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .main-card__header {
+    background: linear-gradient(180deg, #fffdf5 0%, #f7f3df 100%);
+  }
+
+  .section-heading__icon {
+    border-color: rgb(25 200 185 / 28%);
+    color: #168f84;
+    background: linear-gradient(145deg, #e6f9f6, #d7f1e7);
+    box-shadow: 0 5px 12px rgb(25 200 185 / 12%);
+  }
+
+  .section-heading h3,
+  .tree-toolbar__copy strong {
+    color: var(--animal-text-color);
+  }
+
+  .section-heading p,
+  .tree-toolbar__copy span,
+  .tree-node__meta {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .action-group {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .action-group .animal-btn--default,
+  .action-group .animal-btn--dashed {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+  }
+
+  .action-group .animal-btn--primary {
+    border-color: var(--animal-primary-color) !important;
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+  }
+
+  .department-page-tabs .el-tabs__header {
+    border-bottom-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+  }
+
+  .department-page-tabs .el-tabs__nav-wrap {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .department-page-tabs .el-tabs__item {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .department-page-tabs .el-tabs__item:hover,
+  .department-page-tabs .el-tabs__item.is-active {
+    color: var(--animal-primary-color);
+    background: var(--animal-bg-color-input);
+  }
+
+  .tree-toolbar {
+    border-color: var(--animal-border-color-light);
+    background: linear-gradient(105deg, var(--animal-bg-color-secondary) 0%, var(--app-surface-bg) 72%);
+  }
+
+  .tree-toolbar__copy strong::before {
+    background: linear-gradient(180deg, var(--animal-primary-color), #74ba79);
+  }
+
+  .tree-toolbar__actions .el-checkbox {
+    color: var(--animal-text-color-secondary);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .tree-toolbar__actions .animal-btn--default {
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color-input) !important;
+    border-color: var(--animal-border-color) !important;
+  }
+
+  .sync-alert {
+    border-color: rgb(25 200 185 / 24%);
+    background: linear-gradient(90deg, rgb(25 200 185 / 12%), var(--animal-bg-color-secondary));
+  }
+
+  .sync-alert .el-alert__icon {
+    color: var(--animal-primary-color);
+  }
+
+  .sync-alert .el-alert__title {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .tree-shell {
+    border-color: var(--animal-border-color-light);
+    background: linear-gradient(180deg, var(--animal-bg-color) 0%, var(--app-surface-bg) 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%);
+  }
+
+  .organization-tree .el-tree-node__content {
+    border-color: transparent;
+    background: var(--app-surface-bg);
+    box-shadow: 0 1px 2px rgb(64 91 74 / 5%);
+  }
+
+  .organization-tree .el-tree-node__content:hover {
+    border-color: rgb(25 200 185 / 34%);
+    background: var(--animal-primary-color-bg);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .organization-tree .el-tree-node__expand-icon {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .tree-node__icon {
+    border-color: rgb(25 200 185 / 28%);
+    color: #168f84;
+    background: linear-gradient(145deg, #e6f9f6, #e2f2d8);
+    box-shadow: 0 3px 8px rgb(64 91 74 / 8%);
+  }
+
+  .tree-node__name {
+    color: var(--animal-text-color);
+  }
+
+  .tree-node__meta span {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .data-table {
+    --el-table-bg-color: var(--app-surface-bg);
+    --el-table-tr-bg-color: var(--app-surface-bg);
+    --el-table-header-bg-color: var(--tableHeaderBg);
+    --el-table-row-hover-bg-color: color-mix(in srgb, var(--animal-primary-color) 12%, var(--app-surface-bg));
+    --el-table-border-color: var(--animal-border-color-light);
+    --el-table-text-color: var(--animal-text-color);
+    border-color: var(--animal-border-color-light);
+  }
+
+  .data-table .el-table__header-wrapper {
+    background: var(--tableHeaderBg);
+  }
+
+  .data-table th.el-table__cell {
+    color: var(--tableHeaderTextColor) !important;
+    background: var(--tableHeaderBg) !important;
+  }
+
+  .data-table td.el-table__cell {
+    color: var(--animal-text-color);
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .data-table .el-table__row:hover > td.el-table__cell {
+    background: var(--el-table-row-hover-bg-color);
+  }
+
+  .detail-query {
+    border-color: var(--animal-border-color-light);
+    background: linear-gradient(105deg, var(--animal-bg-color-secondary), var(--app-surface-bg));
+  }
+
+  .detail-query .el-input__wrapper,
+  .detail-query .el-select__wrapper {
+    background: var(--animal-bg-color-input);
+    box-shadow: 0 0 0 1px var(--animal-border-color) inset;
+  }
+
+  .table-empty {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .el-empty__description p {
+    color: var(--animal-text-color-secondary);
+  }
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .hrm-sync-page {
+  --hrm-ink: var(--animal-text-color);
+  --hrm-muted: var(--animal-text-color-secondary);
+  --hrm-line: var(--animal-border-color-light);
+  --hrm-blue: var(--animal-primary-color);
+  --hrm-blue-soft: rgb(25 200 185 / 16%);
+
+  .el-card,
+  .main-card {
+    border-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+    box-shadow: var(--app-shadow-md);
+  }
+
+  .intro-card {
+    border-color: var(--animal-border-color);
+    background: var(--app-surface-bg);
+  }
+
+  .intro-card__content {
+    color: var(--animal-text-color);
+    background:
+      radial-gradient(circle at 80% 0%, rgb(25 200 185 / 20%), transparent 27%),
+      linear-gradient(118deg, #29433f 0%, #345751 56%, #3f6b62 100%);
+  }
+
+  .intro-card__content::before {
+    background: radial-gradient(circle, rgb(127 228 211 / 25%) 0 43%, rgb(127 228 211 / 6%) 44% 70%, transparent 71%);
+  }
+
+  .intro-card__content::after {
+    border-color: rgb(127 228 211 / 26%);
+    box-shadow: 0 0 0 22px rgb(127 228 211 / 5%), 0 0 0 44px rgb(127 228 211 / 3%);
+  }
+
+  .eyebrow {
+    color: #8fe0d1;
+  }
+
+  .intro-card h2 {
+    color: var(--animal-text-color);
+    text-shadow: 0 2px 14px rgb(0 0 0 / 20%);
+  }
+
+  .intro-card p {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .intro-card__status {
+    border-color: rgb(127 228 211 / 28%);
+    background: linear-gradient(135deg, rgb(64 86 80 / 88%), rgb(38 58 56 / 72%));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), var(--app-shadow-md);
+  }
+
+  .intro-card__status-icon {
+    border-color: rgb(127 228 211 / 24%);
+    color: #9be9dc;
+    background: linear-gradient(145deg, rgb(25 200 185 / 24%), rgb(25 200 185 / 9%));
+  }
+
+  .intro-card__status strong {
+    color: var(--animal-text-color);
+  }
+
+  .intro-card__status div span {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .intro-card__connected {
+    border-color: rgb(123 200 142 / 58%);
+    color: #a7e6b7;
+    background: rgb(123 200 142 / 13%);
+  }
+
+  .intro-card__connected::before {
+    background: var(--animal-status-success);
+    box-shadow: 0 0 0 3px rgb(123 200 142 / 16%);
+  }
+
+  .main-card__header {
+    background: linear-gradient(180deg, var(--animal-bg-color) 0%, var(--animal-bg-color-input) 100%);
+  }
+
+  .section-heading__icon {
+    border-color: rgb(127 228 211 / 28%);
+    color: #9be9dc;
+    background: linear-gradient(145deg, rgb(25 200 185 / 22%), rgb(25 200 185 / 9%));
+    box-shadow: 0 5px 12px rgb(0 0 0 / 18%);
+  }
+
+  .action-group {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-input);
+  }
+
+  .action-group .animal-btn--default,
+  .action-group .animal-btn--dashed {
+    border-color: var(--animal-border-color) !important;
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color) !important;
+  }
+
+  .action-group .animal-btn--primary {
+    border-color: var(--animal-primary-color) !important;
+    color: #153b36 !important;
+    background: var(--animal-primary-color) !important;
+  }
+
+  .department-page-tabs .el-tabs__header {
+    border-bottom-color: var(--animal-border-color-light);
+    background: var(--app-surface-bg);
+  }
+
+  .department-page-tabs .el-tabs__nav-wrap {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-secondary);
+  }
+
+  .department-page-tabs .el-tabs__item {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .department-page-tabs .el-tabs__item:hover,
+  .department-page-tabs .el-tabs__item.is-active {
+    color: var(--animal-primary-color);
+    background: var(--animal-bg-color-input);
+  }
+
+  .tree-toolbar {
+    border-color: var(--animal-border-color-light);
+    background: linear-gradient(105deg, var(--animal-bg-color) 0%, var(--animal-bg-color-input) 72%);
+  }
+
+  .tree-toolbar__copy strong::before {
+    background: linear-gradient(180deg, var(--animal-primary-color), var(--animal-status-success));
+  }
+
+  .tree-toolbar__actions .el-checkbox {
+    color: var(--animal-text-color-secondary);
+    background: var(--animal-bg-color-input);
+  }
+
+  .tree-toolbar__actions .animal-btn--default {
+    color: var(--animal-text-color) !important;
+    background: var(--animal-bg-color) !important;
+    border-color: var(--animal-border-color) !important;
+  }
+
+  .sync-alert {
+    border-color: rgb(25 200 185 / 28%);
+    background: linear-gradient(90deg, rgb(25 200 185 / 16%), var(--animal-bg-color-input));
+  }
+
+  .sync-alert .el-alert__icon {
+    color: var(--animal-primary-color);
+  }
+
+  .sync-alert .el-alert__title {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .tree-shell {
+    border-color: var(--animal-border-color-light);
+    background: linear-gradient(180deg, var(--animal-bg-color-input) 0%, var(--app-surface-bg) 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  }
+
+  .organization-tree .el-tree-node__content {
+    border-color: transparent;
+    background: var(--animal-bg-color);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 16%);
+  }
+
+  .organization-tree .el-tree-node__content:hover {
+    border-color: rgb(127 228 211 / 36%);
+    background: var(--animal-bg-color-secondary);
+    box-shadow: var(--app-shadow-sm);
+  }
+
+  .organization-tree .el-tree-node__expand-icon {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .tree-node__icon {
+    border-color: rgb(127 228 211 / 28%);
+    color: #9be9dc;
+    background: linear-gradient(145deg, rgb(25 200 185 / 22%), rgb(25 200 185 / 8%));
+    box-shadow: 0 3px 8px rgb(0 0 0 / 18%);
+  }
+
+  .tree-node__name {
+    color: var(--animal-text-color);
+  }
+
+  .tree-node__meta {
+    color: var(--animal-text-color-secondary);
+  }
+
+  .tree-node__meta span {
+    border-color: var(--animal-border-color-light);
+    background: var(--animal-bg-color-input);
+  }
+
+  .data-table {
+    --el-table-bg-color: var(--app-surface-bg);
+    --el-table-tr-bg-color: var(--app-surface-bg);
+    --el-table-header-bg-color: var(--tableHeaderBg);
+    --el-table-row-hover-bg-color: color-mix(in srgb, var(--animal-primary-color) 12%, var(--app-surface-bg));
+    --el-table-border-color: var(--animal-border-color-light);
+    --el-table-text-color: var(--animal-text-color);
+    border-color: var(--animal-border-color-light);
+  }
+
+  .data-table .el-table__header-wrapper {
+    background: var(--tableHeaderBg);
+  }
+
+  .data-table th.el-table__cell {
+    color: var(--tableHeaderTextColor) !important;
+    background: var(--tableHeaderBg) !important;
+  }
+
+  .data-table td.el-table__cell {
+    color: var(--animal-text-color);
+    border-bottom-color: var(--animal-border-color-light);
+  }
+
+  .data-table .el-table__row:hover > td.el-table__cell {
+    background: var(--el-table-row-hover-bg-color);
+  }
+
+  .detail-query {
+    border-color: var(--animal-border-color-light);
+    background: linear-gradient(105deg, var(--animal-bg-color) 0%, var(--animal-bg-color-input) 100%);
+  }
+
+  .detail-query .el-input__wrapper,
+  .detail-query .el-select__wrapper {
+    background: var(--animal-bg-color-input);
+    box-shadow: 0 0 0 1px var(--animal-border-color) inset;
+  }
+
+  .table-empty {
+    border-color: var(--animal-border-color-light);
+    background: rgb(52 74 70 / 64%);
+  }
+
+  .el-empty__description p {
+    color: var(--animal-text-color-secondary);
   }
 }
 </style>

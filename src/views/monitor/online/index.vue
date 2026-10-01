@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container monitor-online-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel">
+      <UiCard shadow="hover" class="search-panel">
         <template #header>
           <div class="panel-heading">
             <div>
@@ -12,10 +12,10 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.loginAddress')" prop="ipaddr">
-            <el-input v-model="queryParams.ipaddr" :placeholder="$t('common.placeholderInputLoginAddress')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.ipaddr" :placeholder="$t('common.placeholderInputLoginAddress')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.userName')" prop="userName">
-            <el-input
+            <UiInput
               v-model="queryParams.userName"
               :placeholder="$t('common.placeholderInputUserName')"
               clearable
@@ -23,13 +23,13 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -39,13 +39,14 @@
           </div>
         </div>
       </template>
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         border
         class="data-table"
         :data="
           onlineList.slice((queryParams.pageNum - 1) * queryParams.pageSize, queryParams.pageNum * queryParams.pageSize)
         "
+        row-key="tokenId"
         style="width: 100%"
       >
         <el-table-column :label="$t('common.index')" width="50" type="index" align="center">
@@ -71,28 +72,30 @@
             <span>{{ parseTime(scope.row.loginTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
+        <el-table-column fixed="right" :label="$t('common.operation')" align="center" width="180" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipForceLogout')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipForceLogout')" placement="bottom">
+                <UiButton
                 v-hasPermi="['monitor:online:forceLogout']"
                 link
                 type="primary"
                 icon="Delete"
                 @click="handleForceLogout(scope.row)"
-              ></el-button>
-            </el-tooltip>
+                ></UiButton>
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
       />
-    </el-card>
+    </UiCard>
   </div>
 </template>
 
@@ -105,6 +108,9 @@ import { OnlineQuery, OnlineVO } from '@/api/monitor/online/types';
 import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 import { parseTime } from '@/utils/ruoyi';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiInput, UiPagination, UiTooltip } from '@/components/UiKit';
 
 const { sys_device_type } = toRefs<any>(useDict('sys_device_type'));
 

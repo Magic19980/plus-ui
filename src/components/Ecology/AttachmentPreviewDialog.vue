@@ -1,5 +1,5 @@
 <template>
-  <el-dialog
+  <UiDialog
     v-model="visible"
     :title="preview.fileName || fileName || '附件预览'"
     width="1000px"
@@ -23,16 +23,16 @@
           <template #default="scope">{{ scope.row[index] || '—' }}</template>
         </el-table-column>
       </el-table>
-      <el-empty
+    <UiEmpty
         v-else-if="!preview.loading"
         :description="preview.message || '当前附件暂不支持在线预览，请下载后查看'"
-      />
+    />
     </div>
     <template #footer>
-      <el-button v-if="ossId" plain @click="downloadAttachment">下载附件</el-button>
-      <el-button type="primary" @click="visible = false">关闭</el-button>
+      <UiButton v-if="ossId" plain @click="downloadAttachment">下载附件</UiButton>
+      <UiButton type="primary" @click="visible = false">关闭</UiButton>
     </template>
-  </el-dialog>
+  </UiDialog>
 </template>
 
 <script setup lang="ts">
@@ -41,6 +41,7 @@ import modal from '@/plugins/modal';
 import { previewOaApplicationAttachment } from '@/api/ecology';
 import type { OaAttachmentPreviewVO } from '@/api/ecology/types';
 import { download as requestDownload } from '@/utils/request';
+import { UiButton, UiDialog, UiEmpty } from '@/components/UiKit';
 
 const props = withDefaults(defineProps<{
   modelValue: boolean;

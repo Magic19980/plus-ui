@@ -61,6 +61,10 @@ const canResolve = computed(() => props.postType === 'QUESTION' && props.postSta
 :global(html.dark) .comment-replies,
 :global(.dark) .comment-replies { border-left-color: #466b94; }
 
+:global(html[data-ui-theme='animal'][data-color-mode='dark'] .comment-replies) {
+  border-left-color: var(--animal-primary-color);
+}
+
 @media (max-width: 560px) {
   .comment-replies { margin-left: 39px; padding-right: 9px; padding-left: 11px; }
 }

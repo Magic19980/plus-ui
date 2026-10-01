@@ -86,8 +86,8 @@ const sidebarBackground = computed(() =>
   sideTheme.value === 'theme-dark'
     // 侧栏主题必须使用自身的背景 token，不能复用页面的 app-sidebar-bg。
     // 否则浅色页面 + 暗色菜单时会出现浅色背景配浅色文字的低对比度问题。
-    ? 'var(--app-sidebar-dark-bg)'
-    : 'linear-gradient(180deg, var(--app-sidebar-light-bg) 0%, #f8fafc 56%, #f2f6fa 100%)'
+    ? 'linear-gradient(160deg, var(--app-sidebar-dark-bg) 0%, color-mix(in srgb, var(--app-sidebar-dark-bg) 82%, #030712) 62%, var(--app-shell-bg) 100%)'
+    : 'linear-gradient(160deg, var(--app-sidebar-light-bg) 0%, color-mix(in srgb, var(--app-sidebar-light-bg) 70%, #ffffff) 58%, var(--app-shell-bg) 100%)'
 );
 const menuStyle = computed(() => ({
   backgroundColor: bgColor.value,
@@ -108,42 +108,31 @@ onMounted(loadMenuBadges);
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 11px 9px 10px;
+  gap: 8px;
+  padding: 10px 8px 9px;
   border: 1px solid var(--app-sidebar-border);
   border-radius: 20px;
   box-shadow:
-    8px 0 28px rgba(2, 6, 23, 0.22),
-    0 18px 42px rgba(2, 6, 23, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 14px 34px rgba(2, 6, 23, 0.14),
+    0 3px 8px rgba(2, 6, 23, 0.06);
   background: var(--sidebar-bg) !important;
   overflow: hidden;
 
   &::before {
     position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 48%;
-    // 画布背景保持纯色，避免折叠侧栏边缘出现一块独立的蓝色背景。
-    background: transparent;
+    top: -80px;
+    right: -70px;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--app-accent-strong) 12%, transparent);
     content: '';
-    opacity: 0.92;
+    opacity: 0.42;
     pointer-events: none;
   }
 
   &::after {
-    position: absolute;
-    top: 1px;
-    right: 30px;
-    left: 30px;
-    height: 2px;
-    border-radius: 0 0 4px 4px;
-    background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.55), transparent);
-    box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
-    content: '';
-    opacity: 0.72;
-    pointer-events: none;
+    display: none;
   }
 
   > * {
@@ -157,15 +146,19 @@ onMounted(loadMenuBadges);
   align-items: center;
   gap: 8px;
   min-height: 30px;
-  margin: 0 3px;
-  padding: 0 5px;
-  border-top: 1px solid rgba(148, 163, 184, 0.13);
-  background: transparent;
-  color: rgba(148, 163, 184, 0.78);
-  transition: color 0.2s ease;
+  margin: 2px 2px 0;
+  padding: 0 9px;
+  border: 1px solid var(--sidebar-footer-border, rgba(148, 163, 184, 0.2));
+  border-radius: 12px;
+  background: var(--sidebar-footer-bg, rgba(255, 255, 255, 0.72));
+  color: var(--sidebar-footer-text, #64748b);
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 
   &:hover {
-    color: rgba(226, 232, 240, 0.94);
+    border-color: var(--sidebar-footer-hover-border, rgba(14, 165, 233, 0.34));
+    background: var(--sidebar-footer-hover-bg, rgba(255, 255, 255, 0.92));
+    color: var(--sidebar-footer-hover-text, #334155);
+    transform: translateY(-1px);
   }
 
   &.collapse {
@@ -173,7 +166,7 @@ onMounted(loadMenuBadges);
     margin-right: 0;
     margin-left: 0;
     padding: 0;
-    border-top-color: transparent;
+    border-color: transparent;
     background: transparent;
   }
 }
@@ -183,14 +176,14 @@ onMounted(loadMenuBadges);
   height: 6px;
   flex: 0 0 6px;
   border-radius: 50%;
-  background: #2dd4bf;
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+  background: var(--sidebar-footer-status, #14b8a6);
+  box-shadow: 0 0 0 3px var(--sidebar-footer-status-ring, rgba(20, 184, 166, 0.12));
 }
 
 .sidebar-footer-label {
   overflow: hidden;
   flex: 1;
-  color: rgba(226, 232, 240, 0.72);
+  color: currentColor;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -201,9 +194,10 @@ onMounted(loadMenuBadges);
 
 .sidebar-footer-badge {
   padding: 3px 5px;
-  border: 1px solid rgba(56, 189, 248, 0.18);
+  border: 1px solid var(--sidebar-footer-badge-border, rgba(14, 165, 233, 0.2));
   border-radius: 4px;
-  color: #7dd3fc;
+  color: var(--sidebar-footer-badge-text, #0ea5e9);
+  background: var(--sidebar-footer-badge-bg, rgba(14, 165, 233, 0.08));
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.08em;

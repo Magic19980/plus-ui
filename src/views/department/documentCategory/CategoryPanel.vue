@@ -1,36 +1,33 @@
 <template>
   <div class="department-document-category-panel" :class="{ 'is-embedded': props.embedded }">
-    <el-card shadow="never" class="table-panel">
+    <UiCard class="table-panel" type="default" pattern="app-teal">
       <template v-if="!props.embedded" #header>
         <DepartmentPanelHeader kicker="DOCUMENT CATEGORY" title="资料分类配置" description="按科室维护多级资料分类，资料库只显示本部门已启用的分类。">
-          <el-button v-hasPermi="['department:documentCategory:add']" type="primary" icon="Plus" @click="handleAdd">新增顶级分类</el-button>
+          <UiButton v-hasPermi="['department:documentCategory:add']" type="primary" icon="Plus" @click="handleAdd">新增顶级分类</UiButton>
         </DepartmentPanelHeader>
       </template>
 
       <el-form :inline="true" :model="queryParams" class="query-form">
         <el-form-item label="分类名称">
-          <el-input v-model="queryParams.categoryName" clearable placeholder="请输入分类名称" @keyup.enter="handleQuery" />
+          <UiInput v-model="queryParams.categoryName" clearable placeholder="请输入分类名称" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" clearable placeholder="全部状态" style="width: 140px">
-            <el-option label="启用" value="ENABLED" />
-            <el-option label="停用" value="DISABLED" />
-          </el-select>
+          <UiSelect v-model="queryParams.status" :options="statusOptions" clearable placeholder="全部状态" style="width: 140px" />
         </el-form-item>
         <div class="query-actions">
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <UiButton type="primary" icon="Search" @click="handleQuery">查询</UiButton>
+          <UiButton icon="Refresh" @click="resetQuery">重置</UiButton>
         </div>
       </el-form>
 
-      <DepartmentDataTable v-loading="loading" row-key="id" border default-expand-all :data="categoryList" :tree-props="{ children: 'children' }">
+      <DepartmentDataTable :loading="loading" row-key="id" border default-expand-all :data="categoryList" :tree-props="{ children: 'children' }">
         <el-table-column label="分类名称" prop="categoryName" min-width="220" show-overflow-tooltip />
         <el-table-column label="层级" width="110" align="center">
           <template #default="scope">{{ scope.row.parentId ? '子分类' : '顶级分类' }}</template>
         </el-table-column>
         <el-table-column label="状态" prop="status" width="110" align="center">
           <template #default="scope">
-            <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">{{ statusLabel(scope.row.status) }}</el-tag>
+            <UiTag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">{{ statusLabel(scope.row.status) }}</UiTag>
           </template>
         </el-table-column>
         <el-table-column label="排序" prop="sortNum" width="90" align="center" />
@@ -38,44 +35,41 @@
         <el-table-column label="备注" prop="remark" min-width="260" show-overflow-tooltip />
         <el-table-column label="更新时间" prop="updateTime" width="170" align="center" />
         <el-table-column label="操作" fixed="right" width="250" align="center">
-          <template #default="scope">
+            <template #default="scope">
             <DepartmentTableActions>
-              <el-button v-hasPermi="['department:documentCategory:add']" link type="success" icon="Plus" @click="handleAddChild(toCategory(scope.row))">新增子分类</el-button>
-              <el-button v-hasPermi="['department:documentCategory:edit']" link type="primary" icon="Edit" @click="handleUpdate(toCategory(scope.row))">编辑</el-button>
-              <el-button v-hasPermi="['department:documentCategory:remove']" link type="danger" icon="Delete" @click="handleDelete(toCategory(scope.row))">删除</el-button>
+              <UiButton v-hasPermi="['department:documentCategory:add']" link type="success" icon="Plus" @click="handleAddChild(toCategory(scope.row))">新增子分类</UiButton>
+              <UiButton v-hasPermi="['department:documentCategory:edit']" link type="primary" icon="Edit" @click="handleUpdate(toCategory(scope.row))">编辑</UiButton>
+              <UiButton v-hasPermi="['department:documentCategory:remove']" link type="danger" icon="Delete" @click="handleDelete(toCategory(scope.row))">删除</UiButton>
             </DepartmentTableActions>
           </template>
         </el-table-column>
       </DepartmentDataTable>
-      <el-empty v-if="!loading && categoryList.length === 0" description="暂无资料分类，请先新增分类" />
-    </el-card>
+      <UiEmpty v-if="!loading && categoryList.length === 0" description="暂无资料分类，请先新增分类" />
+    </UiCard>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="560px" append-to-body>
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="560px" show-footer>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="上级分类">
           <el-tree-select v-model="form.parentId" :data="parentOptions" node-key="id" check-strictly clearable style="width: 100%" :props="{ label: 'categoryName', children: 'children' }" placeholder="不选择则为顶级分类" />
         </el-form-item>
         <el-form-item label="分类名称" prop="categoryName">
-          <el-input v-model="form.categoryName" maxlength="100" show-word-limit placeholder="例如：制度规范、培训资料、项目交付物" />
+          <UiInput :model-value="form.categoryName" :maxlength="100" show-word-limit placeholder="例如：制度规范、培训资料、项目交付物" @update:model-value="value => (form.categoryName = String(value))" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-radio-group v-model="form.status">
-            <el-radio value="ENABLED">启用</el-radio>
-            <el-radio value="DISABLED">停用</el-radio>
-          </el-radio-group>
+          <UiRadioGroup v-model="form.status" :options="statusOptions" />
         </el-form-item>
         <el-form-item label="排序号">
-          <el-input-number v-model="form.sortNum" :min="0" :max="9999" />
+          <UiNumberInput v-model="form.sortNum" :min="0" :max="9999" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="补充该分类的适用范围" />
+          <UiTextarea :model-value="form.remark || ''" :rows="3" :maxlength="500" show-word-limit placeholder="补充该分类的适用范围" @update:model-value="value => (form.remark = String(value))" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" :loading="buttonLoading" @click="submitForm">保存</el-button>
-        <el-button @click="dialog.visible = false">取消</el-button>
+        <UiButton type="primary" :loading="buttonLoading" @click="submitForm">保存</UiButton>
+        <UiButton @click="dialog.visible = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -92,6 +86,7 @@ import type { DepartmentDocumentCategoryForm, DepartmentDocumentCategoryQuery, D
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentPanelHeader from '@/components/Department/PanelHeader.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDialog, UiEmpty, UiInput, UiNumberInput, UiRadioGroup, UiSelect, UiTag, UiTextarea } from '@/components/UiKit';
 import modal from '@/plugins/modal';
 
 const props = withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
@@ -103,6 +98,7 @@ const form = reactive<DepartmentDocumentCategoryForm>({ parentId: 0, categoryNam
 const formRef = ref<FormInstance>();
 const dialog = reactive({ visible: false, title: '' });
 const rules = { categoryName: [{ required: true, message: '请输入分类名称', trigger: 'blur' }] };
+const statusOptions = [{ value: 'ENABLED', label: '启用' }, { value: 'DISABLED', label: '停用' }];
 const toCategory = (row: unknown) => row as DepartmentDocumentCategoryVO;
 
 const pruneTree = (nodes: DepartmentDocumentCategoryVO[], excludedId?: string | number): DepartmentDocumentCategoryVO[] => {

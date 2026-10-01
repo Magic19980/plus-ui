@@ -1,21 +1,20 @@
 <template>
   <div class="top-right-btn" :style="style">
-    <el-row class="toolbar-row">
-      <el-tooltip
+    <div class="toolbar-row">
+      <UiTooltip
         v-if="search"
         class="item"
-        effect="dark"
         :content="showSearch ? t('common.btnHideSearch') : t('common.btnShowSearch')"
-        placement="top"
+        placement="bottom"
       >
-        <el-button circle icon="Search" @click="toggleSearch()" />
-      </el-tooltip>
-      <el-tooltip class="item" effect="dark" :content="t('common.btnRefresh')" placement="top">
-        <el-button circle icon="Refresh" @click="refresh()" />
-      </el-tooltip>
-      <el-tooltip v-if="columns" class="item" effect="dark" :content="t('common.btnShowHideColumn')" placement="top">
+        <UiButton class="toolbar-icon-button" circle icon="Search" :aria-label="showSearch ? t('common.btnHideSearch') : t('common.btnShowSearch')" @click="toggleSearch()" />
+      </UiTooltip>
+      <UiTooltip class="item" :content="t('common.btnRefresh')" placement="bottom">
+        <UiButton class="toolbar-icon-button" circle icon="Refresh" :aria-label="t('common.btnRefresh')" @click="refresh()" />
+      </UiTooltip>
+      <UiTooltip v-if="columns" class="item" :content="t('common.btnShowHideColumn')" placement="bottom">
         <div class="show-btn">
-          <el-popover placement="bottom" trigger="click">
+          <el-popover placement="bottom-start" trigger="click" :teleported="true" :hide-after="0" popper-class="right-toolbar-column-popper">
             <div class="tree-header">{{ t('common.btnShowHideColumn') }}</div>
             <el-tree
               ref="columnRef"
@@ -26,12 +25,12 @@
               @check="columnChange"
             ></el-tree>
             <template #reference>
-              <el-button circle icon="Menu" />
+              <UiButton class="toolbar-icon-button" circle icon="Menu" :aria-label="t('common.btnShowHideColumn')" />
             </template>
           </el-popover>
         </div>
-      </el-tooltip>
-    </el-row>
+      </UiTooltip>
+    </div>
   </div>
 </template>
 
@@ -39,6 +38,7 @@
 import { useI18n } from 'vue-i18n';
 import cache from '@/plugins/cache';
 import { propTypes } from '@/utils/propTypes';
+import { UiButton, UiTooltip } from '@/components/UiKit';
 
 const { t } = useI18n();
 
@@ -114,9 +114,13 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-:deep(.el-button.is-circle) {
-  width: 38px;
-  height: 38px;
+:deep(.toolbar-icon-button.el-button.is-circle),
+:deep(.toolbar-icon-button.ui-animal-button--circle) {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
   border-radius: 14px;
   background: var(--app-elevated-soft-bg);
   border: 1px solid var(--app-surface-border);
@@ -135,6 +139,21 @@ onMounted(() => {
   }
 }
 
+:deep(.toolbar-icon-button .el-icon),
+:deep(.toolbar-icon-button .animal-btn__icon) {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.toolbar-icon-button .el-icon svg),
+:deep(.toolbar-icon-button .animal-btn__icon svg) {
+  width: 16px;
+  height: 16px;
+}
+
 :deep(.el-transfer__button) {
   border-radius: 50%;
   display: block;
@@ -149,7 +168,13 @@ onMounted(() => {
 }
 
 .toolbar-row {
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  margin: 0 !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 .tree-header {

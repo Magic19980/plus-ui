@@ -76,7 +76,7 @@
         <el-table-column :label="$t('common.value')" align="center" prop="value" />
         <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
+            <el-tooltip :content="$t('common.tooltipModify')" placement="bottom">
               <el-button
                 v-hasPermi="['demo:demo:edit']"
                 link
@@ -85,7 +85,7 @@
                 @click="handleUpdate(scope.row)"
               ></el-button>
             </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
+            <el-tooltip :content="$t('common.tooltipDelete')" placement="bottom">
               <el-button
                 v-hasPermi="['demo:demo:remove']"
                 link
@@ -98,7 +98,7 @@
         </el-table-column>
       </el-table>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
@@ -147,6 +147,7 @@ import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import { useTableSelection } from '@/hooks/table/useTableSelection';
 import modal from '@/plugins/modal';
 import { download as requestDownload } from '@/utils/request';
+import { UiPagination } from '@/components/UiKit';
 
 const demoList = ref<DemoVO[]>([]);
 const buttonLoading = ref(false);

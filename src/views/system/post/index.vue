@@ -18,7 +18,7 @@
         :class="{ 'is-tree-collapsed': treeCollapsed }"
       >
         <div class="search-wrap">
-          <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+          <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
                 <div>
@@ -29,7 +29,7 @@
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
               <el-form-item :label="$t('common.postCode')" prop="postCode">
-                <el-input
+                <UiInput
                   v-model="queryParams.postCode"
                   :placeholder="$t('common.placeholderInputPostCode')"
                   clearable
@@ -37,7 +37,7 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.postName')" prop="postName">
-                <el-input
+                <UiInput
                   v-model="queryParams.postName"
                   :placeholder="$t('common.placeholderInputPostName')"
                   clearable
@@ -45,7 +45,7 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.postIndonesianName')" prop="postIndonesianName">
-                <el-input
+                <UiInput
                   v-model="queryParams.postIndonesianName"
                   :placeholder="$t('common.placeholderInputPostIndonesianName')"
                   clearable
@@ -61,23 +61,21 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.status')" prop="status">
-                <el-select v-model="queryParams.status" :placeholder="$t('common.postStatus')" clearable>
-                  <el-option
-                    v-for="dict in sys_normal_disable"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
-                  />
-                </el-select>
+                <UiSelect
+                  v-model="queryParams.status"
+                  :options="sys_normal_disable"
+                  :placeholder="$t('common.postStatus')"
+                  clearable
+                />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+                <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+                <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
               </el-form-item>
             </el-form>
-          </el-card>
+          </UiCard>
         </div>
-        <el-card shadow="hover" class="table-panel">
+        <UiCard shadow="hover" class="table-panel">
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
@@ -86,10 +84,10 @@
                 <p>共 {{ total }} 条记录，支持按部门筛选、岗位维护和导出。</p>
               </div>
               <div class="toolbar-actions">
-                <el-button v-hasPermi="['system:post:add']" type="primary" plain icon="Plus" @click="handleAdd">
+                <UiButton v-hasPermi="['system:post:add']" type="primary" plain icon="Plus" @click="handleAdd">
                   {{ $t('common.btnAdd') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['system:post:edit']"
                   type="success"
                   plain
@@ -98,8 +96,8 @@
                   @click="handleUpdate()"
                 >
                   {{ $t('common.btnEdit') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['system:post:remove']"
                   type="danger"
                   plain
@@ -108,8 +106,8 @@
                   @click="handleDelete()"
                 >
                   {{ $t('common.btnDelete') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['system:post:export']"
                   type="warning"
                   plain
@@ -117,16 +115,17 @@
                   @click="handleExport"
                 >
                   {{ $t('common.btnExport') }}
-                </el-button>
+                </UiButton>
                 <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
               </div>
             </div>
           </template>
-          <el-table
-            v-loading="loading"
+          <DepartmentDataTable
+            :loading="loading"
             border
             class="data-table"
             :data="postList"
+            row-key="postId"
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55" align="center" />
@@ -146,51 +145,53 @@
                 <span>{{ parseTime(scope.row.createTime) }}</span>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('common.operation')" width="180" align="center" class-name="small-padding fixed-width">
+            <el-table-column :label="$t('common.operation')" fixed="right" width="216" align="center" class-name="small-padding fixed-width">
               <template #default="scope">
-                <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-                  <el-button
+                <DepartmentTableActions>
+                <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                  <UiButton
                     v-hasPermi="['system:post:edit']"
                     link
                     type="primary"
                     icon="Edit"
                     @click="handleUpdate(scope.row)"
-                  ></el-button>
-                </el-tooltip>
-                <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-                  <el-button
+                  ></UiButton>
+                </UiTooltip>
+                <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                  <UiButton
                     v-hasPermi="['system:post:remove']"
                     link
                     type="primary"
                     icon="Delete"
                     @click="handleDelete(scope.row)"
-                  ></el-button>
-                </el-tooltip>
+                  ></UiButton>
+                </UiTooltip>
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
+          </DepartmentDataTable>
 
-          <pagination
+          <UiPagination
             v-show="total > 0"
             v-model:page="queryParams.pageNum"
             v-model:limit="queryParams.pageSize"
             :total="total"
             @pagination="getList"
           />
-        </el-card>
+        </UiCard>
 
         <!-- 添加或修改岗位对话框 -->
-        <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
-          <el-form ref="postFormRef" :model="form" :rules="rules" label-width="80px">
+        <UiDialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
+          <el-form ref="postFormRef" :model="form" :rules="rules" label-width="104px" class="post-dialog-form">
             <el-form-item :label="$t('common.postName')" prop="postName">
-              <el-input v-model="form.postName" :placeholder="$t('common.placeholderInputPostName')" />
+              <UiInput v-model="form.postName" :placeholder="$t('common.placeholderInputPostName')" />
             </el-form-item>
             <el-form-item :label="$t('common.postIndonesianName')" prop="postIndonesianName">
-              <el-input
+              <UiInput
                 v-model="form.postIndonesianName"
                 :placeholder="$t('common.placeholderInputPostIndonesianName')"
-                maxlength="100"
-                show-word-limit
+                :maxlength="100"
+                :show-word-limit="true"
                 clearable
               />
             </el-form-item>
@@ -203,29 +204,25 @@
               />
             </el-form-item>
             <el-form-item :label="$t('common.postCode')" prop="postCode">
-              <el-input v-model="form.postCode" :placeholder="$t('common.placeholderInputPostCodeName')" />
+              <UiInput v-model="form.postCode" :placeholder="$t('common.placeholderInputPostCodeName')" />
             </el-form-item>
             <el-form-item :label="$t('common.postSort')" prop="postSort">
-              <el-input-number v-model="form.postSort" controls-position="right" :min="0" />
+              <UiNumberInput v-model="form.postSort" :min="0" />
             </el-form-item>
             <el-form-item :label="$t('common.postStatus')" prop="status">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.status" :options="sys_normal_disable" />
             </el-form-item>
             <el-form-item :label="$t('common.remark')" prop="remark">
-              <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')" />
+              <UiTextarea v-model="form.remark" :placeholder="$t('common.placeholderInputContent')" />
             </el-form-item>
           </el-form>
           <template #footer>
             <div class="dialog-footer">
-              <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-              <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+              <UiButton type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+              <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
             </div>
           </template>
-        </el-dialog>
+        </UiDialog>
       </el-col>
     </el-row>
   </div>
@@ -238,7 +235,10 @@ const { t } = useI18n();
 import { listPost, addPost, delPost, getPost, updatePost, deptTreeSelect } from '@/api/system/post';
 import { PostForm, PostQuery, PostVO } from '@/api/system/post/types';
 import DeptTreeSelect from '@/components/DeptTreeSelect/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import TreePanel from '@/components/TreePanel/index.vue';
+import { UiButton, UiCard, UiDialog, UiInput, UiNumberInput, UiPagination, UiRadioGroup, UiSelect, UiTextarea, UiTooltip } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
@@ -409,4 +409,33 @@ onMounted(() => {
 @use '@/assets/styles/components/page-shell' as pageShell;
 
 @include pageShell.tree-table-crud-page;
+
+// 动森弹窗的内容宽度较紧，Element 表单默认的 label 宽度会被 flex 布局压缩，
+// 中文标签因此出现逐字竖排。固定标签轨道，控件列负责承接剩余空间。
+.post-dialog-form {
+  :deep(.el-form-item) {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  :deep(.el-form-item__label) {
+    box-sizing: border-box;
+    width: auto !important;
+    padding-right: 14px;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  :deep(.el-form-item__content) {
+    min-width: 0;
+    margin-left: 0 !important;
+  }
+
+  :deep(.ui-animal-input-wrap),
+  :deep(.ui-animal-select),
+  :deep(.ui-animal-textarea-wrap) {
+    min-width: 0;
+  }
+}
 </style>

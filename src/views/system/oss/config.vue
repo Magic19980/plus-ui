@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container system-oss-config-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,10 +12,10 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.configKey')" prop="configKey">
-            <el-input v-model="queryParams.configKey" :placeholder="$t('common.placeholderInputConfigKey')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.configKey" :placeholder="$t('common.placeholderInputConfigKey')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.bucketName')" prop="bucketName">
-            <el-input
+            <UiInput
               v-model="queryParams.bucketName"
               :placeholder="$t('common.placeholderInputBucketName')"
               clearable
@@ -23,19 +23,17 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.isDefault')" prop="status">
-            <el-select v-model="queryParams.status" :placeholder="$t('common.placeholderSelectStatus')" clearable>
-              <el-option v-for="dict in sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+          <UiSelect v-model="queryParams.status" :options="sys_yes_no" :placeholder="$t('common.placeholderSelectStatus')" clearable />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -44,10 +42,10 @@
             <p>共 {{ total }} 条记录，支持默认桶切换、权限策略维护和站点配置。</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:ossConfig:add']" type="primary" plain icon="Plus" @click="handleAdd">
+            <UiButton v-hasPermi="['system:ossConfig:add']" type="primary" plain icon="Plus" @click="handleAdd">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:ossConfig:edit']"
               type="success"
               plain
@@ -56,8 +54,8 @@
               @click="handleUpdate()"
             >
               {{ $t('common.btnEdit') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:ossConfig:remove']"
               type="danger"
               plain
@@ -66,14 +64,14 @@
               @click="handleDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         border
         class="data-table"
         :data="ossConfigList"
@@ -89,111 +87,107 @@
         <el-table-column v-if="columns[6].visible" :label="$t('common.region')" align="center" prop="region" />
         <el-table-column v-if="columns[7].visible" :label="$t('common.bucketPermissionType')" align="center" prop="accessPolicy">
           <template #default="scope">
-            <el-tag v-if="scope.row.accessPolicy === '0'" type="warning">private</el-tag>
-            <el-tag v-if="scope.row.accessPolicy === '1'" type="success">public</el-tag>
-            <el-tag v-if="scope.row.accessPolicy === '2'" type="info">custom</el-tag>
+            <UiTag v-if="scope.row.accessPolicy === '0'" type="warning">private</UiTag>
+            <UiTag v-if="scope.row.accessPolicy === '1'" type="success">public</UiTag>
+            <UiTag v-if="scope.row.accessPolicy === '2'" type="info">custom</UiTag>
           </template>
         </el-table-column>
         <el-table-column v-if="columns[8].visible" :label="$t('common.isDefault')" align="center" prop="status">
           <template #default="scope">
-            <el-switch
+            <UiSwitch
               v-model="scope.row.status"
               active-value="Y"
               inactive-value="N"
               @change="handleStatusChange(scope.row)"
-            ></el-switch>
+            />
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" fixed="right" align="center" width="150" class-name="small-padding">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:ossConfig:edit']"
                 link
                 type="primary"
                 icon="Edit"
                 @click="handleUpdate(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:ossConfig:remove']"
                 link
-                type="primary"
+                type="danger"
                 icon="Delete"
                 @click="handleDelete(scope.row)"
-              ></el-button>
-            </el-tooltip>
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
     <!-- 添加或修改对象存储配置对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="800px" append-to-body>
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="800px" append-to-body>
       <el-form ref="ossConfigFormRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item :label="$t('common.configKey')" prop="configKey">
-          <el-input v-model="form.configKey" :placeholder="$t('common.placeholderInputConfigKey')" />
+          <UiInput v-model="form.configKey" :placeholder="$t('common.placeholderInputConfigKey')" />
         </el-form-item>
         <el-form-item :label="$t('common.accessSite')" prop="endpoint">
-          <el-input v-model="form.endpoint" :placeholder="$t('common.placeholderInputEndpoint')">
+          <UiInput v-model="form.endpoint" :placeholder="$t('common.placeholderInputEndpoint')">
             <template #prefix>
               <span style="color: #999">{{ protocol }}</span>
             </template>
-          </el-input>
+          </UiInput>
         </el-form-item>
         <el-form-item :label="$t('common.customDomain')" prop="domainUrl">
-          <el-input v-model="form.domainUrl" :placeholder="$t('common.placeholderInputDomain')">
+          <UiInput v-model="form.domainUrl" :placeholder="$t('common.placeholderInputDomain')">
             <template #prefix>
               <span style="color: #999">{{ protocol }}</span>
             </template>
-          </el-input>
+          </UiInput>
         </el-form-item>
         <el-form-item label="accessKey" prop="accessKey">
-          <el-input v-model="form.accessKey" :placeholder="$t('common.placeholderInputAccessKey')" />
+          <UiInput v-model="form.accessKey" :placeholder="$t('common.placeholderInputAccessKey')" />
         </el-form-item>
         <el-form-item label="secretKey" prop="secretKey">
-          <el-input v-model="form.secretKey" :placeholder="$t('common.placeholderInputSecretKey')" show-password />
+          <UiInput v-model="form.secretKey" type="password" :placeholder="$t('common.placeholderInputSecretKey')" />
         </el-form-item>
         <el-form-item :label="$t('common.bucketName')" prop="bucketName">
-          <el-input v-model="form.bucketName" :placeholder="$t('common.placeholderInputBucketName')" />
+          <UiInput v-model="form.bucketName" :placeholder="$t('common.placeholderInputBucketName')" />
         </el-form-item>
         <el-form-item :label="$t('common.prefix')" prop="prefix">
-          <el-input v-model="form.prefix" :placeholder="$t('common.placeholderInputPrefix')" />
+          <UiInput v-model="form.prefix" :placeholder="$t('common.placeholderInputPrefix')" />
         </el-form-item>
         <el-form-item :label="$t('common.isHttps')">
-          <el-radio-group v-model="form.isHttps">
-            <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
-          </el-radio-group>
+          <UiRadioGroup v-model="form.isHttps" :options="sys_yes_no" />
         </el-form-item>
         <el-form-item :label="$t('common.bucketPermissionType')">
-          <el-radio-group v-model="form.accessPolicy">
-            <el-radio value="0">private</el-radio>
-            <el-radio value="1">public</el-radio>
-            <el-radio value="2">custom</el-radio>
-          </el-radio-group>
+          <UiRadioGroup v-model="form.accessPolicy" :options="accessPolicyOptions" />
         </el-form-item>
         <el-form-item :label="$t('common.region')" prop="region">
-          <el-input v-model="form.region" :placeholder="$t('common.placeholderInputRegion')" />
+          <UiInput v-model="form.region" :placeholder="$t('common.placeholderInputRegion')" />
         </el-form-item>
         <el-form-item :label="$t('common.remark')" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')" />
+          <UiTextarea v-model="form.remark" :placeholder="$t('common.placeholderInputContent')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -209,6 +203,9 @@ import {
   changeOssConfigStatus
 } from '@/api/system/ossConfig';
 import { OssConfigForm, OssConfigQuery, OssConfigVO } from '@/api/system/ossConfig/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDialog, UiInput, UiPagination, UiRadioGroup, UiSelect, UiSwitch, UiTag, UiTextarea, UiTooltip } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
@@ -218,6 +215,11 @@ import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 
 const { sys_yes_no } = toRefs<any>(useDict('sys_yes_no'));
+const accessPolicyOptions = [
+  { value: '0', label: 'private' },
+  { value: '1', label: 'public' },
+  { value: '2', label: 'custom' }
+];
 const ossConfigList = ref<OssConfigVO[]>([]);
 const buttonLoading = ref(false);
 const { loading, setLoading, withLoading } = useLoading(true);

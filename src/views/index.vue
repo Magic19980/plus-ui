@@ -1,12 +1,16 @@
 <template>
-  <div class="dashboard-page">
+  <div :class="['dashboard-page', { 'dashboard-page--animal': isAnimalMode, 'dashboard-page--dark': settingsStore.dark }]">
     <section class="dashboard-hero">
       <div class="hero-orb hero-orb--one"></div>
       <div class="hero-orb hero-orb--two"></div>
       <div class="hero-content">
-        <div class="hero-kicker"><OfficeBuilding /> DEPARTMENT OPERATIONS</div>
-        <h1>科室运营看板</h1>
-        <p>用更少的信息，快速掌握成员状态、精益表现和待处理事项。</p>
+        <div class="hero-kicker">
+          <OfficeBuilding v-if="!isAnimalMode" />
+          <span v-else class="hero-kicker__leaf" aria-hidden="true">✦</span>
+          <span>{{ isAnimalMode ? 'DEPARTMENT ISLAND' : 'DEPARTMENT OPERATIONS' }}</span>
+        </div>
+        <h1>{{ isAnimalMode ? '科室运营岛屿' : '科室运营看板' }}</h1>
+        <p>{{ isAnimalMode ? '每天来岛上看看成员状态、日报进度和待处理事项。' : '用更少的信息，快速掌握成员状态、精益表现和待处理事项。' }}</p>
         <div class="hero-context">
           <span class="context-dot"></span>
           <span>当前科室：{{ currentDeptName }}</span>
@@ -16,7 +20,7 @@
           <span class="sync-label"><span :class="['sync-pulse', { active: loading }]" />{{ loading ? '正在同步' : `更新于 ${lastUpdated}` }}</span>
         </div>
       </div>
-      <el-button class="hero-refresh" :loading="loading" plain round @click="loadDashboard"><el-icon><Refresh /></el-icon>刷新看板</el-button>
+      <UiButton class="hero-refresh" :loading="loading" plain round type="primary" @click="loadDashboard"><el-icon><Refresh /></el-icon>{{ isAnimalMode ? '刷新岛屿' : '刷新看板' }}</UiButton>
     </section>
 
     <section class="dashboard-section">
@@ -26,7 +30,7 @@
           <h2>今日概览</h2>
           <p>成员状态、日报完成情况和当前需要处理的任务。</p>
         </div>
-        <el-tag effect="plain" round><OfficeBuilding /> {{ currentDeptName }}</el-tag>
+        <UiTag effect="plain" round><OfficeBuilding /> {{ currentDeptName }}</UiTag>
       </div>
 
       <div class="metric-grid metric-grid--overview">
@@ -73,7 +77,7 @@
           </div>
           <div class="member-status-columns">
             <div class="member-status-group">
-              <div class="member-status-group__heading"><span>在岗成员</span><el-tag type="success" effect="light" round>{{ memberCount }} 人</el-tag></div>
+              <div class="member-status-group__heading"><span>在岗成员</span><UiTag type="success" effect="light" round>{{ memberCount }} 人</UiTag></div>
               <div v-if="onDutyMembers.length" class="member-list">
                 <div v-for="member in onDutyMembers.slice(0, 6)" :key="member.userId" class="member-item">
                   <span class="member-avatar">{{ memberInitial(member) }}</span>
@@ -81,10 +85,10 @@
                 </div>
                 <button v-if="onDutyMembers.length > 6" type="button" class="member-more" @click="openMemberDrawer('onDuty')">还有 {{ onDutyMembers.length - 6 }} 人，查看全部 <ArrowRight /></button>
               </div>
-              <el-empty v-else description="暂无在岗成员" :image-size="48" />
+              <UiEmpty v-else description="暂无在岗成员" :image-size="48" />
             </div>
             <div class="member-status-group member-status-group--leave">
-              <div class="member-status-group__heading"><span>今日休假</span><el-tag type="warning" effect="light" round>{{ leaveMembers.length }} 人</el-tag></div>
+              <div class="member-status-group__heading"><span>今日休假</span><UiTag type="warning" effect="light" round>{{ leaveMembers.length }} 人</UiTag></div>
               <div v-if="leaveMembers.length" class="member-list">
                 <div v-for="member in leaveMembers.slice(0, 6)" :key="member.userId" class="member-item">
                   <span class="member-avatar member-avatar--leave">{{ memberInitial(member) }}</span>
@@ -92,7 +96,7 @@
                 </div>
                 <button v-if="leaveMembers.length > 6" type="button" class="member-more" @click="openMemberDrawer('leave')">还有 {{ leaveMembers.length - 6 }} 人，查看全部 <ArrowRight /></button>
               </div>
-              <el-empty v-else description="今日暂无休假人员" :image-size="48" />
+              <UiEmpty v-else description="今日暂无休假人员" :image-size="48" />
             </div>
           </div>
         </section>
@@ -104,12 +108,12 @@
               <h3>精益提案看板</h3>
               <p>{{ monthLabel }} · 仅统计已提交提案</p>
             </div>
-            <el-tag type="primary" effect="light" round>本月</el-tag>
+            <UiTag type="primary" effect="light" round>本月</UiTag>
           </div>
           <div class="lean-summary">
             <div class="lean-score-box">
               <div><span>精益评分</span><strong>{{ formatScore(scoreMetric?.score) }}</strong></div>
-              <el-tag :type="scoreTagType" effect="light" round>{{ scoreLabel }}</el-tag>
+              <UiTag :type="scoreTagType" effect="light" round>{{ scoreLabel }}</UiTag>
             </div>
             <div class="lean-total-box"><div class="lean-total-copy"><span>本月提案数</span><small>不含暂存</small></div><strong>{{ scoreMetric ? scoreMetric.totalCount : '—' }}</strong></div>
           </div>
@@ -149,7 +153,7 @@
           <div v-for="risk in departmentRisks" :key="risk.title" :class="['risk-item', `risk-item--${risk.level}`]">
             <span class="risk-mark"><WarningFilled /></span>
             <div><strong>{{ risk.title }}</strong><small>{{ risk.detail }}</small></div>
-            <el-tag :type="risk.level === 'danger' ? 'danger' : 'warning'" effect="light" round>{{ risk.label }}</el-tag>
+            <UiTag :type="risk.level === 'danger' ? 'danger' : 'warning'" effect="light" round>{{ risk.label }}</UiTag>
           </div>
         </div>
       </div>
@@ -162,7 +166,7 @@
           <h2>我的任务</h2>
           <p>只展示分配给当前登录用户的任务，优先处理临近截止和逾期事项。</p>
         </div>
-        <el-tag type="primary" effect="plain" round><User /> 我的任务</el-tag>
+        <UiTag type="primary" effect="plain" round><User /> 我的任务</UiTag>
       </div>
       <div class="metric-grid metric-grid--personal">
         <article class="metric-card metric-card--indigo"><div class="metric-icon"><List /></div><span class="metric-label">我的任务</span><strong>{{ myTasks.length }}</strong><small>当前周期内分配任务</small></article>
@@ -174,22 +178,22 @@
       <div class="panel task-panel">
         <div class="panel-heading">
           <div><h3>任务进度</h3><p>离计划结束时间越近，提醒级别越高；完成任务显示真实完成时间。</p></div>
-          <el-button text type="primary" @click="loadDashboard">同步进度 <ArrowRight /></el-button>
+          <UiButton class="task-sync-button" text type="primary" @click="loadDashboard"><span>同步进度</span><el-icon><ArrowRight /></el-icon></UiButton>
         </div>
         <div v-if="myTasks.length" class="task-list">
           <div v-for="task in sortedTasks" :key="`${task.ruleId}-${task.assignmentId}-${task.periodStart}`" :class="['task-row', `task-row--${taskTone(task)}`]">
             <div :class="['task-status-icon', { completed: task.status === 'COMPLETED' }]" ><CircleCheck v-if="task.status === 'COMPLETED'" /><WarningFilled v-else-if="taskTone(task) === 'danger'" /><Timer v-else /></div>
-            <div class="task-main"><strong>{{ task.taskName }}</strong><div class="task-meta"><el-tag size="small" effect="plain" round>{{ taskTypeLabel(task.taskType) }}</el-tag><span>{{ task.periodStart }} ~ {{ task.periodEnd }}</span><span v-if="task.status === 'COMPLETED' && task.completedAt" class="completed-time">完成于 {{ formatDateTime(task.completedAt) }}</span><span v-else-if="task.deadline">截止 {{ formatDateTime(task.deadline) }}</span></div></div>
+            <div class="task-main"><strong>{{ task.taskName }}</strong><div class="task-meta"><UiTag size="small" effect="plain" round>{{ taskTypeLabel(task.taskType) }}</UiTag><span>{{ task.periodStart }} ~ {{ task.periodEnd }}</span><span v-if="task.status === 'COMPLETED' && task.completedAt" class="completed-time">完成于 {{ formatDateTime(task.completedAt) }}</span><span v-else-if="task.deadline">截止 {{ formatDateTime(task.deadline) }}</span></div></div>
             <div class="task-count"><b>{{ task.completedCount }}</b><span>/ {{ task.requiredCount }}</span><small>完成数量</small></div>
             <div class="task-deadline"><span>{{ task.status === 'COMPLETED' ? '已完成' : taskTone(task) === 'danger' ? '已逾期' : '计划截止' }}</span><b v-if="task.status === 'COMPLETED' && task.completedAt">{{ formatDateTime(task.completedAt) }}</b><b v-else-if="task.deadline">{{ formatDateTime(task.deadline) }}</b><b v-else>未设置</b></div>
-            <el-tag :type="statusTagType(task)" effect="light" round>{{ task.statusLabel || statusLabel(task.status) }}</el-tag>
+            <UiTag :type="statusTagType(task)" effect="light" round>{{ task.statusLabel || statusLabel(task.status) }}</UiTag>
           </div>
         </div>
-        <el-empty v-else description="当前没有分配给你的任务" :image-size="72" />
+        <UiEmpty v-else description="当前没有分配给你的任务" :image-size="72" />
       </div>
     </section>
 
-    <el-drawer v-model="memberDrawer.visible" :title="memberDrawer.type === 'leave' ? '今日休假人员' : '在岗成员'" size="420px" append-to-body>
+    <UiDrawer v-model="memberDrawer.visible" :title="memberDrawer.type === 'leave' ? '今日休假人员' : '在岗成员'" size="420px" placement="right" class="member-drawer" append-to-body>
       <div class="member-drawer-context"><Calendar /> {{ todayLabel }} · {{ currentDeptName }}</div>
       <div v-if="memberDrawerItems.length" class="member-drawer-list">
         <div v-for="member in memberDrawerItems" :key="member.userId" class="member-drawer-item">
@@ -197,8 +201,8 @@
           <div class="member-info"><strong>{{ memberDisplayName(member) }}</strong><small v-if="memberDrawer.type === 'leave'">{{ leaveType(member) }}</small><small v-else>{{ member.jobTitle || '未维护岗位' }}</small></div>
         </div>
       </div>
-      <el-empty v-else :description="memberDrawer.type === 'leave' ? '今日暂无休假人员' : '暂无在岗成员'" :image-size="72" />
-    </el-drawer>
+      <UiEmpty v-else :description="memberDrawer.type === 'leave' ? '今日暂无休假人员' : '暂无在岗成员'" :image-size="72" />
+    </UiDrawer>
   </div>
 </template>
 
@@ -213,9 +217,13 @@ import type { ScoreProposalMetricVO } from '@/api/department/scoreProposal/types
 import { listMyDepartmentTasks } from '@/api/department/task';
 import type { DepartmentTaskProgressVO } from '@/api/department/task/types';
 import { useDepartmentStore } from '@/store/modules/department';
+import { UiThemeEnum } from '@/enums/UiThemeEnum';
+import { useSettingsStore } from '@/store/modules/settings';
 import { useDict } from '@/utils/dict';
+import { UiButton, UiDrawer, UiEmpty, UiTag } from '@/components/UiKit';
 
 const departmentStore = useDepartmentStore();
+const settingsStore = useSettingsStore();
 const { dm_leave_type } = toRefs<any>(useDict('dm_leave_type'));
 const loading = ref(false);
 const calendar = ref<DailyCalendarVO>();
@@ -230,6 +238,7 @@ const todayLabel = `${localNow.getFullYear()}年${localNow.getMonth() + 1}月${l
 const memberDrawer = reactive({ visible: false, type: 'onDuty' as 'onDuty' | 'leave' });
 
 const currentDeptName = computed(() => departmentStore.currentDepartmentName || '未选择科室');
+const isAnimalMode = computed(() => settingsStore.uiTheme === UiThemeEnum.ANIMAL);
 const monthLabel = computed(() => `${currentMonth.slice(0, 4)}年${Number(currentMonth.slice(5, 7))}月`);
 const todayMembers = computed(() => (calendar.value?.members || []).filter(member => getTodayCell(member)?.state !== 'UNAVAILABLE'));
 const leaveMembers = computed(() => todayMembers.value.filter(member => getTodayCell(member)?.state === 'LEAVE'));
@@ -260,7 +269,7 @@ const personalCompleted = computed(() => myTasks.value.filter(task => task.statu
 const personalRate = computed(() => myTasks.value.length ? Math.round((personalCompleted.value / myTasks.value.length) * 100) : 0);
 const personalDueSoon = computed(() => dueSoonCount.value);
 const personalOverdue = computed(() => overdueCount.value);
-const sortedTasks = computed(() => [...myTasks.value].sort((a, b) => { const score = (task: DepartmentTaskProgressVO) => task.status === 'COMPLETED' ? 3 : isOverdue(task) ? 0 : isWithinHours(task.deadline) ? 1 : 2; return score(a) - score(b) || String(a.deadline || '').localeCompare(String(b.deadline || '')); }));
+const sortedTasks = computed(() => myTasks.value.toSorted((a, b) => { const score = (task: DepartmentTaskProgressVO) => task.status === 'COMPLETED' ? 3 : isOverdue(task) ? 0 : isWithinHours(task.deadline) ? 1 : 2; return score(a) - score(b) || String(a.deadline || '').localeCompare(String(b.deadline || '')); }));
 const departmentRisks = computed(() => {
   const risks: Array<{ title: string; detail: string; label: string; level: 'danger' | 'warning' }> = [];
   if (departmentOverdueCount.value) risks.push({ title: `${departmentOverdueCount.value} 条日报已经逾期`, detail: '请提醒相关成员补齐已过期工作日的日报。', label: '高风险', level: 'danger' });
@@ -320,8 +329,49 @@ onMounted(() => loadDashboard());
 .member-status-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 18px; }.member-status-group { min-width: 0; }.member-status-group--leave { padding-left: 22px; border-left: 1px solid var(--el-border-color-lighter); }.member-status-group__heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--el-text-color-regular); font-size: 13px; font-weight: 600; }.member-status-group__heading .el-tag { font-size: 11px; }.member-list { max-height: 252px; overflow-y: auto; }.member-item { display: flex; align-items: center; width: 100%; min-height: 45px; padding: 7px 4px; border-bottom: 1px solid var(--el-border-color-lighter); }.member-more { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 38px; padding: 7px 4px; border: 0; border-bottom: 1px solid var(--el-border-color-lighter); background: transparent; color: var(--el-color-primary); font: inherit; font-size: 12px; cursor: pointer; }.member-more:hover { background: var(--el-fill-color-lighter); }.member-more svg { width: 14px; }.member-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 30px; width: 30px; height: 30px; margin-right: 9px; border-radius: 50%; color: var(--el-color-primary); background: var(--el-color-primary-light-9); font-size: 12px; font-weight: 700; }.member-avatar--leave { color: var(--el-color-warning); background: var(--el-color-warning-light-9); }.member-info { display: flex; flex: 1; flex-direction: column; min-width: 0; }.member-info strong, .member-info small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.member-info strong { font-size: 13px; }.member-info small { margin-top: 3px; color: var(--el-text-color-secondary); font-size: 11px; }
 .lean-panel { display: flex; flex-direction: column; }.lean-summary { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(120px, .8fr); gap: 10px; margin-top: 20px; }.lean-score-box, .lean-total-box { display: flex; align-items: center; justify-content: space-between; min-height: 80px; padding: 14px; border-radius: 12px; background: var(--el-fill-color-lighter); }.lean-score-box > div, .lean-total-copy { display: flex; flex-direction: column; }.lean-score-box span, .lean-total-copy span, .lean-total-copy small { color: var(--el-text-color-secondary); font-size: 12px; }.lean-score-box strong { display: block; margin-top: 8px; color: var(--el-color-success); font-size: 28px; line-height: 1; }.lean-total-box strong { flex: 0 0 auto; margin-left: 14px; color: var(--el-color-primary); font-size: 30px; line-height: 1; }.lean-total-copy span { white-space: nowrap; }.lean-total-copy small { margin-top: 5px; font-size: 10px; }.lean-status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }.lean-status { display: flex; align-items: center; justify-content: space-between; min-height: 43px; padding: 9px 11px; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; background: var(--el-bg-color); }.lean-status span { color: var(--el-text-color-secondary); font-size: 11px; }.lean-status strong { font-size: 19px; line-height: 1; }.lean-status--approved strong { color: var(--el-color-success); }.lean-status--confirm strong { color: #2563eb; }.lean-status--pending strong { color: var(--el-color-warning); }.lean-status--rejected strong { color: var(--el-color-danger); }.lean-status-bar { display: flex; height: 8px; margin-top: 16px; overflow: hidden; border-radius: 999px; background: var(--el-fill-color); }.lean-status-bar__segment { min-width: 0; transition: width .3s ease; }.lean-status-bar__segment--approved { background: var(--el-color-success); }.lean-status-bar__segment--confirm { background: #60a5fa; }.lean-status-bar__segment--pending { background: var(--el-color-warning); }.lean-status-bar__segment--rejected { background: var(--el-color-danger); }.lean-status-legend { display: flex; flex-wrap: wrap; gap: 7px 12px; margin-top: 10px; color: var(--el-text-color-secondary); font-size: 10px; }.lean-status-legend span { display: inline-flex; align-items: center; gap: 4px; }.lean-status-dot { width: 6px; height: 6px; border-radius: 50%; }.lean-status-dot--approved { background: var(--el-color-success); }.lean-status-dot--confirm { background: #60a5fa; }.lean-status-dot--pending { background: var(--el-color-warning); }.lean-status-dot--rejected { background: var(--el-color-danger); }.lean-empty { margin-top: 16px; padding: 13px; border-radius: 10px; color: var(--el-text-color-secondary); background: var(--el-fill-color-lighter); font-size: 12px; text-align: center; }.lean-footnote { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 18px; color: var(--el-text-color-secondary); font-size: 11px; }.lean-footnote svg { width: 14px; color: var(--el-color-success); }
 .risk-panel { margin-top: 14px; }.risk-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 15px; }.risk-item { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 10px 12px; border: 1px solid var(--el-border-color-lighter); border-left: 3px solid var(--el-color-info); border-radius: 10px; background: var(--el-fill-color-lighter); }.risk-item--danger { border-left-color: var(--el-color-danger); }.risk-item--warning { border-left-color: var(--el-color-warning); }.risk-item--success { border-left-color: var(--el-color-success); }.risk-mark { display: flex; align-items: center; justify-content: center; width: 24px; color: var(--el-color-warning); }.risk-item--danger .risk-mark { color: var(--el-color-danger); }.risk-item--success .risk-mark { color: var(--el-color-success); }.risk-item > div { display: flex; flex: 1; flex-direction: column; min-width: 0; }.risk-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }.risk-item small { margin-top: 3px; overflow: hidden; color: var(--el-text-color-secondary); text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }.risk-item .el-tag { flex: 0 0 auto; }
-.task-panel { margin-top: 14px; }.task-panel > .panel-heading { align-items: center; }.task-list { margin-top: 17px; }.task-row { display: flex; align-items: center; gap: 14px; min-height: 75px; padding: 10px 12px; border-bottom: 1px solid var(--el-border-color-lighter); border-left: 3px solid var(--el-border-color); transition: background .2s, border-color .2s; }.task-row:hover { background: var(--el-fill-color-lighter); }.task-row--danger { border-left-color: var(--el-color-danger); background: var(--el-color-danger-light-9); }.task-row--warning { border-left-color: var(--el-color-warning); background: var(--el-color-warning-light-9); }.task-row--success { border-left-color: var(--el-color-success); }.task-status-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 31px; width: 31px; height: 31px; border-radius: 10px; color: var(--el-color-warning); background: var(--el-color-warning-light-9); }.task-status-icon.completed { color: var(--el-color-success); background: var(--el-color-success-light-9); }.task-status-icon svg { width: 17px; }.task-main { flex: 1; min-width: 0; }.task-main > strong { display: block; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }.task-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; color: var(--el-text-color-secondary); font-size: 11px; }.task-meta .el-tag { font-size: 10px; }.completed-time { color: var(--el-color-success); }.task-count { display: flex; flex: 0 0 72px; flex-direction: column; text-align: right; }.task-count b { color: var(--el-color-primary); font-size: 18px; }.task-count span { color: var(--el-text-color-secondary); font-size: 11px; }.task-count small { color: var(--el-text-color-secondary); font-size: 10px; }.task-deadline { display: flex; flex: 0 0 145px; flex-direction: column; gap: 3px; }.task-deadline span { color: var(--el-text-color-secondary); font-size: 10px; }.task-deadline b { font-size: 12px; }.task-row--danger .task-deadline b { color: var(--el-color-danger); }.task-row--warning .task-deadline b { color: var(--el-color-warning); }
+.task-panel { margin-top: 14px; }.task-panel > .panel-heading { align-items: center; }.task-sync-button { flex: 0 0 auto; min-width: 0; }.task-sync-button .el-icon { display: inline-flex; align-items: center; justify-content: center; width: 1em; height: 1em; font-size: 14px; line-height: 1; }.task-sync-button .el-icon svg { width: 1em; height: 1em; }.task-list { margin-top: 17px; }.task-row { display: flex; align-items: center; gap: 14px; min-height: 75px; padding: 10px 12px; border-bottom: 1px solid var(--el-border-color-lighter); border-left: 3px solid var(--el-border-color); transition: background .2s, border-color .2s; }.task-row:hover { background: var(--el-fill-color-lighter); }.task-row--danger { border-left-color: var(--el-color-danger); background: var(--el-color-danger-light-9); }.task-row--warning { border-left-color: var(--el-color-warning); background: var(--el-color-warning-light-9); }.task-row--success { border-left-color: var(--el-color-success); }.task-status-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 31px; width: 31px; height: 31px; border-radius: 10px; color: var(--el-color-warning); background: var(--el-color-warning-light-9); }.task-status-icon.completed { color: var(--el-color-success); background: var(--el-color-success-light-9); }.task-status-icon svg { width: 17px; }.task-main { flex: 1; min-width: 0; }.task-main > strong { display: block; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }.task-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; color: var(--el-text-color-secondary); font-size: 11px; }.task-meta .el-tag { font-size: 10px; }.completed-time { color: var(--el-color-success); }.task-count { display: flex; flex: 0 0 72px; flex-direction: column; text-align: right; }.task-count b { color: var(--el-color-primary); font-size: 18px; }.task-count span { color: var(--el-text-color-secondary); font-size: 11px; }.task-count small { color: var(--el-text-color-secondary); font-size: 10px; }.task-deadline { display: flex; flex: 0 0 145px; flex-direction: column; gap: 3px; }.task-deadline span { color: var(--el-text-color-secondary); font-size: 10px; }.task-deadline b { font-size: 12px; }.task-row--danger .task-deadline b { color: var(--el-color-danger); }.task-row--warning .task-deadline b { color: var(--el-color-warning); }
 .member-drawer-context { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; color: var(--el-text-color-secondary); background: var(--el-fill-color-lighter); font-size: 12px; }.member-drawer-context svg { width: 15px; color: var(--el-color-primary); }.member-drawer-list { display: flex; flex-direction: column; }.member-drawer-item { display: flex; align-items: center; min-height: 58px; border-bottom: 1px solid var(--el-border-color-lighter); }
+/* 动森首页看板：使用页面自身的主题 class，避免 scoped CSS 把装饰规则污染到 html 根节点。 */
+.dashboard-page--animal .dashboard-hero { min-height: 170px; padding: 28px 34px; color: #4f7054; border: 2px solid #82b58b; border-radius: 28px 28px 34px 34px; background: linear-gradient(180deg, #d8efbd 0%, #c2e5b5 58%, #a8d7a5 100%); box-shadow: 0 10px 0 rgba(77, 126, 82, .12), 0 18px 30px rgba(66, 111, 75, .14); }
+.dashboard-page--animal .dashboard-hero::before { position: absolute; inset: 0; background-image: radial-gradient(rgba(255, 255, 255, .42) 1px, transparent 1px); background-size: 18px 18px; opacity: .36; content: ''; mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, .78) 52%, transparent 100%); pointer-events: none; }
+.dashboard-page--animal .dashboard-hero .hero-content { z-index: 2; max-width: min(760px, 72%); }
+.dashboard-page--animal .hero-kicker { display: inline-flex; margin-bottom: 12px; padding: 5px 11px; border: 1px solid rgba(91, 139, 91, .34); border-radius: 999px; color: #4d8b77; background: rgba(255, 253, 232, .64); box-shadow: 0 2px 0 rgba(103, 145, 96, .12); letter-spacing: .13em; }
+.dashboard-page--animal .hero-kicker__leaf { color: #e5b94d; font-size: 15px; line-height: 1; }
+.dashboard-page--animal .dashboard-hero h1 { color: #4e714f; text-shadow: 0 1px 0 rgba(255, 255, 255, .42); }
+.dashboard-page--animal .dashboard-hero p { color: #5d7e63; }
+.dashboard-page--animal .hero-context { gap: 8px; margin-top: 18px; color: #527158; }
+.dashboard-page--animal .hero-context > span:not(.context-dot):not(.sync-label) { padding: 5px 9px; border: 1px solid rgba(99, 143, 103, .3); border-radius: 999px; background: rgba(255, 253, 232, .42); }
+.dashboard-page--animal .hero-context i { background: #76a678; }
+.dashboard-page--animal .context-dot { background: #63b96f; box-shadow: 0 0 0 4px rgba(99, 185, 111, .18); }
+.dashboard-page--animal .sync-label { padding: 5px 9px; border: 1px solid rgba(99, 143, 103, .24); border-radius: 999px; color: #628067; background: rgba(255, 253, 232, .28); }
+.dashboard-page--animal .hero-refresh { color: #4d7051 !important; border-color: rgba(91, 139, 91, .42) !important; background: #fff6cf !important; box-shadow: 0 4px 0 #d2b66b !important; }
+.dashboard-page--animal .hero-refresh:hover { color: #3e6045 !important; background: #fffbe6 !important; }
+.dashboard-page--animal .hero-orb { filter: none; opacity: 1; }
+.dashboard-page--animal .hero-orb--one { width: 210px; height: 210px; right: 15%; top: -142px; background: #ffe6a3; box-shadow: 0 0 0 16px rgba(255, 236, 173, .18), 0 0 0 34px rgba(255, 236, 173, .12); }
+.dashboard-page--animal .hero-orb--two { width: 340px; height: 98px; right: -34px; bottom: -62px; border-radius: 52% 48% 0 0; background: #8fc997; box-shadow: inset 0 18px 0 rgba(119, 181, 126, .4); transform: rotate(-5deg); }
+
+.dashboard-page--animal.dashboard-page--dark .dashboard-hero { color: #f4e8c8; border-color: #668b77; background: linear-gradient(180deg, #28413c 0%, #315448 58%, #28443d 100%); box-shadow: 0 10px 0 rgba(10, 25, 22, .34), 0 18px 30px rgba(5, 18, 16, .32); }
+.dashboard-page--animal.dashboard-page--dark .dashboard-hero::before { background-image: radial-gradient(rgba(205, 239, 196, .22) 1px, transparent 1px); opacity: .28; }
+.dashboard-page--animal.dashboard-page--dark .hero-kicker { border-color: rgba(146, 209, 170, .32); color: #9edbb9; background: rgba(12, 34, 29, .32); box-shadow: 0 2px 0 rgba(0, 0, 0, .16); }
+.dashboard-page--animal.dashboard-page--dark .hero-kicker__leaf { color: #f1cb65; }
+.dashboard-page--animal.dashboard-page--dark .dashboard-hero h1 { color: #f8edcf; text-shadow: 0 1px 0 rgba(0, 0, 0, .18); }
+.dashboard-page--animal.dashboard-page--dark .dashboard-hero p { color: #c3d6bf; }
+.dashboard-page--animal.dashboard-page--dark .hero-context { color: #c3d6bf; }
+.dashboard-page--animal.dashboard-page--dark .hero-context > span:not(.context-dot):not(.sync-label) { border-color: rgba(140, 190, 157, .3); background: rgba(8, 25, 22, .28); }
+.dashboard-page--animal.dashboard-page--dark .hero-context i { background: #83b895; }
+.dashboard-page--animal.dashboard-page--dark .context-dot { background: #80db98; box-shadow: 0 0 0 4px rgba(128, 219, 152, .16); }
+.dashboard-page--animal.dashboard-page--dark .sync-label { border-color: rgba(140, 190, 157, .24); color: #a9c7b1; background: rgba(8, 25, 22, .22); }
+.dashboard-page--animal.dashboard-page--dark .hero-refresh { color: #183a34 !important; border-color: #7dd3b1 !important; background: #83d7b4 !important; box-shadow: 0 4px 0 #4b9f82 !important; }
+.dashboard-page--animal.dashboard-page--dark .hero-refresh:hover { background: #a1e4c5 !important; }
+.dashboard-page--animal.dashboard-page--dark .hero-orb--one { background: #f2d57d; box-shadow: 0 0 0 16px rgba(242, 213, 125, .12), 0 0 0 34px rgba(242, 213, 125, .07); }
+.dashboard-page--animal.dashboard-page--dark .hero-orb--two { background: #4b806b; box-shadow: inset 0 18px 0 rgba(71, 121, 101, .62); }
+.dashboard-page--animal { background: radial-gradient(circle at 12% 0%, rgba(255, 255, 255, .42), transparent 28%), linear-gradient(180deg, #bfe3bf 0%, #cfe9c7 42%, #b4d9ca 100%); }
+.dashboard-page--animal .metric-card,
+.dashboard-page--animal .panel { border: 2px solid var(--animal-border-color-light, #e8e2d6); border-radius: var(--animal-radius-card, 20px); background: var(--animal-bg-color, #f8f8f0); box-shadow: 0 5px 0 var(--animal-shadow-soft, #d4c9b4), var(--app-shadow-sm); }
+.dashboard-page--animal .metric-card { min-height: 122px; }.dashboard-page--animal .metric-card::after { opacity: .08; }.dashboard-page--animal .metric-icon { border-radius: 12px; box-shadow: 0 3px 0 color-mix(in srgb, currentColor 50%, var(--animal-shadow-soft, #d4c9b4)); }.dashboard-page--animal .metric-label, .dashboard-page--animal .metric-card small { color: var(--animal-text-color-secondary, #9f927d); }.dashboard-page--animal .metric-card strong { color: currentColor; }.dashboard-page--animal .metric-card--blue { color: var(--animal-status-info, #5c91c9); }.dashboard-page--animal .metric-card--cyan { color: var(--animal-primary-color, #19c8b9); }.dashboard-page--animal .metric-card--green { color: var(--animal-status-success, #55a86b); }.dashboard-page--animal .metric-card--amber { color: var(--animal-status-warning, #c88b2b); }.dashboard-page--animal .metric-card--red { color: var(--animal-status-danger, #cf625c); }.dashboard-page--animal .metric-card--indigo { color: #7d83c9; }
+.dashboard-page--animal .section-heading h2, .dashboard-page--animal .panel-heading h3 { color: var(--animal-text-color, #794f27); }.dashboard-page--animal .section-heading p, .dashboard-page--animal .panel-heading p { color: var(--animal-text-color-secondary, #9f927d); }.dashboard-page--animal .member-item, .dashboard-page--animal .task-row { border-color: var(--animal-border-color-light, #e8e2d6); }.dashboard-page--animal .task-row:hover { background: var(--animal-primary-color-bg, #e6f9f6); }.dashboard-page--animal .task-row--danger { background: color-mix(in srgb, var(--animal-status-danger, #cf625c) 12%, var(--animal-bg-color, #f8f8f0)); }.dashboard-page--animal .task-row--warning { background: color-mix(in srgb, var(--animal-status-warning, #c88b2b) 12%, var(--animal-bg-color, #f8f8f0)); }
+.dashboard-page--animal.dashboard-page--dark { background: radial-gradient(circle at 12% 0%, rgba(127, 228, 211, .1), transparent 28%), linear-gradient(180deg, #1f2c2d 0%, #263b39 52%, #213534 100%); }.dashboard-page--animal.dashboard-page--dark .metric-card, .dashboard-page--animal.dashboard-page--dark .panel { background: var(--animal-bg-color, #344a46); border-color: var(--animal-border-color-light, #526b65); box-shadow: 0 5px 0 var(--animal-shadow-soft, #1a2525), var(--app-shadow-sm); }.dashboard-page--animal.dashboard-page--dark .section-heading h2, .dashboard-page--animal.dashboard-page--dark .panel-heading h3 { color: var(--animal-text-color, #f5ead1); }.dashboard-page--animal.dashboard-page--dark .metric-label, .dashboard-page--animal.dashboard-page--dark .metric-card small, .dashboard-page--animal.dashboard-page--dark .section-heading p, .dashboard-page--animal.dashboard-page--dark .panel-heading p { color: var(--animal-text-color-secondary, #b9c9bd); }
+
 @keyframes pulse { 50% { opacity: .35; transform: scale(.7); } }
 @media (max-width: 1250px) { .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }.dashboard-content-grid { grid-template-columns: 1fr; }.lean-panel { min-height: 210px; }.risk-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .dashboard-page { padding: 12px 12px 30px; }.dashboard-hero { align-items: flex-start; flex-direction: column; gap: 18px; padding: 24px; }.dashboard-hero h1 { font-size: 25px; }.hero-context { flex-wrap: wrap; row-gap: 7px; }.section-heading { align-items: flex-start; flex-direction: column; }.metric-grid, .member-status-columns, .risk-list { grid-template-columns: 1fr; }.member-status-group--leave { padding-top: 16px; padding-left: 0; border-top: 1px solid var(--el-border-color-lighter); border-left: 0; }.task-row { align-items: flex-start; flex-wrap: wrap; gap: 9px; }.task-main { flex-basis: calc(100% - 46px); }.task-count, .task-deadline { margin-left: 45px; }.task-deadline { flex-basis: auto; }.task-row > .el-tag { margin-left: auto; } }

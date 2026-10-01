@@ -10,13 +10,10 @@
       </div>
       <template #actions>
         <div class="toolbar__actions">
-        <el-input v-model="query.keyword" clearable placeholder="搜索名称或标识" style="width: 220px" @keyup.enter="loadList" />
-        <el-select v-model="query.status" clearable placeholder="全部状态" style="width: 130px" @change="loadList">
-          <el-option label="启用" value="ENABLED" />
-          <el-option label="停用" value="DISABLED" />
-        </el-select>
-        <el-button type="primary" icon="Search" @click="loadList">查询</el-button>
-        <el-button v-hasPermi="['ecology:businessType:add']" type="primary" plain icon="Plus" @click="openAdd">新增业务类型</el-button>
+        <UiInput v-model="query.keyword" clearable placeholder="搜索名称或标识" style="width: 220px" @keyup.enter="loadList" />
+        <UiSelect v-model="query.status" :options="statusOptions" clearable placeholder="全部状态" style="width: 130px" @change="loadList" />
+        <UiButton type="primary" icon="Search" @click="loadList">查询</UiButton>
+        <UiButton v-hasPermi="['ecology:businessType:add']" type="primary" plain icon="Plus" @click="openAdd">新增业务类型</UiButton>
         </div>
       </template>
     </DepartmentTableToolbar>
@@ -26,28 +23,28 @@
       <span>业务标识用于系统自动匹配审批方案</span>
     </div>
 
-    <DepartmentDataTable v-loading="loading" :data="rows" border stripe>
+    <DepartmentDataTable :loading="loading" :data="rows" border stripe>
       <el-table-column label="业务名称" prop="businessName" min-width="180" show-overflow-tooltip />
       <el-table-column label="业务标识" prop="businessType" min-width="220" show-overflow-tooltip>
-        <template #default="scope"><el-tag effect="plain" class="business-code-tag">{{ scope.row.businessType }}</el-tag></template>
+        <template #default="scope"><UiTag effect="plain" class="business-code-tag">{{ scope.row.businessType }}</UiTag></template>
       </el-table-column>
       <el-table-column label="泛微表单" min-width="190" show-overflow-tooltip><template #default="scope">{{ formNameFor(scope.row.businessType) || '未绑定' }}</template></el-table-column>
       <el-table-column label="可用审批方式" min-width="180"><template #default="scope"><span v-if="optionNamesFor(scope.row.businessType).length">{{ optionNamesFor(scope.row.businessType).join('、') }}</span><span v-else class="muted-text">未配置</span></template></el-table-column>
       <el-table-column label="状态" width="100" align="center">
-        <template #default="scope"><el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</el-tag></template>
+        <template #default="scope"><UiTag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</UiTag></template>
       </el-table-column>
       <el-table-column label="备注" prop="remark" min-width="220" show-overflow-tooltip />
       <el-table-column label="更新时间" prop="updateTime" width="180" />
       <el-table-column label="操作" fixed="right" width="160" align="center">
         <template #default="scope">
           <DepartmentTableActions>
-            <el-button v-hasPermi="['ecology:businessType:edit']" link type="primary" @click="openEdit(asBusinessType(scope.row))">编辑</el-button>
-            <el-button v-if="scope.row.status === 'ENABLED'" v-hasPermi="['ecology:businessType:remove']" link type="danger" @click="disable(asBusinessType(scope.row))">停用</el-button>
+            <UiButton v-hasPermi="['ecology:businessType:edit']" link type="primary" @click="openEdit(asBusinessType(scope.row))">编辑</UiButton>
+            <UiButton v-if="scope.row.status === 'ENABLED'" v-hasPermi="['ecology:businessType:remove']" link type="danger" @click="disable(asBusinessType(scope.row))">停用</UiButton>
           </DepartmentTableActions>
         </template>
       </el-table-column>
     </DepartmentDataTable>
-    <el-empty v-if="!loading && rows.length === 0" description="暂无业务类型，请先新增配置" />
+    <UiEmpty v-if="!loading && rows.length === 0" description="暂无业务类型，请先新增配置" />
 
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="680px" class="business-type-dialog" append-to-body destroy-on-close>
       <div class="dialog-intro">
@@ -70,7 +67,7 @@
 
           <div class="form-grid form-grid--two">
             <el-form-item label="业务名称" prop="businessName">
-              <el-input v-model="form.businessName" maxlength="100" placeholder="如：费用报销" />
+              <UiInput v-model="form.businessName" :maxlength="100" placeholder="如：费用报销" />
             </el-form-item>
             <el-form-item label="状态">
               <el-radio-group v-model="form.status" class="status-toggle">
@@ -93,7 +90,7 @@
           </div>
 
           <el-form-item label="业务标识" prop="businessType">
-            <el-input v-model="form.businessType" maxlength="64" :disabled="Boolean(form.id)" placeholder="如：EXPENSE_REIMBURSEMENT" />
+            <UiInput v-model="form.businessType" :maxlength="64" :disabled="Boolean(form.id)" placeholder="如：EXPENSE_REIMBURSEMENT" />
             <div class="field-tip"><el-icon><InfoFilled /></el-icon>用于系统匹配审批方案，保存后不能修改；如需更换请停用旧类型后新增。</div>
           </el-form-item>
         </section>
@@ -110,22 +107,16 @@
           <div class="binding-tip"><el-icon><InfoFilled /></el-icon><span>未绑定表单时，该业务不会出现在发起申请列表中。</span></div>
 
           <el-form-item label="使用表单" class="form-item--wide">
-            <el-select v-model="bindingForm.formId" clearable filterable style="width: 100%" placeholder="选择可复用的泛微表单" @change="handleBindingFormChange">
-              <el-option v-for="item in workflowForms" :key="item.id" :label="`${item.formName}（${item.workflowId}）`" :value="item.id" />
-            </el-select>
+            <UiSelect v-model="bindingForm.formId" :options="workflowFormOptions" clearable filterable style="width: 100%" placeholder="选择可复用的泛微表单" @change="handleBindingFormChange" />
           </el-form-item>
 
           <div v-if="bindingForm.formId" class="form-grid form-grid--two">
             <el-form-item label="可用审批方式" :required="Boolean(bindingForm.formId)">
-              <el-select v-model="bindingForm.optionIds" multiple collapse-tags collapse-tags-tooltip filterable style="width: 100%" placeholder="请选择允许的审批方式">
-                <el-option v-for="item in availableOptions" :key="item.id" :label="item.optionName" :value="item.id" />
-              </el-select>
+              <UiCheckboxGroup v-model="bindingForm.optionIds" :options="availableOptionChoices" direction="vertical" />
               <div class="field-tip">可多选，用户发起时只能从这里选择。</div>
             </el-form-item>
             <el-form-item label="默认审批方式" required>
-              <el-select v-model="bindingForm.defaultOptionId" filterable style="width: 100%" placeholder="请选择默认方式">
-                <el-option v-for="item in selectedOptions" :key="item.id" :label="item.optionName" :value="item.id" />
-              </el-select>
+              <UiSelect v-model="bindingForm.defaultOptionId" :options="selectedOptionOptions" filterable style="width: 100%" placeholder="请选择默认方式" />
               <div class="field-tip">用户发起时自动带出，可再次调整。</div>
             </el-form-item>
           </div>
@@ -133,10 +124,10 @@
         </section>
 
         <section class="form-section form-section--remark">
-          <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="3" maxlength="1000" show-word-limit placeholder="补充该业务的使用说明（选填）" /></el-form-item>
+          <el-form-item label="备注"><UiTextarea v-model="form.remark" :rows="3" :maxlength="1000" show-word-limit placeholder="补充该业务的使用说明（选填）" /></el-form-item>
         </section>
       </el-form>
-      <template #footer><div class="dialog-footer"><span class="footer-hint">配置完成后，业务用户即可按此规则发起申请</span><div><el-button @click="dialog.visible = false">取消</el-button><el-button type="primary" :loading="saving" @click="save">保存配置</el-button></div></div></template>
+      <template #footer><div class="dialog-footer"><span class="footer-hint">配置完成后，业务用户即可按此规则发起申请</span><div><UiButton @click="dialog.visible = false">取消</UiButton><UiButton type="primary" :loading="saving" @click="save">保存配置</UiButton></div></div></template>
     </el-dialog>
   </div>
 </template>
@@ -147,6 +138,7 @@ import modal from '@/plugins/modal';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import DepartmentTableToolbar from '@/components/Department/TableToolbar.vue';
+import { UiButton, UiCheckboxGroup, UiEmpty, UiInput, UiSelect, UiTag, UiTextarea } from '@/components/UiKit';
 import { delOaBusinessWorkflowBinding, disableOaBusinessType, listOaBusinessTypes, listOaBusinessWorkflowBindings, listOaFormWorkflows, listOaWorkflowOptions, saveOaBusinessType, saveOaBusinessWorkflowBinding } from '@/api/ecology';
 import type { OaBusinessTypeForm, OaBusinessTypeVO, OaBusinessWorkflowBindingVO, OaFormWorkflowVO, OaWorkflowOptionVO } from '@/api/ecology/types';
 
@@ -165,8 +157,15 @@ const rules = {
   businessName: [{ required: true, message: '请输入业务名称', trigger: 'blur' }],
   businessType: [{ required: true, message: '请输入业务标识', trigger: 'blur' }]
 };
+const statusOptions = [
+  { value: 'ENABLED', label: '启用' },
+  { value: 'DISABLED', label: '停用' }
+];
 const availableOptions = computed(() => workflowOptions.value.filter((item) => item.status === 'ENABLED'));
 const selectedOptions = computed(() => availableOptions.value.filter((item) => bindingForm.optionIds.some((id) => String(id) === String(item.id))));
+const availableOptionChoices = computed(() => availableOptions.value.map((item) => ({ value: item.id, label: item.optionName })));
+const workflowFormOptions = computed(() => workflowForms.value.map((item) => ({ value: item.id, label: `${item.formName}（${item.workflowId}）` })));
+const selectedOptionOptions = computed(() => selectedOptions.value.map((item) => ({ value: item.id, label: item.optionName })));
 const asBusinessType = (row: unknown) => row as OaBusinessTypeVO;
 
 function newForm(): OaBusinessTypeForm {

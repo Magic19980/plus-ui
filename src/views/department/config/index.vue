@@ -1,39 +1,36 @@
 <template>
   <div class="p-2 app-container department-config-page">
-    <el-card shadow="never" class="page-intro">
+    <UiCard shadow="never" class="page-intro">
       <div class="page-intro__header">
         <div class="page-intro__title">
           <div class="page-intro__kicker">DEPARTMENT CONFIG</div>
           <h2>科室配置</h2>
           <p>将系统部门配置为业务科室，统一管理成员、任务、日报、工单和资料的数据范围。</p>
         </div>
-        <el-button v-hasPermi="['department:department:add']" type="primary" icon="Plus" @click="handleAdd">新增科室</el-button>
+        <UiButton v-hasPermi="['department:department:add']" type="primary" @click="handleAdd"><el-icon><Plus /></el-icon>新增科室</UiButton>
       </div>
         <div class="page-intro__notice">
           <el-icon><InfoFilled /></el-icon>
           <span>科室来源于系统部门。泛微组织调整后，如原部门失效，可使用“迁移”将科室配置和业务数据转到新的有效部门。</span>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="filter-card mt-2">
+    <UiCard shadow="never" class="filter-card mt-2">
       <el-form :model="queryParams" :inline="true" class="query-form" @submit.prevent>
         <el-form-item label="部门/科室名称">
-          <el-input v-model="queryParams.deptName" clearable placeholder="请输入中文或印尼语名称" @keyup.enter="handleQuery" />
+          <UiInput v-model="queryParams.deptName" clearable placeholder="请输入中文或印尼语名称" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" clearable placeholder="全部状态" style="width: 130px">
-            <el-option label="启用" value="ENABLED" />
-            <el-option label="停用" value="DISABLED" />
-          </el-select>
+          <UiSelect v-model="queryParams.status" :options="statusOptions" clearable placeholder="全部状态" style="width: 130px" />
         </el-form-item>
         <el-form-item class="query-actions">
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <UiButton type="primary" @click="handleQuery"><el-icon><Search /></el-icon>查询</UiButton>
+          <UiButton @click="resetQuery"><el-icon><Refresh /></el-icon>重置</UiButton>
         </el-form-item>
       </el-form>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="list-card mt-2">
+    <UiCard shadow="never" class="list-card mt-2">
       <div class="list-card__header">
         <div>
           <div class="list-card__title">业务科室列表</div>
@@ -41,18 +38,18 @@
         </div>
         <div class="list-card__summary">
           <span>共 {{ total }} 个</span>
-          <el-tag v-if="enabledCount > 0" type="success" effect="light">启用 {{ enabledCount }}</el-tag>
-          <el-tag v-if="disabledCount > 0" type="info" effect="light">停用 {{ disabledCount }}</el-tag>
+          <UiTag v-if="enabledCount > 0" type="success" effect="light">启用 {{ enabledCount }}</UiTag>
+          <UiTag v-if="disabledCount > 0" type="info" effect="light">停用 {{ disabledCount }}</UiTag>
         </div>
       </div>
 
-      <DepartmentDataTable v-loading="loading" class="config-table" :data="configList" row-key="deptId">
+      <DepartmentDataTable :loading="loading" class="config-table" :data="configList" row-key="deptId">
           <el-table-column label="系统部门" prop="deptName" min-width="280" show-overflow-tooltip>
             <template #default="scope">
               <div class="dept-name-cell">
                 <span class="dept-name-cell__icon"><el-icon><OfficeBuilding /></el-icon></span>
                 <span class="dept-name-cell__name" :title="scope.row.deptName || '原系统部门已失效'">{{ scope.row.deptName || '原系统部门已失效' }}</span>
-                <el-tag v-if="scope.row.systemDeptAvailable === false" type="warning" effect="light">待迁移</el-tag>
+                <UiTag v-if="scope.row.systemDeptAvailable === false" type="warning" effect="light">待迁移</UiTag>
             </div>
           </template>
         </el-table-column>
@@ -63,7 +60,7 @@
         </el-table-column>
         <el-table-column label="状态" width="100" align="center">
           <template #default="scope">
-            <el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'" effect="light">{{ statusLabel(scope.row.status) }}</el-tag>
+            <UiTag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'" effect="light">{{ statusLabel(scope.row.status) }}</UiTag>
           </template>
         </el-table-column>
         <el-table-column label="排序" prop="sortNum" width="80" align="center" />
@@ -76,32 +73,30 @@
         <el-table-column label="操作" fixed="right" width="220" align="center">
           <template #default="scope">
             <DepartmentTableActions>
-              <el-button v-if="scope.row.systemDeptAvailable !== false" v-hasPermi="['department:department:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
-            <el-button
+              <UiButton v-if="scope.row.systemDeptAvailable !== false" v-hasPermi="['department:department:edit']" link type="primary" @click="handleUpdate(asDepartmentConfigRow(scope.row))"><el-icon><Edit /></el-icon>编辑</UiButton>
+            <UiButton
               v-if="scope.row.systemDeptAvailable === false"
               v-hasPermi="['department:department:edit']"
               link
               type="warning"
-              icon="Right"
-              @click="handleMigrate(scope.row)"
-            >迁移</el-button>
-            <el-button
+               @click="handleMigrate(asDepartmentConfigRow(scope.row))"
+            ><el-icon><Right /></el-icon>迁移</UiButton>
+            <UiButton
               v-if="scope.row.status === 'ENABLED' && scope.row.systemDeptAvailable !== false"
               v-hasPermi="['department:department:remove']"
               link
               type="danger"
-              icon="SwitchButton"
-              @click="handleDisable(scope.row)"
-              >停用</el-button>
+               @click="handleDisable(asDepartmentConfigRow(scope.row))"
+              ><el-icon><SwitchButton /></el-icon>停用</UiButton>
             </DepartmentTableActions>
           </template>
         </el-table-column>
       </DepartmentDataTable>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
-    </el-card>
+      <UiPagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+    </UiCard>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="620px" append-to-body class="department-config-dialog">
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="620px" append-to-body class="department-config-dialog">
       <el-alert
         title="科室来源说明"
         description="请选择系统部门作为业务科室。用户管理中的主部门匹配后，会自动建立正式服务关系；临时协作人员仍需在人员档案中手动纳入。"
@@ -139,25 +134,22 @@
           <div v-else-if="dialog.edit" class="form-help">科室主键来源于系统部门，编辑时不能更换；如需变更，请停用旧科室后新增配置。</div>
         </el-form-item>
         <el-form-item label="状态">
-          <el-radio-group v-model="form.status">
-            <el-radio label="ENABLED">启用</el-radio>
-            <el-radio label="DISABLED">停用</el-radio>
-          </el-radio-group>
+          <UiRadioGroup v-model="form.status" :options="statusOptions" />
         </el-form-item>
         <el-form-item label="排序号">
-          <el-input-number v-model="form.sortNum" :min="0" :max="9999" />
+          <UiNumberInput v-model="form.sortNum" :min="0" :max="9999" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="补充科室用途或管理说明" />
+          <UiTextarea v-model="form.remark" :rows="3" :maxlength="500" show-word-limit placeholder="补充科室用途或管理说明" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button :loading="buttonLoading" type="primary" @click="submitForm">保存</el-button>
-        <el-button @click="dialog.visible = false">取消</el-button>
+        <UiButton :loading="buttonLoading" type="primary" @click="submitForm">保存</UiButton>
+        <UiButton @click="dialog.visible = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="migrationDialog.visible" title="迁移科室配置" width="620px" append-to-body class="department-config-dialog">
+    <UiDialog v-model="migrationDialog.visible" title="迁移科室配置" width="620px" append-to-body class="department-config-dialog">
       <el-alert
         title="迁移前请确认目标部门"
         description="迁移会保留科室配置，并将人员服务关系、日报、休假、任务、资料、工单和其他业务数据统一转到目标部门。目标部门必须是泛微同步后的有效部门，已有科室配置或存在重复数据时不会执行。"
@@ -195,21 +187,22 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button :loading="migrationLoading" type="primary" @click="submitMigration">确认迁移</el-button>
-        <el-button @click="migrationDialog.visible = false">取消</el-button>
+        <UiButton :loading="migrationLoading" type="primary" @click="submitMigration">确认迁移</UiButton>
+        <UiButton @click="migrationDialog.visible = false">取消</UiButton>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
 <script setup name="DepartmentConfig" lang="ts">
-import { ArrowRight, InfoFilled, OfficeBuilding } from '@element-plus/icons-vue';
+import { ArrowRight, Edit, InfoFilled, OfficeBuilding, Plus, Refresh, Right, Search, SwitchButton } from '@element-plus/icons-vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { addDepartmentConfig, disableDepartmentConfig, getDepartmentConfig, listAvailableDepartments, listDepartmentConfig, listOrganizationDepartmentChildren, migrateDepartmentConfig, updateDepartmentConfig } from '@/api/department/config';
 import type { DepartmentConfigForm, DepartmentConfigMigrationForm, DepartmentConfigQuery, DepartmentConfigVO } from '@/api/department/config/types';
 import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import DeptTreeSelect from '@/components/DeptTreeSelect/index.vue';
+import { UiButton, UiCard, UiDialog, UiInput, UiNumberInput, UiPagination, UiRadioGroup, UiSelect, UiTag, UiTextarea } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 
@@ -238,11 +231,17 @@ const migrationLoading = ref(false);
 const migrationSourceName = ref('');
 const migrationForm = reactive<DepartmentConfigMigrationForm>({ sourceDeptId: '', targetDeptId: '' });
 const rules = { deptId: [{ required: true, message: '请选择系统部门', trigger: 'change' }] };
+const statusOptions = [
+  { value: 'ENABLED', label: '启用' },
+  { value: 'DISABLED', label: '停用' }
+] as const;
 const deptTreeProps = { value: 'id', label: 'path', children: 'children', disabled: 'disabled' };
 
 const enabledCount = computed(() => configList.value.filter(item => item.status === 'ENABLED').length);
 const disabledCount = computed(() => configList.value.filter(item => item.status === 'DISABLED').length);
 const statusLabel = (status?: string) => (status === 'DISABLED' ? '停用' : '启用');
+/** 将通用表格行收口为部门配置实体后再交给业务动作。 */
+const asDepartmentConfigRow = (row: unknown): DepartmentConfigVO => row as DepartmentConfigVO;
 
 const getList = async () => {
   await withLoading(async () => {
@@ -485,7 +484,8 @@ onMounted(getList);
   color: var(--el-color-primary);
 }
 
-.filter-card :deep(.el-card__body) {
+.filter-card :deep(.el-card__body),
+.filter-card :deep(.ui-animal-card__body) {
   padding: 18px 22px 2px;
 }
 
@@ -498,7 +498,8 @@ onMounted(getList);
   margin-right: 0;
 }
 
-.list-card :deep(.el-card__body) {
+.list-card :deep(.el-card__body),
+.list-card :deep(.ui-animal-card__body) {
   padding: 0 22px 14px;
 }
 
@@ -554,7 +555,8 @@ onMounted(getList);
   white-space: nowrap;
 }
 
-.dept-name-cell :deep(.el-tag) {
+.dept-name-cell :deep(.el-tag),
+.dept-name-cell :deep(.animal-tag) {
   flex: none;
 }
 
@@ -648,7 +650,8 @@ onMounted(getList);
     flex-direction: column;
   }
 
-  .page-intro__header .el-button {
+  .page-intro__header .el-button,
+  .page-intro__header :deep(.ui-animal-button) {
     align-self: stretch;
   }
 

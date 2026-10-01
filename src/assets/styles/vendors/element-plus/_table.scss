@@ -143,6 +143,83 @@ html.dark {
   width: inherit;
 }
 
+// 操作按钮必须保持同一行，避免动森按钮的最小宽度被表格单元格挤压后纵向排列。
+// 同时放开单元格内部的裁剪，给下方的提示气泡和固定列操作区留出空间。
+.el-table .small-padding.fixed-width .cell,
+.el-table .fixed-width .cell,
+.el-table .el-table__body-wrapper td:last-child .cell,
+.el-table .el-table__fixed-right-body-wrapper td .cell,
+.el-table .el-table__fixed-right td .cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.el-table .small-padding.fixed-width .cell > .el-tooltip,
+.el-table .fixed-width .cell > .el-tooltip,
+.el-table .el-table__body-wrapper td:last-child .cell > .el-tooltip,
+.el-table .el-table__fixed-right-body-wrapper td .cell > .el-tooltip,
+.el-table .el-table__fixed-right td .cell > .el-tooltip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.el-table .small-padding.fixed-width .cell > .el-button,
+.el-table .fixed-width .cell > .el-button,
+.el-table .el-table__body-wrapper td:last-child .cell > .el-button,
+.el-table .el-table__fixed-right-body-wrapper td .cell > .el-button,
+.el-table .el-table__fixed-right td .cell > .el-button {
+  flex: 0 0 auto;
+}
+
+.el-table .small-padding.fixed-width .cell .ui-animal-button,
+.el-table .fixed-width .cell .ui-animal-button,
+.el-table .el-table__body-wrapper td:last-child .cell .ui-animal-button,
+.el-table .el-table__fixed-right-body-wrapper td .cell .ui-animal-button,
+.el-table .el-table__fixed-right td .cell .ui-animal-button {
+  flex: 0 0 auto;
+  min-width: 32px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 8px;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.el-table .table-actions,
+.el-table .history-actions,
+.el-table .department-table-actions {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: none;
+  flex-wrap: nowrap;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+// 动森模式的 Tooltip 会保留在触发器所在单元格内，而 Element Plus 的固定列
+// 会给每一行创建独立层叠上下文。若不提升当前单元格，气泡会被下一行的固定
+// 单元格覆盖，表现为只露出一截。:has 在 Chromium/Edge 中已稳定支持，且只在
+// 气泡实际显示时提升层级，不影响表格常态的滚动和固定列结构。
+.el-table .el-table__cell:has(.animal-tooltip__bubble--visible) {
+  position: relative !important;
+  z-index: 10001 !important;
+  overflow: visible !important;
+}
+
+.el-table .el-table-fixed-column--left:has(.animal-tooltip__bubble--visible),
+.el-table .el-table-fixed-column--right:has(.animal-tooltip__bubble--visible) {
+  position: sticky !important;
+  z-index: 10001 !important;
+}
+
 .el-table .el-dropdown-link {
   cursor: pointer;
   color: var(--el-color-primary);

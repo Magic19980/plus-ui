@@ -1,6 +1,6 @@
 <template>
   <div class="p-2 import-config-page" :class="{ 'is-embedded': props.embedded }">
-    <el-card v-if="!props.embedded" shadow="never" class="intro-card">
+    <UiCard v-if="!props.embedded" shadow="never" class="intro-card">
       <div class="intro-content">
         <div>
           <div class="eyebrow"><span class="eyebrow-dot" /> IMPORT BUSINESS CONFIGURATION</div>
@@ -10,19 +10,19 @@
         <div class="intro-aside">
           <span class="intro-aside-label">WORKFLOW READY</span>
           <strong>业务导入中心</strong>
-          <el-tag type="info" effect="plain">普通用户只需选择业务并上传文件</el-tag>
+          <UiTag type="info" effect="plain">普通用户只需选择业务并上传文件</UiTag>
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="main-card mt-2">
+    <UiCard shadow="never" class="main-card mt-2">
       <div class="card-heading">
         <div>
           <div class="panel-kicker">TEMPLATE CATALOG</div>
           <h3>业务模板目录</h3>
           <p>每个业务使用独立模板，停用模板不会影响历史导入批次。</p>
         </div>
-        <el-button v-hasPermi="['ecology:importConfig:add']" type="primary" icon="Plus" class="add-button" @click="openAdd">新增业务模板</el-button>
+        <UiButton v-hasPermi="['ecology:importConfig:add']" type="primary" icon="Plus" class="add-button" @click="openAdd">新增业务模板</UiButton>
       </div>
       <div class="overview-grid">
         <div class="overview-item overview-item--blue">
@@ -45,7 +45,7 @@
         <div class="table-toolbar-title"><span class="table-toolbar-dot" />已配置业务</div>
         <span class="table-toolbar-tip">模板字段、审批方式和组织匹配均可单独维护</span>
       </div>
-      <el-table v-loading="loading" :data="configs" border class="template-table">
+      <DepartmentDataTable :loading="loading" :data="configs" border class="template-table">
         <el-table-column label="业务名称" min-width="250" show-overflow-tooltip>
           <template #default="scope">
             <div class="business-cell">
@@ -72,10 +72,10 @@
         <el-table-column label="备注" min-width="220" show-overflow-tooltip><template #default="scope"><span class="remark-cell">{{ scope.row.remark || '暂无备注' }}</span></template></el-table-column>
         <el-table-column label="操作" fixed="right" width="150" align="center">
           <template #default="scope">
-            <div class="table-actions">
-              <el-button v-hasPermi="['ecology:importConfig:edit']" link type="primary" @click="openEdit(scope.row)">编辑</el-button>
-              <el-button v-hasPermi="['ecology:importConfig:remove']" link type="danger" @click="removeConfig(scope.row)">删除</el-button>
-            </div>
+            <DepartmentTableActions>
+              <UiButton v-hasPermi="['ecology:importConfig:edit']" link type="primary" @click="openEdit(scope.row)">编辑</UiButton>
+              <UiButton v-hasPermi="['ecology:importConfig:remove']" link type="danger" @click="removeConfig(scope.row)">删除</UiButton>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
         <template #empty>
@@ -83,11 +83,11 @@
             <div class="empty-mark"><span /></div>
             <strong>暂无业务模板</strong>
             <p>创建业务模板后，即可按不同 Excel 结构执行导入。</p>
-            <el-button v-hasPermi="['ecology:importConfig:add']" type="primary" plain icon="Plus" @click="openAdd">创建第一个模板</el-button>
+            <UiButton v-hasPermi="['ecology:importConfig:add']" type="primary" plain icon="Plus" @click="openAdd">创建第一个模板</UiButton>
           </div>
         </template>
-      </el-table>
-    </el-card>
+      </DepartmentDataTable>
+    </UiCard>
 
     <el-dialog v-model="dialog.visible" width="1120px" top="4vh" append-to-body destroy-on-close class="config-dialog">
       <template #header>
@@ -114,9 +114,9 @@
             <div><strong>基础信息</strong><span>选择业务类型，确认模板的使用状态</span></div>
           </div>
           <el-row :gutter="22">
-            <el-col :span="12"><el-form-item label="泛微业务类型" prop="businessType"><el-select v-model="form.businessType" filterable placeholder="选择已配置的泛微业务类型" no-data-text="暂无已配置的泛微业务类型，请先维护业务类型" style="width: 100%" @change="handleBusinessTypeChange"><el-option v-for="item in businessTypes" :key="item.id" :label="businessTypeLabel(item)" :value="item.businessType" :disabled="item.status !== 'ENABLED' && item.businessType !== form.businessType" /></el-select><span class="field-tip">业务类型统一在“泛微审批中心 / 业务类型配置”维护。</span></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="业务名称" prop="businessName"><el-input v-model="form.businessName" disabled placeholder="选择泛微业务类型后自动带出" /></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="模板状态"><el-radio-group v-model="form.status"><el-radio label="ENABLED">启用</el-radio><el-radio label="DISABLED">停用</el-radio></el-radio-group></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="泛微业务类型" prop="businessType"><UiSelect v-model="form.businessType" :options="businessTypeOptions" filterable placeholder="选择已配置的泛微业务类型" style="width: 100%" @change="handleBusinessTypeChange" /><span class="field-tip">业务类型统一在“泛微审批中心 / 业务类型配置”维护。</span></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="业务名称" prop="businessName"><UiInput v-model="form.businessName" disabled placeholder="选择泛微业务类型后自动带出" /></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="模板状态"><UiRadioGroup v-model="form.status" :options="statusOptions" /></el-form-item></el-col>
           </el-row>
         </section>
 
@@ -127,10 +127,10 @@
           </div>
           <el-form-item label="Excel 模板" required>
             <div class="template-upload">
-              <el-upload :limit="1" accept=".xlsx,.xls" :auto-upload="false" :show-file-list="true" :disabled="templateParsing" :on-change="handleTemplateChange" :on-remove="handleTemplateRemove">
-                <el-button type="primary" plain icon="Upload">选择 Excel 模板</el-button>
-              </el-upload>
-              <el-button type="primary" :loading="templateParsing" :disabled="!templateFile" @click="parseTemplate">解析模板</el-button>
+              <UiUpload :limit="1" accept=".xlsx,.xls" :auto-upload="false" :show-file-list="true" :disabled="templateParsing" :on-change="handleTemplateChange" :on-remove="handleTemplateRemove">
+                <UiButton type="primary" plain icon="Upload">选择 Excel 模板</UiButton>
+              </UiUpload>
+              <UiButton type="primary" :loading="templateParsing" :disabled="!templateFile" @click="parseTemplate">解析模板</UiButton>
             </div>
             <span class="field-tip">上传空模板或样例文件即可，系统会自动读取工作表、表头、字段类型和示例值。</span>
           </el-form-item>
@@ -142,18 +142,18 @@
             <div><strong>字段与组织</strong><span>确认字段用途，并设置组织匹配和明细分组规则</span></div>
           </div>
           <el-alert :title="`已解析：${form.sheetName || '第一个工作表'}，${templateFields.length} 个字段；以下配置由系统自动生成，可按业务需要确认。`" type="success" :closable="false" class="section-alert" />
-          <el-table :data="templateFields" border max-height="260px" class="field-table">
+          <DepartmentDataTable :data="templateFields" border max-height="260px" class="field-table">
             <el-table-column label="Excel 列名" prop="header" min-width="220" />
             <el-table-column label="系统识别用途" prop="role" width="150" />
             <el-table-column label="示例值" prop="sample" min-width="220" show-overflow-tooltip />
-            <el-table-column label="必填" width="90" align="center"><template #default="scope"><el-switch v-model="scope.row.required" @change="syncFieldDefinitions" /></template></el-table-column>
-          </el-table>
+            <el-table-column label="必填" width="90" align="center"><template #default="scope"><UiSwitch v-model="scope.row.required" @change="syncFieldDefinitions" /></template></el-table-column>
+          </DepartmentDataTable>
           <el-row :gutter="22" class="field-rule-row">
             <el-col :span="12">
-              <el-form-item label="业务组织字段"><el-select v-model="form.deptField" clearable filterable style="width: 100%" placeholder="不按组织匹配"><el-option v-for="field in templateFields" :key="field.code" :label="field.header" :value="field.code" /></el-select></el-form-item>
+              <el-form-item label="业务组织字段"><UiSelect v-model="form.deptField" :options="templateFieldOptions" clearable filterable style="width: 100%" placeholder="不按组织匹配" /></el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="分组字段"><el-select v-model="groupFields" multiple filterable collapse-tags style="width: 100%" placeholder="不分组" @change="syncGroupFields"><el-option v-for="field in templateFields" :key="field.code" :label="field.header" :value="field.code" /></el-select></el-form-item>
+              <el-form-item label="分组字段"><UiSelect v-model="groupFields" :options="templateFieldOptions" multiple filterable style="width: 100%" placeholder="不分组" @change="syncGroupFields" /></el-form-item>
             </el-col>
           </el-row>
         </section>
@@ -164,10 +164,10 @@
             <div><strong>审批与附件</strong><span>设置提交泛微时使用的默认流程与附件生成规则</span></div>
           </div>
           <el-row :gutter="22">
-            <el-col :span="12"><el-form-item label="默认泛微流程"><el-select v-model="form.defaultWorkflowConfigId" clearable filterable :disabled="!form.businessType" style="width: 100%" placeholder="先选择业务类型" @change="loadPlans"><el-option v-for="item in workflowConfigs" :key="item.id" :label="`${item.formName || '泛微表单'} · ${item.approvalName || item.workflowName}`" :value="item.id" /></el-select><span class="field-tip">仅显示该业务在业务配置中已启用的表单审批方式。</span></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="默认审批策略"><el-select v-model="form.defaultApprovalMode" style="width: 100%"><el-option label="自动匹配审批方案" value="AUTO_RULE" /><el-option label="指定默认审批方案" value="PLAN" /><el-option label="每次临时指定人员" value="MANUAL" /></el-select></el-form-item></el-col>
-            <el-col v-if="form.defaultApprovalMode === 'PLAN'" :span="12"><el-form-item label="默认审批方案"><el-select v-model="form.defaultApprovalPlanId" clearable filterable style="width: 100%" placeholder="选择审批方案"><el-option v-for="item in approvalPlans" :key="item.id" :label="item.planName" :value="item.id" /></el-select></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="附件生成"><div class="switch-field"><el-switch v-model="attachmentEnabled" /><span>自动生成 Excel 明细附件</span></div></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="默认泛微流程"><UiSelect v-model="form.defaultWorkflowConfigId" :options="workflowOptions" clearable filterable :disabled="!form.businessType" style="width: 100%" placeholder="先选择业务类型" @change="loadPlans" /><span class="field-tip">仅显示该业务在业务配置中已启用的表单审批方式。</span></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="默认审批策略"><UiSelect v-model="form.defaultApprovalMode" :options="approvalModeOptions" style="width: 100%" /></el-form-item></el-col>
+            <el-col v-if="form.defaultApprovalMode === 'PLAN'" :span="12"><el-form-item label="默认审批方案"><UiSelect v-model="form.defaultApprovalPlanId" :options="approvalPlanOptions" clearable filterable style="width: 100%" placeholder="选择审批方案" /></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="附件生成"><div class="switch-field"><UiSwitch v-model="attachmentEnabled" /><span>自动生成 Excel 明细附件</span></div></el-form-item></el-col>
           </el-row>
           <div v-if="attachmentEnabled" class="attachment-config-panel">
             <div class="attachment-config-heading">
@@ -175,8 +175,8 @@
                 <strong>附件模板配置</strong>
                 <span>提交时按分组填充模板，保留原有样式、公式和固定尾部内容。</span>
               </div>
-              <el-tag v-if="attachmentConfig.templateOssId" type="success" effect="plain">模板已配置</el-tag>
-              <el-tag v-else type="warning" effect="plain">尚未上传模板</el-tag>
+              <UiTag v-if="attachmentConfig.templateOssId" type="success" effect="plain">模板已配置</UiTag>
+              <UiTag v-else type="warning" effect="plain">尚未上传模板</UiTag>
             </div>
             <el-form-item label="附件模板" required class="attachment-template-item">
               <div class="attachment-template-card">
@@ -189,40 +189,40 @@
                   </div>
                 </div>
                 <div class="attachment-upload">
-                  <el-upload class="attachment-file-picker" :limit="1" accept=".xlsx,.xls" :auto-upload="false" :show-file-list="true" :disabled="attachmentTemplateUploading" :on-change="handleAttachmentTemplateChange" :on-remove="handleAttachmentTemplateRemove">
-                    <el-button type="primary" plain icon="Upload">选择文件</el-button>
-                  </el-upload>
-                  <el-button type="primary" :loading="attachmentTemplateUploading" :disabled="!attachmentTemplateFile" @click="uploadAttachmentTemplate">上传并解析</el-button>
-                  <el-button v-if="attachmentConfig.templateOssId" type="danger" plain @click="clearAttachmentTemplate">清除配置</el-button>
+                  <UiUpload class="attachment-file-picker" :limit="1" accept=".xlsx,.xls" :auto-upload="false" :show-file-list="true" :disabled="attachmentTemplateUploading" :on-change="handleAttachmentTemplateChange" :on-remove="handleAttachmentTemplateRemove">
+                    <UiButton type="primary" plain icon="Upload">选择文件</UiButton>
+                  </UiUpload>
+                  <UiButton type="primary" :loading="attachmentTemplateUploading" :disabled="!attachmentTemplateFile" @click="uploadAttachmentTemplate">上传并解析</UiButton>
+                  <UiButton v-if="attachmentConfig.templateOssId" type="danger" plain @click="clearAttachmentTemplate">清除配置</UiButton>
                 </div>
               </div>
             </el-form-item>
             <div class="attachment-rule-group">
               <div class="attachment-rule-group-title"><strong>模板结构</strong><span>确认 Excel 中各行的位置，行号从 0 开始。</span></div>
               <div class="attachment-structure-grid">
-                <div class="attachment-rule-item"><span class="attachment-rule-label">工作表</span><el-input v-model="attachmentConfig.sheetName" disabled /><small>按上传文件的第一个工作表解析和生成。</small></div>
-                <div class="attachment-rule-item"><span class="attachment-rule-label">标题行</span><el-input-number v-model="attachmentConfig.titleRow" :min="0" controls-position="right" /></div>
-                <div class="attachment-rule-item"><span class="attachment-rule-label">表头行</span><el-input-number v-model="attachmentConfig.headerRow" :min="0" controls-position="right" /></div>
-                <div class="attachment-rule-item"><span class="attachment-rule-label">明细起始行</span><el-input-number v-model="attachmentConfig.dataStartRow" :min="0" controls-position="right" /></div>
+                <div class="attachment-rule-item"><span class="attachment-rule-label">工作表</span><UiInput v-model="attachmentConfig.sheetName" disabled /><small>按上传文件的第一个工作表解析和生成。</small></div>
+                <div class="attachment-rule-item"><span class="attachment-rule-label">标题行</span><UiNumberInput v-model="attachmentConfig.titleRow" :min="0" /></div>
+                <div class="attachment-rule-item"><span class="attachment-rule-label">表头行</span><UiNumberInput v-model="attachmentConfig.headerRow" :min="0" /></div>
+                <div class="attachment-rule-item"><span class="attachment-rule-label">明细起始行</span><UiNumberInput v-model="attachmentConfig.dataStartRow" :min="0" /></div>
               </div>
             </div>
             <div class="attachment-rule-group">
               <div class="attachment-rule-group-title"><strong>生成规则</strong><span>可选配置，留空时保留模板原有内容。</span></div>
               <div class="attachment-output-grid">
-                <div class="attachment-rule-item"><span class="attachment-rule-label">合计行</span><el-input-number v-model="attachmentConfig.totalRow" :min="0" controls-position="right" placeholder="无合计行" /></div>
-                <div class="attachment-rule-item"><span class="attachment-rule-label">标题模板</span><el-input v-model="attachmentConfig.titleTemplate" placeholder="如：{businessName}-{groupName}" /></div>
-                <div class="attachment-rule-item"><span class="attachment-rule-label">文件名模板</span><el-input v-model="attachmentConfig.fileNameTemplate" placeholder="如：{businessType}-{batchNo}-{groupName}" /></div>
+                <div class="attachment-rule-item"><span class="attachment-rule-label">合计行</span><UiNumberInput v-model="attachmentConfig.totalRow" :min="0" placeholder="无合计行" /></div>
+                <div class="attachment-rule-item"><span class="attachment-rule-label">标题模板</span><UiInput v-model="attachmentConfig.titleTemplate" placeholder="如：{businessName}-{groupName}" /></div>
+                <div class="attachment-rule-item"><span class="attachment-rule-label">文件名模板</span><UiInput v-model="attachmentConfig.fileNameTemplate" placeholder="如：{businessType}-{batchNo}-{groupName}" /></div>
               </div>
             </div>
             <div v-if="attachmentConfig.templateOssId" class="attachment-fixed-area">
               <div class="attachment-columns-title">
                 <div><strong>固定区域配置</strong><span>只扫描合计行之后的非空文本，候选项需确认后才会覆盖模板内容。</span></div>
-                <el-tag type="success" effect="plain">已配置 {{ attachmentConfig.fixedMappings.length }} 个单元格</el-tag>
+                <UiTag type="success" effect="plain">已配置 {{ attachmentConfig.fixedMappings.length }} 个单元格</UiTag>
               </div>
               <el-alert title="请选择单元格并手动添加其中的多个标签；未配置的单元格会继续保留模板原内容。" type="info" :closable="false" class="fixed-area-alert" />
               <div v-if="attachmentTemplateCandidates.length" class="fixed-candidate-list">
                 <div class="fixed-area-subtitle"><strong>待配置单元格</strong><span>发现 {{ attachmentTemplateCandidates.length }} 个固定内容候选，可在同一单元格内配置多个标签</span></div>
-                <el-table :data="attachmentTemplateCandidates" border size="small">
+                <DepartmentDataTable :data="attachmentTemplateCandidates" border size="small" max-height="260px">
                   <el-table-column label="位置" width="100" align="center"><template #default="scope"><code>{{ scope.row.cell }}</code></template></el-table-column>
                   <el-table-column label="单元格原内容" min-width="280" show-overflow-tooltip><template #default="scope">{{ scope.row.originalContent }}</template></el-table-column>
                   <el-table-column label="已配置标签" min-width="220" show-overflow-tooltip>
@@ -231,45 +231,42 @@
                       <span v-else class="fixed-label-empty">尚未配置</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="140" align="center"><template #default="scope"><el-button link type="primary" @click="openFixedSegmentDialog(scope.row)">{{ hasFixedMapping(scope.row) ? '编辑标签配置' : '配置多标签' }}</el-button></template></el-table-column>
-                </el-table>
+                  <el-table-column label="操作" width="140" align="center"><template #default="scope"><UiButton link type="primary" @click="openFixedSegmentDialog(scope.row)">{{ hasFixedMapping(scope.row) ? '编辑标签配置' : '配置多标签' }}</UiButton></template></el-table-column>
+                </DepartmentDataTable>
               </div>
               <div v-else class="attachment-columns-empty">暂未识别到固定区域候选；如模板存在固定内容，请确认合计行位置后重新上传解析。</div>
               <div v-if="attachmentConfig.fixedMappings.length" class="fixed-mapping-list">
                 <div class="fixed-area-subtitle"><strong>已确认单元格</strong><span>每个单元格可包含多个标签，生成时只替换对应标签后的内容。</span></div>
-                <el-table :data="attachmentConfig.fixedMappings" border size="small">
+                <DepartmentDataTable :data="attachmentConfig.fixedMappings" border size="small" max-height="260px">
                   <el-table-column label="位置" width="88" align="center"><template #default="scope"><code>{{ scope.row.cell || `${scope.row.column + 1}:${scope.row.row + 1}` }}</code></template></el-table-column>
                   <el-table-column label="单元格原内容" min-width="250" show-overflow-tooltip><template #default="scope">{{ scope.row.originalContent || '—' }}</template></el-table-column>
-                  <el-table-column label="标签数量" width="100" align="center"><template #default="scope"><el-tag type="info" effect="plain">{{ scope.row.segments?.length || 0 }} 个</el-tag></template></el-table-column>
+                  <el-table-column label="标签数量" width="100" align="center"><template #default="scope"><UiTag type="info" effect="plain">{{ scope.row.segments?.length || 0 }} 个</UiTag></template></el-table-column>
                   <el-table-column label="生成预览" min-width="360" show-overflow-tooltip><template #default="scope"><span class="fixed-preview-text">{{ fixedCellMappingPreview(scope.row) }}</span></template></el-table-column>
-                  <el-table-column label="操作" width="160" align="center"><template #default="scope"><el-button link type="primary" @click="openFixedSegmentDialog(scope.row)">编辑</el-button><el-button link type="danger" @click="removeFixedMapping(scope.$index)">移除</el-button></template></el-table-column>
-                </el-table>
+                  <el-table-column label="操作" width="160" align="center"><template #default="scope"><UiButton link type="primary" @click="openFixedSegmentDialog(scope.row)">编辑</UiButton><UiButton link type="danger" @click="removeFixedMapping(scope.$index)">移除</UiButton></template></el-table-column>
+                </DepartmentDataTable>
               </div>
             </div>
             <div v-if="attachmentConfig.headers.length" class="attachment-columns">
-              <div class="attachment-columns-title"><div><strong>附件列映射</strong><span>选择“不填充”可保留该列的模板公式。</span></div><el-tag type="info" effect="plain">{{ attachmentConfig.headers.length }} 列</el-tag></div>
-              <el-table :data="attachmentConfig.headers" border size="small">
+              <div class="attachment-columns-title"><div><strong>附件列映射</strong><span>选择“不填充”可保留该列的模板公式。</span></div><UiTag type="info" effect="plain">{{ attachmentConfig.headers.length }} 列</UiTag></div>
+              <DepartmentDataTable :data="attachmentConfig.headers" border size="small" max-height="260px">
                 <el-table-column label="附件列标题" min-width="260" show-overflow-tooltip>
                   <template #default="scope">{{ scope.row.label || `第${(scope.row.columnIndex ?? scope.$index) + 1}列（保留模板内容）` }}</template>
                 </el-table-column>
                 <el-table-column label="填充来源" min-width="320">
                   <template #default="scope">
-                    <el-select v-model="scope.row.field" clearable filterable style="width: 100%" placeholder="不填充，保留模板内容/公式">
-                      <el-option label="不填充（保留模板公式）" value="" />
-                      <el-option v-for="field in templateFields" :key="field.code" :label="`${field.header}（${field.code}）`" :value="field.code" />
-                    </el-select>
+                    <UiSelect v-model="scope.row.field" :options="attachmentFieldOptions" clearable filterable style="width: 100%" placeholder="不填充，保留模板内容/公式" />
                   </template>
                 </el-table-column>
-              </el-table>
+              </DepartmentDataTable>
             </div>
             <div v-else class="attachment-columns-empty">上传并解析模板后，这里会显示附件列映射。</div>
           </div>
         </section>
 
         <div class="config-form-note"><span class="note-mark">i</span>申请标题、申请说明和内部字段映射由系统根据模板自动生成；审批人员由业务组织对应的审批方案自动匹配。</div>
-        <el-form-item label="备注" class="remark-item"><el-input v-model="form.remark" type="textarea" :rows="2" maxlength="1000" placeholder="补充该业务模板的使用说明（可选）" /></el-form-item>
+        <el-form-item label="备注" class="remark-item"><UiTextarea v-model="form.remark" :rows="2" :maxlength="1000" placeholder="补充该业务模板的使用说明（可选）" /></el-form-item>
       </el-form>
-      <template #footer><div class="dialog-footer-actions"><span>保存后即可在“通用业务导入”中使用</span><div><el-button @click="dialog.visible = false">取消</el-button><el-button type="primary" :loading="saving" @click="save">保存并发布</el-button></div></div></template>
+      <template #footer><div class="dialog-footer-actions"><span>保存后即可在“通用业务导入”中使用</span><div><UiButton @click="dialog.visible = false">取消</UiButton><UiButton type="primary" :loading="saving" @click="save">保存并发布</UiButton></div></div></template>
     </el-dialog>
     <el-dialog v-model="fixedSegmentDialog.visible" width="920px" append-to-body destroy-on-close class="fixed-segment-dialog">
       <template #header>
@@ -278,27 +275,27 @@
       <div v-if="segmentDraft" class="fixed-segment-editor">
         <div class="fixed-segment-context"><div><span>目标单元格</span><code>{{ segmentDraft.cell }}</code></div><div class="fixed-segment-context-content"><span>模板原内容</span><strong>{{ segmentDraft.originalContent }}</strong></div></div>
         <el-alert title="请手动添加该单元格内需要处理的标签。系统按标签在原文中的位置替换值，并保留未配置的其他内容。" type="info" :closable="false" />
-        <div class="fixed-segment-toolbar"><div><strong>标签配置</strong><span>例如：制单：、物流系统科：、结算单位负责人：</span></div><el-button type="primary" plain icon="Plus" @click="addFixedSegment">新增标签</el-button></div>
-        <el-table :data="segmentDraft.segments" border class="fixed-segment-table">
+        <div class="fixed-segment-toolbar"><div><strong>标签配置</strong><span>例如：制单：、物流系统科：、结算单位负责人：</span></div><UiButton type="primary" plain icon="Plus" @click="addFixedSegment">新增标签</UiButton></div>
+        <DepartmentDataTable :data="segmentDraft.segments" border class="fixed-segment-table" max-height="300px">
           <el-table-column label="标签" min-width="220">
-            <template #default="scope"><el-input v-model="scope.row.label" placeholder="输入完整标签，如：制单：" /></template>
+            <template #default="scope"><UiInput v-model="scope.row.label" placeholder="输入完整标签，如：制单：" /></template>
           </el-table-column>
           <el-table-column label="填充方式" width="220">
-            <template #default="scope"><el-select v-model="scope.row.mode" style="width: 100%" @change="handleFixedSegmentModeChange(scope.row)"><el-option v-for="item in fixedModeOptions" :key="item.value" :label="item.label" :value="item.value" /></el-select></template>
+            <template #default="scope"><UiSelect v-model="scope.row.mode" :options="fixedModeOptions" style="width: 100%" @change="handleFixedSegmentModeChange(scope.row)" /></template>
           </el-table-column>
           <el-table-column label="生成内容" min-width="300">
             <template #default="scope">
-              <el-select v-if="scope.row.mode === 'FIELD'" v-model="scope.row.field" filterable clearable style="width: 100%" placeholder="选择导入字段"><el-option v-for="field in templateFields" :key="field.code" :label="`${field.header}（${field.code}）`" :value="field.code" /></el-select>
-              <el-input v-else-if="scope.row.mode === 'CUSTOM'" v-model="scope.row.template" placeholder="输入标签后的生成内容" />
+              <UiSelect v-if="scope.row.mode === 'FIELD'" v-model="scope.row.field" :options="templateFieldOptions" filterable clearable style="width: 100%" placeholder="选择导入字段" />
+              <UiInput v-else-if="scope.row.mode === 'CUSTOM'" v-model="scope.row.template" placeholder="输入标签后的生成内容" />
               <span v-else class="fixed-segment-generated-value">{{ fixedSegmentModeHint(scope.row) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="80" align="center"><template #default="scope"><el-button link type="danger" @click="removeFixedSegment(scope.$index)">删除</el-button></template></el-table-column>
-        </el-table>
+          <el-table-column label="操作" width="80" align="center"><template #default="scope"><UiButton link type="danger" @click="removeFixedSegment(scope.$index)">删除</UiButton></template></el-table-column>
+        </DepartmentDataTable>
         <div v-if="segmentDraft.segments.length === 0" class="fixed-segment-empty">暂未添加标签，请点击“新增标签”。</div>
         <div class="fixed-segment-preview"><div><strong>生成预览</strong><span>仅替换已配置标签后的值</span></div><p>{{ fixedCellMappingPreview(segmentDraft) }}</p></div>
       </div>
-      <template #footer><div class="fixed-segment-dialog-footer"><el-button @click="fixedSegmentDialog.visible = false">取消</el-button><el-button type="primary" @click="saveFixedSegmentMapping">保存标签配置</el-button></div></template>
+      <template #footer><div class="fixed-segment-dialog-footer"><UiButton @click="fixedSegmentDialog.visible = false">取消</UiButton><UiButton type="primary" @click="saveFixedSegmentMapping">保存标签配置</UiButton></div></template>
     </el-dialog>
   </div>
 </template>
@@ -310,6 +307,9 @@ import modal from '@/plugins/modal';
 import { delOaImportBusinessConfig, getOaImportBusinessConfig, listOaBusinessTypes, listOaImportBusinessConfigs, listOaDepartmentApprovals, listOaWorkflowConfigs, parseOaImportTemplate, saveOaImportBusinessConfig, uploadOaImportAttachmentTemplate } from '@/api/ecology';
 import type { OaImportAttachmentFixedCandidateVO, OaImportAttachmentTemplateVO, OaImportBusinessConfigForm, OaImportBusinessConfigVO, OaImportTemplateFieldVO, OaImportTemplatePreviewVO } from '@/api/ecology/importBusinessTypes';
 import type { OaBusinessTypeVO, OaWorkflowConfigVO } from '@/api/ecology/types';
+import { UiButton, UiCard, UiInput, UiNumberInput, UiRadioGroup, UiSelect, UiSwitch, UiTag, UiTextarea, UiUpload } from '@/components/UiKit';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 
 const props = withDefaults(defineProps<{ embedded?: boolean; businessType?: string }>(), { embedded: false });
 const route = useRoute();
@@ -410,6 +410,13 @@ const fieldCount = (row: unknown) => parseJson<OaImportTemplateFieldVO[]>((row a
 const businessInitial = (name?: string) => (name || 'B').trim().slice(0, 1).toUpperCase();
 const enabledCount = computed(() => configs.value.filter((item) => item.status === 'ENABLED').length);
 const matchedCount = computed(() => configs.value.filter((item) => Boolean(item.deptField)).length);
+const statusOptions = [{ value: 'ENABLED', label: '启用' }, { value: 'DISABLED', label: '停用' }];
+const approvalModeOptions = [{ value: 'AUTO_RULE', label: '自动匹配审批方案' }, { value: 'PLAN', label: '指定默认审批方案' }, { value: 'MANUAL', label: '每次临时指定人员' }];
+const businessTypeOptions = computed(() => businessTypes.value.map(item => ({ value: item.businessType, label: businessTypeLabel(item), disabled: item.status !== 'ENABLED' && item.businessType !== form.businessType })));
+const templateFieldOptions = computed(() => templateFields.value.map(field => ({ value: field.code, label: `${field.header}（${field.code}）` })));
+const attachmentFieldOptions = computed(() => [{ value: '', label: '不填充（保留模板公式）' }, ...templateFieldOptions.value]);
+const workflowOptions = computed(() => workflowConfigs.value.map(item => ({ value: item.id, label: `${item.formName || '泛微表单'} · ${item.approvalName || item.workflowName}` })));
+const approvalPlanOptions = computed(() => approvalPlans.value.map(item => ({ value: item.id, label: item.planName })));
 const attachmentState = (row: unknown) => {
   const item = row as OaImportBusinessConfigVO;
   const config = parseJson<Partial<AttachmentConfigForm>>(item.attachmentConfigJson, {});

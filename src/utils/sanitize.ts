@@ -23,6 +23,7 @@ const DEFAULT_ALLOWED_TAGS = new Set([
   'i',
   'img',
   'li',
+  'mark',
   'ol',
   'p',
   'pre',
@@ -48,9 +49,15 @@ const URI_ATTRS = new Set(['href', 'src']);
 const GLOBAL_ALLOWED_ATTRS = new Set(['class', 'title', 'alt', 'style']);
 const TAG_ALLOWED_ATTRS: Record<string, Set<string>> = {
   a: new Set(['href', 'target', 'rel']),
-  img: new Set(['src', 'alt', 'title']),
-  video: new Set(['src', 'poster', 'controls', 'autoplay', 'muted', 'loop']),
+  // Tiptap stores image layout metadata as data attributes so the rendered
+  // content keeps the same alignment, float mode and dimensions as the editor.
+  img: new Set(['src', 'alt', 'title', 'data-align', 'data-wrap', 'width', 'height']),
+  video: new Set(['src', 'poster', 'title', 'controls', 'autoplay', 'muted', 'loop', 'playsinline', 'preload']),
   source: new Set(['src', 'type']),
+  mark: new Set(['data-color']),
+  li: new Set(['data-type', 'data-checked']),
+  ul: new Set(['data-type']),
+  div: new Set(['data-type']),
   td: new Set(['colspan', 'rowspan']),
   th: new Set(['colspan', 'rowspan']),
   col: new Set(['span']),

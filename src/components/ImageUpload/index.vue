@@ -1,6 +1,6 @@
 <template>
   <div class="component-upload-image">
-    <el-upload
+    <UiUpload
       ref="imageUploadRef"
       multiple
       :action="uploadImgUrl"
@@ -22,24 +22,24 @@
       <el-icon class="avatar-uploader-icon">
         <plus />
       </el-icon>
-    </el-upload>
+    </UiUpload>
     <!-- 上传提示 -->
     <div v-if="showTip" class="el-upload__tip">
       请上传
       <template v-if="fileSize">
         大小不超过
-        <b style="color: #f56c6c">{{ fileSize }}MB</b>
+        <b class="upload-tip-limit">{{ fileSize }}MB</b>
       </template>
       <template v-if="fileType">
         格式为
-        <b style="color: #f56c6c">{{ fileType.join('/') }}</b>
+        <b class="upload-tip-limit">{{ fileType.join('/') }}</b>
       </template>
       的文件
     </div>
 
-    <el-dialog v-model="dialogVisible" title="预览" width="800px" append-to-body>
+    <UiDialog v-model="dialogVisible" title="预览" width="800px" append-to-body>
       <img :src="dialogImageUrl" style="display: block; max-width: 100%; margin: 0 auto" />
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -51,6 +51,7 @@ import modal from '@/plugins/modal';
 import { propTypes } from '@/utils/propTypes';
 import { globalHeaders } from '@/utils/request';
 import { getToken } from '@/utils/auth';
+import { UiDialog, UiUpload } from '@/components/UiKit';
 
 const props = defineProps({
   modelValue: {
@@ -287,6 +288,10 @@ const listToString = (list: any[], separator?: string) => {
 </script>
 
 <style lang="scss" scoped>
+.upload-tip-limit {
+  color: var(--animal-status-danger, var(--el-color-danger));
+}
+
 // .el-upload--picture-card 控制加号部分
 :deep(.hide .el-upload--picture-card) {
   display: none;

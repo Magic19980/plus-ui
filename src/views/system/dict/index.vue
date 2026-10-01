@@ -3,7 +3,7 @@
     <el-row :gutter="16" class="dict-grid">
       <!-- 字典类型 -->
       <el-col :xs="24" :lg="12">
-        <el-card shadow="hover" class="dict-card table-panel">
+        <UiCard shadow="hover" class="dict-card table-panel">
           <template #header>
             <div class="toolbar-shell dict-card__header">
               <div class="table-heading">
@@ -26,7 +26,7 @@
           <div class="dict-search" :class="{ 'is-collapsed': !showTypeSearch }">
             <el-form ref="typeQueryFormRef" :model="typeQueryParams" :inline="true" class="query-form">
               <el-form-item :label="$t('common.dictName')" prop="dictName">
-                <el-input
+                <UiInput
                   v-model="typeQueryParams.dictName"
                   :placeholder="$t('common.placeholderInputDictName')"
                   clearable
@@ -34,7 +34,7 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.dictType')" prop="dictType">
-                <el-input
+                <UiInput
                   v-model="typeQueryParams.dictType"
                   :placeholder="$t('common.placeholderInputDictType')"
                   clearable
@@ -42,17 +42,17 @@
                 />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleTypeQuery">{{ $t('common.btnSearch') }}</el-button>
-                <el-button icon="Refresh" @click="handleTypeResetQuery">{{ $t('common.btnReset') }}</el-button>
+                <UiButton type="primary" icon="Search" @click="handleTypeQuery">{{ $t('common.btnSearch') }}</UiButton>
+                <UiButton icon="Refresh" @click="handleTypeResetQuery">{{ $t('common.btnReset') }}</UiButton>
               </el-form-item>
             </el-form>
           </div>
 
           <div class="toolbar-actions dict-actions">
-            <el-button v-hasPermi="['system:dict:add']" type="primary" plain icon="Plus" @click="handleTypeAdd">
+            <UiButton v-hasPermi="['system:dict:add']" type="primary" plain icon="Plus" @click="handleTypeAdd">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:dict:edit']"
               type="success"
               plain
@@ -61,8 +61,8 @@
               @click="handleTypeUpdate()"
             >
               {{ $t('common.btnEdit') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:dict:remove']"
               type="danger"
               plain
@@ -71,8 +71,8 @@
               @click="handleTypeDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:dict:export']"
               type="warning"
               plain
@@ -80,8 +80,8 @@
               @click="handleTypeExport"
             >
               {{ $t('common.btnExport') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:dict:remove']"
               type="danger"
               plain
@@ -89,18 +89,18 @@
               @click="handleRefreshCache"
             >
               {{ $t('common.refreshCache') }}
-            </el-button>
+            </UiButton>
           </div>
 
           <div class="dict-table-wrap">
             <table-skeleton v-if="typeLoading && !typeList?.length" />
-            <el-table
+            <DepartmentDataTable
               v-else
               ref="typeTableRef"
-              v-loading="typeLoading"
               border
               class="data-table"
               :data="typeList"
+              row-key="dictId"
               highlight-current-row
               @row-click="handleTypeRowClick"
               @selection-change="handleTypeSelectionChange"
@@ -130,42 +130,44 @@
                 class-name="small-padding fixed-width"
               >
                 <template #default="scope">
-                  <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-                    <el-button
-                      v-hasPermi="['system:dict:edit']"
-                      link
-                      type="primary"
-                      icon="Edit"
-                      @click="handleTypeUpdate(scope.row)"
-                    ></el-button>
-                  </el-tooltip>
-                  <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-                    <el-button
-                      v-hasPermi="['system:dict:remove']"
-                      link
-                      type="primary"
-                      icon="Delete"
-                      @click="handleTypeDelete(scope.row)"
-                    ></el-button>
-                  </el-tooltip>
+                  <DepartmentTableActions>
+                    <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                      <UiButton
+                        v-hasPermi="['system:dict:edit']"
+                        link
+                        type="primary"
+                        icon="Edit"
+                        @click="handleTypeUpdate(scope.row)"
+                      />
+                    </UiTooltip>
+                    <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                      <UiButton
+                        v-hasPermi="['system:dict:remove']"
+                        link
+                        type="primary"
+                        icon="Delete"
+                        @click="handleTypeDelete(scope.row)"
+                      />
+                    </UiTooltip>
+                  </DepartmentTableActions>
                 </template>
               </el-table-column>
-            </el-table>
+            </DepartmentDataTable>
           </div>
 
-          <pagination
+          <UiPagination
             v-show="typeTotal > 0"
             v-model:page="typeQueryParams.pageNum"
             v-model:limit="typeQueryParams.pageSize"
             :total="typeTotal"
             @pagination="getTypeList"
           />
-        </el-card>
+        </UiCard>
       </el-col>
 
       <!-- 字典数据 -->
       <el-col :xs="24" :lg="12">
-        <el-card shadow="hover" class="dict-card table-panel">
+        <UiCard shadow="hover" class="dict-card table-panel">
           <template #header>
             <div class="toolbar-shell dict-card__header">
               <div class="table-heading">
@@ -189,7 +191,7 @@
           <div class="dict-search" :class="{ 'is-collapsed': !showDataSearch }">
             <el-form ref="dataQueryFormRef" :model="dataQueryParams" :inline="true" class="query-form">
               <el-form-item :label="$t('common.dictLabel')" prop="dictLabel">
-                <el-input
+                <UiInput
                   v-model="dataQueryParams.dictLabel"
                   :placeholder="$t('common.placeholderInputDictLabel')"
                   clearable
@@ -198,16 +200,16 @@
                 />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" :disabled="!hasCurrentDict" @click="handleDataQuery">
+                <UiButton type="primary" icon="Search" :disabled="!hasCurrentDict" @click="handleDataQuery">
                   {{ $t('common.btnSearch') }}
-                </el-button>
-                <el-button icon="Refresh" :disabled="!hasCurrentDict" @click="handleDataResetQuery">{{ $t('common.btnReset') }}</el-button>
+                </UiButton>
+                <UiButton icon="Refresh" :disabled="!hasCurrentDict" @click="handleDataResetQuery">{{ $t('common.btnReset') }}</UiButton>
               </el-form-item>
             </el-form>
           </div>
 
           <div class="toolbar-actions dict-actions">
-            <el-button
+            <UiButton
               v-hasPermi="['system:dict:add']"
               type="primary"
               plain
@@ -216,8 +218,8 @@
               @click="handleDataAdd"
             >
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:dict:edit']"
               type="success"
               plain
@@ -226,8 +228,8 @@
               @click="handleDataUpdate()"
             >
               {{ $t('common.btnEdit') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:dict:remove']"
               type="danger"
               plain
@@ -236,8 +238,8 @@
               @click="handleDataDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:dict:export']"
               type="warning"
               plain
@@ -246,17 +248,17 @@
               @click="handleDataExport"
             >
               {{ $t('common.btnExport') }}
-            </el-button>
+            </UiButton>
           </div>
 
           <div class="dict-table-wrap">
             <table-skeleton v-if="dataLoading && !dataList?.length" />
-            <el-table
+            <DepartmentDataTable
               v-else
-              v-loading="dataLoading"
               border
               class="data-table"
               :data="dataList"
+              row-key="dictCode"
               @selection-change="handleDataSelectionChange"
             >
               <template #empty><empty-state /></template>
@@ -272,7 +274,7 @@
                   >
                     {{ scope.row.dictLabel }}
                   </span>
-                  <el-tag
+                  <UiTag
                     v-else
                     :type="
                       scope.row.listClass === 'primary' || scope.row.listClass === 'default'
@@ -282,7 +284,7 @@
                     :class="scope.row.cssClass"
                   >
                     {{ scope.row.dictLabel }}
-                  </el-tag>
+                  </UiTag>
                 </template>
               </el-table-column>
               <el-table-column :label="$t('common.dictValue')" align="center" prop="dictValue" width="100" />
@@ -301,108 +303,107 @@
                 class-name="small-padding fixed-width"
               >
                 <template #default="scope">
-                  <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-                    <el-button
-                      v-hasPermi="['system:dict:edit']"
-                      link
-                      type="primary"
-                      icon="Edit"
-                      @click="handleDataUpdate(scope.row)"
-                    ></el-button>
-                  </el-tooltip>
-                  <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-                    <el-button
-                      v-hasPermi="['system:dict:remove']"
-                      link
-                      type="primary"
-                      icon="Delete"
-                      @click="handleDataDelete(scope.row)"
-                    ></el-button>
-                  </el-tooltip>
+                  <DepartmentTableActions>
+                    <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                      <UiButton
+                        v-hasPermi="['system:dict:edit']"
+                        link
+                        type="primary"
+                        icon="Edit"
+                        @click="handleDataUpdate(scope.row)"
+                      />
+                    </UiTooltip>
+                    <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                      <UiButton
+                        v-hasPermi="['system:dict:remove']"
+                        link
+                        type="primary"
+                        icon="Delete"
+                        @click="handleDataDelete(scope.row)"
+                      />
+                    </UiTooltip>
+                  </DepartmentTableActions>
                 </template>
               </el-table-column>
-            </el-table>
+            </DepartmentDataTable>
           </div>
 
-          <pagination
+          <UiPagination
             v-show="dataTotal > 0"
             v-model:page="dataQueryParams.pageNum"
             v-model:limit="dataQueryParams.pageSize"
             :total="dataTotal"
             @pagination="getDataList"
           />
-        </el-card>
+        </UiCard>
       </el-col>
     </el-row>
 
     <!-- 字典类型对话框 -->
-    <el-dialog v-model="typeDialog.visible" :title="typeDialog.title" width="500px" append-to-body>
+    <UiDialog v-model="typeDialog.visible" :title="typeDialog.title" width="500px" append-to-body>
       <el-form ref="typeFormRef" :model="typeForm" :rules="typeRules" label-width="100px">
         <el-form-item :label="$t('common.dictName')" prop="dictName">
-          <el-input v-model="typeForm.dictName" :placeholder="$t('common.placeholderInputDictName')" />
+          <UiInput v-model="typeForm.dictName" :placeholder="$t('common.placeholderInputDictName')" />
         </el-form-item>
         <el-form-item prop="dictType">
           <template #label>
             <span>
-              <el-tooltip :content="$t('common.dictTooltipTypeKey')" placement="top">
-                <i class="el-icon-question"></i>
-              </el-tooltip>
+              <UiTooltip :content="$t('common.dictTooltipTypeKey')" placement="bottom">
+                <span class="dict-help-icon" aria-label="提示">?</span>
+              </UiTooltip>
               {{ $t('common.dictType') }}
             </span>
           </template>
-          <el-input v-model="typeForm.dictType" :placeholder="$t('common.placeholderInputDictType')" maxlength="100" />
+          <UiInput v-model="typeForm.dictType" :placeholder="$t('common.placeholderInputDictType')" :maxlength="100" />
         </el-form-item>
         <el-form-item :label="$t('common.remark')" prop="remark">
-          <el-input v-model="typeForm.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')"></el-input>
+          <UiTextarea v-model="typeForm.remark" :placeholder="$t('common.placeholderInputContent')"></UiTextarea>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitTypeForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancelType">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitTypeForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancelType">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
     <!-- 字典数据对话框 -->
-    <el-dialog v-model="dataDialog.visible" :title="dataDialog.title" width="500px" append-to-body>
+    <UiDialog v-model="dataDialog.visible" :title="dataDialog.title" width="500px" append-to-body>
       <el-form ref="dataFormRef" :model="dataForm" :rules="dataRules" label-width="80px">
         <el-form-item :label="$t('common.dictType')">
-          <el-input v-model="dataForm.dictType" :disabled="true" />
+          <UiInput v-model="dataForm.dictType" disabled />
         </el-form-item>
         <el-form-item :label="$t('common.dataLabel')" prop="dictLabel">
-          <el-input v-model="dataForm.dictLabel" :placeholder="$t('common.placeholderInputDataLabel')" />
+          <UiInput v-model="dataForm.dictLabel" :placeholder="$t('common.placeholderInputDataLabel')" />
         </el-form-item>
         <el-form-item :label="$t('common.dataKey')" prop="dictValue">
-          <el-input v-model="dataForm.dictValue" :placeholder="$t('common.placeholderInputDataValue')" />
+          <UiInput v-model="dataForm.dictValue" :placeholder="$t('common.placeholderInputDataValue')" />
         </el-form-item>
         <el-form-item :label="$t('common.cssClass')" prop="cssClass">
-          <el-input v-model="dataForm.cssClass" :placeholder="$t('common.placeholderInputCssClass')" />
+          <UiInput v-model="dataForm.cssClass" :placeholder="$t('common.placeholderInputCssClass')" />
         </el-form-item>
         <el-form-item :label="$t('common.sort')" prop="dictSort">
-          <el-input-number v-model="dataForm.dictSort" controls-position="right" :min="0" />
+          <UiNumberInput v-model="dataForm.dictSort" controls-position="right" :min="0" />
         </el-form-item>
         <el-form-item :label="$t('common.listClass')" prop="listClass">
-          <el-select v-model="dataForm.listClass">
-            <el-option
-              v-for="item in listClassOptions"
-              :key="item.value"
-              :label="item.label + '(' + item.value + ')'"
-              :value="item.value"
-            ></el-option>
-          </el-select>
+          <UiSelect
+            v-model="dataForm.listClass"
+            :options="listClassOptions.map(item => ({ value: item.value, label: item.label + '(' + item.value + ')' }))"
+            clearable
+          />
         </el-form-item>
         <el-form-item :label="$t('common.remark')" prop="remark">
-          <el-input v-model="dataForm.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')"></el-input>
+          <UiTextarea v-model="dataForm.remark" :placeholder="$t('common.placeholderInputContent')"></UiTextarea>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitDataForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancelData">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitDataForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancelData">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -419,6 +420,9 @@ import { download as requestDownload } from '@/utils/request';
 import { parseTime } from '@/utils/ruoyi';
 import EmptyState from '@/components/EmptyState/index.vue';
 import TableSkeleton from '@/components/TableSkeleton/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDialog, UiInput, UiNumberInput, UiPagination, UiSelect, UiTag, UiTextarea, UiTooltip } from '@/components/UiKit';
 
 const typeList = ref<DictTypeVO[]>([]);
 const typeLoading = ref(true);
@@ -430,7 +434,7 @@ const typeTotal = ref(0);
 
 const typeFormRef = ref<ElFormInstance>();
 const typeQueryFormRef = ref<ElFormInstance>();
-const typeTableRef = ref<ElTableInstance>();
+const typeTableRef = ref<{ setCurrentRow?: (row?: unknown | null) => void }>();
 
 const typeDialog = reactive<DialogOption>({
   visible: false,
@@ -797,13 +801,15 @@ onMounted(() => {
   padding-bottom: 0;
 }
 
-.dict-actions :deep(.el-button) {
+.dict-actions :deep(.el-button),
+.dict-actions :deep(.ui-animal-button) {
   height: 32px;
   padding: 0 14px;
   border-radius: 10px !important;
 }
 
-.dict-actions :deep(.el-button + .el-button) {
+.dict-actions :deep(.el-button + .el-button),
+.dict-actions :deep(.ui-animal-button + .ui-animal-button) {
   margin-left: 0;
 }
 

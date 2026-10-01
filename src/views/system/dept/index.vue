@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container system-dept-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,7 +12,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.deptName')" prop="deptName">
-            <el-input
+            <UiInput
               v-model="queryParams.deptName"
               :placeholder="$t('common.placeholderInputDeptName')"
               clearable
@@ -20,7 +20,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.deptCategoryCode')" prop="deptCategory">
-            <el-input
+            <UiInput
               v-model="queryParams.deptCategory"
               :placeholder="$t('common.placeholderInputPostCategory')"
               clearable
@@ -29,19 +29,22 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="queryParams.status" :placeholder="$t('common.deptStatus')" clearable>
-              <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+            <UiSelect
+              v-model="queryParams.status"
+              :options="normalDisableOptions"
+              :placeholder="$t('common.deptStatus')"
+              clearable
+            />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -50,18 +53,17 @@
             <p>{{ $t('common.descDeptList') }}</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:dept:add']" type="primary" plain icon="Plus" @click="handleAdd()">
+            <UiButton v-hasPermi="['system:dept:add']" type="primary" plain icon="Plus" @click="handleAdd()">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button type="info" plain icon="Sort" @click="handleToggleExpandAll">{{ $t('common.checkboxExpandCollapse') }}</el-button>
+            </UiButton>
+            <UiButton type="info" plain icon="Sort" @click="handleToggleExpandAll">{{ $t('common.checkboxExpandCollapse') }}</UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
+      <DepartmentDataTable
         ref="deptTableRef"
-        v-loading="loading"
         class="data-table"
         :data="deptList"
         row-key="deptId"
@@ -70,18 +72,21 @@
         :load="loadDeptChildren"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         :default-expand-all="isExpandAll || isSearchActive"
+        @expand-change="expandDeptHandle"
       >
-        <el-table-column prop="deptName" :label="$t('common.deptName')" width="260"></el-table-column>
+        <el-table-column prop="deptName" :label="$t('common.deptName')" width="260" />
         <el-table-column prop="indonesianName" :label="$t('common.deptIndonesianName')" min-width="220" show-overflow-tooltip>
           <template #default="scope">
             <span>{{ scope.row.indonesianName || '—' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="deptCategory" align="center" :label="$t('common.deptCategoryCode')" width="200"></el-table-column>
-        <el-table-column prop="orderNum" align="center" :label="$t('common.sort')" width="200"></el-table-column>
+        <el-table-column prop="deptCategory" align="center" :label="$t('common.deptCategoryCode')" width="200" />
+        <el-table-column prop="orderNum" align="center" :label="$t('common.sort')" width="200" />
         <el-table-column prop="status" align="center" :label="$t('common.status')" width="100">
           <template #default="scope">
-            <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
+            <UiTag :type="scope.row.status === '0' ? 'success' : 'danger'">
+              {{ sys_normal_disable.find((item: any) => String(item.value) === String(scope.row.status))?.label || scope.row.status }}
+            </UiTag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.createTime')" align="center" prop="createTime" width="200">
@@ -89,46 +94,47 @@
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column fixed="right" align="center" :label="$t('common.operation')">
+        <el-table-column fixed="right" align="center" :label="$t('common.operation')" width="216" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-              <el-button
-                v-hasPermi="['system:dept:edit']"
-                link
-                type="primary"
-                icon="Edit"
-                @click="handleUpdate(scope.row)"
-              />
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipAdd')" placement="top">
-              <el-button
-                v-hasPermi="['system:dept:add']"
-                link
-                type="primary"
-                icon="Plus"
-                @click="handleAdd(scope.row)"
-              />
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
-                v-hasPermi="['system:dept:remove']"
-                link
-                type="primary"
-                icon="Delete"
-                @click="handleDelete(scope.row)"
-              />
-            </el-tooltip>
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                <UiButton
+                  v-hasPermi="['system:dept:edit']"
+                  link
+                  type="primary"
+                  icon="Edit"
+                  @click="handleUpdate(scope.row)"
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipAdd')" placement="bottom">
+                <UiButton
+                  v-hasPermi="['system:dept:add']"
+                  link
+                  type="primary"
+                  icon="Plus"
+                  @click="handleAdd(scope.row)"
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
+                  v-hasPermi="['system:dept:remove']"
+                  link
+                  type="primary"
+                  icon="Delete"
+                  @click="handleDelete(scope.row)"
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
-    </el-card>
+      </DepartmentDataTable>
+    </UiCard>
 
-    <el-dialog
+    <UiDialog
       v-model="dialog.visible"
       :title="dialog.title"
-      destroy-on-close
       append-to-body
-      width="min(760px, calc(100vw - 32px))"
+      width="min(820px, calc(100vw - 32px))"
       class="dept-form-dialog"
     >
       <el-form ref="deptFormRef" :model="form" :rules="rules" label-width="112px" class="dept-form">
@@ -147,64 +153,64 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.deptName')" prop="deptName">
-              <el-input v-model="form.deptName" :placeholder="$t('common.placeholderInputDeptName')" />
+              <UiInput v-model="form.deptName" :placeholder="$t('common.placeholderInputDeptName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.deptIndonesianName')" prop="indonesianName">
-              <el-input v-model="form.indonesianName" :placeholder="$t('common.placeholderInputDeptIndonesianName')" maxlength="100" show-word-limit clearable />
+              <UiInput
+                v-model="form.indonesianName"
+                :placeholder="$t('common.placeholderInputDeptIndonesianName')"
+                :maxlength="100"
+                show-word-limit
+                clearable
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.deptCategoryCode')" prop="deptCategory">
-              <el-input v-model="form.deptCategory" :placeholder="$t('common.placeholderInputPostCategory')" />
+              <UiInput v-model="form.deptCategory" :placeholder="$t('common.placeholderInputPostCategory')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.sort')" prop="orderNum">
-              <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
+              <UiNumberInput v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.leader')" prop="leader">
-              <el-select id="leader" v-model="form.leader" :placeholder="$t('common.placeholderSelectLeader')">
-                <el-option
-                  v-for="item in deptUserList"
-                  :key="item.userId"
-                  :label="item.userName"
-                  :value="item.userId"
-                />
-              </el-select>
+              <UiSelect
+                id="leader"
+                v-model="form.leader"
+                :options="deptUserOptions"
+                :placeholder="$t('common.placeholderSelectLeader')"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.phone')" prop="phone">
-              <el-input v-model="form.phone" :placeholder="$t('common.placeholderInputPhone')" maxlength="11" />
+              <UiInput v-model="form.phone" :placeholder="$t('common.placeholderInputPhone')" :maxlength="11" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.email')" prop="email">
-              <el-input v-model="form.email" :placeholder="$t('common.placeholderInputEmail')" maxlength="50" />
+              <UiInput v-model="form.email" :placeholder="$t('common.placeholderInputEmail')" :maxlength="50" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.deptStatus')" prop="status">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.status" :options="normalDisableOptions" />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -224,6 +230,19 @@ import { useTreeTableExpand } from '@/hooks/tree/useTreeTableExpand';
 import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 import { handleTree, parseTime } from '@/utils/ruoyi';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import {
+  UiButton,
+  UiCard,
+  UiDialog,
+  UiInput,
+  UiNumberInput,
+  UiRadioGroup,
+  UiSelect,
+  UiTag,
+  UiTooltip
+} from '@/components/UiKit';
 
 interface DeptOptionsType {
   deptId: number | string;
@@ -232,6 +251,12 @@ interface DeptOptionsType {
 }
 
 const { sys_normal_disable } = toRefs<any>(useDict('sys_normal_disable'));
+const normalDisableOptions = computed(() =>
+  (sys_normal_disable.value || []).map((item: any) => ({
+    value: item.value,
+    label: item.label
+  }))
+);
 
 // 部门数据量较大，避免 Vue 首次递归代理整棵部门树。
 const deptList = shallowRef<DeptVO[]>([]);
@@ -239,8 +264,17 @@ const { loading, withLoading } = useLoading(true);
 const { showSearch } = useSearchToggle();
 const deptOptions = ref<DeptOptionsType[]>([]);
 const deptUserList = ref<UserVO[]>([]);
+const deptUserOptions = computed(() =>
+  deptUserList.value.map((item) => ({
+    value: item.userId,
+    label: item.userName
+  }))
+);
 
-const deptTableRef = ref<ElTableInstance>();
+type DeptTableMethods = {
+  toggleRowExpansion?: (row: DeptVO, expanded?: boolean) => void;
+};
+const deptTableRef = ref<DeptTableMethods>();
 const queryFormRef = ref<ElFormInstance>();
 const deptFormRef = ref<ElFormInstance>();
 const { isExpandAll, handleToggleExpandAll } = useTreeTableExpand<DeptVO>({
@@ -321,7 +355,7 @@ const getList = async () => {
 };
 
 /** 懒加载部门直属子节点 */
-const loadDeptChildren = async (row: DeptVO, _treeNode: unknown, resolve: (data: DeptVO[]) => void) => {
+const loadDeptChildren = async (row: any, _treeNode: unknown, resolve: (data: any[]) => void) => {
   try {
     const res = await listDeptChildren(row.deptId);
     resolve(res.data || []);
@@ -329,6 +363,9 @@ const loadDeptChildren = async (row: DeptVO, _treeNode: unknown, resolve: (data:
     resolve([]);
   }
 };
+
+/** Animal Table 与 Element Plus 统一使用 expand-change 事件；部门页无需额外同步展开状态。 */
+const expandDeptHandle = (_row: DeptVO, _expandedRows: unknown) => undefined;
 
 /** 查询当前部门的所有用户 */
 async function getDeptAllUser(deptId: any) {
@@ -432,8 +469,44 @@ onMounted(() => {
   padding: 24px 28px 12px;
 }
 
+:global(.dept-form-dialog .animal-modal__content) {
+  overflow-x: hidden;
+}
+
+:global(.animal-modal:has(.dept-form) .animal-modal__content) {
+  overflow-x: hidden;
+}
+
+:global(.dept-form-dialog .dept-form > .el-row) {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+:global(.animal-modal:has(.dept-form) .dept-form > .el-row) {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+:global(.dept-form-dialog .dept-form .el-col) {
+  min-width: 0;
+}
+
+:global(.animal-modal:has(.dept-form) .dept-form .el-col) {
+  min-width: 0;
+}
+
 :global(.dept-form-dialog .dept-form .el-form-item) {
   margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+}
+
+:global(.animal-modal:has(.dept-form) .dept-form .el-form-item) {
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
 }
 
 :global(.dept-form-dialog .dept-form .el-form-item__label) {
@@ -441,11 +514,41 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+:global(.animal-modal:has(.dept-form) .dept-form .el-form-item__label) {
+  padding-right: 14px;
+  white-space: nowrap;
+}
+
 :global(.dept-form-dialog .dept-form .el-input),
 :global(.dept-form-dialog .dept-form .el-select),
 :global(.dept-form-dialog .dept-form .el-tree-select),
-:global(.dept-form-dialog .dept-form .el-input-number) {
+:global(.dept-form-dialog .dept-form .el-input-number),
+:global(.dept-form-dialog .dept-form .ui-animal-input-wrap),
+:global(.dept-form-dialog .dept-form .ui-animal-select),
+:global(.dept-form-dialog .dept-form .ui-animal-number-input) {
   width: 100%;
+  min-width: 0;
+}
+
+:global(.animal-modal:has(.dept-form) .dept-form .el-input),
+:global(.animal-modal:has(.dept-form) .dept-form .el-select),
+:global(.animal-modal:has(.dept-form) .dept-form .el-tree-select),
+:global(.animal-modal:has(.dept-form) .dept-form .el-input-number),
+:global(.animal-modal:has(.dept-form) .dept-form .ui-animal-input-wrap),
+:global(.animal-modal:has(.dept-form) .dept-form .ui-animal-select),
+:global(.animal-modal:has(.dept-form) .dept-form .ui-animal-number-input) {
+  width: 100%;
+  min-width: 0;
+}
+
+:global(.dept-form-dialog .dept-form .el-form-item__content) {
+  min-width: 0;
+  margin-left: 0 !important;
+}
+
+:global(.animal-modal:has(.dept-form) .dept-form .el-form-item__content) {
+  min-width: 0;
+  margin-left: 0 !important;
 }
 
 :global(.dept-form-dialog .dept-form .el-radio-group) {

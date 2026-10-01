@@ -19,7 +19,7 @@
         :class="{ 'is-tree-collapsed': treeCollapsed }"
       >
         <div class="search-wrap">
-          <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+          <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
                 <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -28,33 +28,33 @@
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
               <el-form-item>
                 <el-badge :value="userSelectCount" :max="10" class="item">
-                  <el-button type="primary" @click="openUserSelect">{{ $t('common.selectApplicant') }}</el-button>
+                  <UiButton type="primary" @click="openUserSelect">{{ $t('common.selectApplicant') }}</UiButton>
                 </el-badge>
               </el-form-item>
               <el-form-item :label="$t('common.taskName')" prop="nodeName">
-                <el-input v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
+                <UiInput v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
               </el-form-item>
               <el-form-item :label="$t('common.processDefinitionName')" label-width="100" prop="flowName">
-                <el-input v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
+                <UiInput v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
               </el-form-item>
               <el-form-item :label="$t('common.processDefinitionCode')" label-width="100" prop="flowCode">
-                <el-input v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
+                <UiInput v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+                <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+                <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
               </el-form-item>
             </el-form>
-          </el-card>
+          </UiCard>
         </div>
-        <el-card shadow="hover" class="table-panel">
+        <UiCard shadow="hover" class="table-panel">
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
                 <h3>{{ $t('common.sectionFlowInstance') }}</h3>
               </div>
               <div class="toolbar-actions">
-                <el-button
+                <UiButton
                   v-hasPermi="['workflow:instance:remove']"
                   type="danger"
                   plain
@@ -63,7 +63,7 @@
                   @click="() => handleDelete()"
                 >
                   {{ $t('common.btnDelete') }}
-                </el-button>
+                </UiButton>
                 <right-toolbar
                   v-model:show-search="showSearch"
                   :search="false"
@@ -72,10 +72,9 @@
               </div>
             </div>
           </template>
-          <el-tabs v-model="tab" @tab-click="changeTab">
-            <el-tab-pane name="running" :label="$t('common.tabRunningProcess')"></el-tab-pane>
-            <el-tab-pane name="finish" :label="$t('common.tabFinishedProcess')"></el-tab-pane>
-            <el-table
+          <UiTabs v-model="tab" :items="instanceTabs" contentless aria-label="流程实例状态" @change="changeTab" />
+          <div class="instance-table-content">
+            <DepartmentDataTable
               v-loading="loading"
               border
               class="data-table"
@@ -122,8 +121,8 @@
                 min-width="70"
               >
                 <template #default="scope">
-                  <el-tag v-if="!scope.row.isSuspended" type="success">{{ $t('common.tagActive') }}</el-tag>
-                  <el-tag v-else type="danger">{{ $t('common.tagSuspended') }}</el-tag>
+                  <UiTag v-if="!scope.row.isSuspended" type="success">{{ $t('common.tagActive') }}</UiTag>
+                  <UiTag v-else type="danger">{{ $t('common.tagSuspended') }}</UiTag>
                 </template>
               </el-table-column>
               <el-table-column align="center" :label="$t('common.processStatus')" min-width="80">
@@ -141,15 +140,15 @@
               ></el-table-column>
               <el-table-column :label="$t('common.operation')" align="center" :width="165" fixed="right">
                 <template #default="scope">
-                  <el-row v-if="tab === 'running'" :gutter="10" class="mb8">
-                    <el-col :span="1.5">
-                      <el-popover
+                  <DepartmentTableActions>
+                    <el-popover
+                        v-if="tab === 'running'"
                         :ref="el => setPopoverRef(el, scope.$index)"
                         trigger="click"
                         placement="left"
                         :width="300"
                       >
-                        <el-input
+                        <UiTextarea
                           v-model="deleteReason"
                           resize="none"
                           :rows="3"
@@ -157,16 +156,15 @@
                           :placeholder="$t('common.placeholderInputInvalidReason')"
                         />
                         <div style="text-align: right; margin: 5px 0px 0px 0px">
-                          <el-button size="small" text @click="cancelPopover(scope.$index)">{{ $t('common.btnCancel') }}</el-button>
-                          <el-button size="small" type="primary" @click="handleInvalid(scope.row)">{{ $t('common.btnConfirm') }}</el-button>
+                          <UiButton size="small" text @click="cancelPopover(scope.$index)">{{ $t('common.btnCancel') }}</UiButton>
+                          <UiButton size="small" type="primary" @click="handleInvalid(scope.row)">{{ $t('common.btnConfirm') }}</UiButton>
                         </div>
                         <template #reference>
-                          <el-button type="danger" size="small" icon="CircleClose">{{ $t('common.btnInvalid') }}</el-button>
+                          <UiButton type="danger" size="small" icon="CircleClose">{{ $t('common.btnInvalid') }}</UiButton>
                         </template>
                       </el-popover>
-                    </el-col>
-                    <el-col :span="1.5">
-                      <el-button
+                    <UiButton
+                      v-if="tab === 'running'"
                         v-hasPermi="['workflow:instance:remove']"
                         type="danger"
                         size="small"
@@ -174,12 +172,8 @@
                         @click="handleDelete(scope.row)"
                       >
                         {{ $t('common.btnDelete') }}
-                      </el-button>
-                    </el-col>
-                  </el-row>
-                  <el-row :gutter="10" class="mb8">
-                    <el-col :span="1.5">
-                      <el-button
+                    </UiButton>
+                    <UiButton
                         v-hasPermi="['workflow:instance:query']"
                         type="primary"
                         size="small"
@@ -187,10 +181,8 @@
                         @click="handleView(scope.row)"
                       >
                         查看
-                      </el-button>
-                    </el-col>
-                    <el-col :span="1.5">
-                      <el-button
+                    </UiButton>
+                    <UiButton
                         v-hasPermi="['workflow:instance:variableQuery']"
                         type="primary"
                         size="small"
@@ -198,21 +190,20 @@
                         @click="handleInstanceVariable(scope.row)"
                       >
                         变量
-                      </el-button>
-                    </el-col>
-                  </el-row>
+                    </UiButton>
+                  </DepartmentTableActions>
                 </template>
               </el-table-column>
-            </el-table>
-            <pagination
+            </DepartmentDataTable>
+            <UiPagination
               v-show="total > 0"
               v-model:page="queryParams.pageNum"
               v-model:limit="queryParams.pageSize"
               :total="total"
               @pagination="handleQuery"
             />
-          </el-tabs>
-        </el-card>
+          </div>
+        </UiCard>
       </el-col>
     </el-row>
     <el-dialog
@@ -221,7 +212,7 @@
       :title="processDefinitionDialog.title"
       width="70%"
     >
-      <el-table v-loading="loading" :data="processDefinitionHistoryList">
+      <DepartmentDataTable :loading="loading" :data="processDefinitionHistoryList">
         <el-table-column fixed align="center" type="index" :label="$t('common.index')" width="60"></el-table-column>
         <el-table-column fixed align="center" prop="name" :label="$t('common.processDefinitionName')"></el-table-column>
         <el-table-column fixed align="center" prop="nodeName" :label="$t('common.taskName')"></el-table-column>
@@ -237,8 +228,8 @@
           min-width="70"
         >
           <template #default="scope">
-            <el-tag v-if="scope.row.suspensionState == 1" type="success">{{ $t('common.tagActive') }}</el-tag>
-            <el-tag v-else type="danger">{{ $t('common.tagSuspended') }}</el-tag>
+            <UiTag v-if="scope.row.suspensionState == 1" type="success">{{ $t('common.tagActive') }}</UiTag>
+            <UiTag v-else type="danger">{{ $t('common.tagSuspended') }}</UiTag>
           </template>
         </el-table-column>
         <el-table-column
@@ -247,7 +238,7 @@
           :label="$t('common.deployTime')"
           :show-overflow-tooltip="true"
         ></el-table-column>
-      </el-table>
+      </DepartmentDataTable>
     </el-dialog>
     <!-- 流程变量开始 -->
     <el-dialog
@@ -258,34 +249,34 @@
       width="60%"
       :close-on-click-modal="false"
     >
-      <el-card v-loading="variableLoading">
+      <UiCard v-loading="variableLoading">
         <template #header>
           <div class="clearfix">
             <span>
               流程定义名称：
-              <el-tag>{{ processDefinitionName }}</el-tag>
+              <UiTag>{{ processDefinitionName }}</UiTag>
             </span>
           </div>
         </template>
         <div class="max-h-500px overflow-y-auto">
           <VueJsonPretty :data="formatToJsonObject(variables)" />
         </div>
-      </el-card>
-      <el-card v-loading="variableLoading">
+      </UiCard>
+      <UiCard v-loading="variableLoading">
         <el-form ref="ruleFormRef" :model="form" :inline="true" :rules="rules" label-width="120px">
           <el-form-item :label="$t('common.variableKey')" prop="key">
-            <el-input v-model="form.key" :placeholder="$t('common.placeholderInputVarKey')" />
+            <UiInput v-model="form.key" :placeholder="$t('common.placeholderInputVarKey')" />
           </el-form-item>
           <el-form-item :label="$t('common.variableValue')" prop="value">
-            <el-input v-model="form.value" :placeholder="$t('common.placeholderInputVarValue')" />
+            <UiInput v-model="form.value" :placeholder="$t('common.placeholderInputVarValue')" />
           </el-form-item>
           <el-form-item>
-            <el-button v-hasPermi="['workflow:instance:variable']" type="primary" @click="handleVariable(ruleFormRef)">
+            <UiButton v-hasPermi="['workflow:instance:variable']" type="primary" @click="handleVariable(ruleFormRef)">
               {{ $t('common.btnConfirm') }}
-            </el-button>
+            </UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </el-dialog>
     <!-- 流程变量结束 -->
 
@@ -300,7 +291,7 @@
 </template>
 
 <script setup lang="ts">
-import { ElForm, FormInstance, type TabsPaneContext } from 'element-plus';
+import { ElForm, FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { ref } from 'vue';
@@ -323,6 +314,9 @@ import workflowCommon from '@/api/workflow/workflowCommon';
 import { RouterJumpVo } from '@/api/workflow/workflowCommon/types';
 import TreePanel from '@/components/TreePanel/index.vue';
 import UserSelect from '@/components/UserSelect/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiInput, UiPagination, UiTabs, UiTag, UiTextarea } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDialogState } from '@/hooks/dialog/useDialogState';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
@@ -376,6 +370,10 @@ const { treeCollapsed } = useTreeCollapsed();
 const { dialog: processDefinitionDialog } = useDialogState('流程定义');
 
 const tab = ref('running');
+const instanceTabs = computed(() => [
+  { key: 'running', label: t('common.tabRunningProcess') },
+  { key: 'finish', label: t('common.tabFinishedProcess') }
+]);
 // 作废原因
 const deleteReason = ref('');
 
@@ -463,10 +461,11 @@ const handleDelete = async (row?: Partial<FlowInstanceVO>) => {
   }
   modal.msgSuccess(t('common.msgDeleteSuccess'));
 };
-const changeTab = async (pane: TabsPaneContext) => {
+const changeTab = async (nextTab: string) => {
+  tab.value = nextTab;
   processInstanceList.value = [];
   queryParams.value.pageNum = 1;
-  if ('running' === pane.paneName) {
+  if ('running' === nextTab) {
     getProcessInstanceRunningList();
   } else {
     getProcessInstanceFinishList();
@@ -586,6 +585,13 @@ onMounted(() => {
 
 .content-main {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.instance-table-content {
+  display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 12px;
 }

@@ -5,7 +5,7 @@ import { useNoticeStore } from '@/store/modules/notice';
 import { useUserStore } from '@/store/modules/user';
 import { getToken } from '@/utils/auth';
 import { isMessageRead } from '@/utils/message-read';
-import { parsePushMessage, resolveNoticeGroup, resolveNoticeTitle, shouldAppendNotice } from '@/utils/push-message';
+import { parsePushMessage, resolveNoticeGroup, resolveNoticeTitle, shouldAppendNotice, type PushMessagePayload } from '@/utils/push-message';
 
 let closePushConnection: (() => void) | undefined;
 let stopPushWatchers: Array<() => void> = [];
@@ -18,8 +18,7 @@ const formatNoticeTime = (timestamp?: number | string) => {
   return time.toLocaleString();
 };
 
-const appendNotice = (raw: string) => {
-  const payload = parsePushMessage(raw);
+const appendNotice = (payload: PushMessagePayload) => {
   if (!shouldAppendNotice(payload)) {
     return;
   }
@@ -53,7 +52,8 @@ const handlePushMessage = (raw: string) => {
     closePush();
     return;
   }
-  appendNotice(raw);
+  const payload = parsePushMessage(raw);
+  appendNotice(payload);
 };
 
 const toNoticeItem = (item: MessageVO) => {
@@ -96,8 +96,9 @@ const initSsePush = (url: string) => {
   });
   closePushConnection = close;
 
-  const stopErrorWatch = watch(error, () => {
-    console.warn('SSE connection error:', error.value);
+  const stopErrorWatch = watch(error, (value) => {
+    // SSE 断线由 autoReconnect 负责恢复，最终失败统一由 onFailed 提示，避免每次 Event 刷屏。
+    if (!value) return;
     error.value = null;
   });
 

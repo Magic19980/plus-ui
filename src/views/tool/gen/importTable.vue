@@ -1,57 +1,57 @@
 <template>
-  <el-dialog v-model="visible" :title="$t('common.dialogImportTable')" width="1100px" top="5vh" append-to-body>
+  <UiDialog v-model="visible" :title="$t('common.dialogImportTable')" width="1100px" class="gen-import-dialog">
     <el-form ref="queryFormRef" :model="queryParams" :inline="true">
       <el-form-item :label="$t('common.dataSource')" prop="dataName">
-        <el-select v-model="queryParams.dataName" filterable :placeholder="$t('common.placeholderSelectDataSource')">
-          <el-option v-for="item in dataNameList" :key="item" :label="item" :value="item"></el-option>
-        </el-select>
+        <UiSelect v-model="queryParams.dataName" filterable :placeholder="$t('common.placeholderSelectDataSource')" :options="dataNameOptions" />
       </el-form-item>
       <el-form-item :label="$t('common.tableName')" prop="tableName">
-        <el-input v-model="queryParams.tableName" :placeholder="$t('common.placeholderInputTableName')" clearable @keyup.enter="handleQuery" />
+        <UiInput v-model="queryParams.tableName" :placeholder="$t('common.placeholderInputTableName')" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item :label="$t('common.tableDesc')" prop="tableComment">
-        <el-input v-model="queryParams.tableComment" :placeholder="$t('common.placeholderInputTableDesc')" clearable @keyup.enter="handleQuery" />
+        <UiInput v-model="queryParams.tableComment" :placeholder="$t('common.placeholderInputTableDesc')" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-        <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+        <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+        <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
       </el-form-item>
     </el-form>
-    <el-row>
-      <el-table
+    <div class="import-table-content">
+      <DepartmentDataTable
         ref="tableRef"
         border
         :data="dbTableList"
-        height="260px"
+        max-height="260px"
         @row-click="clickRow"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column prop="tableName" :label="$t('common.tableName')" :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="tableComment" :label="$t('common.tableDesc')" :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="createTime" :label="$t('common.createTime')"></el-table-column>
-        <el-table-column prop="updateTime" :label="$t('common.updateTime')"></el-table-column>
-      </el-table>
-      <pagination
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="tableName" :label="$t('common.tableName')" :show-overflow-tooltip="true" />
+        <el-table-column prop="tableComment" :label="$t('common.tableDesc')" :show-overflow-tooltip="true" />
+        <el-table-column prop="createTime" :label="$t('common.createTime')" />
+        <el-table-column prop="updateTime" :label="$t('common.updateTime')" />
+      </DepartmentDataTable>
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-row>
+    </div>
     <template #footer>
       <div class="dialog-footer">
-        <el-button type="primary" @click="handleImportTable">{{ $t('common.btnConfirm') }}</el-button>
-        <el-button @click="visible = false">{{ $t('common.btnCancel') }}</el-button>
+        <UiButton type="primary" @click="handleImportTable">{{ $t('common.btnConfirm') }}</UiButton>
+        <UiButton @click="visible = false">{{ $t('common.btnCancel') }}</UiButton>
       </div>
     </template>
-  </el-dialog>
+  </UiDialog>
 </template>
 
 <script setup lang="ts">
 import { listDbTable, importTable, getDataNames } from '@/api/tool/gen';
 import { DbTableQuery, DbTableVO } from '@/api/tool/gen/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import { UiButton, UiDialog, UiInput, UiPagination, UiSelect } from '@/components/UiKit';
 import { useI18n } from 'vue-i18n';
 import modal from '@/plugins/modal';
 
@@ -60,7 +60,7 @@ const visible = ref(false);
 const tables = ref<Array<string>>([]);
 const dbTableList = ref<Array<DbTableVO>>([]);
 
-const tableRef = ref<ElTableInstance>();
+const tableRef = ref<InstanceType<typeof DepartmentDataTable>>();
 const queryFormRef = ref<ElFormInstance>();
 
 const queryParams = reactive<DbTableQuery>({
@@ -71,6 +71,7 @@ const queryParams = reactive<DbTableQuery>({
   tableComment: ''
 });
 const dataNameList = ref<Array<string>>([]);
+const dataNameOptions = computed(() => dataNameList.value.map(value => ({ value, label: value })));
 
 const emit = defineEmits(['ok']);
 
@@ -92,7 +93,7 @@ const show = (dataName: string) => {
 /** 单击选择行 */
 const clickRow = (row: DbTableVO) => {
   // ele bug
-  tableRef.value?.toggleRowSelection(row, false);
+  tableRef.value?.toggleRowSelection(row as unknown as Record<string, unknown>, false);
 };
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: DbTableVO[]) => {

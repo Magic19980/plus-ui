@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container workflow-task-copy-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -9,22 +9,22 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.taskName')" prop="nodeName">
-            <el-input v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.processDefinitionName')" label-width="100" prop="flowName">
-            <el-input v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.processDefinitionCode')" label-width="100" prop="flowCode">
-            <el-input v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.flowCode" :placeholder="$t('common.placeholderInputFlowCode')" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -36,8 +36,8 @@
         </div>
       </template>
 
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         border
         class="data-table"
         :data="taskList"
@@ -76,18 +76,22 @@
         </el-table-column>
         <el-table-column :label="$t('common.operation')" align="center" width="200">
           <template #default="scope">
-            <el-button type="primary" size="small" icon="View" @click="handleView(scope.row)">{{ $t('common.btnView') }}</el-button>
+            <DepartmentTableActions>
+              <UiButton type="primary" size="small" icon="View" @click="handleView(scope.row)">
+                {{ $t('common.btnView') }}
+              </UiButton>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
-      <pagination
+      </DepartmentDataTable>
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="handleQuery"
       />
-    </el-card>
+    </UiCard>
   </div>
 </template>
 
@@ -97,10 +101,13 @@ import { pageByTaskCopy } from '@/api/workflow/task';
 import { TaskQuery } from '@/api/workflow/task/types';
 import workflowCommon from '@/api/workflow/workflowCommon';
 import { RouterJumpVo } from '@/api/workflow/workflowCommon/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
 import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import { useTableSelection } from '@/hooks/table/useTableSelection';
+import { UiButton, UiCard, UiInput, UiPagination } from '@/components/UiKit';
 import { useDict } from '@/utils/dict';
 
 const queryFormRef = ref<ElFormInstance>();

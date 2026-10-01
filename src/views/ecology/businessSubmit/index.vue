@@ -1,16 +1,16 @@
 <template>
   <div class="app-container ecology-business-submit-page">
-    <el-card shadow="never" class="submit-hero">
+    <UiCard shadow="never" class="submit-hero">
       <div>
         <span class="submit-eyebrow"><el-icon><Promotion /></el-icon> SUBMIT TO ECOLOGY</span>
         <h2>业务提交</h2>
         <p>选择已发布的业务，完成单项审批或批量导入，系统会在提交前自动核对流程、组织、审批人和附件。</p>
       </div>
       <div class="submit-hero__meta"><span>当前可提交</span><strong>{{ availableBusinessCount }} 个业务</strong><small>{{ importTemplateCount }} 个批量导入模板</small></div>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="submit-card">
-      <div class="submit-card__heading"><div><span class="section-kicker">SUBMISSION WORKSPACE</span><h3>提交工作区</h3><p>在同一页面切换单项审批和批量导入，提交记录统一进入“我的申请”。</p></div><el-button plain icon="Refresh" :loading="loading" @click="loadSummary">刷新状态</el-button></div>
+    <UiCard shadow="never" class="submit-card">
+      <div class="submit-card__heading"><div><span class="section-kicker">SUBMISSION WORKSPACE</span><h3>提交工作区</h3><p>在同一页面切换单项审批和批量导入，提交记录统一进入“我的申请”。</p></div><UiButton plain icon="Refresh" :loading="loading" @click="loadSummary">刷新状态</UiButton></div>
       <DepartmentPageTabs v-model="activeTab" class="submit-tabs">
         <el-tab-pane name="single">
           <template #label><span class="tab-label"><el-icon><DocumentChecked /></el-icon>单项审批</span></template>
@@ -21,12 +21,12 @@
           <EcologyImportBusiness embedded />
         </el-tab-pane>
       </DepartmentPageTabs>
-    </el-card>
+    </UiCard>
 
     <div class="submission-note-grid">
-      <el-card shadow="never" class="note-card"><span class="note-card__icon"><el-icon><Finished /></el-icon></span><div><strong>提交前自动检查</strong><p>业务配置、组织映射、审批方案和附件模板在提交前统一校验。</p></div></el-card>
-      <el-card shadow="never" class="note-card"><span class="note-card__icon note-card__icon--green"><el-icon><Connection /></el-icon></span><div><strong>审批人员自动匹配</strong><p>根据业务类型、组织范围、条件和优先级选择审批方案。</p></div></el-card>
-      <el-card shadow="never" class="note-card"><span class="note-card__icon note-card__icon--orange"><el-icon><Document /></el-icon></span><div><strong>附件按模板生成</strong><p>需要附件的业务按已配置模板生成，公式和样式由模板负责。</p></div></el-card>
+      <UiCard shadow="never" class="note-card"><span class="note-card__icon"><el-icon><Finished /></el-icon></span><div><strong>提交前自动检查</strong><p>业务配置、组织映射、审批方案和附件模板在提交前统一校验。</p></div></UiCard>
+      <UiCard shadow="never" class="note-card"><span class="note-card__icon note-card__icon--green"><el-icon><Connection /></el-icon></span><div><strong>审批人员自动匹配</strong><p>根据业务类型、组织范围、条件和优先级选择审批方案。</p></div></UiCard>
+      <UiCard shadow="never" class="note-card"><span class="note-card__icon note-card__icon--orange"><el-icon><Document /></el-icon></span><div><strong>附件按模板生成</strong><p>需要附件的业务按已配置模板生成，公式和样式由模板负责。</p></div></UiCard>
     </div>
   </div>
 </template>
@@ -38,6 +38,7 @@ import DepartmentPageTabs from '@/components/Department/PageTabs.vue';
 import EcologyCenter from '../center/index.vue';
 import EcologyImportBusiness from '../importBusiness/index.vue';
 import { listOaBusinessTypes, listAvailableOaImportBusinessConfigs } from '@/api/ecology';
+import { UiButton, UiCard } from '@/components/UiKit';
 
 const activeTab = ref('single');
 const loading = ref(false);
@@ -74,7 +75,8 @@ onMounted(loadSummary);
   box-shadow: 0 12px 30px rgba(15, 23, 42, .05);
 }
 
-.submit-hero :deep(.el-card__body) {
+.submit-hero :deep(.el-card__body),
+.submit-hero :deep(.ui-animal-card__body) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -171,7 +173,8 @@ onMounted(loadSummary);
   margin-top: 14px;
 }
 
-.note-card :deep(.el-card__body) {
+.note-card :deep(.el-card__body),
+.note-card :deep(.ui-animal-card__body) {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -214,7 +217,8 @@ onMounted(loadSummary);
 }
 
 @media (max-width: 900px) {
-  .submit-hero :deep(.el-card__body) {
+  .submit-hero :deep(.el-card__body),
+  .submit-hero :deep(.ui-animal-card__body) {
     align-items: flex-start;
     flex-direction: column;
   }

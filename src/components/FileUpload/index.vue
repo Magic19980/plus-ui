@@ -1,6 +1,6 @@
 <template>
   <div class="upload-file">
-    <el-upload
+    <UiUpload
       ref="fileUploadRef"
       multiple
       :action="uploadFileUrl"
@@ -18,18 +18,18 @@
       v-if="!disabled"
     >
       <!-- 上传按钮 -->
-      <el-button type="primary">选取文件</el-button>
-    </el-upload>
+      <UiButton type="primary">选取文件</UiButton>
+    </UiUpload>
     <!-- 上传提示 -->
     <div v-if="showTip && !disabled" class="el-upload__tip">
       请上传
       <template v-if="fileSize">
         大小不超过
-        <b style="color: #f56c6c">{{ fileSize }}MB</b>
+        <b class="upload-tip-limit">{{ fileSize }}MB</b>
       </template>
       <template v-if="fileType">
         格式为
-        <b style="color: #f56c6c">{{ fileType.join('/') }}</b>
+        <b class="upload-tip-limit">{{ fileType.join('/') }}</b>
       </template>
       的文件
     </div>
@@ -40,7 +40,7 @@
           <span class="el-icon-document">{{ getFileName(file.name) }}</span>
         </el-link>
         <div class="ele-upload-list__item-content-action">
-          <el-button type="danger" v-if="!disabled" link @click="handleDelete(index)">删除</el-button>
+          <UiButton v-if="!disabled" type="danger" link @click="handleDelete(index)">删除</UiButton>
         </div>
       </li>
     </transition-group>
@@ -53,6 +53,7 @@ import type { SysOssExt } from '@/api/system/oss/types';
 import modal from '@/plugins/modal';
 import { propTypes } from '@/utils/propTypes';
 import { globalHeaders } from '@/utils/request';
+import { UiButton, UiUpload } from '@/components/UiKit';
 
 const props = defineProps({
   modelValue: {
@@ -239,6 +240,10 @@ const listToString = (list: any[], separator?: string) => {
 <style lang="scss" scoped>
 .upload-file-uploader {
   margin-bottom: 5px;
+}
+
+.upload-tip-limit {
+  color: var(--animal-status-danger, var(--el-color-danger));
 }
 
 .upload-file-list .el-upload-list__item {

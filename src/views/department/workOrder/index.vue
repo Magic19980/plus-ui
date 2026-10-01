@@ -1,19 +1,19 @@
 <template>
   <div class="p-2 app-container department-work-order-page">
-    <el-card shadow="hover" class="search-panel">
+    <UiCard shadow="hover" class="search-panel">
       <el-form :model="queryParams" :inline="true" class="query-form">
         <el-form-item label="发生年月">
-          <el-date-picker v-model="dateRange" type="monthrange" value-format="YYYY-MM" range-separator="至" start-placeholder="开始月份" end-placeholder="结束月份" clearable />
+          <UiDatePicker v-model="dateRange" type="monthrange" value-format="YYYY-MM" range-separator="至" start-placeholder="开始月份" end-placeholder="结束月份" clearable />
         </el-form-item>
-        <el-form-item label="项目名称"><el-input v-model="queryParams.systemName" clearable placeholder="请输入项目名称" /></el-form-item>
+        <el-form-item label="项目名称"><UiInput v-model="queryParams.systemName" clearable placeholder="请输入项目名称" /></el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <UiButton type="primary" icon="Search" @click="handleQuery">查询</UiButton>
+          <UiButton icon="Refresh" @click="resetQuery">重置</UiButton>
         </el-form-item>
       </el-form>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="hover" class="summary-panel mt-2">
+    <UiCard shadow="hover" class="summary-panel mt-2">
       <template #header>
         <DepartmentPanelHeader kicker="Manual Order Ledger" title="人工单指标">
           <template #meta><span class="summary-tip">按人工统计明细汇总：人工投入=中国人工+印尼人工</span></template>
@@ -30,17 +30,17 @@
       <el-alert v-if="summary.unattributedCount" class="mt-3" type="warning" :closable="false">
         有 {{ summary.unattributedCount }} 条已确认记录没有发生年月，未进入日期范围统计。
       </el-alert>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="hover" class="table-panel mt-2">
+    <UiCard shadow="hover" class="table-panel mt-2">
       <template #header>
         <DepartmentPanelHeader title="人工单台账" description="每个 PDF 生成 1 条主记录，原始表格行保存在“人工统计明细”中，明细可继续维护并参与周报。">
-            <el-button v-hasPermi="['department:workOrder:add']" type="primary" plain icon="Plus" @click="handleAdd">手动新增</el-button>
-            <el-button v-hasPermi="['department:workOrder:import']" type="info" plain icon="Upload" @click="upload.open = true">导入人工单 PDF</el-button>
-            <el-button v-hasPermi="['department:workOrder:export']" type="warning" plain icon="Download" @click="handleExport">导出人工单台账</el-button>
+            <UiButton v-hasPermi="['department:workOrder:add']" type="primary" plain icon="Plus" @click="handleAdd">手动新增</UiButton>
+            <UiButton v-hasPermi="['department:workOrder:import']" type="info" plain icon="Upload" @click="upload.open = true">导入人工单 PDF</UiButton>
+            <UiButton v-hasPermi="['department:workOrder:export']" type="warning" plain icon="Download" @click="handleExport">导出人工单台账</UiButton>
         </DepartmentPanelHeader>
       </template>
-    <DepartmentDataTable v-loading="loading" border :data="orderList">
+    <DepartmentDataTable :loading="loading" border :data="orderList">
         <el-table-column label="发生年月" prop="occurDate" width="115" align="center">
           <template #default="scope">{{ formatMonth(scope.row.occurDate) }}</template>
         </el-table-column>
@@ -49,9 +49,9 @@
         </el-table-column>
         <el-table-column label="来源文件" min-width="220" show-overflow-tooltip>
           <template #default="scope">
-            <el-button v-if="scope.row.sourceType === 'PDF' && scope.row.sourceFileName" link type="primary" @click="handlePreview(scope.row)">
+            <UiButton v-if="scope.row.sourceType === 'PDF' && scope.row.sourceFileName" link type="primary" @click="handlePreview(asWorkOrderRow(scope.row))">
               {{ scope.row.sourceFileName }}
-            </el-button>
+            </UiButton>
             <span v-else>—</span>
           </template>
         </el-table-column>
@@ -65,43 +65,43 @@
         <el-table-column label="操作" fixed="right" width="280" align="center">
           <template #default="scope">
             <DepartmentTableActions>
-              <el-button v-if="scope.row.detailCount" link type="primary" @click="handleDetails(scope.row)">人工统计明细({{ scope.row.detailCount }})</el-button>
-              <el-button v-hasPermi="['department:workOrder:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)">编辑</el-button>
-              <el-button v-hasPermi="['department:workOrder:remove']" link type="danger" icon="Delete" @click="handleDelete(scope.row)" />
+              <UiButton v-if="scope.row.detailCount" link type="primary" @click="handleDetails(asWorkOrderRow(scope.row))">人工统计明细({{ scope.row.detailCount }})</UiButton>
+              <UiButton v-hasPermi="['department:workOrder:edit']" link type="primary" icon="Edit" @click="handleUpdate(asWorkOrderRow(scope.row))">编辑</UiButton>
+              <UiButton v-hasPermi="['department:workOrder:remove']" link type="danger" icon="Delete" @click="handleDelete(asWorkOrderRow(scope.row))" />
             </DepartmentTableActions>
           </template>
         </el-table-column>
     </DepartmentDataTable>
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
-    </el-card>
+      <UiPagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+    </UiCard>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="760px" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="125px">
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="760px">
+      <el-form ref="formRef" class="work-order-form" :model="form" :rules="rules" label-width="125px">
         <el-row :gutter="18">
-          <el-col :span="12"><el-form-item label="发生年月" prop="occurDate"><el-date-picker v-model="form.occurDate" type="month" value-format="YYYY-MM" placeholder="选择发生年月" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="项目名称" prop="systemName"><el-input v-model="form.systemName" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="安装车间"><el-input v-model="form.installDepartment" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="安装班组"><el-input v-model="form.installTeam" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="工作类别"><el-input v-model="form.workCategory" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="故障类型"><el-input v-model="form.faultType" placeholder="如系统维护/问题咨询" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="处理时长(分钟)"><el-input-number v-model="form.resolutionMinutes" :min="0" :step="1" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="人工单量"><el-input-number v-model="form.quantity" :min="0.01" :step="0.5" style="width: 100%" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="申请部门"><el-input v-model="form.requestDept" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="结算单位"><el-input v-model="form.settlementUnit" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="责任人"><el-input v-model="form.responsiblePerson" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="处理人"><el-input v-model="form.handler" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="项目负责人"><el-input v-model="form.projectOwner" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="反馈渠道"><el-input v-model="form.feedbackChannel" placeholder="如微信/电话/现场" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="发生年月" prop="occurDate"><UiDatePicker v-model="form.occurDate" type="month" value-format="YYYY-MM" placeholder="选择发生年月" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="项目名称" prop="systemName"><UiInput v-model="form.systemName" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="安装车间"><UiInput v-model="form.installDepartment" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="安装班组"><UiInput v-model="form.installTeam" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="工作类别"><UiInput v-model="form.workCategory" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="故障类型"><UiInput v-model="form.faultType" placeholder="如系统维护/问题咨询" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="处理时长(分钟)"><UiNumberInput v-model="form.resolutionMinutes" :min="0" :step="1" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="人工单量"><UiNumberInput v-model="form.quantity" :min="0.01" :step="0.5" style="width: 100%" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="申请部门"><UiInput v-model="form.requestDept" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="结算单位"><UiInput v-model="form.settlementUnit" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="责任人"><UiInput v-model="form.responsiblePerson" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="处理人"><UiInput v-model="form.handler" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="项目负责人"><UiInput v-model="form.projectOwner" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="反馈渠道"><UiInput v-model="form.feedbackChannel" placeholder="如微信/电话/现场" /></el-form-item></el-col>
         </el-row>
-        <el-form-item label="项目特征"><el-input v-model="form.title" /></el-form-item>
-        <el-form-item label="工作内容"><el-input v-model="form.workContent" type="textarea" :rows="4" maxlength="4000" show-word-limit /></el-form-item>
+        <el-form-item label="项目特征"><UiInput v-model="form.title" /></el-form-item>
+        <el-form-item label="工作内容"><UiTextarea :model-value="form.workContent || ''" :rows="4" :maxlength="4000" show-word-limit @update:model-value="form.workContent = String($event)" /></el-form-item>
         <el-form-item v-if="form.parseMessage" label="解析提示"><el-alert type="warning" :closable="false" :title="form.parseMessage" /></el-form-item>
       </el-form>
-      <template #footer><el-button type="primary" :loading="buttonLoading" @click="submitForm">保存</el-button><el-button @click="dialog.visible = false">取消</el-button></template>
-    </el-dialog>
+      <template #footer><UiButton type="primary" :loading="buttonLoading" @click="submitForm">保存</UiButton><UiButton @click="dialog.visible = false">取消</UiButton></template>
+    </UiDialog>
 
-    <el-dialog v-model="detailDialog.visible" :title="detailDialog.title" width="1400px" append-to-body>
-      <DepartmentDataTable v-loading="detailLoading" border :data="detailList" max-height="620px">
+    <UiDialog v-model="detailDialog.visible" :title="detailDialog.title" width="1400px">
+      <DepartmentDataTable :loading="detailLoading" border :data="detailList" max-height="620px">
         <el-table-column label="序号" prop="sequenceNo" width="70" align="center" fixed="left" />
         <el-table-column label="申请部门" prop="requestDept" width="140" show-overflow-tooltip />
         <el-table-column label="结算单位" prop="settlementUnit" width="160" show-overflow-tooltip />
@@ -118,49 +118,49 @@
         <el-table-column label="操作" width="130" fixed="right" align="center">
           <template #default="scope">
             <DepartmentTableActions>
-              <el-button v-hasPermi="['department:workOrder:edit']" link type="primary" @click="handleDetailEdit(scope.row)">编辑</el-button>
-              <el-button v-hasPermi="['department:workOrder:remove']" link type="danger" @click="handleDetailDelete(scope.row)">删除</el-button>
+              <UiButton v-hasPermi="['department:workOrder:edit']" link type="primary" @click="handleDetailEdit(asWorkOrderDetailRow(scope.row))">编辑</UiButton>
+              <UiButton v-hasPermi="['department:workOrder:remove']" link type="danger" @click="handleDetailDelete(asWorkOrderDetailRow(scope.row))">删除</UiButton>
             </DepartmentTableActions>
           </template>
         </el-table-column>
       </DepartmentDataTable>
-    </el-dialog>
+    </UiDialog>
 
-    <el-dialog v-model="detailEditDialog.visible" :title="detailEditDialog.title" width="900px" append-to-body>
-      <el-form ref="detailFormRef" :model="detailForm" :rules="detailRules" label-width="155px">
+    <UiDialog v-model="detailEditDialog.visible" :title="detailEditDialog.title" width="900px">
+      <el-form ref="detailFormRef" class="work-order-detail-form" :model="detailForm" :rules="detailRules" label-width="155px">
         <el-row :gutter="18">
-          <el-col :span="12"><el-form-item label="申请部门"><el-input v-model="detailForm.requestDept" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="结算单位"><el-input v-model="detailForm.settlementUnit" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="项目负责人"><el-input v-model="detailForm.projectOwner" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="项目名称" prop="projectName"><el-input v-model="detailForm.projectName" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="项目特征"><el-input v-model="detailForm.projectFeature" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="计量单位"><el-input v-model="detailForm.unit" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="工程量"><el-input v-model="detailForm.engineeringQuantity" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="中国人工"><el-input v-model="detailForm.chineseLabor" /></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="印尼人工"><el-input v-model="detailForm.indonesiaLabor" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="安装车间"><el-input v-model="detailForm.installDepartment" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="安装班组"><el-input v-model="detailForm.installTeam" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="申请部门"><UiInput v-model="detailForm.requestDept" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="结算单位"><UiInput v-model="detailForm.settlementUnit" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="项目负责人"><UiInput v-model="detailForm.projectOwner" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="项目名称" prop="projectName"><UiInput v-model="detailForm.projectName" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="项目特征"><UiInput v-model="detailForm.projectFeature" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="计量单位"><UiInput v-model="detailForm.unit" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="工程量"><UiInput v-model="detailForm.engineeringQuantity" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="中国人工"><UiInput v-model="detailForm.chineseLabor" /></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="印尼人工"><UiInput v-model="detailForm.indonesiaLabor" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="安装车间"><UiInput v-model="detailForm.installDepartment" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="安装班组"><UiInput v-model="detailForm.installTeam" /></el-form-item></el-col>
         </el-row>
-        <el-form-item label="工作内容"><el-input v-model="detailForm.workContent" type="textarea" :rows="6" maxlength="4000" show-word-limit /></el-form-item>
+        <el-form-item label="工作内容"><UiTextarea :model-value="detailForm.workContent || ''" :rows="6" :maxlength="4000" show-word-limit @update:model-value="detailForm.workContent = String($event)" /></el-form-item>
       </el-form>
-      <template #footer><el-button type="primary" :loading="detailButtonLoading" @click="submitDetailForm">保存</el-button><el-button @click="detailEditDialog.visible = false">取消</el-button></template>
-    </el-dialog>
+      <template #footer><UiButton type="primary" :loading="detailButtonLoading" @click="submitDetailForm">保存</UiButton><UiButton @click="detailEditDialog.visible = false">取消</UiButton></template>
+    </UiDialog>
 
-    <el-dialog v-model="upload.open" title="导入人工单 PDF" width="520px" append-to-body>
-      <el-upload ref="uploadRef" drag :limit="1" accept=".pdf" :headers="globalHeaders()" :action="upload.url" :auto-upload="false" :disabled="upload.isUploading" :on-success="handleUploadSuccess" :on-error="handleUploadError">
+    <UiDialog v-model="upload.open" title="导入人工单 PDF" width="520px">
+      <UiUpload ref="uploadRef" drag :limit="1" accept=".pdf" :headers="globalHeaders()" :action="upload.url" :auto-upload="false" :disabled="upload.isUploading" :on-success="handleUploadSuccess" :on-error="handleUploadError">
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
         <div class="el-upload__text">拖拽 PDF 到此处，或点击选择</div>
         <template #tip><div class="el-upload__tip">支持当前“工程量统计明细/人工单”文字版 PDF；扫描件需后续接入 OCR。</div></template>
-      </el-upload>
-      <template #footer><el-button type="primary" :loading="upload.isUploading" @click="submitUpload">开始解析</el-button><el-button @click="closeUpload">取消</el-button></template>
-    </el-dialog>
+      </UiUpload>
+      <template #footer><UiButton type="primary" :loading="upload.isUploading" @click="submitUpload">开始解析</UiButton><UiButton @click="closeUpload">取消</UiButton></template>
+    </UiDialog>
 
     <el-dialog v-model="previewDialog.visible" class="work-order-pdf-dialog" :title="previewDialog.title" width="min(1200px, 92vw)" append-to-body destroy-on-close @closed="clearPreview">
       <div v-loading="previewDialog.loading" class="work-order-pdf-preview-shell">
         <iframe v-if="previewUrl" :src="previewUrl" class="work-order-pdf-preview" title="人工单 PDF 预览" />
-        <el-empty v-else-if="!previewDialog.loading" description="PDF 预览内容为空" />
+        <UiEmpty v-else-if="!previewDialog.loading" description="PDF 预览内容为空" />
       </div>
-      <template #footer><el-button @click="previewDialog.visible = false">关闭</el-button></template>
+      <template #footer><UiButton @click="previewDialog.visible = false">关闭</UiButton></template>
     </el-dialog>
   </div>
 </template>
@@ -177,6 +177,7 @@ import type { WorkOrderDetailForm, WorkOrderDetailVO, WorkOrderForm, WorkOrderQu
 import { useLoading } from '@/hooks/async/useLoading';
 import modal from '@/plugins/modal';
 import { download as requestDownload, globalHeaders } from '@/utils/request';
+import { UiButton, UiCard, UiDatePicker, UiDialog, UiEmpty, UiInput, UiNumberInput, UiPagination, UiTextarea, UiUpload } from '@/components/UiKit';
 
 const { loading, withLoading } = useLoading(true);
 const orderList = ref<WorkOrderVO[]>([]);
@@ -197,6 +198,9 @@ const detailDialog = reactive({ visible: false, title: '' });
 const detailEditDialog = reactive({ visible: false, title: '编辑人工统计明细' });
 const detailParentId = ref<string | number>();
 const detailForm = reactive<WorkOrderDetailForm>({});
+/** 主表与人工明细表共用通用表格插槽，分别在动作边界明确实体类型。 */
+const asWorkOrderRow = (row: unknown): WorkOrderVO => row as WorkOrderVO;
+const asWorkOrderDetailRow = (row: unknown): WorkOrderDetailVO => row as WorkOrderDetailVO;
 const upload = reactive({ open: false, isUploading: false, url: import.meta.env.VITE_APP_BASE_API + '/department/workOrder/importPdf' });
 const previewUrl = ref('');
 const previewDialog = reactive({ visible: false, loading: false, title: '' });
@@ -352,4 +356,63 @@ onBeforeUnmount(clearPreview);
 :global(.work-order-pdf-dialog .el-dialog__body) { padding: 0 !important; overflow: hidden; }
 .work-order-pdf-preview-shell { display: block; width: 100%; height: min(72vh, 760px); min-height: 520px; overflow: hidden; background: var(--el-fill-color-light); }
 .work-order-pdf-preview { display: block; width: 100%; height: 100%; min-height: 520px; border: 0; background: #fff; }
+</style>
+
+<style lang="scss">
+/* UiDialog 的动森实现使用 Teleport，表单语义类负责承接跨主题布局，避免多列字段挤压。 */
+.animal-modal:has(.work-order-form) .work-order-form,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form {
+  min-width: 0;
+}
+
+.animal-modal:has(.work-order-form) .work-order-form .el-row,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-row {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+.animal-modal:has(.work-order-form) .work-order-form .el-col,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-col {
+  min-width: 0;
+  padding-right: 9px !important;
+  padding-left: 9px !important;
+}
+
+.animal-modal:has(.work-order-form) .work-order-form .el-form-item,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-form-item {
+  display: grid;
+  grid-template-columns: 125px minmax(0, 1fr);
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.animal-modal:has(.work-order-form) .work-order-form .el-form-item__label,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-form-item__label {
+  width: auto !important;
+  padding-right: 14px;
+  color: var(--animal-text-color, #725d42);
+  white-space: nowrap;
+}
+
+.animal-modal:has(.work-order-form) .work-order-form .el-form-item__content,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-form-item__content {
+  min-width: 0;
+  margin-left: 0 !important;
+}
+
+.animal-modal:has(.work-order-form) .work-order-form .el-form-item__content > *,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-form-item__content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.animal-modal:has(.work-order-form) .work-order-form .el-alert,
+.animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-alert {
+  min-width: 0;
+}
+
+html[data-color-mode='dark'] .animal-modal:has(.work-order-form) .work-order-form .el-form-item__label,
+html[data-color-mode='dark'] .animal-modal:has(.work-order-detail-form) .work-order-detail-form .el-form-item__label {
+  color: var(--animal-text-color, #f5ead1);
+}
 </style>

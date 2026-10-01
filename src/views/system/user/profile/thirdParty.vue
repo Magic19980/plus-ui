@@ -1,6 +1,6 @@
 <template>
   <div class="profile-auth">
-    <el-table :data="auths" border class="data-table profile-auth-table">
+    <DepartmentDataTable :data="auths" border class="data-table profile-auth-table">
       <el-table-column :label="$t('common.index')" width="50" type="index" />
       <el-table-column :label="$t('common.bindPlatform')" width="140" align="center" prop="source" show-overflow-tooltip />
       <el-table-column :label="$t('common.avatar')" width="120" align="center" prop="avatar">
@@ -12,12 +12,14 @@
       <el-table-column :label="$t('common.bindTime')" width="180" align="center" prop="createTime" />
       <el-table-column :label="$t('common.operation')" width="80" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-tooltip :content="$t('common.tooltipUnbind')" placement="top">
-            <el-button link type="primary" icon="CircleClose" @click="unlockAuth(scope.row)"></el-button>
-          </el-tooltip>
+          <DepartmentTableActions>
+            <UiTooltip :content="$t('common.tooltipUnbind')" placement="bottom">
+              <UiButton link type="danger" icon="CircleClose" @click="unlockAuth(scope.row)" />
+            </UiTooltip>
+          </DepartmentTableActions>
         </template>
       </el-table-column>
-    </el-table>
+    </DepartmentDataTable>
 
     <div class="provider-section">
       <div class="provider-heading">
@@ -66,6 +68,9 @@ import { useI18n } from 'vue-i18n';
 import modal from '@/plugins/modal';
 import tab from '@/plugins/tab';
 import { propTypes } from '@/utils/propTypes';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiTooltip } from '@/components/UiKit';
 
 const { t } = useI18n();
 

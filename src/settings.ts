@@ -1,5 +1,6 @@
 import { LanguageEnum } from '@/enums/LanguageEnum';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
+import { UiThemeEnum } from '@/enums/UiThemeEnum';
 
 const setting: DefaultSettings = {
   /**
@@ -8,6 +9,11 @@ const setting: DefaultSettings = {
   title: import.meta.env.VITE_APP_TITLE,
 
   theme: '#0EA5E9',
+
+  /**
+   * 工作模式：office 使用现有组件，animal 使用 Animal Island 组件体系。
+   */
+  uiTheme: UiThemeEnum.OFFICE,
 
   /**
    * 侧边栏主题 深色主题theme-dark，浅色主题theme-light
@@ -81,6 +87,11 @@ const setting: DefaultSettings = {
   /**
    * 页面圆角大小
    */
-  radiusBase: 18
+  radiusBase: 18,
+
+  /**
+   * 表格全高内部滚动
+   */
+  fullHeightTable: false
 };
 export default setting;

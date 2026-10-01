@@ -6,66 +6,66 @@
         <h3>表单配置</h3>
         <p>维护泛微表单和字段规则，审批方式在另一页签统一维护。</p>
       </div>
-      <el-button v-hasPermi="['ecology:workflowConfig:add']" type="primary" icon="Plus" @click="openAdd">新增表单</el-button>
+      <UiButton v-hasPermi="['ecology:workflowConfig:add']" type="primary" icon="Plus" @click="openAdd">新增表单</UiButton>
     </div>
 
     <el-alert title="先填写 workflowId，再按泛微表单逐项维护字段。选择类字段的选项值必须填写泛微实际值；业务提交时会按这里的配置自动组装表单。" type="info" :closable="false" show-icon class="panel-guide" />
 
-    <el-table v-loading="loading" :data="rows" border class="config-table" row-key="id">
+    <DepartmentDataTable :loading="loading" :data="rows" border class="config-table" row-key="id">
       <el-table-column label="表单名称" min-width="270">
         <template #default="scope">
           <div class="form-cell"><span class="form-cell__icon"><el-icon><Document /></el-icon></span><div><strong>{{ scope.row.formName }}</strong><small>{{ scope.row.workflowId }}</small></div></div>
         </template>
       </el-table-column>
-      <el-table-column label="字段" width="100" align="center"><template #default="scope"><el-tag effect="plain" type="info">{{ fieldCount(scope.row) }} 项</el-tag></template></el-table-column>
+      <el-table-column label="字段" width="100" align="center"><template #default="scope"><UiTag effect="plain" type="info">{{ fieldCount(scope.row) }} 项</UiTag></template></el-table-column>
       <el-table-column label="申请名称模板" prop="requestNameTemplate" min-width="230" show-overflow-tooltip />
-      <el-table-column label="状态" width="110" align="center"><template #default="scope"><el-tag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'" effect="plain">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</el-tag></template></el-table-column>
+      <el-table-column label="状态" width="110" align="center"><template #default="scope"><UiTag :type="scope.row.status === 'ENABLED' ? 'success' : 'info'" effect="plain">{{ scope.row.status === 'ENABLED' ? '启用' : '停用' }}</UiTag></template></el-table-column>
       <el-table-column label="备注" prop="remark" min-width="190" show-overflow-tooltip />
-      <el-table-column label="操作" fixed="right" width="150" align="center"><template #default="scope"><DepartmentTableActions><el-button v-hasPermi="['ecology:workflowConfig:edit']" link type="primary" @click="openEdit(asForm(scope.row))">编辑</el-button><el-button v-hasPermi="['ecology:workflowConfig:remove']" link type="danger" @click="remove(asForm(scope.row))">删除</el-button></DepartmentTableActions></template></el-table-column>
-    </el-table>
-    <el-empty v-if="!loading && rows.length === 0" description="暂无表单，请先新增表单配置" />
+      <el-table-column label="操作" fixed="right" width="150" align="center"><template #default="scope"><DepartmentTableActions><UiButton v-hasPermi="['ecology:workflowConfig:edit']" link type="primary" @click="openEdit(asForm(scope.row))">编辑</UiButton><UiButton v-hasPermi="['ecology:workflowConfig:remove']" link type="danger" @click="remove(asForm(scope.row))">删除</UiButton></DepartmentTableActions></template></el-table-column>
+    </DepartmentDataTable>
+    <UiEmpty v-if="!loading && rows.length === 0" description="暂无表单，请先新增表单配置" />
 
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="1080px" append-to-body destroy-on-close class="form-dialog">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <div class="dialog-summary"><span class="summary-icon"><el-icon><Document /></el-icon></span><div><strong>泛微表单基本信息</strong><small>表单只配置一次，业务类型配置中选择使用哪个表单</small></div></div>
         <el-row :gutter="18">
-          <el-col :span="12"><el-form-item label="表单名称" prop="formName"><el-input v-model="form.formName" maxlength="100" placeholder="如：结算单（公用）" /></el-form-item></el-col>
-          <el-col :span="12"><el-form-item label="泛微 workflowId" prop="workflowId"><el-input v-model="form.workflowId" maxlength="64" placeholder="如：63526" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="表单名称" prop="formName"><UiInput v-model="form.formName" :maxlength="100" placeholder="如：结算单（公用）" /></el-form-item></el-col>
+          <el-col :span="12"><el-form-item label="泛微 workflowId" prop="workflowId"><UiInput v-model="form.workflowId" :maxlength="64" placeholder="如：63526" /></el-form-item></el-col>
         </el-row>
-        <el-form-item label="申请名称模板"><el-input v-model="form.requestNameTemplate" maxlength="200" placeholder="可用 {businessType}、{formName}、{title}、{applicationNo}" /></el-form-item>
+        <el-form-item label="申请名称模板"><UiInput v-model="form.requestNameTemplate" :maxlength="200" placeholder="可用 {businessType}、{formName}、{title}、{applicationNo}" /></el-form-item>
 
-        <div class="schema-heading"><div><strong>表单字段</strong><span>把泛微页面中的字段翻译成用户看得懂的输入项</span></div><el-button type="primary" plain icon="Plus" @click="addField">新增字段</el-button></div>
+        <div class="schema-heading"><div><strong>表单字段</strong><span>把泛微页面中的字段翻译成用户看得懂的输入项</span></div><UiButton type="primary" plain icon="Plus" @click="addField">新增字段</UiButton></div>
         <el-alert title="字段标识是系统内部名称；泛微字段编码和选择项实际值请按泛微页面填写。审批方式字段请将语义类型设为“审批方式”，并在选项中填写对应的全局审批方式编码和泛微实际值。" type="warning" :closable="false" show-icon class="schema-guide" />
         <div class="schema-table-wrap">
-          <el-table :data="fieldRows" border class="schema-table" empty-text="暂无字段，请点击右上角新增字段">
-            <el-table-column label="字段标识" min-width="145"><template #default="scope"><el-input v-model="scope.row.key" size="small" placeholder="如 amount" /></template></el-table-column>
-            <el-table-column label="显示名称" min-width="150"><template #default="scope"><el-input v-model="scope.row.label" size="small" placeholder="如 审批金额" /></template></el-table-column>
-            <el-table-column label="泛微字段编码" min-width="160"><template #default="scope"><el-input v-model="scope.row.oaFieldCode" size="small" placeholder="如 field90109" /></template></el-table-column>
-            <el-table-column label="控件" width="145"><template #default="scope"><el-select v-model="scope.row.controlType" size="small" @change="handleFieldTypeChange(asField(scope.row))"><el-option v-for="item in controlTypes" :key="item.value" :label="item.label" :value="item.value" /></el-select></template></el-table-column>
-            <el-table-column label="语义" width="145"><template #default="scope"><el-select v-model="scope.row.semanticType" size="small"><el-option v-for="item in semanticTypes" :key="item.value" :label="item.label" :value="item.value" /></el-select></template></el-table-column>
-            <el-table-column label="必填" width="65" align="center"><template #default="scope"><el-switch v-model="scope.row.required" size="small" /></template></el-table-column>
-            <el-table-column label="多选" width="65" align="center"><template #default="scope"><el-switch v-if="scope.row.controlType === 'SELECT'" v-model="scope.row.multiple" size="small" /><span v-else class="schema-muted">—</span></template></el-table-column>
-            <el-table-column label="选项" width="90" align="center"><template #default="scope"><el-button v-if="isChoice(asField(scope.row))" link type="primary" @click="openOptions(scope.$index)">维护选项</el-button><span v-else class="schema-muted">—</span></template></el-table-column>
-            <el-table-column label="操作" width="70" align="center"><template #default="scope"><el-button link type="danger" icon="Delete" @click="removeField(scope.$index)" /></template></el-table-column>
-          </el-table>
+          <DepartmentDataTable :data="fieldRows" border class="schema-table" row-key="key" empty-text="暂无字段，请点击右上角新增字段" :max-height="420">
+            <el-table-column label="字段标识" min-width="145"><template #default="scope"><UiInput v-model="scope.row.key" size="small" placeholder="如 amount" /></template></el-table-column>
+            <el-table-column label="显示名称" min-width="150"><template #default="scope"><UiInput v-model="scope.row.label" size="small" placeholder="如 审批金额" /></template></el-table-column>
+            <el-table-column label="泛微字段编码" min-width="160"><template #default="scope"><UiInput v-model="scope.row.oaFieldCode" size="small" placeholder="如 field90109" /></template></el-table-column>
+            <el-table-column label="控件" width="145"><template #default="scope"><UiSelect v-model="scope.row.controlType" :options="controlTypes" size="small" style="width: 100%" @change="handleFieldTypeChange(asField(scope.row))" /></template></el-table-column>
+            <el-table-column label="语义" width="145"><template #default="scope"><UiSelect v-model="scope.row.semanticType" :options="semanticTypes" size="small" style="width: 100%" /></template></el-table-column>
+            <el-table-column label="必填" width="65" align="center"><template #default="scope"><UiSwitch v-model="scope.row.required" size="small" /></template></el-table-column>
+            <el-table-column label="多选" width="65" align="center"><template #default="scope"><UiSwitch v-if="scope.row.controlType === 'SELECT'" v-model="scope.row.multiple" size="small" /><span v-else class="schema-muted">—</span></template></el-table-column>
+            <el-table-column label="选项" width="90" align="center"><template #default="scope"><UiButton v-if="isChoice(asField(scope.row))" link type="primary" @click="openOptions(scope.$index)">维护选项</UiButton><span v-else class="schema-muted">—</span></template></el-table-column>
+            <el-table-column label="操作" fixed="right" width="70" align="center"><template #default="scope"><UiButton link type="danger" icon="Delete" @click="removeField(scope.$index)" /></template></el-table-column>
+          </DepartmentDataTable>
         </div>
         <div class="schema-footnote">共 {{ fieldRows.length }} 个字段。保存后，申请人只会看到显示名称、控件和选项，不需要接触泛微字段编码。</div>
-        <el-form-item label="状态" class="dialog-status"><el-radio-group v-model="form.status"><el-radio label="ENABLED">启用</el-radio><el-radio label="DISABLED">停用</el-radio></el-radio-group></el-form-item>
-        <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="2" maxlength="1000" show-word-limit /></el-form-item>
+        <el-form-item label="状态" class="dialog-status"><UiRadioGroup v-model="form.status" :options="statusOptions" /></el-form-item>
+        <el-form-item label="备注"><UiTextarea v-model="form.remark" :rows="2" :maxlength="1000" show-word-limit /></el-form-item>
       </el-form>
-      <template #footer><el-button type="primary" :loading="saving" @click="save">保存表单</el-button><el-button @click="dialog.visible = false">取消</el-button></template>
+      <template #footer><UiButton type="primary" :loading="saving" @click="save">保存表单</UiButton><UiButton @click="dialog.visible = false">取消</UiButton></template>
     </el-dialog>
 
     <el-dialog v-model="optionDialog.visible" title="维护字段选项" width="680px" append-to-body destroy-on-close class="option-dialog">
       <div class="option-dialog__hint">选项名称给用户看；泛微实际值原样传给泛微。审批方式字段还要填写全局审批方式编码，才能和审批方式配置关联。</div>
-      <el-table :data="optionRows" border class="option-table">
-        <el-table-column label="选项名称" min-width="180"><template #default="scope"><el-input v-model="scope.row.label" size="small" placeholder="如：会签" /></template></el-table-column>
-        <el-table-column v-if="isApprovalField()" label="审批方式编码" min-width="160"><template #default="scope"><el-input v-model="scope.row.optionCode" size="small" placeholder="如 COUNTERSIGN" /></template></el-table-column>
-        <el-table-column label="泛微实际值" min-width="160"><template #default="scope"><el-input v-model="scope.row.oaValue" size="small" placeholder="如 1" /></template></el-table-column>
-        <el-table-column label="操作" width="70" align="center"><template #default="scope"><el-button link type="danger" icon="Delete" @click="optionRows.splice(scope.$index, 1)" /></template></el-table-column>
-      </el-table>
-      <el-button class="option-add" type="primary" link icon="Plus" @click="addOption">新增选项</el-button>
-      <template #footer><el-button type="primary" @click="saveOptions">确定</el-button><el-button @click="optionDialog.visible = false">取消</el-button></template>
+      <DepartmentDataTable :data="optionRows" border class="option-table" :max-height="300" :row-key="(row) => `${row.label}-${row.oaValue}`">
+        <el-table-column label="选项名称" min-width="180"><template #default="scope"><UiInput v-model="scope.row.label" size="small" placeholder="如：会签" /></template></el-table-column>
+        <el-table-column v-if="isApprovalField()" label="审批方式编码" min-width="160"><template #default="scope"><UiInput v-model="scope.row.optionCode" size="small" placeholder="如 COUNTERSIGN" /></template></el-table-column>
+        <el-table-column label="泛微实际值" min-width="160"><template #default="scope"><UiInput v-model="scope.row.oaValue" size="small" placeholder="如 1" /></template></el-table-column>
+        <el-table-column label="操作" fixed="right" width="70" align="center"><template #default="scope"><UiButton link type="danger" icon="Delete" @click="optionRows.splice(scope.$index, 1)" /></template></el-table-column>
+      </DepartmentDataTable>
+      <UiButton class="option-add" type="primary" link icon="Plus" @click="addOption">新增选项</UiButton>
+      <template #footer><UiButton type="primary" @click="saveOptions">确定</UiButton><UiButton @click="optionDialog.visible = false">取消</UiButton></template>
     </el-dialog>
   </div>
 </template>
@@ -74,12 +74,15 @@
 import { onMounted, reactive, ref } from 'vue';
 import { Document } from '@element-plus/icons-vue';
 import modal from '@/plugins/modal';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiEmpty, UiInput, UiRadioGroup, UiSelect, UiSwitch, UiTag, UiTextarea } from '@/components/UiKit';
 import { delOaFormWorkflow, getOaFormWorkflow, listOaFormWorkflows, saveOaFormWorkflow } from '@/api/ecology';
 import type { OaFormFieldDefinition, OaFormFieldOption, OaFormFieldSchema, OaFormWorkflowForm, OaFormWorkflowVO } from '@/api/ecology/types';
 
 const controlTypes = [{ label: '单行文本', value: 'TEXT' }, { label: '多行文本', value: 'TEXTAREA' }, { label: '数字', value: 'NUMBER' }, { label: '下拉单选/多选', value: 'SELECT' }, { label: '单选', value: 'RADIO' }, { label: '日期', value: 'DATE' }, { label: '日期时间', value: 'DATETIME' }, { label: '人员单选', value: 'USER_SINGLE' }, { label: '人员多选', value: 'USER_MULTI' }, { label: '附件', value: 'FILE' }, { label: '图片', value: 'IMAGE' }];
 const semanticTypes = [{ label: '业务字段', value: 'SPECIFIC' }, { label: '申请标题', value: 'TITLE' }, { label: '申请内容', value: 'CONTENT' }, { label: '申请人', value: 'APPLICANT' }, { label: '申请时间', value: 'APPLICANT_DATE' }, { label: '紧急程度', value: 'URGENCY' }, { label: '审批方式', value: 'APPROVAL_MODE' }, { label: '审批人员', value: 'PARTICIPANT' }, { label: '抄送人员', value: 'COPY' }, { label: '附件', value: 'ATTACHMENT' }, { label: '图片', value: 'IMAGE' }, { label: '系统字段', value: 'SYSTEM' }];
+const statusOptions = [{ label: '启用', value: 'ENABLED' }, { label: '停用', value: 'DISABLED' }];
 const emptySchema = (): OaFormFieldSchema => ({ version: 1, fields: [] });
 const newForm = (): OaFormWorkflowForm => ({ id: undefined, workflowId: '', formName: '', requestNameTemplate: '{formName}-{title}', fieldMappingJson: '{}', specificFieldMappingJson: '{}', fieldSchemaJson: JSON.stringify(emptySchema()), status: 'ENABLED', remark: '' });
 const rows = ref<OaFormWorkflowVO[]>([]); const loading = ref(false); const saving = ref(false); const formRef = ref<ElFormInstance>(); const form = reactive<OaFormWorkflowForm>(newForm()); const fieldRows = ref<OaFormFieldDefinition[]>([]); const dialog = reactive({ visible: false, title: '' }); const optionDialog = reactive({ visible: false, fieldIndex: -1 }); const optionRows = ref<OaFormFieldOption[]>([]);

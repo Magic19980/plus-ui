@@ -18,7 +18,7 @@
         :class="{ 'is-tree-collapsed': treeCollapsed }"
       >
         <div class="search-wrap">
-          <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+          <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
             <template #header>
               <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
                 <div>
@@ -29,7 +29,7 @@
             </template>
             <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
               <el-form-item :label="$t('common.userName')" prop="userName">
-                <el-input
+                <UiInput
                   v-model="queryParams.userName"
                   :placeholder="$t('common.placeholderInputUserName')"
                   clearable
@@ -37,7 +37,7 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.nickName')" prop="nickName">
-                <el-input
+                <UiInput
                   v-model="queryParams.nickName"
                   :placeholder="$t('common.placeholderInputNickName')"
                   clearable
@@ -45,7 +45,7 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.indonesianName')" prop="indonesianName">
-                <el-input
+                <UiInput
                   v-model="queryParams.indonesianName"
                   :placeholder="$t('common.placeholderInputIndonesianName')"
                   clearable
@@ -53,7 +53,7 @@
                 />
               </el-form-item>
               <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
-                <el-input
+                <UiInput
                   v-model="queryParams.phoneNumber"
                   :placeholder="$t('common.placeholderInputPhone')"
                   clearable
@@ -62,17 +62,15 @@
               </el-form-item>
 
               <el-form-item :label="$t('common.status')" prop="status">
-                <el-select v-model="queryParams.status" :placeholder="$t('common.userStatus')" clearable>
-                  <el-option
-                    v-for="dict in sys_normal_disable"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
-                  />
-                </el-select>
+                <UiSelect
+                  v-model="queryParams.status"
+                  :options="normalDisableOptions"
+                  :placeholder="$t('common.userStatus')"
+                  clearable
+                />
               </el-form-item>
               <el-form-item :label="$t('common.createTime')" style="width: 308px">
-                <el-date-picker
+                <UiDatePicker
                   v-model="dateRange"
                   value-format="YYYY-MM-DD HH:mm:ss"
                   type="daterange"
@@ -80,11 +78,11 @@
                   :start-placeholder="$t('common.placeholderStartDate')"
                   :end-placeholder="$t('common.placeholderEndDate')"
                   :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
-                ></el-date-picker>
+                />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-                <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+                <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+                <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
               </el-form-item>
             </el-form>
             <search-filter-summary
@@ -92,10 +90,10 @@
               :active-filters="activeFilters"
               @clear-all="handleQuery"
             />
-          </el-card>
+          </UiCard>
         </div>
 
-        <el-card shadow="hover" class="table-panel">
+        <UiCard shadow="hover" class="table-panel">
           <template #header>
             <div class="toolbar-shell">
               <div class="table-heading">
@@ -104,10 +102,10 @@
                 <p>{{ $t("common.recordCount", { total }) }}</p>
               </div>
               <div class="toolbar-actions">
-                <el-button v-has-permi="['system:user:add']" type="primary" plain icon="Plus" @click="handleAdd()">
+                <UiButton v-has-permi="['system:user:add']" type="primary" plain icon="Plus" @click="handleAdd()">
                   {{ $t('common.btnAdd') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-has-permi="['system:user:edit']"
                   type="success"
                   plain
@@ -116,8 +114,8 @@
                   @click="handleUpdate()"
                 >
                   {{ $t('common.btnEdit') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-has-permi="['system:user:remove']"
                   type="danger"
                   plain
@@ -126,8 +124,8 @@
                   @click="handleDelete()"
                 >
                   {{ $t('common.btnDelete') }}
-                </el-button>
-                <el-button
+                </UiButton>
+                <UiButton
                   v-hasPermi="['system:user:edit']"
                   type="warning"
                   plain
@@ -136,12 +134,12 @@
                   @click="handleUnlock()"
                 >
                   {{ $t('common.btnUnlock') }}
-                </el-button>
+                </UiButton>
                 <el-dropdown class="mt-[1px]">
-                  <el-button plain type="info">
+                  <UiButton plain type="info">
                     {{ $t('common.btnMore') }}
                     <el-icon class="el-icon--right"><arrow-down /></el-icon>
-                  </el-button>
+                  </UiButton>
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item icon="Download" @click="importTemplate">{{ $t('common.btnDownloadTemplate') }}</el-dropdown-item>
@@ -167,12 +165,12 @@
           </template>
 
           <table-skeleton v-if="loading && !userList?.length" />
-          <el-table
+          <DepartmentDataTable
             v-else
-            v-loading="loading"
             border
             class="data-table"
             :data="userList"
+            row-key="userId"
             @selection-change="handleSelectionChange"
           >
             <template #empty><empty-state /></template>
@@ -234,12 +232,12 @@
             />
             <el-table-column v-if="columns[7].visible" key="status" :label="$t('common.status')" align="center">
               <template #default="scope">
-                <el-switch
+                <UiSwitch
                   v-model="scope.row.status"
                   active-value="0"
                   inactive-value="1"
                   @change="handleStatusChange(scope.row)"
-                ></el-switch>
+                />
               </template>
             </el-table-column>
 
@@ -251,62 +249,63 @@
 
             <el-table-column :label="$t('common.operation')" fixed="right" width="180" class-name="small-padding fixed-width">
               <template #default="scope">
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipModify')" placement="top">
-                  <el-button
+                <DepartmentTableActions>
+                <UiTooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipModify')" placement="bottom">
+                  <UiButton
                     v-hasPermi="['system:user:edit']"
                     link
                     type="primary"
                     icon="Edit"
                     @click="handleUpdate(scope.row)"
-                  ></el-button>
-                </el-tooltip>
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipDelete')" placement="top">
-                  <el-button
+                  ></UiButton>
+                </UiTooltip>
+                <UiTooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipDelete')" placement="bottom">
+                  <UiButton
                     v-hasPermi="['system:user:remove']"
                     link
                     type="primary"
                     icon="Delete"
                     @click="handleDelete(scope.row)"
-                  ></el-button>
-                </el-tooltip>
+                  ></UiButton>
+                </UiTooltip>
 
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipResetPwd')" placement="top">
-                  <el-button
+                <UiTooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipResetPwd')" placement="bottom">
+                  <UiButton
                     v-hasPermi="['system:user:resetPwd']"
                     link
                     type="primary"
                     icon="Key"
                     @click="handleResetPwd(scope.row)"
-                  ></el-button>
-                </el-tooltip>
+                  ></UiButton>
+                </UiTooltip>
 
-                <el-tooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipAssignRole')" placement="top">
-                  <el-button
+                <UiTooltip v-if="scope.row.userId !== '1761100000000000001'" :content="$t('common.tooltipAssignRole')" placement="bottom">
+                  <UiButton
                     v-hasPermi="['system:user:edit']"
                     link
                     type="primary"
                     icon="CircleCheck"
                     @click="handleAuthRole(scope.row)"
-                  ></el-button>
-                </el-tooltip>
+                  ></UiButton>
+                </UiTooltip>
+                </DepartmentTableActions>
               </template>
             </el-table-column>
-          </el-table>
+          </DepartmentDataTable>
 
-          <pagination
+          <UiPagination
             v-show="total > 0"
             v-model:page="queryParams.pageNum"
             v-model:limit="queryParams.pageSize"
             :total="total"
             @pagination="getList"
           />
-        </el-card>
+        </UiCard>
       </el-col>
     </el-row>
 
     <!-- 添加或修改用户配置对话框 -->
-    <el-dialog
-      ref="formDialogRef"
+    <UiDialog
       v-model="dialog.visible"
       :title="dialog.title"
       width="min(820px, calc(100vw - 32px))"
@@ -326,15 +325,15 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.nickName')" prop="nickName">
-              <el-input v-model="form.nickName" :placeholder="$t('common.placeholderInputNickName')" maxlength="30" />
+              <UiInput v-model="form.nickName" :placeholder="$t('common.placeholderInputNickName')" :maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.indonesianName')" prop="indonesianName">
-              <el-input
+              <UiInput
                 v-model="form.indonesianName"
                 :placeholder="$t('common.placeholderInputIndonesianName')"
-                maxlength="100"
+                :maxlength="100"
                 clearable
               />
             </el-form-item>
@@ -353,7 +352,7 @@
                 @show="handleDeptPickerShow"
               >
                 <template #reference>
-                  <el-input
+                  <UiInput
                     v-model="deptPickerInput"
                     :placeholder="$t('common.placeholderInputDeptName')"
                     clearable
@@ -364,7 +363,7 @@
                     <template #suffix>
                       <el-icon><ArrowDown /></el-icon>
                     </template>
-                  </el-input>
+                  </UiInput>
                 </template>
                 <div class="dept-picker-panel">
                   <el-tree-v2
@@ -395,35 +394,35 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.employeeNo')" prop="employeeNo">
-              <el-input v-model="form.employeeNo" placeholder="请输入工号" maxlength="64" clearable />
+              <UiInput v-model="form.employeeNo" placeholder="请输入工号" :maxlength="64" clearable />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.phoneNumber')" prop="phoneNumber">
-              <el-input v-model="form.phoneNumber" :placeholder="$t('common.placeholderInputPhone')" maxlength="11" />
+              <UiInput v-model="form.phoneNumber" :placeholder="$t('common.placeholderInputPhone')" :maxlength="11" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.email')" prop="email">
-              <el-input v-model="form.email" :placeholder="$t('common.placeholderInputEmail')" maxlength="50" />
+              <UiInput v-model="form.email" :placeholder="$t('common.placeholderInputEmail')" :maxlength="50" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item v-if="form.userId == undefined" :label="$t('common.userName')" prop="userName">
-              <el-input v-model="form.userName" :placeholder="$t('common.placeholderInputUserName')" maxlength="30" />
+              <UiInput v-model="form.userName" :placeholder="$t('common.placeholderInputUserName')" :maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item v-if="form.userId == undefined" :label="$t('common.userPassword')" prop="password">
-              <el-input
+              <UiInput
                 v-model="form.password"
                 :placeholder="$t('common.placeholderInputUserPwd')"
                 type="password"
-                maxlength="20"
+                :maxlength="20"
                 show-password
               />
             </el-form-item>
@@ -432,93 +431,62 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.gender')">
-              <el-select v-model="form.gender" :placeholder="$t('common.placeholderSelect')">
-                <el-option
-                  v-for="dict in sys_user_gender"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                ></el-option>
-              </el-select>
+              <UiSelect v-model="form.gender" :options="userGenderOptions" :placeholder="$t('common.placeholderSelect')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.status')">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
-                  {{ dict.label }}
-                </el-radio>
-              </el-radio-group>
+              <UiRadioGroup v-model="form.status" :options="normalDisableOptions" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.post')">
-              <el-select
+              <UiSelect
                 v-model="form.postIds"
+                :options="postSelectOptions"
                 multiple
                 filterable
                 clearable
-                collapse-tags
-                collapse-tags-tooltip
-                :max-collapse-tags="1"
                 :placeholder="$t('common.placeholderSelect')"
-              >
-                <el-option
-                  v-for="item in postOptions"
-                  :key="item.postId"
-                  :label="item.postName"
-                  :value="item.postId"
-                  :disabled="item.status == '1'"
-                ></el-option>
-              </el-select>
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('common.role')" prop="roleIds">
-              <el-select
+              <UiSelect
                 v-model="form.roleIds"
+                :options="roleSelectOptions"
                 filterable
                 multiple
                 clearable
-                collapse-tags
-                collapse-tags-tooltip
-                :max-collapse-tags="1"
                 :placeholder="$t('common.placeholderSelect')"
-              >
-                <el-option
-                  v-for="item in roleOptions"
-                  :key="item.roleId"
-                  :label="item.roleName"
-                  :value="item.roleId"
-                  :disabled="item.status == '1'"
-                ></el-option>
-              </el-select>
+              />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item :label="$t('common.remark')">
-              <el-input v-model="form.remark" type="textarea" :placeholder="$t('common.placeholderInputContent')"></el-input>
+            <UiTextarea v-model="form.remark" :placeholder="$t('common.placeholderInputContent')" :rows="4" />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" :disabled="userDialogLoading" @click="submitForm">
+          <UiButton type="primary" :disabled="userDialogLoading" @click="submitForm">
             {{ $t('common.btnConfirm') }}
-          </el-button>
-          <el-button @click="cancel()">{{ $t('common.btnCancel') }}</el-button>
+          </UiButton>
+          <UiButton @click="cancel()">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
     <!-- 用户导入对话框 -->
-    <el-dialog v-model="upload.open" :title="upload.title" width="400px" append-to-body>
-      <el-upload
+    <UiDialog v-model="upload.open" :title="upload.title" width="400px" append-to-body>
+      <UiUpload
         ref="uploadRef"
         :limit="1"
         accept=".xlsx, .xls"
@@ -554,14 +522,14 @@
             </el-link>
           </div>
         </template>
-      </el-upload>
+      </UiUpload>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitFileForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="upload.open = false">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton type="primary" @click="submitFileForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="upload.open = false">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
 
     <!-- 用户详情抽屉 -->
     <user-view-drawer ref="userViewRef" />
@@ -581,6 +549,8 @@ import { PostVO } from '@/api/system/post/types';
 import { RoleVO } from '@/api/system/role/types';
 import api from '@/api/system/user';
 import { UserForm, UserQuery, UserVO } from '@/api/system/user/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import TreePanel from '@/components/TreePanel/index.vue';
 import EmptyState from '@/components/EmptyState/index.vue';
 import SearchFilterSummary from '@/components/SearchFilterSummary/index.vue';
@@ -597,10 +567,30 @@ import { useDict } from '@/utils/dict';
 import { checkPermi } from '@/utils/permission';
 import { globalHeaders } from '@/utils/request';
 import { download as requestDownload } from '@/utils/request';
+import {
+  UiButton,
+  UiCard,
+  UiDatePicker,
+  UiDialog,
+  UiInput,
+  UiPagination,
+  UiRadioGroup,
+  UiSelect,
+  UiSwitch,
+  UiTextarea,
+  UiTooltip,
+  UiUpload
+} from '@/components/UiKit';
 import UserViewDrawer from './view.vue';
 
 const router = useRouter();
 const { sys_normal_disable, sys_user_gender } = toRefs<any>(useDict('sys_normal_disable', 'sys_user_gender'));
+const normalDisableOptions = computed(() =>
+  (sys_normal_disable.value || []).map((item: any) => ({ value: item.value, label: item.label }))
+);
+const userGenderOptions = computed(() =>
+  (sys_user_gender.value || []).map((item: any) => ({ value: item.value, label: item.label }))
+);
 const userList = ref<UserVO[]>();
 const { loading, withLoading } = useLoading(true);
 const { showSearch } = useSearchToggle();
@@ -690,6 +680,12 @@ const deptTreeExpandedKeys = computed<(number | string)[]>(() => {
 const initPassword = ref<string>('');
 const postOptions = ref<PostVO[]>([]);
 const roleOptions = ref<RoleVO[]>([]);
+const postSelectOptions = computed(() =>
+  postOptions.value.map(item => ({ value: item.postId, label: item.postName, disabled: item.status === '1' }))
+);
+const roleSelectOptions = computed(() =>
+  roleOptions.value.map(item => ({ value: item.roleId, label: item.roleName, disabled: item.status === '1' }))
+);
 /*** 用户导入参数 */
 const upload = reactive<ImportOption>({
   // 是否显示弹出层（用户导入）
@@ -735,7 +731,6 @@ const treePanelRef = ref<InstanceType<typeof TreePanel>>();
 const queryFormRef = ref<ElFormInstance>();
 const userFormRef = ref<ElFormInstance>();
 const uploadRef = ref<ElUploadInstance>();
-const formDialogRef = ref<ElDialogInstance>();
 const userViewRef = ref<InstanceType<typeof UserViewDrawer>>();
 
 const initFormData: UserForm = {
@@ -877,7 +872,7 @@ const handleDeptPickerShow = () => {
 
 const handleDeptTreeNodeClick = (data: DeptTreeOption) => {
   if (data.disabled) return;
-  form.value.deptId = data.id;
+  form.value.deptId = Number(data.id);
   deptPickerVisible.value = false;
   deptSearchKeyword.value = '';
   handleDeptChange(data.id);
@@ -1254,7 +1249,8 @@ async function handleDeptChange(value: number | string | null | undefined) {
   padding: 16px 28px 24px;
 }
 
-:global(.user-form-dialog .dialog-footer .el-button) {
+:global(.user-form-dialog .dialog-footer .el-button),
+:global(.user-form-dialog .dialog-footer .ui-animal-button) {
   min-width: 88px;
   height: 38px;
   border-radius: 9px;

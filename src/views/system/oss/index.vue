@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container system-oss-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,10 +12,10 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.fileName')" prop="fileName">
-            <el-input v-model="queryParams.fileName" :placeholder="$t('common.placeholderInputFileName')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.fileName" :placeholder="$t('common.placeholderInputFileName')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.originalName')" prop="originalName">
-            <el-input
+            <UiInput
               v-model="queryParams.originalName"
               :placeholder="$t('common.placeholderInputOriginalName')"
               clearable
@@ -23,7 +23,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.fileSuffix')" prop="fileSuffix">
-            <el-input
+            <UiInput
               v-model="queryParams.fileSuffix"
               :placeholder="$t('common.placeholderInputFileSuffix')"
               clearable
@@ -31,7 +31,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.createTime')" style="width: 308px">
-            <el-date-picker
+            <UiDatePicker
               v-model="dateRangeCreateTime"
               value-format="YYYY-MM-DD HH:mm:ss"
               type="daterange"
@@ -39,20 +39,20 @@
               :start-placeholder="$t('common.placeholderStartDate')"
               :end-placeholder="$t('common.placeholderEndDate')"
               :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
-            ></el-date-picker>
+            />
           </el-form-item>
           <el-form-item :label="$t('common.provider')" prop="service">
-            <el-input v-model="queryParams.service" :placeholder="$t('common.placeholderInputProvider')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.service" :placeholder="$t('common.placeholderInputProvider')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -61,13 +61,13 @@
             <p>共 {{ total }} 条记录，支持文件上传、预览切换和 OSS 配置跳转。</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleFile">
+            <UiButton v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleFile">
               {{ $t('common.btnUploadFile') }}
-            </el-button>
-            <el-button v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleImage">
+            </UiButton>
+            <UiButton v-hasPermi="['system:oss:upload']" type="primary" plain icon="Upload" @click="handleImage">
               上传图片
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:oss:remove']"
               type="danger"
               plain
@@ -76,16 +76,16 @@
               @click="handleDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:oss:edit']"
               :type="previewListResource ? 'danger' : 'warning'"
               plain
               @click="handlePreviewListResource(!previewListResource)"
             >
               预览开关 : {{ previewListResource ? '禁用' : t('common.tagEnabled') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['system:ossConfig:list']"
               type="info"
               plain
@@ -93,15 +93,15 @@
               @click="handleOssConfig"
             >
               配置管理
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
+      <DepartmentDataTable
         v-if="showTable"
-        v-loading="loading"
+        :loading="loading"
         :data="ossList"
         class="data-table"
         border
@@ -135,38 +135,40 @@
         <el-table-column :label="$t('common.provider')" align="center" prop="service" sortable="custom" />
         <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipDownload')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipDownload')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:oss:download']"
                 link
                 type="primary"
                 icon="Download"
                 @click="handleDownload(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
                 v-hasPermi="['system:oss:remove']"
                 link
-                type="primary"
+                type="danger"
                 icon="Delete"
                 @click="handleDelete(scope.row)"
-              ></el-button>
-            </el-tooltip>
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
     <!-- 添加或修改OSS对象存储对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
       <el-form ref="ossFormRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item :label="$t('common.fileName')">
           <fileUpload v-if="type === 0" v-model="form.file" />
@@ -175,11 +177,11 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -191,6 +193,9 @@ const { t } = useI18n();
 import { listOss, delOss } from '@/api/system/oss';
 import { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
 import ImagePreview from '@/components/ImagePreview/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDatePicker, UiDialog, UiInput, UiPagination, UiTooltip } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useFormDialog } from '@/hooks/dialog/useFormDialog';
 import { useDateRangeQuery } from '@/hooks/form/useDateRangeQuery';

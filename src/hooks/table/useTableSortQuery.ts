@@ -7,10 +7,14 @@ interface TableSortState {
   order: TableSortOrder;
 }
 
+interface SortableTableInstance {
+  sort: (prop: string, order: TableSortOrder) => void;
+}
+
 interface UseTableSortQueryOptions<T extends Record<string, any>> {
   queryParams: Ref<T>;
   defaultSort: TableSortState;
-  tableRef?: Ref<ElTableInstance | undefined>;
+  tableRef?: Ref<SortableTableInstance | undefined>;
   onSortChange?: () => void;
 }
 

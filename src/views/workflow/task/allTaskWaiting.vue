@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container workflow-all-task-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -10,23 +10,23 @@
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item>
             <el-badge :value="userSelectCount" :max="10" class="item">
-              <el-button type="primary" @click="openUserSelect">{{ $t('common.selectApplicant') }}</el-button>
+              <UiButton type="primary" @click="openUserSelect">{{ $t('common.selectApplicant') }}</UiButton>
             </el-badge>
           </el-form-item>
           <el-form-item :label="$t('common.taskName')" prop="nodeName">
-            <el-input v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.nodeName" :placeholder="$t('common.placeholderInputTaskName')" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.processDefinitionName')" label-width="100" prop="flowName">
-            <el-input v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.flowName" :placeholder="$t('common.placeholderInputFlowName')" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -34,7 +34,7 @@
           </div>
           <div class="toolbar-actions">
             <template v-if="tab === 'waiting'">
-              <el-button
+              <UiButton
                 class="todo-action-btn todo-action-btn--primary"
                 type="primary"
                 plain
@@ -43,8 +43,8 @@
                 @click="handleUserOpen()"
               >
                 修改办理人
-              </el-button>
-              <el-button
+              </UiButton>
+              <UiButton
                 class="todo-action-btn todo-action-btn--warning"
                 type="warning"
                 plain
@@ -53,16 +53,15 @@
                 @click="handleUrgeTaskOpen()"
               >
                 催办
-              </el-button>
+              </UiButton>
             </template>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="handleQuery"></right-toolbar>
           </div>
         </div>
       </template>
-      <el-tabs v-model="tab" @tab-click="changeTab">
-        <el-tab-pane name="waiting" :label="$t('common.tabWaitingTask')"></el-tab-pane>
-        <el-tab-pane name="finish" :label="$t('common.tabFinishedTask')"></el-tab-pane>
-        <el-table
+      <UiTabs v-model="tab" :items="taskTabs" contentless aria-label="任务状态" @change="changeTab" />
+      <div class="task-table-content">
+        <DepartmentDataTable
           v-loading="loading"
           border
           class="data-table"
@@ -130,28 +129,26 @@
           <el-table-column align="center" prop="createTime" :label="$t('common.createTime')" width="160"></el-table-column>
           <el-table-column :label="$t('common.operation')" align="center" :width="tab === 'finish' ? '88' : '188'">
             <template #default="scope">
-              <el-row :gutter="10" class="mb8">
-                <el-col :span="1.5" v-if="tab === 'waiting' || tab === 'finish'">
-                  <el-button type="primary" size="small" icon="View" @click="handleView(scope.row)">{{ $t('common.btnView') }}</el-button>
-                </el-col>
-                <el-col :span="1.5" v-if="tab === 'waiting'">
-                  <el-button type="primary" size="small" icon="Setting" @click="handleMeddle(scope.row)">
+              <DepartmentTableActions>
+                <UiButton v-if="tab === 'waiting' || tab === 'finish'" type="primary" size="small" icon="View" @click="handleView(scope.row)">
+                  {{ $t('common.btnView') }}
+                </UiButton>
+                <UiButton v-if="tab === 'waiting'" type="primary" size="small" icon="Setting" @click="handleMeddle(scope.row)">
                     流程干预
-                  </el-button>
-                </el-col>
-              </el-row>
+                </UiButton>
+              </DepartmentTableActions>
             </template>
           </el-table-column>
-        </el-table>
-        <pagination
+        </DepartmentDataTable>
+        <UiPagination
           v-show="total > 0"
           v-model:page="queryParams.pageNum"
           v-model:limit="queryParams.pageSize"
           :total="total"
           @pagination="handleQuery"
         />
-      </el-tabs>
-    </el-card>
+      </div>
+    </UiCard>
     <!-- 选人组件 -->
     <UserSelect ref="userSelectRef" :multiple="userMultiple" @confirm-call-back="submitCallback"></UserSelect>
     <!-- 流程干预组件 -->
@@ -169,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { TabsPaneContext } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { UserVO } from '@/api/system/user/types';
 import { pageByAllTaskWait, pageByAllTaskFinish, updateAssignee, urgeTask } from '@/api/workflow/task';
 import { TaskQuery, FlowTaskVO } from '@/api/workflow/task/types';
@@ -179,6 +176,9 @@ import messageType from '@/components/Process/MessageType.vue';
 import processMeddle from '@/components/Process/processMeddle.vue';
 import UserNameDisplay from '@/components/Process/UserNameDisplay.vue';
 import UserSelect from '@/components/UserSelect/index.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiInput, UiPagination, UiTabs } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
 import { useSearchToggle } from '@/hooks/form/useSearchToggle';
@@ -186,6 +186,7 @@ import { useTableSelection } from '@/hooks/table/useTableSelection';
 import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 
+const { t } = useI18n();
 //选人组件
 const userSelectRef = ref<InstanceType<typeof UserSelect>>();
 //流程干预组件
@@ -220,6 +221,10 @@ const queryParams = ref<TaskQuery>({
   createByIds: []
 });
 const tab = ref('waiting');
+const taskTabs = computed(() => [
+  { key: 'waiting', label: t('common.tabWaitingTask') },
+  { key: 'finish', label: t('common.tabFinishedTask') }
+]);
 const { resetQuery } = useSearchReset({
   queryFormRef,
   queryParams,
@@ -244,10 +249,11 @@ const handleQuery = () => {
     getFinishList();
   }
 };
-const changeTab = async (data: TabsPaneContext) => {
+const changeTab = async (data: string) => {
+  tab.value = data;
   taskList.value = [];
   queryParams.value.pageNum = 1;
-  if ('waiting' === data.paneName) {
+  if ('waiting' === data) {
     getWaitingList();
   } else {
     getFinishList();
@@ -333,6 +339,13 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.task-table-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .todo-action-btn {
   height: 32px;
   padding: 0 14px;

@@ -19,6 +19,7 @@
 import animateConfig from '@/animate';
 import logo from '@/assets/logo/tei-logo.svg';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
+import { UiThemeEnum } from '@/enums/UiThemeEnum';
 import { useSettingsStore } from '@/store/modules/settings';
 
 defineProps({
@@ -34,13 +35,26 @@ const sideTheme = computed(() => settingsStore.sideTheme);
 const isTopNav = computed(() => settingsStore.navType === NavTypeEnum.TOP);
 const isDarkSide = computed(() => !isTopNav.value && sideTheme.value === 'theme-dark');
 const isDarkTheme = computed(() => settingsStore.dark || isDarkSide.value);
-const logoSurface = computed(() =>
-  isDarkSide.value
-    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025))'
-    : 'linear-gradient(135deg, #ffffff, #f3f7fb)'
-);
-const logoBorder = computed(() => (isDarkSide.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.2)'));
-const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-text-title)'));
+const isAnimalMode = computed(() => settingsStore.uiTheme === UiThemeEnum.ANIMAL);
+const logoSurface = computed(() => {
+  if (isAnimalMode.value) {
+    return isDarkSide.value
+      ? 'linear-gradient(145deg, rgba(82, 112, 103, 0.72), rgba(45, 64, 60, 0.48))'
+      : 'linear-gradient(145deg, rgba(255, 253, 245, 0.78), rgba(241, 231, 207, 0.56))';
+  }
+  return isDarkSide.value
+    ? 'linear-gradient(145deg, rgba(39, 57, 82, 0.72), rgba(21, 31, 49, 0.5))'
+    : 'linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(237, 244, 250, 0.56))';
+});
+const logoBorder = computed(() => 'transparent');
+const logoHoverBorder = computed(() => {
+  if (isAnimalMode.value) return isDarkSide.value ? 'rgba(111, 225, 211, 0.48)' : 'rgba(25, 200, 185, 0.42)';
+  return isDarkSide.value ? 'rgba(125, 211, 252, 0.38)' : 'rgba(14, 165, 233, 0.34)';
+});
+const logoTextColor = computed(() => {
+  if (isAnimalMode.value) return isDarkSide.value ? '#f5ead1' : '#725d42';
+  return isDarkSide.value ? '#f8fbff' : 'var(--app-text-title)';
+});
 </script>
 
 <style lang="scss" scoped>
@@ -56,14 +70,14 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
 .sidebar-logo-container {
   position: relative;
   flex-shrink: 0;
-  height: 56px;
-  line-height: 56px;
-  padding: 0 2px;
+  height: 58px;
+  line-height: 58px;
+  padding: 0;
   margin-top: 0;
   background: transparent;
   text-align: center;
   overflow: hidden;
-  margin-bottom: 0;
+  margin-bottom: 2px;
 
   & .sidebar-logo-link {
     height: 100%;
@@ -72,15 +86,14 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
+    padding: 0 7px;
     position: relative;
-    border-radius: 15px;
+    border-radius: 14px;
     background: v-bind(logoSurface);
     border: 1px solid v-bind(logoBorder);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 8px 18px rgba(2, 6, 23, 0.14);
+    box-shadow: 0 5px 14px rgba(2, 6, 23, 0.06);
     overflow: hidden;
     transition:
       border-color 0.2s ease,
@@ -88,11 +101,23 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
       transform 0.2s ease;
 
     &:hover {
-      border-color: rgba(56, 189, 248, 0.38);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        0 10px 22px rgba(2, 6, 23, 0.18);
+      border-color: v-bind(logoHoverBorder);
+      background: v-bind(logoSurface);
+      box-shadow: 0 7px 17px rgba(2, 6, 23, 0.09);
       transform: translateY(-1px);
+    }
+
+    &::after {
+      position: absolute;
+      top: -28px;
+      right: -22px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--app-accent-strong) 15%, transparent);
+      content: '';
+      opacity: 0.5;
+      pointer-events: none;
     }
 
     & .sidebar-logo {
@@ -155,15 +180,25 @@ const logoTextColor = computed(() => (isDarkSide.value ? '#f8fbff' : 'var(--app-
   }
 
   &.collapse {
-    height: 50px;
-    line-height: 50px;
+    height: 45px;
+    line-height: 45px;
 
     .sidebar-logo-link {
       padding: 0;
+      justify-content: center;
+
+      &::before {
+        display: none;
+      }
+
+      &::after {
+        display: none;
+      }
 
       .sidebar-logo {
-        width: 31px;
-        height: 31px;
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
       }
     }
   }

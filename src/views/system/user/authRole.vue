@@ -1,6 +1,6 @@
 <template>
   <div class="p-2 app-container auth-role-page">
-    <el-card shadow="hover" class="search-panel auth-role-info">
+    <UiCard shadow="hover" class="search-panel auth-role-info">
       <template #header>
         <div class="panel-heading">
           <div><h3>{{ $t('common.basicInfo') }}</h3></div>
@@ -8,32 +8,32 @@
       </template>
       <el-form :model="form" :inline="true" class="query-form auth-role-form">
         <el-form-item :label="$t('common.nickName')" prop="nickName">
-          <el-input v-model="form.nickName" disabled />
+          <UiInput v-model="form.nickName" disabled />
         </el-form-item>
         <el-form-item :label="$t('common.loginAccount')" prop="userName">
-          <el-input v-model="form.userName" disabled />
+          <UiInput v-model="form.userName" disabled />
         </el-form-item>
       </el-form>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
             <h3>{{ $t('common.roleInfo') }}</h3>
           </div>
           <div class="toolbar-actions">
-            <el-button type="primary" @click="submitForm()">{{ $t('common.btnSubmit') }}</el-button>
-            <el-button @click="close()">{{ $t('common.btnBack') }}</el-button>
+            <UiButton type="primary" @click="submitForm()">{{ $t('common.btnSubmit') }}</UiButton>
+            <UiButton @click="close()">{{ $t('common.btnBack') }}</UiButton>
           </div>
         </div>
       </template>
-      <el-table
+      <DepartmentDataTable
         ref="tableRef"
-        v-loading="loading"
         border
         class="data-table"
-        :row-key="getRowKey"
+        :loading="loading"
+        row-key="roleId"
         :data="roles.slice((pageNum - 1) * pageSize, pageNum * pageSize)"
         @row-click="clickRow"
         @selection-change="handleSelectionChange"
@@ -57,9 +57,9 @@
             <span>{{ parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>
-      </el-table>
-      <pagination v-show="total > 0" v-model:page="pageNum" v-model:limit="pageSize" :total="total" />
-    </el-card>
+      </DepartmentDataTable>
+      <UiPagination v-show="total > 0" v-model:page="pageNum" v-model:limit="pageSize" :total="total" />
+    </UiCard>
   </div>
 </template>
 
@@ -71,6 +71,8 @@ import { UserForm } from '@/api/system/user/types';
 import modal from '@/plugins/modal';
 import tab from '@/plugins/tab';
 import { parseTime } from '@/utils/ruoyi';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import { UiButton, UiCard, UiInput, UiPagination } from '@/components/UiKit';
 
 const route = useRoute();
 
@@ -86,22 +88,18 @@ const form = ref<Partial<UserForm>>({
   userId: undefined
 });
 
-const tableRef = ref<ElTableInstance>();
+const tableRef = ref<{ toggleRowSelection?: (row: RoleVO, selected?: boolean) => void }>();
 
 /** 单击选中行数据 */
 const clickRow = (row: RoleVO) => {
   if (checkSelectable(row)) {
     row.flag = !row.flag;
-    tableRef.value?.toggleRowSelection(row, row.flag);
+    tableRef.value?.toggleRowSelection?.(row, row.flag);
   }
 };
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: RoleVO[]) => {
   roleIds.value = selection.map(item => item.roleId);
-};
-/** 保存选中的数据编号 */
-const getRowKey = (row: RoleVO): string => {
-  return String(row.roleId);
 };
 /** 检查角色状态 */
 const checkSelectable = (row: RoleVO): boolean => {
@@ -142,7 +140,7 @@ const getList = async () => {
     await nextTick(() => {
       roles.value.forEach(row => {
         if (row?.flag) {
-          tableRef.value?.toggleRowSelection(row, true);
+          tableRef.value?.toggleRowSelection?.(row, true);
         }
       });
     });

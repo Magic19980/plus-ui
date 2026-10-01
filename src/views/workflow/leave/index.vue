@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container workflow-leave-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -9,7 +9,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.leaveDays')" prop="startLeaveDays">
-            <el-input
+            <UiInput
               v-model="queryParams.startLeaveDays"
               :placeholder="$t('common.placeholderInputLeaveDays')"
               clearable
@@ -18,7 +18,7 @@
           </el-form-item>
           <el-form-item prop="endLeaveDays">至</el-form-item>
           <el-form-item prop="endLeaveDays">
-            <el-input
+            <UiInput
               v-model="queryParams.endLeaveDays"
               :placeholder="$t('common.placeholderInputLeaveDays')"
               clearable
@@ -30,20 +30,20 @@
             <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
             <h3>{{ $t('common.sectionLeaveList') }}</h3>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['workflow:leave:add']" type="primary" plain icon="Plus" @click="handleAdd">
+            <UiButton v-hasPermi="['workflow:leave:add']" type="primary" plain icon="Plus" @click="handleAdd">
               {{ $t('common.btnAdd') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['workflow:leave:export']"
               type="warning"
               plain
@@ -51,14 +51,14 @@
               @click="handleExport"
             >
               {{ $t('common.btnExport') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         border
         class="data-table"
         :data="leaveList"
@@ -68,7 +68,7 @@
         <el-table-column v-if="false" :label="$t('common.primaryKey')" align="center" prop="id" />
         <el-table-column :label="$t('common.leaveType')" align="center">
           <template #default="scope">
-            <el-tag>{{ options.find(e => e.value === scope.row.leaveType)?.label }}</el-tag>
+            <UiTag type="info">{{ options.find(e => e.value === scope.row.leaveType)?.label || '-' }}</UiTag>
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.startTime')" align="center" prop="startDate">
@@ -85,68 +85,57 @@
         <el-table-column :label="$t('common.leaveReason')" align="center" prop="remark" />
         <el-table-column align="center" :label="$t('common.processStatus')" min-width="70">
           <template #default="scope">
-            <dict-tag :options="wf_business_status" :value="scope.row.status"></dict-tag>
+            <UiTag :type="statusTagType(scope.row.status)">{{ statusLabel(scope.row.status) }}</UiTag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.operation')" align="center" width="162">
+        <el-table-column :label="$t('common.operation')" align="center" width="250">
           <template #default="scope">
-            <el-row :gutter="10" class="mb8">
-              <el-col
-                :span="1.5"
+            <DepartmentTableActions>
+              <UiButton
                 v-if="scope.row.status === 'draft' || scope.row.status === 'cancel' || scope.row.status === 'back'"
+                v-hasPermi="['workflow:leave:edit']"
+                size="small"
+                type="primary"
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
               >
-                <el-button
-                  v-hasPermi="['workflow:leave:edit']"
-                  size="small"
-                  type="primary"
-                  icon="Edit"
-                  @click="handleUpdate(scope.row)"
-                >
-                  {{ $t('common.btnEdit') }}
-                </el-button>
-              </el-col>
-              <el-col
-                :span="1.5"
+                {{ $t('common.btnEdit') }}
+              </UiButton>
+              <UiButton
                 v-if="scope.row.status === 'draft' || scope.row.status === 'cancel' || scope.row.status === 'back'"
+                v-hasPermi="['workflow:leave:remove']"
+                size="small"
+                type="danger"
+                icon="Delete"
+                @click="handleDelete(scope.row)"
               >
-                <el-button
-                  v-hasPermi="['workflow:leave:remove']"
-                  size="small"
-                  type="primary"
-                  icon="Delete"
-                  @click="handleDelete(scope.row)"
-                >
-                  {{ $t('common.btnDelete') }}
-                </el-button>
-              </el-col>
-            </el-row>
-            <el-row :gutter="10" class="mb8">
-              <el-col :span="1.5">
-                <el-button type="primary" size="small" icon="View" @click="handleView(scope.row)">{{ $t('common.btnView') }}</el-button>
-              </el-col>
-              <el-col :span="1.5" v-if="scope.row.status === 'waiting'">
-                <el-button
-                  size="small"
-                  type="primary"
-                  icon="Notification"
-                  @click="handleCancelProcessApply(scope.row.id)"
-                >
-                  撤销
-                </el-button>
-              </el-col>
-            </el-row>
+                {{ $t('common.btnDelete') }}
+              </UiButton>
+              <UiButton type="primary" size="small" icon="View" @click="handleView(scope.row)">
+                {{ $t('common.btnView') }}
+              </UiButton>
+              <UiButton
+                v-if="scope.row.status === 'waiting'"
+                size="small"
+                type="warning"
+                icon="Notification"
+                @click="handleCancelProcessApply(scope.row.id)"
+              >
+                撤销
+              </UiButton>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
   </div>
 </template>
 
@@ -157,16 +146,19 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 import { delLeave, listLeave } from '@/api/workflow/leave';
 import { LeaveForm, LeaveQuery, LeaveVO } from '@/api/workflow/leave/types';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
 import { useSearchToggle } from '@/hooks/form/useSearchToggle';
 import { useTableSelection } from '@/hooks/table/useTableSelection';
+import { UiButton, UiCard, UiInput, UiPagination, UiTag } from '@/components/UiKit';
 import modal from '@/plugins/modal';
 import tab from '@/plugins/tab';
 import router from '@/router';
 import { useDict } from '@/utils/dict';
 import { download as requestDownload } from '@/utils/request';
-import { parseTime } from '@/utils/ruoyi';
+import { parseTime, selectDictLabel } from '@/utils/ruoyi';
 
 const route = useRoute();
 const { wf_business_status } = toRefs<any>(useDict('wf_business_status'));
@@ -193,6 +185,12 @@ const options = [
     label: t('common.leaveTypeMarriage')
   }
 ];
+
+const statusLabel = (status?: string) => selectDictLabel(wf_business_status.value, status ?? '') || status || '-';
+const statusTagType = (status?: string) => {
+  const type = wf_business_status.value?.find((item: DictDataOption) => item.value == status)?.elTagType;
+  return ['primary', 'success', 'warning', 'danger', 'info'].includes(type) ? type : 'info';
+};
 
 const queryFormRef = ref<ElFormInstance>();
 

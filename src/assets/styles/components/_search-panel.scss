@@ -13,12 +13,14 @@
 .search-panel {
   isolation: isolate;
 
-  .el-card__header {
+  .el-card__header,
+  .ui-animal-card__header {
     display: block;
     padding: 12px 16px !important;
   }
 
-  .el-card__body {
+  .el-card__body,
+  .ui-animal-card__body {
     padding-top: 16px !important;
     overflow: hidden;
     max-height: 560px;
@@ -32,7 +34,8 @@
 }
 
 .search-panel.is-collapsed {
-  .el-card__body {
+  .el-card__body,
+  .ui-animal-card__body {
     max-height: 0;
     opacity: 0;
     padding-top: 0 !important;

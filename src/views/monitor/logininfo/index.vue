@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container monitor-logininfo-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,10 +12,10 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.loginAddress')" prop="ipaddr">
-            <el-input v-model="queryParams.ipaddr" :placeholder="$t('common.placeholderInputLoginAddress')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.ipaddr" :placeholder="$t('common.placeholderInputLoginAddress')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.userName')" prop="userName">
-            <el-input
+            <UiInput
               v-model="queryParams.userName"
               :placeholder="$t('common.placeholderInputUserName')"
               clearable
@@ -23,12 +23,10 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="queryParams.status" :placeholder="$t('common.placeholderLoginStatus')" clearable>
-              <el-option v-for="dict in sys_common_status" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+            <UiSelect v-model="queryParams.status" :options="sys_common_status" :placeholder="$t('common.placeholderLoginStatus')" clearable />
           </el-form-item>
           <el-form-item :label="$t('common.loginTime')" style="width: 308px">
-            <el-date-picker
+            <UiDatePicker
               v-model="dateRange"
               value-format="YYYY-MM-DD HH:mm:ss"
               type="daterange"
@@ -36,17 +34,17 @@
               :start-placeholder="$t('common.placeholderStartDate')"
               :end-placeholder="$t('common.placeholderEndDate')"
               :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
-            ></el-date-picker>
+            />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -55,7 +53,7 @@
             <p>共 {{ total }} 条记录，支持排序、批量清理、导出和账号解锁。</p>
           </div>
           <div class="toolbar-actions">
-            <el-button
+            <UiButton
               v-hasPermi="['monitor:logininfo:remove']"
               type="danger"
               plain
@@ -64,11 +62,11 @@
               @click="handleDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
-            <el-button v-hasPermi="['monitor:logininfo:remove']" type="danger" plain icon="Delete" @click="handleClean">
+            </UiButton>
+            <UiButton v-hasPermi="['monitor:logininfo:remove']" type="danger" plain icon="Delete" @click="handleClean">
               {{ $t('common.btnClear') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['monitor:logininfo:unlock']"
               type="primary"
               plain
@@ -77,8 +75,8 @@
               @click="handleUnlock"
             >
               {{ $t('common.btnUnlock') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['monitor:logininfo:export']"
               type="warning"
               plain
@@ -86,15 +84,14 @@
               @click="handleExport"
             >
               {{ $t('common.btnExport') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
+      <DepartmentDataTable
         ref="loginInfoTableRef"
-        v-loading="loading"
         :data="loginInfoList"
         class="data-table"
         :default-sort="defaultSort"
@@ -140,24 +137,26 @@
             <span>{{ parseTime(scope.row.loginTime) }}</span>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
   </div>
 </template>
 
 <script setup name="LoginInfo" lang="ts">
-import { list, delLoginInfo, cleanLoginInfo, unlockLoginInfo } from '@/api/monitor/logininfo';
+import { list, delLoginInfo, cleanLoginInfo, unlockLoginInfo } from '@/api/monitor/loginInfo';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
-import { LoginInfoQuery, LoginInfoVO } from '@/api/monitor/logininfo/types';
+import { LoginInfoQuery, LoginInfoVO } from '@/api/monitor/loginInfo/types';
+import { UiButton, UiCard, UiDatePicker, UiInput, UiPagination, UiSelect } from '@/components/UiKit';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useDateRangeQuery } from '@/hooks/form/useDateRangeQuery';
 import { useSearchReset } from '@/hooks/form/useSearchReset';
@@ -179,7 +178,7 @@ const total = ref(0);
 const { dateRange, applyDateRange, resetDateRange } = useDateRangeQuery();
 
 const queryFormRef = ref<ElFormInstance>();
-const loginInfoTableRef = ref<ElTableInstance>();
+const loginInfoTableRef = ref<{ sort: (prop: string, order: 'ascending' | 'descending' | null) => void }>();
 // 查询参数
 const queryParams = ref<LoginInfoQuery>({
   pageNum: 1,

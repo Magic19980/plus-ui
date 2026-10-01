@@ -1,7 +1,7 @@
 <template>
   <section class="app-main">
     <router-view v-slot="{ Component, route }">
-      <transition :enter-active-class="animate" mode="out-in">
+      <transition :enter-active-class="pageTransitionClass" mode="out-in">
         <keep-alive :include="tagsViewStore.cachedViews">
           <component :is="Component" v-if="!route.meta.link" :key="`${route.path}:${departmentStore.switchRevision}`" />
         </keep-alive>
@@ -37,6 +37,12 @@ watch(
   },
   { immediate: true }
 );
+
+/**
+ * 仅在用户明确开启页面动画时挂载动画类。
+ * 关闭动画时不再强制执行 fadeIn，避免页签切换后页面停留在透明状态。
+ */
+const pageTransitionClass = computed(() => (useSettingsStore().animationEnable ? animate.value : ''));
 
 watchEffect(() => {
   addIframe();
@@ -82,8 +88,9 @@ function addIframe() {
 }
 
 .app-main.with-fixed-header.with-tags-view {
-  min-height: calc(100vh - 111px);
-  padding-top: 111px;
+  // 固定顶部包含 Navbar 与 TagsView，额外留出页面呼吸间距，避免内容面板贴住页签。
+  min-height: calc(100vh - 123px);
+  padding-top: 123px;
 }
 </style>
 <style lang="scss">

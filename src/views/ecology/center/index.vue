@@ -1,6 +1,6 @@
 <template>
   <div class="app-container ecology-center-page" :class="{ 'is-embedded': props.embedded }">
-    <el-card v-if="!props.embedded" shadow="never" class="intro-card">
+    <UiCard v-if="!props.embedded" shadow="never" class="intro-card">
       <div class="intro-card__content">
         <div class="intro-card__copy">
           <span class="eyebrow"><el-icon><Stamp /></el-icon>ECOLOGY APPROVAL CENTER</span>
@@ -13,12 +13,12 @@
             <strong>泛微 OA</strong>
             <span>外部系统负责流程执行</span>
           </div>
-          <el-tag type="success" effect="plain">已接入</el-tag>
+          <UiTag type="success" effect="plain">已接入</UiTag>
         </div>
       </div>
-    </el-card>
+    </UiCard>
 
-    <el-card shadow="never" class="main-card mt-2">
+    <UiCard shadow="never" class="main-card mt-2">
       <template #header>
         <div v-if="!props.embedded" class="main-card__header">
           <div class="section-heading">
@@ -28,39 +28,35 @@
               <p>提交后由泛微执行审批，本地保留申请状态和同步轨迹。</p>
             </div>
           </div>
-          <el-tag type="info" effect="plain">提交入口</el-tag>
+          <UiTag type="info" effect="plain">提交入口</UiTag>
         </div>
       </template>
       <div class="application-panel">
           <el-form :model="applicationQuery" :inline="true" @submit.prevent>
             <el-form-item label="业务类型">
-              <el-select v-model="applicationQuery.businessType" clearable filterable placeholder="全部业务类型" style="width: 220px">
-                <el-option v-for="item in businessTypes" :key="item.id" :label="businessTypeLabel(item)" :value="item.businessType" />
-              </el-select>
+              <UiSelect v-model="applicationQuery.businessType" :options="businessTypeOptions" clearable filterable placeholder="全部业务类型" style="width: 220px" />
             </el-form-item>
-            <el-form-item label="标题"><el-input v-model="applicationQuery.title" clearable placeholder="申请标题" @keyup.enter="loadApplications" /></el-form-item>
+            <el-form-item label="标题"><UiInput v-model="applicationQuery.title" clearable placeholder="申请标题" @keyup.enter="loadApplications" /></el-form-item>
             <el-form-item label="状态">
-              <el-select v-model="applicationQuery.status" clearable placeholder="全部状态" style="width: 140px">
-                <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
-              </el-select>
+              <UiSelect v-model="applicationQuery.status" :options="statusOptions" clearable placeholder="全部状态" style="width: 140px" />
             </el-form-item>
             <el-form-item v-hasPermi="['ecology:application:monitor']" label="查看范围">
-              <el-checkbox v-model="applicationQuery.monitor">审批监控</el-checkbox>
+              <UiCheckboxGroup v-model="monitorSelection" :options="monitorOptions" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" icon="Search" @click="searchApplications">查询</el-button>
-              <el-button icon="Refresh" @click="resetApplicationQuery">重置</el-button>
+              <UiButton type="primary" icon="Search" @click="searchApplications">查询</UiButton>
+              <UiButton icon="Refresh" @click="resetApplicationQuery">重置</UiButton>
             </el-form-item>
           </el-form>
 
           <div class="toolbar">
             <div class="toolbar__hint">申请提交后由泛微执行审批，本地保存 requestId、状态和同步轨迹。</div>
             <div>
-              <el-button v-hasPermi="['ecology:application:reconcile']" class="mr-2" plain icon="Refresh" @click="reconcileApplications">立即对账</el-button>
-              <el-button v-hasPermi="['ecology:application:add']" type="primary" icon="Plus" @click="openApplicationAdd">发起申请</el-button>
+              <UiButton v-hasPermi="['ecology:application:reconcile']" class="mr-2" plain icon="Refresh" @click="reconcileApplications">立即对账</UiButton>
+              <UiButton v-hasPermi="['ecology:application:add']" type="primary" icon="Plus" @click="openApplicationAdd">发起申请</UiButton>
             </div>
           </div>
-          <DepartmentDataTable v-loading="applicationLoading" :data="applications" border>
+          <DepartmentDataTable :loading="applicationLoading" :data="applications" border>
             <el-table-column label="申请编号" prop="applicationNo" width="170" show-overflow-tooltip />
             <el-table-column label="业务类型" prop="businessType" min-width="170" show-overflow-tooltip>
               <template #default="scope">{{ businessTypeName(scope.row.businessType) }}</template>
@@ -69,27 +65,27 @@
             <el-table-column label="申请人" prop="applicantName" width="110" />
             <el-table-column label="流程" prop="workflowName" min-width="160" show-overflow-tooltip />
             <el-table-column label="状态" width="120" align="center">
-              <template #default="scope"><el-tag :type="statusType(scope.row.status)">{{ statusLabel(scope.row.status) }}</el-tag></template>
+              <template #default="scope"><UiTag :type="statusType(scope.row.status)">{{ statusLabel(scope.row.status) }}</UiTag></template>
             </el-table-column>
             <el-table-column label="泛微 requestId" prop="oaRequestId" width="150" show-overflow-tooltip />
             <el-table-column label="创建时间" prop="createTime" width="170" />
             <el-table-column label="操作" fixed="right" width="260" align="center">
               <template #default="scope">
                 <DepartmentTableActions>
-                  <el-button link type="primary" @click="openApplicationDetail(scope.row)">详情</el-button>
-                <el-button v-if="canEdit(scope.row)" v-hasPermi="['ecology:application:edit']" link type="primary" @click="openApplicationEdit(scope.row)">编辑</el-button>
-                <el-button v-if="canSubmit(scope.row)" v-hasPermi="['ecology:application:submit']" link type="success" @click="submitApplication(scope.row)">提交</el-button>
-                <el-button v-if="scope.row.oaRequestId" v-hasPermi="['ecology:application:sync']" link type="warning" @click="syncApplication(scope.row)">同步</el-button>
-                  <el-button v-if="scope.row.oaLink" link type="info" @click="openOa(scope.row)">打开泛微</el-button>
+                  <UiButton link type="primary" @click="openApplicationDetail(scope.row)">详情</UiButton>
+                <UiButton v-if="canEdit(scope.row)" v-hasPermi="['ecology:application:edit']" link type="primary" @click="openApplicationEdit(scope.row)">编辑</UiButton>
+                <UiButton v-if="canSubmit(scope.row)" v-hasPermi="['ecology:application:submit']" link type="success" @click="submitApplication(scope.row)">提交</UiButton>
+                <UiButton v-if="scope.row.oaRequestId" v-hasPermi="['ecology:application:sync']" link type="warning" @click="syncApplication(scope.row)">同步</UiButton>
+                  <UiButton v-if="scope.row.oaLink" link type="info" @click="openOa(scope.row)">打开泛微</UiButton>
                 </DepartmentTableActions>
               </template>
             </el-table-column>
           </DepartmentDataTable>
-          <pagination v-show="applicationTotal > 0" v-model:page="applicationQuery.pageNum" v-model:limit="applicationQuery.pageSize" :total="applicationTotal" @pagination="loadApplications" />
-          <el-empty v-if="!applicationLoading && applications.length === 0" description="暂无审批申请" />
+          <UiPagination v-show="applicationTotal > 0" v-model:page="applicationQuery.pageNum" v-model:limit="applicationQuery.pageSize" :total="applicationTotal" @pagination="loadApplications" />
+          <UiEmpty v-if="!applicationLoading && applications.length === 0" description="暂无审批申请" />
 
       </div>
-    </el-card>
+    </UiCard>
 
     <el-dialog v-model="applicationDialog.visible" width="900px" append-to-body destroy-on-close class="application-dialog">
       <template #header>
@@ -103,23 +99,21 @@
           <div class="application-section__heading"><span class="application-section__index">01</span><div><strong>基础信息</strong><span>选择本次申请使用的泛微表单、审批方式和业务类型</span></div></div>
           <div class="application-form-grid application-form-grid--two">
             <el-form-item label="业务类型" prop="businessType">
-              <el-select v-model="applicationForm.businessType" filterable placeholder="选择已配置的业务类型" @change="handleApplicationBusinessTypeChange">
-                <el-option v-for="item in businessTypes" :key="item.id" :label="businessTypeLabel(item)" :value="item.businessType" :disabled="item.status !== 'ENABLED' && item.businessType !== applicationForm.businessType" />
-              </el-select>
+              <UiSelect v-model="applicationForm.businessType" :options="businessTypeOptions" filterable placeholder="选择已配置的业务类型" @change="handleApplicationBusinessTypeChange" />
               <div class="form-tip">选择业务后，只显示该业务已绑定的泛微表单审批方式。</div>
             </el-form-item>
-            <el-form-item label="审批方式" prop="workflowConfigId"><el-select v-model="applicationForm.workflowConfigId" filterable :disabled="!applicationForm.businessType" placeholder="先选择业务类型" @change="handleApplicationWorkflowChange"><el-option v-for="item in enabledWorkflowConfigs" :key="item.id" :label="`${item.formName || '泛微表单'} · ${item.approvalName || item.workflowName}`" :value="item.id" /></el-select></el-form-item>
+            <el-form-item label="审批方式" prop="workflowConfigId"><UiSelect v-model="applicationForm.workflowConfigId" :options="workflowConfigOptions" filterable :disabled="!applicationForm.businessType" placeholder="先选择业务类型" @change="handleApplicationWorkflowChange" /></el-form-item>
           </div>
         </section>
 
         <section class="application-section">
           <div class="application-section__heading"><span class="application-section__index">02</span><div><strong>审批策略</strong><span>确认审批方式，提交时按规则生成审批链</span></div></div>
-          <el-form-item label="审批方式" prop="approvalMode"><el-radio-group v-model="applicationForm.approvalMode" @change="handleApprovalModeChange"><el-radio label="AUTO_RULE">自动匹配</el-radio><el-radio label="PLAN">选择审批方案</el-radio><el-radio label="MANUAL">本次临时指定</el-radio></el-radio-group></el-form-item>
+          <el-form-item label="审批方式" prop="approvalMode"><UiRadioGroup v-model="applicationForm.approvalMode" :options="approvalModeOptions" @change="handleApprovalModeChange" /></el-form-item>
           <el-alert v-if="applicationForm.approvalMode === 'AUTO_RULE'" :title="applicationApprovalHint" type="info" :closable="false" class="application-alert" />
-          <el-form-item v-if="applicationForm.approvalMode === 'PLAN'" label="审批方案" required><el-select v-model="applicationForm.approvalPlanId" filterable placeholder="选择当前业务的审批方案"><el-option v-for="item in applicationApprovalPlans" :key="item.id" :label="item.planName" :value="item.id" /></el-select></el-form-item>
+          <el-form-item v-if="applicationForm.approvalMode === 'PLAN'" label="审批方案" required><UiSelect v-model="applicationForm.approvalPlanId" :options="approvalPlanOptions" filterable placeholder="选择当前业务的审批方案" /></el-form-item>
             <el-alert v-if="applicationForm.approvalMode === 'PLAN'" title="选择方案只决定本次申请使用哪些审批人，不会创建新的泛微表单。" type="info" :closable="false" class="application-alert" />
           <el-alert v-if="applicationForm.approvalMode === 'MANUAL'" title="临时指定不会创建审批方案，只对当前申请生效。" type="info" :closable="false" class="application-alert" />
-          <div class="application-flow-summary"><span>审批方式</span><el-tag type="info">{{ selectedApprovalName }}</el-tag><span class="form-tip">节点顺序和审批类型由该审批方式配置决定。</span></div>
+          <div class="application-flow-summary"><span>审批方式</span><UiTag type="info">{{ selectedApprovalName }}</UiTag><span class="form-tip">节点顺序和审批类型由该审批方式配置决定。</span></div>
           <div v-if="applicationForm.approvalMode === 'AUTO_RULE'" class="application-people-preview">
             <div><span>匹配方式：</span>提交时按业务归属组织、来源模块和方案条件确定审批方案</div>
             <div><span>候选方案：</span>{{ matchedApplicationApprovals.length ? matchedApplicationApprovals.map((item) => item.planName).join('、') : '当前暂未找到可用方案' }}</div>
@@ -133,12 +127,12 @@
             <el-alert v-if="!applicationStageDefinitions.length" title="当前审批方式还没有配置审批节点，请先联系管理员维护流程配置。" type="warning" :closable="false" class="application-alert" />
             <el-form-item v-for="stage in applicationStageDefinitions" :key="stage.code" :label="stage.name" :required="stage.required">
               <div class="application-people-picker application-stage-picker">
-                <div class="application-stage-picker__toolbar"><el-button plain @click="openApplicationStageSelect(stage.code)">选择用户</el-button><span>{{ stage.mode === 'COUNTERSIGN' ? '会签节点，可多选' : '按当前顺序依次审批' }}{{ stage.required ? ' · 必填' : ' · 可不配置' }}</span></div>
-                <div v-for="(user, index) in applicationUsersForStage(stage.code)" :key="user.userId" class="application-ordered-person"><span>{{ index + 1 }}. {{ user.nickName }}</span><el-button v-if="stage.mode !== 'COUNTERSIGN'" link :disabled="index === 0" @click="moveApplicationStage(stage.code, index, -1)">上移</el-button><el-button v-if="stage.mode !== 'COUNTERSIGN'" link :disabled="index === applicationUsersForStage(stage.code).length - 1" @click="moveApplicationStage(stage.code, index, 1)">下移</el-button><el-button link type="danger" @click="removeApplicationStageUser(stage.code, user.userId)">移除</el-button></div>
+                <div class="application-stage-picker__toolbar"><UiButton plain @click="openApplicationStageSelect(stage.code)">选择用户</UiButton><span>{{ stage.mode === 'COUNTERSIGN' ? '会签节点，可多选' : '按当前顺序依次审批' }}{{ stage.required ? ' · 必填' : ' · 可不配置' }}</span></div>
+                <div v-for="(user, index) in applicationUsersForStage(stage.code)" :key="user.userId" class="application-ordered-person"><span>{{ index + 1 }}. {{ user.nickName }}</span><UiButton v-if="stage.mode !== 'COUNTERSIGN'" link :disabled="index === 0" @click="moveApplicationStage(stage.code, index, -1)">上移</UiButton><UiButton v-if="stage.mode !== 'COUNTERSIGN'" link :disabled="index === applicationUsersForStage(stage.code).length - 1" @click="moveApplicationStage(stage.code, index, 1)">下移</UiButton><UiButton link type="danger" @click="removeApplicationStageUser(stage.code, user.userId)">移除</UiButton></div>
                 <span v-if="!applicationUsersForStage(stage.code).length" class="form-tip">请选择该节点的审批人员</span>
               </div>
             </el-form-item>
-            <el-form-item label="抄送人员"><div class="application-people-picker application-stage-picker"><div class="application-stage-picker__toolbar"><el-button plain @click="openApplicationStageSelect('COPY')">选择用户</el-button><span>可不配置，不参与审批</span></div><div v-for="(user, index) in applicationCopyUsers" :key="user.userId" class="application-ordered-person"><span>{{ index + 1 }}. {{ user.nickName }}</span><el-button link type="danger" @click="removeApplicationStageUser('COPY', user.userId)">移除</el-button></div><span v-if="!applicationCopyUsers.length" class="form-tip">可不配置</span></div></el-form-item>
+            <el-form-item label="抄送人员"><div class="application-people-picker application-stage-picker"><div class="application-stage-picker__toolbar"><UiButton plain @click="openApplicationStageSelect('COPY')">选择用户</UiButton><span>可不配置，不参与审批</span></div><div v-for="(user, index) in applicationCopyUsers" :key="user.userId" class="application-ordered-person"><span>{{ index + 1 }}. {{ user.nickName }}</span><UiButton link type="danger" @click="removeApplicationStageUser('COPY', user.userId)">移除</UiButton></div><span v-if="!applicationCopyUsers.length" class="form-tip">可不配置</span></div></el-form-item>
           </template>
         </section>
 
@@ -148,7 +142,7 @@
         </section>
       </el-form>
       <template #footer>
-        <div class="application-dialog__footer"><span>草稿可暂存，提交泛微时会校验完整信息</span><div><el-button @click="applicationDialog.visible = false">取消</el-button><el-button plain :loading="buttonLoading" :disabled="applicationDialog.loading" @click="saveApplication">保存草稿</el-button><el-button type="primary" :loading="buttonLoading" :disabled="applicationDialog.loading" @click="submitApplicationFromDialog">提交泛微</el-button></div></div>
+        <div class="application-dialog__footer"><span>草稿可暂存，提交泛微时会校验完整信息</span><div><UiButton @click="applicationDialog.visible = false">取消</UiButton><UiButton plain :loading="buttonLoading" :disabled="applicationDialog.loading" @click="saveApplication">保存草稿</UiButton><UiButton type="primary" :loading="buttonLoading" :disabled="applicationDialog.loading" @click="submitApplicationFromDialog">提交泛微</UiButton></div></div>
       </template>
     </el-dialog>
 
@@ -163,27 +157,27 @@
         <el-descriptions-item label="审批方式">{{ detail.approvalName || detail.approvalCode || '—' }}</el-descriptions-item>
         <el-descriptions-item label="申请标题">{{ detail.title }}</el-descriptions-item>
         <el-descriptions-item label="申请人">{{ detail.applicantName || detail.applicantUserId }}</el-descriptions-item>
-        <el-descriptions-item label="状态"><el-tag :type="statusType(detail.status)">{{ statusLabel(detail.status) }}</el-tag></el-descriptions-item>
+        <el-descriptions-item label="状态"><UiTag :type="statusType(detail.status)">{{ statusLabel(detail.status) }}</UiTag></el-descriptions-item>
         <el-descriptions-item label="泛微 requestId">{{ detail.oaRequestId || '尚未生成' }}</el-descriptions-item>
         <el-descriptions-item v-if="detail.participants?.length" label="审批人快照"><div v-for="item in detail.participants" :key="item.id">{{ item.stageName || '未命名节点' }}：{{ item.oaUserName || item.oaUserId || item.localUserId }}</div></el-descriptions-item>
         <el-descriptions-item v-if="detail.attachments?.length" label="附件">
           <div v-for="item in detail.attachments" :key="item.id" class="attachment-item">
             <span>{{ item.fileName || `附件_${item.ossId}` }}（{{ item.uploadStatus || '待上传' }}）</span>
-            <el-button v-if="item.ossId" link type="primary" icon="Download" @click="downloadAttachment(item)">下载附件</el-button>
+            <UiButton v-if="item.ossId" link type="primary" icon="Download" @click="downloadAttachment(item)">下载附件</UiButton>
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="申请内容"><div class="detail-content">{{ detail.content }}</div></el-descriptions-item>
         <el-descriptions-item v-if="detail.failReason" label="失败原因"><el-text type="danger">{{ detail.failReason }}</el-text></el-descriptions-item>
       </el-descriptions>
-      <el-divider content-position="left">状态轨迹</el-divider>
+      <UiDivider content-position="left">状态轨迹</UiDivider>
       <el-timeline v-loading="eventLoading">
         <el-timeline-item v-for="item in events" :key="item.id" :timestamp="item.createTime" placement="top">
           <div>{{ eventLabel(item.eventType) }}：{{ item.fromStatus || '—' }} → {{ item.toStatus || '—' }}</div>
           <small v-if="item.errorCode" class="event-error">{{ item.errorCode }}</small>
         </el-timeline-item>
       </el-timeline>
-      <el-empty v-if="!eventLoading && events.length === 0" description="暂无事件轨迹" />
-      <template #footer><el-button v-if="detail?.oaLink" type="primary" @click="openOa(detail)">打开泛微流程</el-button></template>
+      <UiEmpty v-if="!eventLoading && events.length === 0" description="暂无事件轨迹" />
+      <template #footer><UiButton v-if="detail?.oaLink" type="primary" @click="openOa(detail)">打开泛微流程</UiButton></template>
     </el-drawer>
 
   </div>
@@ -196,6 +190,7 @@ import DepartmentDataTable from '@/components/Department/DataTable.vue';
 import DepartmentTableActions from '@/components/Department/TableActions.vue';
 import DynamicForm from '@/components/Ecology/DynamicForm.vue';
 import UserSelect from '@/components/UserSelect/index.vue';
+import { UiButton, UiCard, UiCheckboxGroup, UiDivider, UiEmpty, UiInput, UiPagination, UiRadioGroup, UiSelect, UiTag } from '@/components/UiKit';
 import { optionSelect } from '@/api/system/user';
 import type { UserVO } from '@/api/system/user/types';
 import type { PageResult } from '@/api/types';
@@ -236,6 +231,15 @@ const statusOptions = [
   { label: '待核对', value: 'UNKNOWN' },
   { label: '已取消', value: 'CANCELLED' }
 ];
+const approvalModeOptions = [{ label: '自动匹配', value: 'AUTO_RULE' }, { label: '选择审批方案', value: 'PLAN' }, { label: '本次临时指定', value: 'MANUAL' }];
+const monitorOptions = [{ label: '审批监控', value: 'monitor' }];
+const monitorSelection = computed<string[]>({
+  get: () => (applicationQuery.monitor ? ['monitor'] : []),
+  set: (value) => { applicationQuery.monitor = value.includes('monitor'); }
+});
+const businessTypeOptions = computed(() => businessTypes.value.map(item => ({ value: item.businessType, label: businessTypeLabel(item), disabled: item.status !== 'ENABLED' && item.businessType !== applicationForm.businessType })));
+const workflowConfigOptions = computed(() => enabledWorkflowConfigs.value.map(item => ({ value: item.id, label: `${item.formName || '泛微表单'} · ${item.approvalName || item.workflowName}` })));
+const approvalPlanOptions = computed(() => applicationApprovalPlans.value.map(item => ({ value: item.id, label: item.planName })));
 const applicationRules = { workflowConfigId: [{ required: true, message: '请选择泛微表单', trigger: 'change' }], businessType: [{ required: true, message: '请选择业务类型', trigger: 'change' }], title: [{ required: true, message: '请填写申请标题', trigger: 'blur' }], content: [{ required: true, message: '请填写申请内容', trigger: 'blur' }], approvalMode: [{ required: true, message: '请选择审批策略', trigger: 'change' }] };
 
 const statusLabel = (status?: string) => statusOptions.find((item) => item.value === status)?.label || status || '未知';
@@ -719,6 +723,116 @@ html.dark .ecology-center-page .el-collapse-item__wrap {
 html.dark .ecology-center-page .el-collapse-item__content {
   color: #c6d2e4;
 }
+
+/* 动森深色模式：审批中心的页面级暗色规则也必须切换到动森色阶。 */
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page {
+  --ecology-ink: var(--animal-overlay-text);
+  --ecology-muted: var(--animal-overlay-muted);
+  --ecology-line: var(--animal-overlay-border);
+  color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .intro-card {
+  background: linear-gradient(135deg, #244c49 0%, #2b5d57 56%, #38706a 100%);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .main-card,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .main-card .el-card__body,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .main-card .el-card__header {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .main-card__header {
+  background: linear-gradient(180deg, var(--animal-overlay-surface) 0%, var(--animal-overlay-bg) 100%);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .section-heading__icon,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .business-type-panel .panel-heading__icon {
+  border-color: color-mix(in srgb, var(--animal-primary-color) 40%, var(--animal-overlay-border));
+  color: var(--animal-primary-color);
+  background: var(--animal-primary-color-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-form-item__label {
+  color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-input__wrapper,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-select__wrapper,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-textarea__inner,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-input-number,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-date-editor.el-input__wrapper {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-bg-color-input);
+  box-shadow: 0 0 0 1px var(--animal-overlay-border) inset;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-input__inner,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-textarea__inner,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-select__selected-item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-select__placeholder,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-input-number__decrease,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-input-number__increase {
+  color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-input__inner::placeholder,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-textarea__inner::placeholder,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-select__placeholder {
+  color: var(--animal-overlay-muted);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table {
+  --el-table-bg-color: var(--animal-overlay-bg);
+  --el-table-tr-bg-color: var(--animal-overlay-bg);
+  --el-table-header-bg-color: var(--animal-overlay-surface);
+  --el-table-row-hover-bg-color: var(--animal-overlay-hover);
+  --el-table-current-row-bg-color: var(--animal-overlay-hover);
+  --el-table-border-color: var(--animal-overlay-border);
+  --el-table-text-color: var(--animal-overlay-text);
+  --el-table-header-text-color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table th.el-table__cell,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table td.el-table__cell,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table__fixed,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table__fixed-right {
+  color: var(--animal-overlay-text);
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table th.el-table__cell,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table__header-wrapper,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table__fixed-header-wrapper {
+  background: var(--animal-overlay-surface);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table__body tr:hover > td.el-table__cell,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-table__body tr.current-row > td.el-table__cell {
+  background: var(--animal-overlay-hover) !important;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-alert--info {
+  border-color: color-mix(in srgb, var(--animal-primary-color) 35%, var(--animal-overlay-border));
+  background: var(--animal-accent-soft);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-alert--info .el-alert__title,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-alert--info .el-alert__description,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-alert--info .el-alert__icon {
+  color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-collapse,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-collapse-item__header,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-collapse-item__wrap,
+html[data-ui-theme='animal'][data-color-mode='dark'] .ecology-center-page .el-collapse-item__content {
+  color: var(--animal-overlay-text);
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+}
 </style>
 
 <style lang="scss">
@@ -1141,6 +1255,44 @@ html.dark .application-dialog .dynamic-field--upload {
 
 html.dark .application-dialog .upload-file-list .el-upload-list__item {
   border-color: rgba(100, 116, 139, 0.55);
+}
+
+/* 动森深色模式下，审批申请弹窗使用与全局浮层一致的绿色灰阶。 */
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog.el-dialog {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+  box-shadow: var(--app-shadow-lg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .el-dialog__header,
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .el-dialog__footer,
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .application-section {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-surface);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .el-dialog__body {
+  background: var(--animal-overlay-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .application-dialog__title-icon,
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .application-section__index {
+  border-color: var(--animal-primary-color);
+  color: var(--animal-primary-color);
+  background: var(--animal-primary-color-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .application-flow-summary,
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .application-ordered-person,
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .dynamic-field--choice,
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .dynamic-field--upload {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-hover);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .application-dialog .dynamic-form__summary {
+  border-color: color-mix(in srgb, var(--animal-primary-color) 38%, var(--animal-overlay-border));
+  background: var(--animal-accent-soft);
 }
 
 @media (max-width: 760px) {

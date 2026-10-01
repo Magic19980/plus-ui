@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container system-client-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div><h3>{{ $t('common.sectionSearchCondition') }}</h3></div>
@@ -9,7 +9,7 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="85px" class="query-form">
           <el-form-item :label="$t('common.clientKey')" prop="clientKey">
-            <el-input
+            <UiInput
               v-model="queryParams.clientKey"
               :placeholder="$t('common.placeholderInputClientKey')"
               clearable
@@ -17,7 +17,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.clientSecret')" prop="clientSecret">
-            <el-input
+            <UiInput
               v-model="queryParams.clientSecret"
               :placeholder="$t('common.placeholderInputSecretKey')"
               clearable
@@ -25,19 +25,17 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="queryParams.status" :placeholder="$t('common.status')" clearable>
-              <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
-            </el-select>
+          <UiSelect v-model="queryParams.status" :options="sys_normal_disable" :placeholder="$t('common.status')" clearable />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
             <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -75,11 +73,12 @@
         </div>
       </template>
 
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         :data="clientList"
         border
         class="data-table"
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center" />
@@ -100,14 +99,14 @@
         <el-table-column :label="$t('common.whitelistPath')" align="center">
           <template #default="scope">
             <div class="rule-tag-list">
-              <el-tag
+              <UiTag
                 v-for="path in getRuleList(scope.row.accessPathList, scope.row.accessPath)"
                 :key="path"
                 size="small"
                 effect="plain"
               >
                 {{ path }}
-              </el-tag>
+              </UiTag>
               <span v-if="!getRuleList(scope.row.accessPathList, scope.row.accessPath).length" class="rule-empty">
                 全部路径
               </span>
@@ -117,7 +116,7 @@
         <el-table-column :label="$t('common.whitelistIp')" align="center">
           <template #default="scope">
             <div class="rule-tag-list">
-              <el-tag
+              <UiTag
                 v-for="ip in getRuleList(scope.row.ipWhitelistList, scope.row.ipWhitelist)"
                 :key="ip"
                 size="small"
@@ -125,7 +124,7 @@
                 effect="plain"
               >
                 {{ ip }}
-              </el-tag>
+              </UiTag>
               <span v-if="!getRuleList(scope.row.ipWhitelistList, scope.row.ipWhitelist).length" class="rule-empty">
                 全部IP
               </span>
@@ -136,101 +135,88 @@
         <el-table-column label="Token固定超时时间" align="center" prop="timeout" />
         <el-table-column key="status" :label="$t('common.status')" align="center">
           <template #default="scope">
-            <el-switch
+            <UiSwitch
               v-model="scope.row.status"
               active-value="0"
               inactive-value="1"
               @change="handleStatusChange(scope.row)"
-            ></el-switch>
+            />
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipModify')" placement="top">
-              <el-button
-                v-hasPermi="['system:client:edit']"
-                link
-                type="primary"
-                icon="Edit"
-                @click="handleUpdate(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
-                v-hasPermi="['system:client:remove']"
-                link
-                type="primary"
-                icon="Delete"
-                @click="handleDelete(scope.row)"
-              ></el-button>
-            </el-tooltip>
+            <DepartmentTableActions>
+              <UiTooltip :content="$t('common.tooltipModify')" placement="bottom">
+                <UiButton
+                  v-hasPermi="['system:client:edit']"
+                  link
+                  type="primary"
+                  icon="Edit"
+                  @click="handleUpdate(scope.row)"
+                />
+              </UiTooltip>
+              <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+                <UiButton
+                  v-hasPermi="['system:client:remove']"
+                  link
+                  type="primary"
+                  icon="Delete"
+                  @click="handleDelete(scope.row)"
+                />
+              </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
+      </DepartmentDataTable>
 
-      <pagination
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
     <!-- 添加或修改客户端管理对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="760px" append-to-body>
+    <UiDialog v-model="dialog.visible" :title="dialog.title" width="760px" append-to-body>
       <el-form ref="clientFormRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item :label="$t('common.clientKey')" prop="clientKey">
-          <el-input v-model="form.clientKey" :disabled="form.id != null" :placeholder="$t('common.placeholderInputClientKey')" />
+          <UiInput v-model="form.clientKey" :disabled="form.id != null" :placeholder="$t('common.placeholderInputClientKey')" />
         </el-form-item>
         <el-form-item :label="$t('common.clientSecret')" prop="clientSecret">
-          <el-input v-model="form.clientSecret" :disabled="form.id != null" :placeholder="$t('common.placeholderInputSecretKey')" />
+          <UiInput v-model="form.clientSecret" :disabled="form.id != null" :placeholder="$t('common.placeholderInputSecretKey')" />
         </el-form-item>
         <el-form-item :label="$t('common.grantType')" prop="grantTypeList">
-          <el-select v-model="form.grantTypeList" multiple :placeholder="$t('common.placeholderInputGrantType')">
-            <el-option
-              v-for="dict in sys_grant_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
+          <UiSelect v-model="form.grantTypeList" multiple :options="sys_grant_type" :placeholder="$t('common.placeholderInputGrantType')" />
         </el-form-item>
         <el-form-item :label="$t('common.deviceType')" prop="deviceType">
-          <el-select v-model="form.deviceType" :placeholder="$t('common.placeholderInputDeviceType')">
-            <el-option
-              v-for="dict in sys_device_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
+          <UiSelect v-model="form.deviceType" :options="sys_device_type" :placeholder="$t('common.placeholderInputDeviceType')" />
         </el-form-item>
         <el-form-item prop="accessPath" label-width="auto">
           <template #label>
             <span>
-              <el-tooltip content="多个路径可按换行、逗号或分号分隔；为空表示允许访问所有接口路径" placement="top">
-                <el-icon><question-filled /></el-icon>
-              </el-tooltip>
+              <UiTooltip content="多个路径可按换行、逗号或分号分隔；为空表示允许访问所有接口路径" placement="bottom">
+                <span class="client-help-icon" aria-label="提示">?</span>
+              </UiTooltip>
               允许访问路径
             </span>
           </template>
-          <el-input v-model="form.accessPath" type="textarea" :rows="4" :placeholder="$t('common.placeholderExampleAccessPath')" />
+          <UiTextarea v-model="form.accessPath" :rows="4" :placeholder="$t('common.placeholderExampleAccessPath')" />
         </el-form-item>
         <el-form-item prop="ipWhitelist" label-width="auto">
           <template #label>
             <span>
-              <el-tooltip
+              <UiTooltip
                 content="支持精确IP、通配符和CIDR；多个规则可按换行、逗号或分号分隔；为空表示允许所有IP"
-                placement="top"
+                placement="bottom"
               >
-                <el-icon><question-filled /></el-icon>
-              </el-tooltip>
+                <span class="client-help-icon" aria-label="提示">?</span>
+              </UiTooltip>
               IP白名单
             </span>
           </template>
-          <el-input
+          <UiTextarea
             v-model="form.ipWhitelist"
-            type="textarea"
             :rows="4"
             :placeholder="$t('common.placeholderExampleIpWhitelist')"
           />
@@ -238,40 +224,36 @@
         <el-form-item prop="activeTimeout" label-width="auto">
           <template #label>
             <span>
-              <el-tooltip content="指定时间无操作则过期（单位：秒），默认30分钟（1800秒）" placement="top">
-                <el-icon><question-filled /></el-icon>
-              </el-tooltip>
+              <UiTooltip content="指定时间无操作则过期（单位：秒），默认30分钟（1800秒）" placement="bottom">
+                <span class="client-help-icon" aria-label="提示">?</span>
+              </UiTooltip>
               Token活跃超时时间
             </span>
           </template>
-          <el-input v-model="form.activeTimeout" :placeholder="$t('common.placeholderInputActiveTimeout')" />
+          <UiInput v-model="form.activeTimeout" :placeholder="$t('common.placeholderInputActiveTimeout')" />
         </el-form-item>
         <el-form-item prop="timeout" label-width="auto">
           <template #label>
             <span>
-              <el-tooltip content="指定时间必定过期（单位：秒），默认七天（604800秒）" placement="top">
-                <el-icon><question-filled /></el-icon>
-              </el-tooltip>
+              <UiTooltip content="指定时间必定过期（单位：秒），默认七天（604800秒）" placement="bottom">
+                <span class="client-help-icon" aria-label="提示">?</span>
+              </UiTooltip>
               Token固定超时时间
             </span>
           </template>
-          <el-input v-model="form.timeout" :placeholder="$t('common.placeholderInputTimeout')" />
+          <UiInput v-model="form.timeout" :placeholder="$t('common.placeholderInputTimeout')" />
         </el-form-item>
         <el-form-item :label="$t('common.status')">
-          <el-radio-group v-model="form.status">
-            <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">
-              {{ dict.label }}
-            </el-radio>
-          </el-radio-group>
+          <UiRadioGroup v-model="form.status" :options="sys_normal_disable" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('common.btnCancel') }}</el-button>
+          <UiButton :loading="buttonLoading" type="primary" @click="submitForm">{{ $t('common.btnConfirm') }}</UiButton>
+          <UiButton @click="cancel">{{ $t('common.btnCancel') }}</UiButton>
         </div>
       </template>
-    </el-dialog>
+    </UiDialog>
   </div>
 </template>
 
@@ -288,6 +270,9 @@ import { useTableSelection } from '@/hooks/table/useTableSelection';
 import modal from '@/plugins/modal';
 import { useDict } from '@/utils/dict';
 import { download as requestDownload } from '@/utils/request';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDialog, UiInput, UiPagination, UiRadioGroup, UiSelect, UiSwitch, UiTag, UiTextarea, UiTooltip } from '@/components/UiKit';
 
 const { sys_normal_disable } = toRefs<any>(useDict('sys_normal_disable'));
 const { sys_grant_type } = toRefs<any>(useDict('sys_grant_type'));
@@ -464,6 +449,22 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .system-client-page {
+  :deep(.client-help-icon) {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    color: var(--app-accent-strong);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    cursor: help;
+  }
+
   :deep(.grant-type-tag) {
     width: 100%;
     display: flex;

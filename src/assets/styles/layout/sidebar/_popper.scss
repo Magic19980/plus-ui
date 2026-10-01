@@ -9,15 +9,17 @@
 }
 
 .el-popper.is-pure {
-  border-radius: var(--app-radius-md);
+  min-width: 190px;
+  overflow: hidden;
+  border-radius: 16px;
   border: 1px solid var(--app-surface-border);
   background: var(--app-surface-bg);
-  box-shadow: var(--app-shadow-md);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.08);
 
   .el-menu--popup {
-    min-width: 192px;
-    padding: 7px;
-    border-radius: var(--app-radius-md);
+    min-width: 190px;
+    padding: 6px;
+    border-radius: 16px;
     border: 0;
     background: var(--app-surface-bg) !important;
 
@@ -36,6 +38,19 @@
       transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
 
+    .el-menu-item .svg-icon,
+    .el-sub-menu__title .svg-icon {
+      width: 18px !important;
+      height: 18px !important;
+      box-sizing: content-box;
+      margin-right: 10px;
+      padding: 4px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--app-text-muted) 10%, transparent);
+      opacity: 0.82;
+      transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+    }
+
     .el-menu-item:hover,
     .el-sub-menu__title:hover {
       border-color: color-mix(in srgb, var(--app-accent-strong) 24%, transparent);
@@ -43,12 +58,21 @@
       background: color-mix(in srgb, var(--app-accent-strong) 12%, var(--app-surface-bg)) !important;
     }
 
+    .el-menu-item:hover .svg-icon,
+    .el-sub-menu__title:hover .svg-icon,
+    .el-menu-item.is-active .svg-icon,
+    .el-sub-menu.is-active > .el-sub-menu__title .svg-icon {
+      background: color-mix(in srgb, var(--app-accent-strong) 18%, transparent);
+      opacity: 1;
+      transform: scale(1.03);
+    }
+
     .el-menu-item.is-active,
     .el-sub-menu.is-active > .el-sub-menu__title {
       border-color: color-mix(in srgb, var(--app-accent-strong) 34%, transparent);
       color: var(--app-text-title) !important;
       background: color-mix(in srgb, var(--app-accent-strong) 18%, var(--app-surface-bg)) !important;
-      box-shadow: inset 2px 0 0 var(--app-accent-strong);
+      box-shadow: inset 3px 0 0 var(--app-accent-strong), inset 0 1px 0 rgba(255, 255, 255, 0.14);
     }
 
     .svg-icon,
@@ -101,4 +125,36 @@ html.dark .el-popper.is-pure .el-menu--popup .el-sub-menu.is-active > .el-sub-me
   color: #f7fbff !important;
   background: linear-gradient(100deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.1)) !important;
   box-shadow: inset 2px 0 0 #38bdf8, inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* 动森深色模式使用动森语义色覆盖 Element Plus 的办公蓝色弹层。 */
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+  box-shadow: var(--app-shadow-lg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure .el-menu--popup {
+  background: var(--animal-overlay-bg) !important;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure .el-menu--popup .el-menu-item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure .el-menu--popup .el-sub-menu__title {
+  color: var(--animal-overlay-text) !important;
+  background: transparent !important;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure .el-menu--popup .el-menu-item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure .el-menu--popup .el-sub-menu__title:hover {
+  border-color: color-mix(in srgb, var(--animal-primary-color) 34%, transparent);
+  color: var(--animal-overlay-text) !important;
+  background: var(--animal-overlay-hover) !important;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure .el-menu--popup .el-menu-item.is-active,
+html[data-ui-theme='animal'][data-color-mode='dark'] .el-popper.is-pure .el-menu--popup .el-sub-menu.is-active > .el-sub-menu__title {
+  border-color: color-mix(in srgb, var(--animal-primary-color) 48%, transparent);
+  color: var(--animal-overlay-text) !important;
+  background: color-mix(in srgb, var(--animal-primary-color) 22%, var(--animal-overlay-bg)) !important;
+  box-shadow: inset 2px 0 0 var(--animal-primary-color), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }

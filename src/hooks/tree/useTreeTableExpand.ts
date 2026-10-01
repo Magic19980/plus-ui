@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 
 interface UseTreeTableExpandOptions<T> {
-  tableRef: Ref<ElTableInstance | undefined>;
+  tableRef: Ref<{ toggleRowExpansion?: (row: T, expanded?: boolean) => void } | undefined>;
   data: Ref<T[]>;
   initialExpandAll?: boolean;
   getChildren?: (row: T) => T[] | undefined;
@@ -14,7 +14,7 @@ export function useTreeTableExpand<T extends Record<string, any>>(options: UseTr
 
   const toggleRows = (rows: T[], expanded: boolean) => {
     rows.forEach(row => {
-      tableRef.value?.toggleRowExpansion(row, expanded);
+      tableRef.value?.toggleRowExpansion?.(row, expanded);
       const children = getChildren(row);
       if (children?.length) {
         toggleRows(children, expanded);

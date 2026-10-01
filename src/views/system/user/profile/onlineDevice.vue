@@ -1,6 +1,6 @@
 <template>
   <div class="profile-table-wrap">
-    <el-table :data="devices" border class="data-table profile-device-table">
+    <DepartmentDataTable :data="devices" border class="data-table profile-device-table">
       <el-table-column :label="$t('common.deviceType')" align="center">
         <template #default="scope">
           <dict-tag :options="sys_device_type" :value="scope.row.deviceType" />
@@ -17,12 +17,14 @@
       </el-table-column>
       <el-table-column :label="$t('common.operation')" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-            <el-button link type="primary" icon="Delete" @click="handldDelOnline(scope.row)"></el-button>
-          </el-tooltip>
+          <DepartmentTableActions>
+            <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+              <UiButton link type="danger" icon="Delete" @click="handldDelOnline(scope.row)" />
+            </UiTooltip>
+          </DepartmentTableActions>
         </template>
       </el-table-column>
-    </el-table>
+    </DepartmentDataTable>
   </div>
 </template>
 
@@ -34,6 +36,9 @@ import { useDict } from '@/utils/dict';
 import { useI18n } from 'vue-i18n';
 import { propTypes } from '@/utils/propTypes';
 import { parseTime } from '@/utils/ruoyi';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiTooltip } from '@/components/UiKit';
 
 const { t } = useI18n();
 

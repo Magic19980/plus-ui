@@ -1,7 +1,7 @@
 <template>
   <div class="p-2 app-container tool-gen-page">
     <div class="search-wrap">
-      <el-card shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
+      <UiCard shadow="hover" class="search-panel" :class="{ 'is-collapsed': !showSearch }">
         <template #header>
           <div class="panel-heading search-panel-toggle" @click.stop="showSearch = !showSearch">
             <div>
@@ -12,16 +12,13 @@
         </template>
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" class="query-form">
           <el-form-item :label="$t('common.dataSource')" prop="dataName">
-            <el-select v-model="queryParams.dataName" filterable clearable :placeholder="$t('common.placeholderSelectDataSource')">
-              <el-option key="" :label="$t('common.all')" value="" />
-              <el-option v-for="item in dataNameList" :key="item" :label="item" :value="item"></el-option>
-            </el-select>
+            <UiSelect v-model="queryParams.dataName" :options="dataNameOptions" filterable clearable :placeholder="$t('common.placeholderSelectDataSource')" />
           </el-form-item>
           <el-form-item :label="$t('common.tableName')" prop="tableName">
-            <el-input v-model="queryParams.tableName" :placeholder="$t('common.placeholderInputTableName')" clearable @keyup.enter="handleQuery" />
+            <UiInput v-model="queryParams.tableName" :placeholder="$t('common.placeholderInputTableName')" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="$t('common.tableDesc')" prop="tableComment">
-            <el-input
+            <UiInput
               v-model="queryParams.tableComment"
               :placeholder="$t('common.placeholderInputTableDesc')"
               clearable
@@ -29,24 +26,24 @@
             />
           </el-form-item>
           <el-form-item :label="$t('common.createTime')" style="width: 308px">
-            <el-date-picker
+            <UiDatePicker
               v-model="dateRange"
               value-format="YYYY-MM-DD"
               type="daterange"
               range-separator="-"
               :start-placeholder="$t('common.placeholderStartDate')"
               :end-placeholder="$t('common.placeholderEndDate')"
-            ></el-date-picker>
+            />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</el-button>
-            <el-button icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</el-button>
+            <UiButton type="primary" icon="Search" @click="handleQuery">{{ $t('common.btnSearch') }}</UiButton>
+            <UiButton icon="Refresh" @click="resetQuery">{{ $t('common.btnReset') }}</UiButton>
           </el-form-item>
         </el-form>
-      </el-card>
+      </UiCard>
     </div>
 
-    <el-card shadow="hover" class="table-panel">
+    <UiCard shadow="hover" class="table-panel">
       <template #header>
         <div class="toolbar-shell">
           <div class="table-heading">
@@ -55,13 +52,13 @@
             <p>共 {{ total }} 条记录，支持导入表结构、同步数据库和代码预览生成。</p>
           </div>
           <div class="toolbar-actions">
-            <el-button v-hasPermi="['tool:gen:code']" type="primary" plain icon="Download" @click="handleGenTable()">
+            <UiButton v-hasPermi="['tool:gen:code']" type="primary" plain icon="Download" @click="handleGenTable()">
               生成
-            </el-button>
-            <el-button v-hasPermi="['tool:gen:import']" type="info" plain icon="Upload" @click="openImportTable">
+            </UiButton>
+            <UiButton v-hasPermi="['tool:gen:import']" type="info" plain icon="Upload" @click="openImportTable">
               {{ $t('common.btnImport') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['tool:gen:edit']"
               type="success"
               plain
@@ -70,8 +67,8 @@
               @click="handleEditTable()"
             >
               {{ $t('common.btnEdit') }}
-            </el-button>
-            <el-button
+            </UiButton>
+            <UiButton
               v-hasPermi="['tool:gen:remove']"
               type="danger"
               plain
@@ -80,14 +77,14 @@
               @click="handleDelete()"
             >
               {{ $t('common.btnDelete') }}
-            </el-button>
+            </UiButton>
             <right-toolbar v-model:show-search="showSearch" :search="false" @query-table="getList"></right-toolbar>
           </div>
         </div>
       </template>
 
-      <el-table
-        v-loading="loading"
+      <DepartmentDataTable
+        :loading="loading"
         border
         class="data-table"
         :data="tableList"
@@ -107,62 +104,64 @@
         <el-table-column :label="$t('common.updateTime')" align="center" prop="updateTime" width="160" />
         <el-table-column :label="$t('common.operation')" align="center" width="330" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-tooltip :content="$t('common.tooltipPreview')" placement="top">
-              <el-button
+            <DepartmentTableActions>
+            <UiTooltip :content="$t('common.tooltipPreview')" placement="bottom">
+              <UiButton
                 v-hasPermi="['tool:gen:preview']"
                 link
                 type="primary"
                 icon="View"
                 @click="handlePreview(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipEdit')" placement="top">
-              <el-button
+              ></UiButton>
+            </UiTooltip>
+            <UiTooltip :content="$t('common.tooltipEdit')" placement="bottom">
+              <UiButton
                 v-hasPermi="['tool:gen:edit']"
                 link
                 type="primary"
                 icon="Edit"
                 @click="handleEditTable(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipDelete')" placement="top">
-              <el-button
+              ></UiButton>
+            </UiTooltip>
+            <UiTooltip :content="$t('common.tooltipDelete')" placement="bottom">
+              <UiButton
                 v-hasPermi="['tool:gen:remove']"
                 link
                 type="primary"
                 icon="Delete"
                 @click="handleDelete(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipSync')" placement="top">
-              <el-button
+              ></UiButton>
+            </UiTooltip>
+            <UiTooltip :content="$t('common.tooltipSync')" placement="bottom">
+              <UiButton
                 v-hasPermi="['tool:gen:edit']"
                 link
                 type="primary"
                 icon="Refresh"
                 @click="handleSynchDb(scope.row)"
-              ></el-button>
-            </el-tooltip>
-            <el-tooltip :content="$t('common.tooltipGenerate')" placement="top">
-              <el-button
+              ></UiButton>
+            </UiTooltip>
+            <UiTooltip :content="$t('common.tooltipGenerate')" placement="bottom">
+              <UiButton
                 v-hasPermi="['tool:gen:code']"
                 link
                 type="primary"
                 icon="Download"
                 @click="handleGenTable(scope.row)"
-              ></el-button>
-            </el-tooltip>
+              ></UiButton>
+            </UiTooltip>
+            </DepartmentTableActions>
           </template>
         </el-table-column>
-      </el-table>
-      <pagination
+      </DepartmentDataTable>
+      <UiPagination
         v-show="total > 0"
         v-model:page="queryParams.pageNum"
         v-model:limit="queryParams.pageSize"
         :total="total"
         @pagination="getList"
       />
-    </el-card>
+    </UiCard>
 
     <!-- 预览界面 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="80%" top="5vh" append-to-body class="scrollbar">
@@ -205,7 +204,11 @@ import download from '@/plugins/download';
 import modal from '@/plugins/modal';
 import router from '@/router';
 import ImportTable from './importTable.vue';
+import DepartmentDataTable from '@/components/Department/DataTable.vue';
+import DepartmentTableActions from '@/components/Department/TableActions.vue';
+import { UiButton, UiCard, UiDatePicker, UiInput, UiPagination, UiSelect, UiTooltip } from '@/components/UiKit';
 
+const { t } = useI18n();
 const route = useRoute();
 
 const tableList = ref<TableVO[]>([]);
@@ -215,6 +218,7 @@ const total = ref(0);
 const { dateRange, applyDateRange, resetDateRange } = useDateRangeQuery();
 const uniqueId = ref('');
 const dataNameList = ref<Array<string>>([]);
+const dataNameOptions = computed(() => [{ value: '', label: t('common.all') }, ...dataNameList.value.map(item => ({ value: item, label: item }))]);
 
 const queryFormRef = ref<ElFormInstance>();
 const importRef = ref<InstanceType<typeof ImportTable>>();

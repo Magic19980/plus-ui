@@ -1,6 +1,6 @@
 <template>
   <div class="p-2 app-container department-community-page">
-    <el-card shadow="never" class="community-hero">
+    <UiCard class="community-hero" type="default" pattern="app-blue">
       <div class="hero-main">
         <div>
           <span class="hero-kicker">COLLABORATION COMMUNITY</span>
@@ -8,7 +8,7 @@
           <p>把日常经验、问题求助和改进想法放到一起，让跨部门协作更顺畅。</p>
         </div>
         <div class="hero-actions">
-          <el-button v-hasPermi="['department:community:moderate']" plain @click="openReportAdmin">举报处理</el-button>
+          <UiButton v-hasPermi="['department:community:moderate']" plain @click="openReportAdmin">举报处理</UiButton>
         </div>
       </div>
       <div class="hero-summary">
@@ -26,24 +26,18 @@
         </div>
         <div class="hero-tip"><el-icon><InfoFilled /></el-icon><span>社区用于讨论交流，正式制度和成果请归档到资料库或提交 SCORE 提案。</span></div>
       </div>
-    </el-card>
+    </UiCard>
 
     <div class="community-layout mt-2">
-      <el-card shadow="never" class="community-card">
+      <UiCard class="community-card" type="default" pattern="none">
         <div class="community-toolbar">
-          <div class="feed-tabs">
-            <button v-for="item in feedOptions" :key="item.value" class="feed-tab" :class="{ active: queryParams.feed === item.value }" @click="changeFeed(item.value)">
-              <el-icon><component :is="item.icon" /></el-icon>{{ item.label }}
-            </button>
-          </div>
+          <UiTabs v-model="queryParams.feed" :items="feedOptions" :shadow="false" contentless aria-label="社区内容筛选" @change="changeFeed" />
           <div class="filter-actions">
-            <el-input v-model="queryParams.keyword" clearable class="keyword-input" placeholder="搜索标题、副标题、内容或标签" @keyup.enter="handleQuery">
+            <UiInput v-model="queryParams.keyword" clearable class="keyword-input" placeholder="搜索标题、副标题、内容或标签" @keyup.enter="handleQuery">
               <template #prefix><el-icon><Search /></el-icon></template>
-            </el-input>
-            <el-select v-model="queryParams.postType" clearable class="type-select" placeholder="全部类型" @change="handleQuery">
-              <el-option v-for="item in postTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            </UiInput>
+            <UiSelect v-model="queryParams.postType" :options="postTypeOptions" clearable class="type-select" placeholder="全部类型" @change="handleQuery" />
+            <UiButton type="primary" icon="Search" @click="handleQuery">查询</UiButton>
           </div>
         </div>
 
@@ -85,10 +79,10 @@
             @resolve-comment="resolveComment"
             @load-more-comments="handleLoadMoreComments"
           />
-          <el-empty v-if="!loading && !postList.length" description="还没有内容，来发布第一条吧" />
+          <UiEmpty v-if="!loading && !postList.length" class="community-empty" description="还没有内容，来发布第一条吧" />
         </div>
-        <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
-      </el-card>
+        <UiPagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      </UiCard>
 
       <aside class="community-aside">
         <section class="aside-card">
@@ -104,33 +98,28 @@
           <span class="aside-cta-kicker">START A TOPIC</span>
           <strong>把经验分享出来</strong>
           <p>遇到问题、总结经验或提出改进想法，都可以在这里开启讨论。</p>
-          <el-button v-hasPermi="['department:community:add']" type="primary" plain @click="openCreate">发布内容</el-button>
+          <UiButton v-hasPermi="['department:community:add']" type="primary" plain @click="openCreate">发布内容</UiButton>
         </section>
       </aside>
     </div>
 
     <el-dialog v-model="postDialog.visible" :title="postDialog.title" width="min(960px, 92vw)" append-to-body destroy-on-close class="community-post-dialog">
       <el-form ref="postFormRef" :model="postForm" :rules="postRules" label-position="top">
-        <el-form-item label="标题" prop="title"><el-input v-model="postForm.title" maxlength="200" show-word-limit placeholder="用一句话说清楚你想讨论什么" /></el-form-item>
-        <el-form-item label="副标题（可选）"><el-input v-model="postForm.subtitle" maxlength="300" show-word-limit placeholder="补充说明主题，可不填写" /></el-form-item>
+        <el-form-item label="标题" prop="title"><UiInput v-model="postForm.title" :maxlength="200" placeholder="用一句话说清楚你想讨论什么" /></el-form-item>
+        <el-form-item label="副标题（可选）"><UiInput v-model="postForm.subtitle" :maxlength="300" placeholder="补充说明主题，可不填写" /></el-form-item>
         <div class="form-grid">
           <el-form-item label="内容类型" prop="postType">
-            <el-select v-model="postForm.postType" style="width: 100%">
-              <el-option v-for="item in postTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <UiSelect v-model="postForm.postType" :options="postTypeOptions" style="width: 100%" />
           </el-form-item>
           <el-form-item label="可见范围" prop="visibility">
-            <el-select v-model="postForm.visibility" style="width: 100%">
-              <el-option label="全员可见" value="ALL" />
-              <el-option label="本部门可见" value="DEPT" />
-            </el-select>
+            <UiSelect v-model="postForm.visibility" :options="visibilityOptions" style="width: 100%" />
           </el-form-item>
         </div>
         <el-form-item label="话题标签">
-          <el-input v-model="postForm.tags" maxlength="500" placeholder="多个标签用逗号分隔，如：系统、效率、经验" />
+          <UiInput v-model="postForm.tags" :maxlength="500" placeholder="多个标签用逗号分隔，如：系统、效率、经验" />
         </el-form-item>
         <el-form-item class="community-content-item" label="正文" prop="content">
-          <CommunityTiptapEditor v-model="postForm.content" v-model:media-oss-ids="inlineMediaOssIds" v-model:uploading="editorUploading" :min-height="390" :max-length="10000" />
+          <TiptapEditor v-model="postForm.content" v-model:media-oss-ids="inlineMediaOssIds" v-model:uploading="editorUploading" preset="community" :min-height="390" :max-length="10000" />
         </el-form-item>
         <div class="media-field">
           <div class="media-field-head">
@@ -193,9 +182,9 @@
         </div>
       </el-form>
       <template #footer>
-        <el-button @click="postDialog.visible = false">取消</el-button>
-        <el-button :loading="buttonLoading" @click="submitPost('DRAFT')">保存草稿</el-button>
-        <el-button type="primary" :loading="buttonLoading" @click="submitPost('PUBLISHED')">{{ postForm.id ? '保存并发布' : '发布' }}</el-button>
+        <UiButton @click="postDialog.visible = false">取消</UiButton>
+        <UiButton :loading="buttonLoading" @click="submitPost('DRAFT')">保存草稿</UiButton>
+        <UiButton type="primary" :loading="buttonLoading" @click="submitPost('PUBLISHED')">{{ postForm.id ? '保存并发布' : '发布' }}</UiButton>
       </template>
     </el-dialog>
 
@@ -227,7 +216,7 @@
               </div>
             </div>
             <div class="post-detail-divider" />
-            <article class="post-detail-copy"><CommunityTiptapEditor :model-value="detailPost.content" read-only :min-height="0" :max-length="10000" /></article>
+            <article class="post-detail-copy"><TiptapEditor :model-value="detailPost.content" read-only preset="community" :min-height="0" :max-length="10000" /></article>
             <div v-if="splitTags(detailPost.tags).length" class="post-detail-tags">
               <el-tag v-for="tag in splitTags(detailPost.tags)" :key="tag" size="small" effect="plain"># {{ tag }}</el-tag>
             </div>
@@ -272,9 +261,9 @@
                   <div class="detail-comment-input-wrap">
                     <div v-if="replyingTo" class="detail-comment-reply-target">
                       <span>正在评论 {{ replyingTo.authorName || '这条评论' }}</span>
-                      <el-button link type="primary" size="small" @click="cancelReply">取消评论</el-button>
+                      <UiButton link type="primary" size="small" @click="cancelReply">取消评论</UiButton>
                     </div>
-                    <el-input ref="detailCommentInputRef" v-model="commentForm.content" type="textarea" :rows="3" maxlength="2000" show-word-limit :placeholder="replyingTo ? '写下你的评论…' : '写下你的评论，分享你的经验或建议…'" @keydown.ctrl.enter.prevent="submitComment" />
+                    <UiTextarea ref="detailCommentInputRef" v-model="commentForm.content" :rows="3" :maxlength="2000" show-word-limit :placeholder="replyingTo ? '写下你的评论…' : '写下你的评论，分享你的经验或建议…'" @keydown.ctrl.enter.prevent="submitComment" />
                     <div v-if="commentMediaItems.length" class="detail-comment-media-draft-list">
                       <div v-for="item in commentMediaItems" :key="item.key" class="detail-comment-media-draft">
                         <img :src="item.localUrl || item.previewUrl" alt="评论图片" />
@@ -304,7 +293,7 @@
                         </el-upload>
                         <span class="detail-comment-composer-hint">Ctrl + Enter 发表评论</span>
                       </div>
-                      <el-button v-hasPermi="['department:community:comment']" type="primary" :loading="commentLoading" @click="submitComment">发表评论</el-button>
+                      <UiButton v-hasPermi="['department:community:comment']" type="primary" :loading="commentLoading" @click="submitComment">发表评论</UiButton>
                     </div>
                   </div>
                 </div>
@@ -320,9 +309,9 @@
                         <div class="detail-comment-meta">
                           <span>{{ thread.comment.createTime }}</span>
                           <div class="detail-comment-actions">
-                            <el-button v-if="thread.comment.mine" v-hasPermi="['department:community:comment']" link type="danger" size="small" @click="handleDeleteComment(thread.comment)">删除</el-button>
-                            <el-button v-hasPermi="['department:community:comment']" link type="primary" size="small" @click="handleReply(thread.comment)">评论</el-button>
-                            <el-button v-if="detailPost.postType === 'QUESTION' && detailPost.status !== 'RESOLVED'" v-hasPermi="['department:community:edit']" link type="success" size="small" @click="resolveComment(thread.comment)">采纳</el-button>
+                            <UiButton v-if="thread.comment.mine" v-hasPermi="['department:community:comment']" link type="danger" size="small" @click="handleDeleteComment(thread.comment)">删除</UiButton>
+                            <UiButton v-hasPermi="['department:community:comment']" link type="primary" size="small" @click="handleReply(thread.comment)">评论</UiButton>
+                            <UiButton v-if="detailPost.postType === 'QUESTION' && detailPost.status !== 'RESOLVED'" v-hasPermi="['department:community:edit']" link type="success" size="small" @click="resolveComment(thread.comment)">采纳</UiButton>
                           </div>
                         </div>
                       </div>
@@ -338,9 +327,9 @@
                           <div class="detail-comment-meta">
                             <span>{{ reply.createTime }}</span>
                             <div class="detail-comment-actions">
-                              <el-button v-if="reply.mine" v-hasPermi="['department:community:comment']" link type="danger" size="small" @click="handleDeleteComment(reply)">删除</el-button>
-                              <el-button v-hasPermi="['department:community:comment']" link type="primary" size="small" @click="handleReply(reply)">评论</el-button>
-                              <el-button v-if="detailPost.postType === 'QUESTION' && detailPost.status !== 'RESOLVED'" v-hasPermi="['department:community:edit']" link type="success" size="small" @click="resolveComment(reply)">采纳</el-button>
+                              <UiButton v-if="reply.mine" v-hasPermi="['department:community:comment']" link type="danger" size="small" @click="handleDeleteComment(reply)">删除</UiButton>
+                              <UiButton v-hasPermi="['department:community:comment']" link type="primary" size="small" @click="handleReply(reply)">评论</UiButton>
+                              <UiButton v-if="detailPost.postType === 'QUESTION' && detailPost.status !== 'RESOLVED'" v-hasPermi="['department:community:edit']" link type="success" size="small" @click="resolveComment(reply)">采纳</UiButton>
                             </div>
                           </div>
                         </div>
@@ -349,7 +338,7 @@
                   </div>
                 </div>
                 <div v-if="commentHasMore" class="detail-comments-load-more">
-                  <el-button link type="primary" :loading="commentLoadingMore" @click="handleLoadMoreComments">查看剩余 {{ remainingCommentCount }} 条评论</el-button>
+                  <UiButton link type="primary" :loading="commentLoadingMore" @click="handleLoadMoreComments">查看剩余 {{ remainingCommentCount }} 条评论</UiButton>
                 </div>
                 <el-empty v-if="!commentThreads.length" :image-size="56" description="还没有评论，来留下第一条评论吧" />
               </template>
@@ -362,8 +351,8 @@
         <div v-if="detailPost" class="post-detail-footer">
           <div class="post-detail-stats"><span><el-icon><View /></el-icon>{{ detailPost.viewCount || 0 }} 次浏览</span><span><el-icon><ChatDotRound /></el-icon>{{ commentTotal }} 条评论</span></div>
           <div class="post-detail-footer-actions">
-            <el-button text :loading="isReactionLoading(detailPost.id, 'LIKE')" :disabled="isReactionLoading(detailPost.id, 'LIKE')" :class="{ reacted: detailPost.liked }" @click="toggleDetailReaction('LIKE')"><el-icon><Pointer /></el-icon>{{ detailPost.likeCount || 0 }}</el-button>
-            <el-button text :loading="isReactionLoading(detailPost.id, 'FAVORITE')" :disabled="isReactionLoading(detailPost.id, 'FAVORITE')" :class="{ reacted: detailPost.favorited }" @click="toggleDetailReaction('FAVORITE')"><el-icon><Star /></el-icon>{{ detailPost.favoriteCount || 0 }}</el-button>
+            <UiButton text :loading="isReactionLoading(detailPost.id, 'LIKE')" :disabled="isReactionLoading(detailPost.id, 'LIKE')" :class="{ reacted: detailPost.liked }" @click="toggleDetailReaction('LIKE')"><el-icon><Pointer /></el-icon>{{ detailPost.likeCount || 0 }}</UiButton>
+            <UiButton text :loading="isReactionLoading(detailPost.id, 'FAVORITE')" :disabled="isReactionLoading(detailPost.id, 'FAVORITE')" :class="{ reacted: detailPost.favorited }" @click="toggleDetailReaction('FAVORITE')"><el-icon><Star /></el-icon>{{ detailPost.favoriteCount || 0 }}</UiButton>
           </div>
         </div>
       </template>
@@ -423,7 +412,7 @@
 
     <el-dialog v-model="reportDialog.visible" title="举报内容" width="520px" append-to-body destroy-on-close>
       <div class="report-tip">请描述你认为不合适的地方，管理员会根据内容处理。</div>
-      <el-input v-model="reportForm.reason" type="textarea" :rows="5" maxlength="500" show-word-limit placeholder="请输入举报原因" />
+      <UiTextarea v-model="reportForm.reason" :rows="5" :maxlength="500" show-word-limit placeholder="请输入举报原因" />
       <template #footer>
         <el-button @click="reportDialog.visible = false">取消</el-button>
         <el-button type="primary" :loading="reportSubmitting" @click="submitReport">提交举报</el-button>
@@ -461,13 +450,13 @@
           </template>
         </el-table-column>
       </el-table>
-      <pagination v-show="reportTotal > 0" v-model:page="reportQuery.pageNum" v-model:limit="reportQuery.pageSize" :total="reportTotal" @pagination="getReports" />
+      <UiPagination v-show="reportTotal > 0" v-model:page="reportQuery.pageNum" v-model:limit="reportQuery.pageSize" :total="reportTotal" @pagination="getReports" />
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts" name="DepartmentCommunity">
-import type { FormInstance, InputInstance } from 'element-plus';
+import type { FormInstance } from 'element-plus';
 import { ChatDotRound, CircleCheck, Clock, Connection, Delete, Edit, InfoFilled, Loading, Picture, Pointer, RefreshRight, Search, Star, TrendCharts, UserFilled, View, VideoCamera, Warning, ZoomIn, ZoomOut } from '@element-plus/icons-vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import {
@@ -499,8 +488,9 @@ import type {
   DepartmentCommunityReportQuery,
   DepartmentCommunityReportVO
 } from '@/api/department/community/types';
-import CommunityTiptapEditor from '@/components/CommunityTiptapEditor/index.vue';
+import TiptapEditor from '@/components/TiptapEditor/index.vue';
 import UserAvatar from '@/components/UserAvatar/index.vue';
+import { UiButton, UiCard, UiEmpty, UiInput, UiPagination, UiSelect, UiTabs, UiTextarea } from '@/components/UiKit';
 import modal from '@/plugins/modal';
 import { useLoading } from '@/hooks/async/useLoading';
 import { useUserStore } from '@/store/modules/user';
@@ -540,7 +530,8 @@ const expandedCommentPostId = ref<string | number>();
 const commentPost = ref<DepartmentCommunityPostVO>();
 const detailCommentLoading = ref(false);
 const replyingTo = ref<DepartmentCommunityCommentVO>();
-const detailCommentInputRef = ref<InputInstance>();
+type UiTextareaInstance = { focus: () => void; textarea?: HTMLTextAreaElement };
+const detailCommentInputRef = ref<UiTextareaInstance>();
 const {
   comments,
   commentTotal,
@@ -610,10 +601,14 @@ const mediaImageStyle = computed(() => ({
 }));
 
 const feedOptions = [
-  { value: 'HOT', label: '推荐', icon: TrendCharts },
-  { value: 'LATEST', label: '最新', icon: Clock },
-  { value: 'MINE', label: '我的内容', icon: UserFilled }
-] as const satisfies ReadonlyArray<{ value: CommunityFeed; label: string; icon: typeof TrendCharts }>;
+  { key: 'HOT', label: '推荐', icon: TrendCharts },
+  { key: 'LATEST', label: '最新', icon: Clock },
+  { key: 'MINE', label: '我的内容', icon: UserFilled }
+] as const satisfies ReadonlyArray<{ key: CommunityFeed; label: string; icon: typeof TrendCharts }>;
+const visibilityOptions = [
+  { value: 'ALL', label: '全员可见' },
+  { value: 'DEPT', label: '本部门可见' }
+] as const;
 const emojiList = [
   // 表情与人物
   '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😋', '😛', '😜', '🤪', '🤔', '🫡', '🤗', '🤭', '🤫', '🤐', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '😯', '😲', '🥱', '😴', '🤓', '😎', '🤯', '😢', '😭', '😤', '😠', '😡', '🤬', '🤢', '🤮', '🤧', '🥳', '🥺', '😱', '😨', '😰', '😳', '🫠',
@@ -663,8 +658,8 @@ const handleQuery = () => {
   getList();
 };
 
-const changeFeed = (feed: CommunityFeed) => {
-  queryParams.feed = feed;
+const changeFeed = (feed: string) => {
+  queryParams.feed = feed as CommunityFeed;
   handleQuery();
 };
 
@@ -1059,15 +1054,17 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .department-community-page {
-  --community-ink: #18243b;
-  --community-muted: #71809a;
-  --community-line: #e6ecf5;
-  --community-primary: #3f8eea;
-  --community-surface: #ffffff;
-  --community-surface-raised: #ffffff;
-  --community-soft: #f5f8fc;
-  --community-canvas: #f5f8fc;
-  --community-shadow: 0 16px 42px rgba(47, 73, 111, .08);
+  --community-ink: var(--app-text-title, #18243b);
+  --community-muted: var(--app-text-muted, #71809a);
+  --community-line: var(--app-surface-border, #e6ecf5);
+  --community-primary: var(--app-accent-strong, #3f8eea);
+  --community-surface: var(--app-surface-bg, #ffffff);
+  --community-surface-raised: var(--app-elevated-soft-bg, #ffffff);
+  --community-soft: var(--app-elevated-soft-bg, #f5f8fc);
+  --community-canvas: var(--app-shell-bg, #f5f8fc);
+  --community-shadow: var(--app-shadow-md, 0 16px 42px rgba(47, 73, 111, .08));
+  --community-control-bg: var(--animal-bg-color-input, var(--app-surface-bg, #ffffff));
+  --community-focus-bg: color-mix(in srgb, var(--community-primary) 12%, var(--community-surface));
 
   /* 社区页需要覆盖到视口底部，否则列表结束后会露出 app-main 的另一层底色。 */
   min-height: calc(100vh - 111px);
@@ -1075,23 +1072,24 @@ onMounted(async () => {
 
   .community-hero {
     position: relative;
-    border: 1px solid rgba(181, 207, 239, .65);
+    border: 1px solid color-mix(in srgb, var(--community-primary) 24%, var(--community-line));
     border-radius: 22px;
     overflow: hidden;
     background:
-      radial-gradient(circle at 85% 12%, rgba(89, 157, 238, .22), transparent 28%),
-      linear-gradient(118deg, #f8fbff 0%, #edf6ff 58%, #f8fbff 100%);
+      radial-gradient(circle at 85% 12%, color-mix(in srgb, var(--community-primary) 22%, transparent), transparent 28%),
+      linear-gradient(118deg, color-mix(in srgb, var(--community-surface) 94%, var(--community-primary)) 0%, color-mix(in srgb, var(--community-surface) 86%, var(--community-primary)) 58%, var(--community-surface) 100%);
     box-shadow: var(--community-shadow);
     :deep(.el-card__body) { padding: 30px 34px 24px; }
+    :deep(.ui-animal-card__body) { padding: 30px 34px 24px; }
   }
   .hero-main { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
   .hero-actions { display: flex; align-items: center; gap: 10px; padding-top: 5px; }
-  .hero-actions :deep(.el-button) { border-radius: 11px; }
-  .hero-kicker { display: block; color: #6a9bdf; font-size: 11px; font-weight: 800; letter-spacing: 1.8px; }
+  .hero-actions :deep(.el-button), .hero-actions :deep(.animal-button) { border-radius: 11px; }
+  .hero-kicker { display: block; color: var(--community-primary); font-size: 11px; font-weight: 800; letter-spacing: 1.8px; }
   h2 { margin: 9px 0 7px; color: var(--community-ink); font-size: 30px; font-weight: 750; letter-spacing: .2px; }
   .hero-main p { max-width: 620px; margin: 0; color: var(--community-muted); font-size: 14px; line-height: 1.7; }
-  .hero-summary { display: flex; align-items: stretch; gap: 11px; margin-top: 27px; padding-top: 19px; border-top: 1px solid rgba(122, 157, 201, .2); }
-  .summary-item { display: flex; align-items: center; gap: 10px; min-width: 142px; padding: 10px 13px; border: 1px solid rgba(181, 207, 239, .52); border-radius: 14px; background: rgba(255, 255, 255, .56); }
+  .hero-summary { display: flex; align-items: stretch; gap: 11px; margin-top: 27px; padding-top: 19px; border-top: 1px solid color-mix(in srgb, var(--community-line) 70%, transparent); }
+  .summary-item { display: flex; align-items: center; gap: 10px; min-width: 142px; padding: 10px 13px; border: 1px solid color-mix(in srgb, var(--community-primary) 18%, var(--community-line)); border-radius: 14px; background: color-mix(in srgb, var(--community-surface) 78%, transparent); }
   .summary-icon { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 12px; font-size: 18px; }
   .summary-icon.blue { color: #4d91e8; background: #deedff; }
   .summary-icon.green { color: #54af8b; background: #ddf5eb; }
@@ -1099,8 +1097,8 @@ onMounted(async () => {
   .summary-item strong, .summary-item span { display: block; }
   .summary-item strong { color: var(--community-ink); font-size: 17px; }
   .summary-item div span { margin-top: 2px; color: var(--community-muted); font-size: 12px; }
-  .hero-tip { display: flex; align-items: center; gap: 7px; max-width: 390px; margin: auto 0 auto auto; color: #8190a9; font-size: 12px; line-height: 1.5; }
-  .hero-tip .el-icon { color: #74a6e7; }
+  .hero-tip { display: flex; align-items: center; gap: 7px; max-width: 390px; margin: auto 0 auto auto; color: var(--community-muted); font-size: 12px; line-height: 1.5; }
+  .hero-tip .el-icon { color: var(--community-primary); }
   .community-layout { display: grid; grid-template-columns: minmax(0, 1fr) 294px; gap: 18px; align-items: start; background: transparent; }
   /* 页面画布只由页面根节点负责，内容卡片和分页保持透明，避免出现多层横向色带。 */
   .community-card,
@@ -1111,18 +1109,15 @@ onMounted(async () => {
     box-shadow: none;
   }
   .community-card :deep(.el-card__body) { padding: 0; }
-  .community-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 13px 15px; border: 1px solid var(--community-line); border-radius: 16px; background: var(--community-surface); box-shadow: 0 9px 28px rgba(47, 73, 111, .05); }
-  .feed-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--community-soft); }
-  .feed-tab { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 0; border-radius: 9px; color: #8090a9; background: transparent; cursor: pointer; transition: all .2s; }
-  .feed-tab:hover { color: var(--community-primary); background: #f3f7fd; }
-  .feed-tab.active { color: #fff; background: var(--community-primary); box-shadow: 0 5px 12px rgba(77, 145, 232, .2); }
+  .community-card :deep(.ui-animal-card__body) { padding: 0; }
+  .community-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 13px 15px; border: 1px solid var(--community-line); border-radius: 16px; background: var(--community-surface); box-shadow: var(--app-shadow-sm, 0 9px 28px rgba(47, 73, 111, .05)); }
   .filter-actions { display: flex; align-items: center; gap: 8px; }
   .keyword-input { width: 270px; }
   .type-select { width: 130px; }
   .filter-actions :deep(.el-input__wrapper), .filter-actions :deep(.el-select__wrapper) { border-radius: 10px; box-shadow: 0 0 0 1px var(--community-line) inset; }
-  .filter-actions :deep(.el-button) { border-radius: 10px; }
+  .filter-actions :deep(.el-button), .filter-actions :deep(.animal-button) { border-radius: 10px; }
   .post-list { display: grid; grid-template-columns: 1fr; gap: 16px; min-height: 260px; padding-top: 18px; }
-  .post-list :deep(.el-empty) { grid-column: 1 / -1; min-height: 260px; border: 1px dashed var(--community-line); border-radius: 18px; background: var(--community-surface); }
+  .post-list :deep(.el-empty), .post-list :deep(.community-empty) { grid-column: 1 / -1; min-height: 260px; border: 1px dashed var(--community-line); border-radius: 18px; background: var(--community-surface); }
   .community-aside { display: grid; align-self: start; gap: 16px; height: fit-content; position: sticky; top: 14px; }
   .aside-card { padding: 19px; border: 1px solid var(--community-line); border-radius: 17px; background: var(--community-surface); box-shadow: 0 10px 30px rgba(47, 73, 111, .055); }
   .aside-card-head { display: flex; align-items: center; gap: 10px; padding-bottom: 15px; border-bottom: 1px solid var(--community-line); }
@@ -1137,14 +1132,14 @@ onMounted(async () => {
   .aside-rule strong, .aside-rule small { display: block; }
   .aside-rule strong { color: var(--community-ink); font-size: 13px; }
   .aside-rule small { margin-top: 4px; color: var(--community-muted); font-size: 12px; line-height: 1.55; }
-  .aside-cta { padding: 21px; background: linear-gradient(145deg, #eef7ff, #f8fbff); }
-  .aside-cta-kicker { display: block; color: #6a9bdf; font-size: 10px; font-weight: 800; letter-spacing: 1.6px; }
-  .aside-cta > strong { display: block; margin-top: 8px; color: #203858; font-size: 18px; }
-  .aside-cta p { margin: 8px 0 16px; color: #71809a; font-size: 12px; line-height: 1.65; }
-  .aside-cta :deep(.el-button) { width: 100%; border-radius: 10px; }
+  .aside-cta { padding: 21px; background: linear-gradient(145deg, color-mix(in srgb, var(--community-primary) 10%, var(--community-surface)), var(--community-surface)); }
+  .aside-cta-kicker { display: block; color: var(--community-primary); font-size: 10px; font-weight: 800; letter-spacing: 1.6px; }
+  .aside-cta > strong { display: block; margin-top: 8px; color: var(--community-ink); font-size: 18px; }
+  .aside-cta p { margin: 8px 0 16px; color: var(--community-muted); font-size: 12px; line-height: 1.65; }
+  .aside-cta :deep(.el-button), .aside-cta :deep(.animal-button) { width: 100%; border-radius: 10px; }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .comment-heading { color: #32435f; font-weight: 650; }
-  .media-field { margin-top: 6px; padding: 16px; border: 1px solid var(--community-line); border-radius: 14px; background: #fbfcfe; }
+  .comment-heading { color: var(--community-ink); font-weight: 650; }
+  .media-field { margin-top: 6px; padding: 16px; border: 1px solid var(--community-line); border-radius: 14px; background: var(--community-soft); }
   .media-field-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .media-field-head > div { display: flex; align-items: center; gap: 8px; }
   .media-field-head strong { color: #354661; font-size: 14px; }
@@ -1213,10 +1208,10 @@ onMounted(async () => {
     .keyword-input { flex: 1; width: auto; min-width: 220px; }
   }
   @media (max-width: 560px) {
-    .community-hero :deep(.el-card__body), .community-card :deep(.el-card__body) { padding-right: 16px; padding-left: 16px; }
+    .community-hero :deep(.el-card__body), .community-hero :deep(.ui-animal-card__body), .community-card :deep(.el-card__body), .community-card :deep(.ui-animal-card__body) { padding-right: 16px; padding-left: 16px; }
     .hero-main { align-items: flex-start; flex-direction: column; }
     .hero-actions { width: 100%; }
-    .hero-actions .el-button { flex: 1; }
+    .hero-actions .el-button, .hero-actions :deep(.animal-button) { flex: 1; }
     .community-aside { grid-template-columns: 1fr; }
     .form-grid { grid-template-columns: 1fr; gap: 0; }
     .media-upload-row { flex-direction: column; }
@@ -1235,8 +1230,7 @@ onMounted(async () => {
   box-shadow: none;
 }
 
-html.dark .department-community-page .post-list .el-empty,
-.dark .department-community-page .post-list .el-empty {
+html[data-ui-theme='office'][data-color-mode='dark'] .department-community-page .post-list .el-empty {
   background: var(--community-surface);
 }
 
@@ -1359,7 +1353,7 @@ html.dark .department-community-page .post-list .el-empty,
   .post-detail-author-line strong { color: #2b3b58; font-size: 13px; }
   .post-detail-author > div > span { display: block; margin-top: 3px; color: #9aa8ba; font-size: 11px; }
   .post-detail-divider { height: 1px; margin: 20px 0; background: #edf1f6; }
-  /* 正文排版继承 CommunityTiptapEditor，确保详情与编辑器保持一致。 */
+  /* 正文排版继承 TiptapEditor，确保详情与编辑器保持一致。 */
   .post-detail-copy p { color: #526681; white-space: pre-wrap; overflow-wrap: anywhere; }
   .post-detail-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
   .post-detail-media-section { margin-top: 24px; padding-top: 18px; border-top: 1px solid #edf1f6; }
@@ -1420,7 +1414,7 @@ html.dark .department-community-page .post-list .el-empty,
 
   .detail-comment-input-wrap { flex: 1; min-width: 0; }
   .detail-comment-reply-target { display: flex; align-items: center; gap: 7px; margin: 0 0 7px; color: #6a9bdf; font-size: 12px; }
-  .detail-comment-reply-target .el-button { padding: 0; font-size: 11px; }
+  .detail-comment-reply-target .el-button, .detail-comment-reply-target .animal-button { padding: 0; font-size: 11px; }
   .detail-comment-input-wrap .el-textarea__inner { min-height: 82px !important; padding: 11px 13px; border-color: #dce7f3; border-radius: 10px; background: #fff; box-shadow: none; color: #32435f; font-size: 13px; line-height: 1.6; }
   .detail-comment-input-wrap .el-textarea__inner:focus { border-color: #76afea; box-shadow: 0 0 0 3px rgba(63, 142, 234, .1); }
   .detail-comment-input-wrap .el-input__count { color: #9aa8ba; background: transparent; }
@@ -1438,7 +1432,7 @@ html.dark .department-community-page .post-list .el-empty,
   .detail-comment-tool-button:hover { color: #3f8eea; background: #eaf3ff; }
   .detail-comment-image-uploader { display: inline-flex; }
   .detail-comment-composer-hint { margin-left: 5px; color: #9aa8ba; font-size: 11px; }
-  .detail-comment-composer-footer > .el-button { min-width: 86px; border-radius: 9px; }
+  .detail-comment-composer-footer > .el-button, .detail-comment-composer-footer > .animal-button { min-width: 86px; border-radius: 9px; }
 
   .detail-comment-list { margin-top: 15px; }
   .detail-comment-thread + .detail-comment-thread { margin-top: 2px; }
@@ -1452,7 +1446,7 @@ html.dark .department-community-page .post-list .el-empty,
   .detail-comment-reply-context { margin-right: 5px; color: #6a9bdf; }
   .detail-comment-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 18px; margin-top: 5px; color: #9aa8ba; font-size: 11px; }
   .detail-comment-actions { display: flex; align-items: center; gap: 8px; }
-  .detail-comment-actions .el-button { margin: 0; padding: 0; font-size: 11px; }
+  .detail-comment-actions .el-button, .detail-comment-actions .animal-button { margin: 0; padding: 0; font-size: 11px; }
   .detail-comment-replies { position: relative; margin: 0 0 3px 44px; padding-left: 14px; border-left: 2px solid #d9e6f4; }
   .detail-comment-item--reply { display: flex; align-items: flex-start; margin-left: calc((var(--reply-depth, 1) - 1) * 22px); padding: 8px 0; border-top-color: #f0f3f7; }
   .detail-comment-item--reply:first-child { border-top: 0; }
@@ -1460,19 +1454,18 @@ html.dark .department-community-page .post-list .el-empty,
   .detail-comment-media-list button { width: 74px; height: 74px; padding: 0; overflow: hidden; border: 1px solid #dce7f3; border-radius: 8px; background: #edf2f8; cursor: zoom-in; }
   .detail-comment-media-list button:hover { border-color: #76afea; box-shadow: 0 3px 12px rgba(63, 142, 234, .15); }
   .detail-comments-load-more { display: flex; align-items: center; justify-content: center; min-height: 38px; margin-top: 8px; border-top: 1px solid #edf1f6; }
-  .detail-comments-load-more .el-button { margin: 0; font-size: 12px; }
+  .detail-comments-load-more .el-button, .detail-comments-load-more .animal-button { margin: 0; font-size: 12px; }
 
   .post-detail-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 22px; }
   .post-detail-stats, .post-detail-footer-actions { display: flex; align-items: center; gap: 8px; }
   .post-detail-stats { gap: 14px; color: #97a5b7; font-size: 11px; }
   .post-detail-stats span { display: inline-flex; align-items: center; gap: 4px; }
-  .post-detail-footer-actions .el-button { color: #8798ae; }
-  .post-detail-footer-actions .el-button:hover, .post-detail-footer-actions .el-button.reacted { color: #3f8eea; }
+  .post-detail-footer-actions .el-button, .post-detail-footer-actions .animal-button { color: #8798ae; }
+  .post-detail-footer-actions .el-button:hover, .post-detail-footer-actions .el-button.reacted, .post-detail-footer-actions .animal-button:hover, .post-detail-footer-actions .animal-button.reacted { color: #3f8eea; }
   .post-detail-footer-actions .el-button--primary { color: #fff; }
 }
 
-html.dark .community-post-dialog,
-.dark .community-post-dialog {
+html[data-ui-theme='office'][data-color-mode='dark'] .community-post-dialog {
   border-color: #2a3850;
   background: #141e30;
   box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
@@ -1494,8 +1487,7 @@ html.dark .community-post-dialog,
   .compose-media-preview { border-color: #33445c; background: #243247; }
 }
 
-html.dark .community-post-detail-dialog,
-.dark .community-post-detail-dialog {
+html[data-ui-theme='office'][data-color-mode='dark'] .community-post-detail-dialog {
   border-color: #2a3850;
   background: #141e30;
   box-shadow: 0 26px 80px rgba(0, 0, 0, .46);
@@ -1546,8 +1538,129 @@ html.dark .community-post-detail-dialog,
   .detail-comment-media-list button { border-color: #33445c; background: #243247; }
   .detail-comments-load-more { border-top-color: #2a3850; }
   .post-detail-stats { color: #8fa3bd; }
-  .post-detail-footer-actions .el-button { color: #9aaac0; }
-  .post-detail-footer-actions .el-button:hover, .post-detail-footer-actions .el-button.reacted { color: #86baff; }
+  .post-detail-footer-actions .el-button, .post-detail-footer-actions .animal-button { color: #9aaac0; }
+  .post-detail-footer-actions .el-button:hover, .post-detail-footer-actions .el-button.reacted, .post-detail-footer-actions .animal-button:hover, .post-detail-footer-actions .animal-button.reacted { color: #86baff; }
+}
+
+/*
+ * 动森模式使用自己的 surface token。社区弹窗通过 teleport 挂到 body，
+ * 因此不能依赖页面根节点的继承关系，必须在这里显式接入主题变量。
+ */
+html[data-ui-theme='animal'] .community-post-dialog,
+html[data-ui-theme='animal'] .community-post-detail-dialog {
+  --community-ink: var(--app-text-title);
+  --community-muted: var(--app-text-muted);
+  --community-line: var(--app-surface-border);
+  --community-primary: var(--app-accent-strong);
+  --community-surface: var(--app-surface-bg);
+  --community-surface-raised: var(--app-elevated-soft-bg);
+  --community-soft: var(--app-elevated-soft-bg);
+  --community-control-bg: var(--animal-bg-color-input);
+  border-color: var(--community-line);
+  background: var(--community-surface);
+  color: var(--community-ink);
+  box-shadow: var(--app-shadow-lg);
+}
+
+html[data-ui-theme='animal'] .community-post-dialog {
+  .el-dialog__header,
+  .el-dialog__footer { border-color: var(--community-line); }
+  .el-dialog__title,
+  .el-form-item__label { color: var(--community-ink); }
+  .el-input__wrapper,
+  .el-textarea__inner,
+  .el-select__wrapper { background: var(--community-control-bg); color: var(--community-ink); }
+  .media-field { border-color: var(--community-line); background: var(--community-soft); }
+  .media-field-head strong { color: var(--community-ink); }
+  .media-field-head > div span,
+  .media-field-description,
+  .media-upload-note,
+  .media-field-hint { color: var(--community-muted); }
+  .media-count { border-color: color-mix(in srgb, var(--community-primary) 35%, var(--community-line)); color: var(--community-primary) !important; background: color-mix(in srgb, var(--community-primary) 12%, var(--community-surface)); }
+  .media-drag-tip,
+  .media-upload-note .is-uploading { color: var(--community-primary); }
+  .media-add-card { border-color: color-mix(in srgb, var(--community-primary) 42%, var(--community-line)); color: var(--community-primary); background: color-mix(in srgb, var(--community-primary) 10%, var(--community-surface)); }
+  .media-add-card:hover { border-color: var(--community-primary); background: color-mix(in srgb, var(--community-primary) 16%, var(--community-surface)); }
+  .media-add-card.disabled { color: var(--community-muted); border-color: var(--community-line); background: var(--community-soft); }
+  .media-add-subtitle,
+  .media-empty-state small { color: var(--community-muted); }
+  .media-empty-state { border-color: var(--community-line); color: var(--community-muted); background: var(--community-soft); }
+  .media-empty-state .el-icon { color: var(--community-primary); }
+  .compose-media-type { color: var(--community-primary); background: color-mix(in srgb, var(--community-primary) 12%, var(--community-surface)); }
+  .compose-media-name { color: var(--community-muted); }
+  .compose-media-preview { border-color: var(--community-line); background: var(--community-soft); }
+}
+
+html[data-ui-theme='animal'] .community-post-detail-dialog {
+  .el-dialog__header,
+  .el-dialog__footer,
+  .post-detail-divider,
+  .post-detail-media-section,
+  .post-detail-side-heading,
+  .post-detail-comments,
+  .detail-comment-item,
+  .detail-comments-load-more { border-color: var(--community-line); }
+  .post-detail-dialog-header strong,
+  .post-detail-main h2,
+  .post-detail-author-line strong,
+  .post-detail-comments-title strong,
+  .post-detail-side-heading strong,
+  .post-detail-section-head strong,
+  .detail-comment-line strong { color: var(--community-ink); }
+  .post-detail-eyebrow,
+  .post-detail-side-kicker,
+  .post-detail-comments-kicker,
+  .detail-comment-reply-context,
+  .detail-comment-reply-target { color: var(--community-primary); }
+  .post-detail-dialog-header .el-button { color: var(--community-muted); background: var(--community-soft); }
+  .post-detail-dialog-header .el-button:hover { color: var(--community-primary); background: color-mix(in srgb, var(--community-primary) 12%, var(--community-surface)); }
+  .post-detail-subtitle,
+  .post-detail-copy p,
+  .post-detail-info-list strong,
+  .detail-comment-line,
+  .detail-comment-content { color: var(--community-muted); }
+  .post-detail-author > div > span,
+  .post-detail-section-head span,
+  .post-detail-side-heading small,
+  .post-detail-info-list span,
+  .post-detail-comments-title > span:last-child,
+  .post-detail-comments-tip,
+  .detail-comment-meta,
+  .post-detail-stats { color: var(--community-muted); }
+  .post-detail-media-image,
+  .post-detail-media-video,
+  .detail-comment-media-draft,
+  .detail-comment-media-list button { border-color: var(--community-line); background: var(--community-soft); }
+  .post-detail-side-card { border-color: var(--community-line); background: var(--community-soft); }
+  .post-detail-side-icon { color: var(--community-primary); background: color-mix(in srgb, var(--community-primary) 12%, var(--community-surface)); }
+  .post-detail-side-tip { background: linear-gradient(145deg, color-mix(in srgb, var(--community-primary) 12%, var(--community-surface)), var(--community-surface)); }
+  .post-detail-side-tip > strong { color: var(--community-ink); }
+  .post-detail-side-tip p { color: var(--community-muted); }
+  .detail-comment-editor { border-color: var(--community-line); background: var(--community-soft); }
+  .detail-comment-input-wrap .el-textarea__inner { border-color: var(--community-line); background: var(--community-control-bg); color: var(--community-ink); }
+  .detail-comment-input-wrap .el-textarea__inner:focus { border-color: var(--community-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--community-primary) 18%, transparent); }
+  .detail-comment-input-wrap .el-textarea__inner::placeholder,
+  .detail-comment-input-wrap .el-input__count,
+  .detail-comment-composer-hint { color: var(--community-muted); }
+  .detail-comment-tool-button { color: var(--community-muted); }
+  .detail-comment-tool-button:hover { color: var(--community-primary); background: color-mix(in srgb, var(--community-primary) 12%, var(--community-surface)); }
+  .detail-comment-dept { color: var(--community-primary); background: color-mix(in srgb, var(--community-primary) 12%, var(--community-surface)); }
+  .detail-comment-replies { border-left-color: color-mix(in srgb, var(--community-primary) 44%, var(--community-line)); }
+  .detail-comment-item--reply { border-top-color: var(--community-line); }
+  .post-detail-footer-actions .el-button,
+  .post-detail-footer-actions .animal-button { color: var(--community-muted); }
+  .post-detail-footer-actions .el-button:hover,
+  .post-detail-footer-actions .el-button.reacted,
+  .post-detail-footer-actions .animal-button:hover,
+  .post-detail-footer-actions .animal-button.reacted { color: var(--community-primary); }
+}
+
+/* Element Plus 的 Animal card 基础规则会覆盖卡片 background，社区头部保留主题化渐变以维持页面层级。 */
+html[data-ui-theme='animal'] .department-community-page .community-hero {
+  border-color: color-mix(in srgb, var(--app-accent-strong) 28%, var(--app-surface-border));
+  background:
+    radial-gradient(circle at 85% 12%, color-mix(in srgb, var(--app-accent-strong) 22%, transparent), transparent 28%),
+    linear-gradient(118deg, color-mix(in srgb, var(--app-surface-bg) 94%, var(--app-accent-strong)) 0%, color-mix(in srgb, var(--app-surface-bg) 86%, var(--app-accent-strong)) 58%, var(--app-surface-bg) 100%) !important;
 }
 
 @media (max-width: 760px) {
@@ -1783,8 +1896,7 @@ html.dark .community-post-detail-dialog,
   background: #edf5ff;
 }
 
-html.dark .department-community-page,
-.dark .department-community-page {
+html[data-ui-theme='office'][data-color-mode='dark'] .department-community-page {
   --community-ink: #e7eef9;
   --community-muted: #9aaac0;
   --community-line: #2a3850;
@@ -1810,8 +1922,6 @@ html.dark .department-community-page,
   .summary-icon.orange { color: #f2b769; background: #4b3822; }
   .community-toolbar, .aside-card { background: var(--community-surface); }
   .community-card { background: transparent; }
-  .feed-tab { color: #9aaac0; }
-  .feed-tab:hover { background: #1b2b42; }
   /* 帖子卡片内的文字提高对比度，避免被组件默认的浅色文字值覆盖。 */
   .post-card .author-line strong,
   .post-card .post-content-pane h3 { color: #f1f6fd !important; }

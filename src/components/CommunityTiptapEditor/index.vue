@@ -49,7 +49,7 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-popover v-model:visible="linkPopoverOpen" trigger="manual" placement="bottom-start" :width="300" :show-arrow="false">
+        <el-popover v-model:visible="linkPopoverOpen" trigger="click" placement="bottom-start" :width="300" :show-arrow="false">
           <div class="community-link-popover">
             <div class="community-link-popover-title">链接地址</div>
             <input ref="linkInputRef" v-model="linkHref" class="community-link-input" type="url" placeholder="https://example.com" aria-label="链接地址" @keydown.enter.prevent="applyLink" />
@@ -94,6 +94,7 @@
           <template #dropdown>
             <el-dropdown-menu class="community-insert-menu">
               <el-dropdown-item command="image"><TiptapToolbarIcon name="image-plus" />图片</el-dropdown-item>
+              <el-dropdown-item v-if="showVideo" command="video"><TiptapToolbarIcon name="video" />视频</el-dropdown-item>
               <el-dropdown-item command="table"><TiptapToolbarIcon name="table" />表格</el-dropdown-item>
               <el-dropdown-item command="code-block"><TiptapToolbarIcon name="code-block" />代码块</el-dropdown-item>
               <el-dropdown-item divided command="clear-float"><TiptapToolbarIcon name="clear-format" />结束文字环绕</el-dropdown-item>
@@ -151,9 +152,10 @@
       <EditorContent :editor="editor" />
       <div v-if="uploading" class="tiptap-uploading-indicator"><span class="upload-spinner" />正在插入图片…</div>
     </div>
-    <div v-if="!readOnly" class="tiptap-editor-hint">选中正文中的图片，可设置左/中/右对齐或文字环绕；拖动图片右下角可调整宽度。需要结束环绕时，把光标放到目标位置，在“添加”菜单选择“结束文字环绕”。</div>
+    <div v-if="!readOnly && showHint" class="tiptap-editor-hint">选中正文中的图片，可设置左/中/右对齐或文字环绕；拖动图片右下角可调整宽度。需要结束环绕时，把光标放到目标位置，在“添加”菜单选择“结束文字环绕”。</div>
 
-    <input ref="imageInputRef" class="tiptap-image-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple @change="handleImageChange" />
+    <input ref="imageInputRef" class="tiptap-image-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml" multiple @change="handleImageChange" />
+    <input ref="videoInputRef" class="tiptap-image-input" type="file" accept="video/mp4,video/webm,video/ogg" multiple @change="handleVideoChange" />
   </div>
 </template>
 
@@ -177,6 +179,14 @@ import { getToken } from '@/utils/auth';
 const OSS_MARKER_RE = /oss:\/\/([\w-]+)/g;
 const baseUrl = import.meta.env.VITE_APP_BASE_API;
 const IMAGE_MIN_WIDTH = 120;
+
+export interface TiptapUploadResult {
+  ossId: string | number;
+  previewUrl: string;
+  fileName?: string;
+}
+
+export type TiptapUploadHandler = (file: File) => Promise<TiptapUploadResult>;
 
 const parseImageWidth = (element: HTMLElement) => {
   const value = element.style.width || element.getAttribute('width') || '';
@@ -202,6 +212,32 @@ const ClearFloat = TiptapNode.create({
   },
   renderHTML() {
     return ['div', { 'data-type': 'clear-float', class: 'community-clear-float' }];
+  }
+});
+
+/**
+ * 视频节点只负责保留已有 HTML 视频和在编辑器中回显上传结果。
+ * 上传行为由业务通过 uploadVideo 注入，避免编辑器依赖某个业务模块。
+ */
+const RichVideo = TiptapNode.create({
+  name: 'video',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  addAttributes() {
+    return {
+      src: { default: null },
+      poster: { default: null },
+      title: { default: null },
+      controls: { default: true },
+      preload: { default: 'metadata' }
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'video' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['video', { ...HTMLAttributes, controls: '', playsinline: '', preload: HTMLAttributes.preload || 'metadata' }];
   }
 });
 
@@ -418,9 +454,6 @@ const TaskItem = Image.extend({
   group: 'block',
   defining: true,
   draggable: false,
-  addOptions() {
-    return {};
-  },
   addAttributes() {
     return {
       checked: {
@@ -489,9 +522,6 @@ const TaskList = Image.extend({
   content: 'taskItem+',
   group: 'block',
   defining: true,
-  addOptions() {
-    return {};
-  },
   addAttributes() {
     return {};
   },
@@ -509,12 +539,20 @@ const props = withDefaults(
     minHeight?: number;
     maxLength?: number;
     readOnly?: boolean;
+    placeholder?: string;
+    showHint?: boolean;
+    showVideo?: boolean;
+    uploadImage?: TiptapUploadHandler;
+    uploadVideo?: TiptapUploadHandler;
   }>(),
   {
     modelValue: '',
     minHeight: 300,
     maxLength: 10000,
-    readOnly: false
+    readOnly: false,
+    placeholder: '描述背景、现象、你的想法或希望得到的帮助…',
+    showHint: true,
+    showVideo: false
   }
 );
 
@@ -525,6 +563,7 @@ const emit = defineEmits<{
 }>();
 
 const imageInputRef = ref<HTMLInputElement>();
+const videoInputRef = ref<HTMLInputElement>();
 const uploading = ref(false);
 const selectedImageWidth = ref<string | null>(null);
 const selectedImageAlign = ref<'left' | 'center' | 'right'>('left');
@@ -594,6 +633,7 @@ const editor = useEditor({
     TaskList,
     TaskItem,
     ClearFloat,
+    RichVideo,
     TableKit.configure({
       table: {
         resizable: true,
@@ -617,7 +657,7 @@ const editor = useEditor({
       }
     }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    Placeholder.configure({ placeholder: '描述背景、现象、你的想法或希望得到的帮助…' }),
+    Placeholder.configure({ placeholder: props.placeholder }),
     CharacterCount.configure({ limit: props.maxLength })
   ],
   content: '',
@@ -735,6 +775,7 @@ const handleListCommand = (command: string | number) => {
 };
 const handleInsertCommand = (command: string | number) => {
   if (command === 'image') openImagePicker();
+  if (command === 'video' && props.showVideo) openVideoPicker();
   if (command === 'table') editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   if (command === 'code-block') toggleCodeBlock();
   if (command === 'clear-float') insertClearFloat();
@@ -952,16 +993,20 @@ const openImagePicker = () => imageInputRef.value?.click();
 
 const uploadInlineImage = async (file: File) => {
   const suffix = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
-  if (!['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(suffix)) {
-    throw new Error('正文图片仅支持 JPG、PNG、GIF、WEBP 格式');
+  if (!['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(suffix)) {
+    throw new Error('正文图片仅支持 JPG、PNG、GIF、WEBP、SVG 格式');
   }
   if (file.size > 10 * 1024 * 1024) {
     throw new Error('正文图片不能超过10MB');
   }
-  const formData = new FormData();
-  formData.append('file', file);
-  const res = await uploadDepartmentCommunityMedia(formData);
-  const media = res.data;
+  const media = props.uploadImage
+    ? await props.uploadImage(file)
+    : await (async () => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await uploadDepartmentCommunityMedia(formData);
+        return res.data;
+      })();
   if (!media?.ossId || !media.previewUrl) throw new Error('图片上传响应不完整');
   ossUrlToId.set(media.previewUrl, String(media.ossId));
   return {
@@ -973,6 +1018,33 @@ const uploadInlineImage = async (file: File) => {
       width: '70%',
       align: 'left',
       wrap: 'none'
+    }
+  };
+};
+
+const openVideoPicker = () => videoInputRef.value?.click();
+
+const uploadInlineVideo = async (file: File) => {
+  const suffix = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
+  if (!['.mp4', '.webm', '.ogg'].includes(suffix)) {
+    throw new Error('视频仅支持 MP4、WEBM、OGG 格式');
+  }
+  if (file.size > 100 * 1024 * 1024) {
+    throw new Error('视频不能超过100MB');
+  }
+  if (!props.uploadVideo) {
+    throw new Error('当前编辑器未配置视频上传');
+  }
+  const media = await props.uploadVideo(file);
+  if (!media?.ossId || !media.previewUrl) throw new Error('视频上传响应不完整');
+  ossUrlToId.set(media.previewUrl, String(media.ossId));
+  return {
+    type: 'video',
+    attrs: {
+      src: media.previewUrl,
+      title: media.fileName || file.name,
+      controls: true,
+      preload: 'metadata'
     }
   };
 };
@@ -995,6 +1067,32 @@ const handleImageChange = async (event: Event) => {
     }
     if (imageNodes.length) {
       editor.value.chain().focus().insertContent(imageNodes).createParagraphNear().run();
+    }
+  } finally {
+    uploading.value = false;
+    emit('update:uploading', false);
+    await nextTick();
+  }
+};
+
+const handleVideoChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const files = Array.from(input.files || []);
+  input.value = '';
+  if (!files.length || !editor.value || !props.showVideo) return;
+  uploading.value = true;
+  emit('update:uploading', true);
+  try {
+    const videoNodes = [];
+    for (const file of files) {
+      try {
+        videoNodes.push(await uploadInlineVideo(file));
+      } catch (error) {
+        modal.msgError(error instanceof Error ? error.message : '视频上传失败，请稍后重试');
+      }
+    }
+    if (videoNodes.length) {
+      editor.value.chain().focus().insertContent(videoNodes).createParagraphNear().run();
     }
   } finally {
     uploading.value = false;
@@ -1107,6 +1205,7 @@ watch(() => props.modelValue, () => {
 :deep(.tiptap mark) { padding: 0 2px; }
 :deep(.tiptap sup), :deep(.tiptap sub) { line-height: 0; }
 :deep(.tiptap img) { display: block; max-width: 100%; height: auto; margin: 12px 0; border-radius: 9px; box-shadow: 0 6px 18px rgba(37, 71, 111, .12); }
+:deep(.tiptap video) { display: block; width: min(100%, 720px); max-width: 100%; margin: 12px 0; border-radius: 9px; background: #0f172a; box-shadow: 0 6px 18px rgba(37, 71, 111, .12); }
 :deep(.tiptap img[data-align='left']) { margin-left: 0; margin-right: auto; }
 :deep(.tiptap img[data-align='center']) { margin-left: auto; margin-right: auto; }
 :deep(.tiptap img[data-align='right']) { margin-left: auto; margin-right: 0; }
@@ -1201,4 +1300,113 @@ html.dark .community-tiptap-editor .tiptap .tableWrapper > table th, html.dark .
 html.dark .community-tiptap-editor .tiptap .tableWrapper > table th, html.dark .community-tiptap-editor .tiptap > table th { color: #dbe8f7; background: #20324b; }
 html.dark .community-tiptap-editor .tiptap .tableWrapper > table td, html.dark .community-tiptap-editor .tiptap > table td { color: #b8c7da; background: #141e31; }
 html.dark .community-tiptap-editor .tiptap .selectedCell:after { background: rgba(89, 160, 235, .24); }
+
+/* 动森深色模式覆盖编辑器及 teleport 到 body 的菜单，避免复用办公蓝色暗色值。 */
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor:focus-within {
+  border-color: var(--animal-primary-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--animal-primary-color) 22%, transparent);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor.is-readonly {
+  border-color: transparent;
+  background: transparent;
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap-tools-sticky,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap-toolbar {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-surface);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .toolbar-button,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .toolbar-dropdown-trigger {
+  color: var(--animal-overlay-muted);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .toolbar-button:hover:not(:disabled),
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .toolbar-button.active,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .toolbar-dropdown-trigger:hover:not(:disabled),
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .toolbar-dropdown-trigger.active {
+  border-color: color-mix(in srgb, var(--animal-primary-color) 48%, transparent);
+  color: var(--animal-primary-color);
+  background: var(--animal-overlay-hover);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap-search-panel,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .community-link-input,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap-search-field,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap-replace-input {
+  border-color: var(--animal-overlay-border);
+  color: var(--animal-overlay-text);
+  background: var(--animal-overlay-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap h2,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap h3,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap .tableWrapper > table td,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap > table td {
+  color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap blockquote {
+  border-left-color: var(--animal-primary-color);
+  color: var(--animal-overlay-muted);
+  background: var(--animal-overlay-surface);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap a {
+  color: var(--animal-primary-color);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-highlight-menu,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-heading-menu,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-list-menu,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-insert-menu,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-size-menu,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-table-menu,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-wrap-menu {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-highlight-menu .el-dropdown-menu__item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-heading-menu .el-dropdown-menu__item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-list-menu .el-dropdown-menu__item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-insert-menu .el-dropdown-menu__item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-size-menu .el-dropdown-menu__item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-table-menu .el-dropdown-menu__item,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-wrap-menu .el-dropdown-menu__item {
+  color: var(--animal-overlay-text);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-highlight-menu .el-dropdown-menu__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-highlight-menu .el-dropdown-menu__item.is-current,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-heading-menu .el-dropdown-menu__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-heading-menu .el-dropdown-menu__item.is-current,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-list-menu .el-dropdown-menu__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-list-menu .el-dropdown-menu__item.is-current,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-insert-menu .el-dropdown-menu__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-insert-menu .el-dropdown-menu__item.is-current,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-size-menu .el-dropdown-menu__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-size-menu .el-dropdown-menu__item.is-current,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-table-menu .el-dropdown-menu__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-table-menu .el-dropdown-menu__item.is-current,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-wrap-menu .el-dropdown-menu__item:hover,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-image-wrap-menu .el-dropdown-menu__item.is-current {
+  color: var(--animal-primary-color);
+  background: var(--animal-overlay-hover);
+}
+
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap .tableWrapper > table,
+html[data-ui-theme='animal'][data-color-mode='dark'] .community-tiptap-editor .tiptap > table {
+  border-color: var(--animal-overlay-border);
+  background: var(--animal-overlay-bg);
+}
 </style>
