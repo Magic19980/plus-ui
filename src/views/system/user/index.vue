@@ -325,7 +325,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('common.nickName')" prop="nickName">
-              <UiInput v-model="form.nickName" :placeholder="$t('common.placeholderInputNickName')" :maxlength="30" />
+              <UiInput v-model="form.nickName" :placeholder="$t('common.placeholderInputNickName')" :maxlength="100" />
             </el-form-item>
           </el-col>
           <el-col :span="12">

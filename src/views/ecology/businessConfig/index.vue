@@ -45,7 +45,7 @@
             <el-table-column label="配置状态" min-width="190">
               <template #default="scope"><UiTag :type="scope.row.statusType" effect="plain">{{ scope.row.statusLabel }}</UiTag><span v-if="scope.row.statusHint" class="status-hint">{{ scope.row.statusHint }}</span></template>
             </el-table-column>
-            <el-table-column label="操作" fixed="right" width="250" align="center">
+            <el-table-column label="操作" width="230" align="center">
               <template #default="scope">
                 <div class="row-actions">
                   <UiButton v-hasPermi="['ecology:businessType:list']" link type="primary" @click="goToBusinessType">业务类型</UiButton>
@@ -156,6 +156,16 @@ onMounted(loadData);
 .workspace-card { margin-top: 14px; padding: 23px 22px 18px; }.card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px; }.card-heading h3 { margin: 7px 0 4px; color: var(--app-text-title); font-size: 19px; }.business-name { display: flex; align-items: center; gap: 11px; }.business-name > span { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: var(--el-color-primary); background: var(--el-color-primary-light-9); font-weight: 700; }.business-name strong, .business-name small { display: block; }.business-name strong { color: var(--app-text-title); }.business-name small { margin-top: 4px; color: var(--el-text-color-secondary); font-size: 11px; }.count-value { color: var(--el-color-primary); font-size: 18px; font-weight: 700; }.count-value + small, .status-hint { color: var(--el-text-color-secondary); font-size: 11px; }.status-hint { margin-left: 8px; }.row-actions { display: inline-flex; gap: 2px; }
 @media (max-width: 900px) { .workspace-hero { align-items: flex-start; flex-direction: column; }.workspace-hero__status { width: 100%; }.overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .ecology-business-config-page { padding: 12px; }.overview-grid { grid-template-columns: 1fr; }.card-heading { align-items: stretch; flex-direction: column; } }
+
+/* 操作列保持普通列布局；按钮组在单元格中居中排列，避免固定层形成突兀的侧边面板。 */
+.ecology-business-config-page .row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
 
 /* 页面层级微调：让页头内容真正横向布局，避免卡片被撑成大面积空白。 */
 .workspace-hero {

@@ -54,6 +54,22 @@
   .selector-table {
     border-radius: 10px;
     overflow: hidden;
+    // VXE 表格独立于 Element Plus 表格；显式连接应用语义色，兼容办公/动森及明暗模式。
+    --vxe-ui-font-color: var(--animal-overlay-text, var(--app-text-title, var(--el-text-color-primary)));
+    --vxe-ui-font-primary-color: var(--animal-primary-color, var(--app-accent-strong, var(--el-color-primary)));
+    --vxe-ui-font-lighten-color: var(--animal-overlay-muted, var(--app-text-muted, var(--el-text-color-secondary)));
+    --vxe-ui-font-darken-color: var(--animal-overlay-text, var(--app-text-title, var(--el-text-color-primary)));
+    --vxe-ui-layout-background-color: var(--animal-overlay-bg, var(--app-surface-bg, var(--el-bg-color)));
+    --vxe-ui-table-header-background-color: var(--animal-overlay-surface, var(--tableHeaderBg, var(--el-fill-color-light)));
+    --vxe-ui-table-header-font-color: var(--animal-overlay-text, var(--tableHeaderTextColor, var(--app-text-title)));
+    --vxe-ui-table-border-color: var(--animal-overlay-border, var(--app-surface-border, var(--el-border-color-lighter)));
+    --vxe-ui-table-column-hover-background-color: color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 8%, var(--app-surface-bg, var(--el-bg-color)));
+    --vxe-ui-table-column-current-background-color: color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 12%, var(--app-surface-bg, var(--el-bg-color)));
+    --vxe-ui-table-row-hover-background-color: var(--animal-overlay-hover, color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 8%, var(--app-surface-bg, var(--el-bg-color))));
+    --vxe-ui-table-row-current-background-color: color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 14%, var(--app-surface-bg, var(--el-bg-color)));
+    --vxe-ui-table-row-hover-current-background-color: color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 20%, var(--app-surface-bg, var(--el-bg-color)));
+    --vxe-ui-table-row-checkbox-checked-background-color: color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 14%, var(--app-surface-bg, var(--el-bg-color)));
+    --vxe-ui-table-row-hover-checkbox-checked-background-color: color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 20%, var(--app-surface-bg, var(--el-bg-color)));
   }
 
   .selector-table :deep(.vxe-table--render-default) {
@@ -62,8 +78,8 @@
   }
 
   .selector-table :deep(.vxe-header--column) {
-    background: var(--tableHeaderBg);
-    color: var(--tableHeaderTextColor);
+    background: var(--animal-overlay-surface, var(--tableHeaderBg, var(--el-fill-color-light)));
+    color: var(--animal-overlay-text, var(--tableHeaderTextColor, var(--app-text-title)));
     font-weight: 600;
   }
 
@@ -74,6 +90,6 @@
 
   .selector-table :deep(.vxe-body--row.row--hover),
   .selector-table :deep(.vxe-body--row:hover) {
-    background-color: rgba(14, 165, 233, 0.05);
+    background-color: var(--animal-overlay-hover, color-mix(in srgb, var(--app-accent-strong, var(--el-color-primary)) 8%, var(--app-surface-bg, var(--el-bg-color))));
   }
 }

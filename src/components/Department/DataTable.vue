@@ -95,6 +95,7 @@ interface AnimalColumn {
   showOverflowTooltip?: boolean | Record<string, unknown>;
   renderHeader?: (index: number) => VNodeChild;
   render?: (value: unknown, record: TableRecord, index: number) => VNodeChild;
+  renderExpanded?: (record: TableRecord, index: number) => VNodeChild;
   [key: string]: unknown;
 }
 
@@ -204,6 +205,7 @@ function createColumn(vnode: VNode, index: number): AnimalColumn {
   const label = readProp<string>(sourceProps, 'label') || prop || '';
   const rawFixed = readProp<boolean | 'left' | 'right'>(sourceProps, 'fixed');
   const fixed = rawFixed === true ? 'left' : rawFixed === 'left' || rawFixed === 'right' ? rawFixed : undefined;
+  const type = readProp<string>(sourceProps, 'type');
   const sourceSlots = columnSlots(vnode);
   const columnMeta: LegacyColumnProps = { ...sourceProps, prop, label, $index: index };
   const column: AnimalColumn = {
@@ -212,7 +214,7 @@ function createColumn(vnode: VNode, index: number): AnimalColumn {
     dataIndex: prop,
     // 兼容 Element Plus header-click 回调，保留业务侧使用的 property 字段。
     property: prop,
-    type: readProp<string>(sourceProps, 'type'),
+    type,
     width: readProp<string | number>(sourceProps, 'width'),
     minWidth: readProp<string | number>(sourceProps, 'minWidth'),
     align: readProp<'left' | 'center' | 'right'>(sourceProps, 'align'),
@@ -229,8 +231,14 @@ function createColumn(vnode: VNode, index: number): AnimalColumn {
   };
 
   if (sourceSlots.default) {
-    column.render = (value, record, rowIndex) =>
-      sourceSlots.default?.({ row: record, $index: rowIndex, column: columnMeta }) ?? String(value ?? '');
+    if (type === 'expand') {
+      // Element Plus 将 expand 列的默认插槽作为展开面板内容，而不是普通单元格内容。
+      column.renderExpanded = (record, rowIndex) =>
+        sourceSlots.default?.({ row: record, $index: rowIndex, column: columnMeta });
+    } else {
+      column.render = (value, record, rowIndex) =>
+        sourceSlots.default?.({ row: record, $index: rowIndex, column: columnMeta }) ?? String(value ?? '');
+    }
   }
   if (sourceSlots.header) {
     column.renderHeader = headerIndex =>

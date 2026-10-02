@@ -106,7 +106,7 @@
           <template #default="scope">
             <div class="group-records-panel">
               <div class="group-records-panel__heading"><strong>{{ scope.row.groupName || '未命名分组' }} · 明细数据</strong><span>{{ scope.row.recordCount || 0 }} 条明细，以下数据统一使用该分组的泛微提交结果</span></div>
-              <DepartmentDataTable :data="groupRecords(scope.row.groupKey)" border size="small" class="group-records-table" :max-height="360">
+              <DepartmentDataTable :data="groupRecords(scope.row.groupKey)" border size="small" class="group-records-table" :max-height="270">
                 <el-table-column label="行号" prop="rowNo" width="70" />
                 <el-table-column label="泛微组织" prop="deptName" min-width="150" show-overflow-tooltip />
                 <el-table-column v-for="field in detailFields" :key="field.code" :label="field.header" :min-width="field.header.length > 8 ? 150 : 110" show-overflow-tooltip><template #default="recordScope">{{ recordScope.row.data?.[field.code] ?? '—' }}</template></el-table-column>
@@ -157,8 +157,8 @@
               <el-icon class="mapping-select__arrow"><ArrowDown /></el-icon>
             </button>
             <UiButton v-if="mappingValues[name]" link type="danger" class="mapping-clear" @click="clearMapping(name)">清除</UiButton>
-            <UiButton v-else-if="!mappingSkipped[name]" link type="warning" class="mapping-skip" @click="skipSourceDepartment(name)">跳过本批次</UiButton>
-            <UiButton v-else link type="primary" class="mapping-skip" @click="restoreSourceDepartment(name)">恢复处理</UiButton>
+            <UiButton v-else-if="!mappingSkipped[name]" link type="warning" icon="ArrowRight" class="mapping-skip" @click="skipSourceDepartment(name)">跳过本批次</UiButton>
+            <UiButton v-else link type="primary" icon="RefreshLeft" class="mapping-skip mapping-skip--restore" @click="restoreSourceDepartment(name)">恢复处理</UiButton>
           </div>
           <div v-if="mappingSkipped[name]" class="mapping-skip-note"><span>跳过原因</span><el-input v-model="mappingSkipReasons[name]" size="small" maxlength="500" show-word-limit placeholder="例如：组织暂未同步" /></div>
           </div>
@@ -1865,10 +1865,72 @@ onMounted(async () => {
   }
 
   .mapping-skip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
+    min-width: 94px;
+    height: 34px;
     margin-left: 0;
-    padding: 0 2px;
-    font-size: 12px;
+    padding: 0 10px !important;
+    border: 1px solid color-mix(in srgb, var(--import-warning-color) 48%, var(--app-surface-border)) !important;
+    border-radius: 11px !important;
+    background: color-mix(in srgb, var(--import-warning-color) 9%, var(--el-bg-color)) !important;
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--import-warning-color) 22%, transparent) !important;
+    color: var(--import-warning-strong) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.01em;
+    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--import-warning-color) !important;
+      background: color-mix(in srgb, var(--import-warning-color) 16%, var(--el-bg-color)) !important;
+      box-shadow: 0 3px 0 color-mix(in srgb, var(--import-warning-color) 28%, transparent) !important;
+      color: var(--import-warning-strong) !important;
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      box-shadow: 0 1px 0 color-mix(in srgb, var(--import-warning-color) 22%, transparent) !important;
+      transform: translateY(0);
+    }
+
+    .el-icon,
+    :deep(.animal-btn__icon) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      margin-right: 1px;
+      flex: 0 0 14px;
+    }
+
+    .el-icon svg,
+    :deep(.animal-btn__icon svg) {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  .mapping-skip--restore {
+    border-color: color-mix(in srgb, var(--el-color-primary) 48%, var(--app-surface-border)) !important;
+    background: color-mix(in srgb, var(--el-color-primary) 9%, var(--el-bg-color)) !important;
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--el-color-primary) 22%, transparent) !important;
+    color: var(--el-color-primary) !important;
+
+    &:hover:not(:disabled) {
+      border-color: var(--el-color-primary) !important;
+      background: color-mix(in srgb, var(--el-color-primary) 16%, var(--el-bg-color)) !important;
+      box-shadow: 0 3px 0 color-mix(in srgb, var(--el-color-primary) 28%, transparent) !important;
+      color: var(--el-color-primary) !important;
+    }
+
+    &:active:not(:disabled) {
+      box-shadow: 0 1px 0 color-mix(in srgb, var(--el-color-primary) 22%, transparent) !important;
+    }
   }
 
   .mapping-skip-note {

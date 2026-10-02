@@ -7,6 +7,7 @@
       :disabled="disabled"
       :aria-expanded="multiSelectOpen"
       :aria-label="triggerAriaLabel"
+      :title="selectedText"
       aria-haspopup="listbox"
       @click.stop="toggleMultiSelect"
       @keydown="handleMultiKeydown"
@@ -15,10 +16,12 @@
       <span v-if="clearable && selectedOptions.length" class="ui-animal-multi-select__clear" role="button" aria-label="清空" @click.stop="clearMultiSelect">×</span>
       <span v-else class="ui-animal-multi-select__arrow" :class="{ 'is-open': multiSelectOpen }" aria-hidden="true" />
     </button>
+    <Teleport v-if="multiSelectOpen" to="body">
     <div
-      v-if="multiSelectOpen"
+      ref="multiDropdownRef"
       class="ui-animal-multi-select__dropdown"
       :class="{ 'is-drop-up': multiSelectPlacement === 'top' }"
+      :style="multiDropdownStyle"
       role="listbox"
       aria-multiselectable="true"
     >
@@ -47,6 +50,7 @@
       </button>
       <span v-if="!filteredAnimalOptions.length" class="ui-animal-multi-select__empty">暂无选项</span>
     </div>
+    </Teleport>
   </div>
   <div
     v-else-if="useAnimalSelect && isAnimalMode"
@@ -61,6 +65,7 @@
       :disabled="disabled"
       :aria-expanded="singleSelectOpen"
       :aria-label="triggerAriaLabel"
+      :title="singleSelectedText"
       aria-haspopup="listbox"
       @click.stop="toggleSingleSelect"
       @keydown="handleSingleKeydown"
@@ -68,10 +73,12 @@
       <span class="ui-animal-select__value" :class="{ 'is-placeholder': !singleSelectedKey }">{{ singleSelectedText }}</span>
       <span class="ui-animal-select__arrow" :class="{ 'is-open': singleSelectOpen }" aria-hidden="true" />
     </button>
+    <Teleport v-if="singleSelectOpen" to="body">
     <div
-      v-if="singleSelectOpen"
+      ref="singleDropdownRef"
       class="ui-animal-select__dropdown"
       :class="{ 'is-drop-up': singleSelectPlacement === 'top' }"
+      :style="singleDropdownStyle"
       role="listbox"
     >
       <input
@@ -98,6 +105,7 @@
       </button>
       <span v-if="!filteredSingleOptions.length" class="ui-animal-select__empty">暂无选项</span>
     </div>
+    </Teleport>
   </div>
   <ElSelect
     v-else
@@ -119,7 +127,7 @@
  * Animal Island 使用 key/label 选项结构，办公模式使用 Element Plus 的 Option，
  * 这里集中完成两种数据结构的转换，并保留清空筛选及不可用选项的语义。
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useAttrs } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch, type CSSProperties } from 'vue';
 import { ElOption, ElSelect } from 'element-plus';
 import { UiThemeEnum } from '@/enums/UiThemeEnum';
 import { useSettingsStore } from '@/store/modules/settings';
@@ -158,6 +166,8 @@ const settingsStore = useSettingsStore();
 const isAnimalMode = computed(() => settingsStore.uiTheme === UiThemeEnum.ANIMAL);
 const multiSelectRef = ref<HTMLElement>();
 const singleSelectRef = ref<HTMLElement>();
+const multiDropdownRef = ref<HTMLElement>();
+const singleDropdownRef = ref<HTMLElement>();
 const multiSelectOpen = ref(false);
 const singleSelectOpen = ref(false);
 const multiSelectKeyword = ref('');
@@ -167,6 +177,8 @@ const singleActiveIndex = ref(-1);
 type DropdownPlacement = 'bottom' | 'top';
 const multiSelectPlacement = ref<DropdownPlacement>('bottom');
 const singleSelectPlacement = ref<DropdownPlacement>('bottom');
+const multiDropdownStyle = ref<CSSProperties>({});
+const singleDropdownStyle = ref<CSSProperties>({});
 /**
  * 远程搜索、创建选项和自定义筛选依赖 Element Select 的事件契约，
  * Animal Select 当前没有对应能力，遇到这些属性时保留 Element Plus，避免静默丢失业务行为。
@@ -202,28 +214,107 @@ const selectedText = computed(() => {
   return `已选择 ${selectedOptions.value.length} 项`;
 });
 
-const getDropdownPlacement = (target: HTMLElement | undefined, optionCount: number, hasSearch: boolean): DropdownPlacement => {
-  if (!target || typeof window === 'undefined') return 'bottom';
-  const rect = target.getBoundingClientRect();
-  const estimatedHeight = Math.min(320, 16 + (hasSearch ? 42 : 0) + Math.max(optionCount, 1) * 42);
-  const belowSpace = window.innerHeight - rect.bottom - 12;
-  const aboveSpace = rect.top - 12;
-  return belowSpace < estimatedHeight && aboveSpace > belowSpace ? 'top' : 'bottom';
+type VisibleBounds = { top: number; right: number; bottom: number; left: number };
+
+const getVisibleBounds = (target: HTMLElement): VisibleBounds => {
+  const bounds: VisibleBounds = { top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0 };
+  // The popup is teleported to body, so table/cell overflow is no longer a real
+  // clipping boundary. Only honor the semantic modal scroll area when present.
+  const boundary = target.closest<HTMLElement>('.config-form, .el-dialog__body');
+  if (boundary) {
+    const rect = boundary.getBoundingClientRect();
+    const left = rect.left + boundary.clientLeft;
+    const top = rect.top + boundary.clientTop;
+    bounds.left = Math.max(bounds.left, left);
+    bounds.right = Math.min(bounds.right, left + boundary.clientWidth);
+    bounds.top = Math.max(bounds.top, top);
+    bounds.bottom = Math.min(bounds.bottom, top + boundary.clientHeight);
+  }
+  return bounds;
+};
+
+const updateOneDropdown = (
+  target: HTMLElement | undefined,
+  dropdown: HTMLElement | undefined,
+  optionCount: number,
+  hasSearch: boolean,
+  setPlacement: (placement: DropdownPlacement) => void,
+  setStyle: (style: CSSProperties) => void
+) => {
+  if (!target || !dropdown || typeof window === 'undefined') return;
+  const trigger = target.getBoundingClientRect();
+  const bounds = getVisibleBounds(target);
+  const isOutside = trigger.bottom <= bounds.top || trigger.top >= bounds.bottom || trigger.right <= bounds.left || trigger.left >= bounds.right;
+  if (isOutside) {
+    setStyle({});
+    return false;
+  }
+
+  const availableWidth = Math.max(0, bounds.right - bounds.left);
+  const width = Math.min(Math.max(trigger.width, 220), availableWidth);
+  const left = Math.max(bounds.left, Math.min(trigger.left, bounds.right - width));
+  const gap = 8;
+  const belowSpace = Math.max(0, bounds.bottom - trigger.bottom - gap);
+  const aboveSpace = Math.max(0, trigger.top - bounds.top - gap);
+  const estimatedHeight = 12 + (hasSearch ? 38 : 0) + Math.max(optionCount, 1) * 36;
+  const desiredHeight = Math.min(320, window.innerHeight * 0.42, Math.max(52, dropdown.scrollHeight || estimatedHeight));
+  const placement: DropdownPlacement = belowSpace >= desiredHeight || belowSpace >= aboveSpace ? 'bottom' : 'top';
+  const availableHeight = placement === 'bottom' ? belowSpace : aboveSpace;
+  const maxHeight = Math.max(0, Math.min(desiredHeight, availableHeight));
+  const top = placement === 'bottom' ? trigger.bottom + gap : trigger.top - gap - maxHeight;
+  const dialogZIndex = Number.parseInt(window.getComputedStyle(target.closest<HTMLElement>('.el-dialog') || target).zIndex, 10);
+
+  setPlacement(placement);
+  setStyle({
+    position: 'fixed',
+    top: `${Math.max(bounds.top, Math.min(top, bounds.bottom - maxHeight))}px`,
+    left: `${left}px`,
+    right: 'auto',
+    bottom: 'auto',
+    width: `${width}px`,
+    maxHeight: `${maxHeight}px`,
+    boxSizing: 'border-box',
+    overscrollBehavior: 'contain',
+    zIndex: Number.isFinite(dialogZIndex) ? dialogZIndex + 1 : 3000
+  });
+  return true;
 };
 
 const updateDropdownPlacement = () => {
   if (multiSelectOpen.value) {
-    multiSelectPlacement.value = getDropdownPlacement(multiSelectRef.value, filteredAnimalOptions.value.length, isFilterable.value);
+    const visible = updateOneDropdown(
+      multiSelectRef.value,
+      multiDropdownRef.value,
+      filteredAnimalOptions.value.length,
+      isFilterable.value,
+      value => { multiSelectPlacement.value = value; },
+      value => { multiDropdownStyle.value = value; }
+    );
+    if (visible === false) multiSelectOpen.value = false;
   }
   if (singleSelectOpen.value) {
-    singleSelectPlacement.value = getDropdownPlacement(singleSelectRef.value, filteredSingleOptions.value.length, isFilterable.value);
+    const visible = updateOneDropdown(
+      singleSelectRef.value,
+      singleDropdownRef.value,
+      filteredSingleOptions.value.length,
+      isFilterable.value,
+      value => { singleSelectPlacement.value = value; },
+      value => { singleDropdownStyle.value = value; }
+    );
+    if (visible === false) singleSelectOpen.value = false;
   }
 };
 
 const closeMultiSelect = (event: MouseEvent) => {
-  if (multiSelectRef.value && !multiSelectRef.value.contains(event.target as Node)) multiSelectOpen.value = false;
-  if (singleSelectRef.value && !singleSelectRef.value.contains(event.target as Node)) singleSelectOpen.value = false;
+  const target = event.target as Node | null;
+  const isInside = (element: HTMLElement | undefined, dropdown: HTMLElement | undefined) => Boolean(target && (element?.contains(target) || dropdown?.contains(target)));
+  if (!isInside(multiSelectRef.value, multiDropdownRef.value)) multiSelectOpen.value = false;
+  if (!isInside(singleSelectRef.value, singleDropdownRef.value)) singleSelectOpen.value = false;
 };
+
+watch([filteredAnimalOptions, filteredSingleOptions], () => {
+  void nextTick(updateDropdownPlacement);
+});
 onMounted(() => {
   document.addEventListener('click', closeMultiSelect);
   window.addEventListener('resize', updateDropdownPlacement);
@@ -414,10 +505,9 @@ const selectSingleOption = (value: string) => {
 
 .ui-animal-multi-select__dropdown,
 .ui-animal-select__dropdown {
-  position: absolute;
+  position: fixed;
   z-index: 100000;
-  top: calc(100% + 10px);
-  right: 0;
+  top: 0;
   left: 0;
   max-height: min(320px, 42vh);
   overflow-y: auto;
@@ -427,12 +517,13 @@ const selectSingleOption = (value: string) => {
   background: var(--animal-bg-color, #f8f8f0);
   box-shadow: 0 3px 0 color-mix(in srgb, var(--animal-shadow-soft, #d4c9b4) 72%, transparent), 0 10px 22px color-mix(in srgb, var(--animal-shadow-soft-strong, #a89878) 24%, transparent);
   animation: ui-animal-select-pop .14s ease-out both;
+  overscroll-behavior: contain;
   scrollbar-color: color-mix(in srgb, var(--animal-primary-color, #19c8b9) 48%, transparent) transparent;
   scrollbar-width: thin;
 }
 
 .ui-animal-multi-select__dropdown.is-drop-up,
-.ui-animal-select__dropdown.is-drop-up { top: auto; bottom: calc(100% + 8px); border-radius: 14px 14px 8px 14px; animation-name: ui-animal-select-pop-up; }
+.ui-animal-select__dropdown.is-drop-up { border-radius: 14px 14px 8px 14px; animation-name: ui-animal-select-pop-up; }
 
 .ui-animal-multi-select__dropdown::-webkit-scrollbar,
 .ui-animal-select__dropdown::-webkit-scrollbar { width: 5px; }

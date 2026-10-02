@@ -110,7 +110,11 @@
                 </div>
               </transition>
 
-              <el-card shadow="hover" class="table-panel selector-card">
+              <el-card
+                shadow="hover"
+                class="table-panel selector-card"
+                :class="{ 'table-panel--expanded': hasSearched || selectUserList.length > 0 }"
+              >
                 <template #header>
                   <div class="toolbar-shell selector-header">
                     <div class="table-heading selector-list-heading">
@@ -133,36 +137,38 @@
                   </div>
                 </div>
 
-                <vxe-table
-                  ref="tableRef"
-                  class="selector-table"
-                  :height="tableHeight"
-                  border
-                  show-overflow
-                  auto-resize
-                  :data="userList"
-                  :loading="loading"
-                  :row-config="{ keyField: 'userId', isHover: true }"
-                  :checkbox-config="{
-                    reserve: true,
-                    trigger: 'row',
-                    highlight: true,
-                    showHeader: prop.multiple
-                  }"
-                  @checkbox-all="handleCheckboxAll"
-                  @checkbox-change="handleCheckboxChange"
-                >
-                  <vxe-column type="checkbox" width="50" align="center" />
-                  <vxe-column key="employeeNo" title="工号" align="center" field="employeeNo" width="140" />
-                  <vxe-column key="nickName" title="姓名" align="center" field="nickName" min-width="140" />
-                  <vxe-column key="deptName" title="所属组织" align="center" field="deptName" min-width="190" show-overflow />
-                  <vxe-column key="phoneNumber" title="手机号码" align="center" field="phoneNumber" width="140" />
-                  <vxe-column key="status" title="状态" align="center" width="88">
-                    <template #default="scope">
-                      <dict-tag :options="sys_normal_disable" :value="scope.row.status"></dict-tag>
-                    </template>
-                  </vxe-column>
-                </vxe-table>
+                <div class="selector-table-frame">
+                  <vxe-table
+                    ref="tableRef"
+                    class="selector-table"
+                    height="100%"
+                    border
+                    show-overflow
+                    auto-resize
+                    :data="userList"
+                    :loading="loading"
+                    :row-config="{ keyField: 'userId', isHover: true }"
+                    :checkbox-config="{
+                      reserve: true,
+                      trigger: 'row',
+                      highlight: true,
+                      showHeader: prop.multiple
+                    }"
+                    @checkbox-all="handleCheckboxAll"
+                    @checkbox-change="handleCheckboxChange"
+                  >
+                    <vxe-column type="checkbox" width="50" align="center" />
+                    <vxe-column key="employeeNo" title="工号" align="center" field="employeeNo" width="140" />
+                    <vxe-column key="nickName" title="姓名" align="center" field="nickName" min-width="140" />
+                    <vxe-column key="deptName" title="所属组织" align="center" field="deptName" min-width="190" show-overflow />
+                    <vxe-column key="phoneNumber" title="手机号码" align="center" field="phoneNumber" width="140" />
+                    <vxe-column key="status" title="状态" align="center" width="88">
+                      <template #default="scope">
+                        <dict-tag :options="sys_normal_disable" :value="scope.row.status"></dict-tag>
+                      </template>
+                    </vxe-column>
+                  </vxe-table>
+                </div>
 
                 <el-alert
                   v-if="!hasSearched && !loading && selectUserList.length === 0"
@@ -247,7 +253,6 @@ const deptSearchMode = ref(false);
 const hasSearched = ref(false);
 const deptOptions = ref<DeptTreeVO[]>([]);
 const selectUserList = ref<UserVO[]>([]);
-const tableHeight = computed(() => (hasSearched.value || selectUserList.value.length > 0 ? '520px' : '180px'));
 const deptTreeProps = { label: 'label', children: 'children', isLeaf: 'isLeaf' };
 
 const deptTreeRef = ref<ElTreeInstance>();
@@ -567,10 +572,29 @@ defineExpose({
 
 .user-select-shell {
   height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tree-content-col {
+  display: flex;
+  min-height: 0;
 }
 
 .user-select-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
   height: 100%;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.user-select-main > div:first-child {
+  flex: 0 0 auto;
 }
 
 .selector-side-card {
@@ -578,25 +602,54 @@ defineExpose({
 }
 
 .table-panel {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
   min-height: 0;
-}
-
-.user-select-dialog :deep(.el-dialog__body) {
-  box-sizing: border-box;
-  height: calc(100vh - 200px);
-  max-height: none !important;
-  overflow: hidden;
-}
-
-.user-select-main .search-panel,
-.user-select-main .table-panel {
   height: auto !important;
+}
+
+.table-panel--expanded {
+  flex: 1 1 0;
+}
+
+.user-select-main .search-panel {
+  height: auto !important;
+}
+
+.table-panel :deep(.el-card__header) {
+  flex: 0 0 auto;
 }
 
 .table-panel :deep(.el-card__body) {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
+}
+
+.selector-table-frame {
+  flex: 0 0 180px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.table-panel--expanded .selector-table-frame {
+  flex: 1 1 0;
+  min-height: 160px;
+}
+
+.selector-table {
+  width: 100%;
+  height: 100%;
+}
+
+.selector-selected-bar,
+.selector-empty-hint,
+.table-panel :deep(.pagination-container),
+.table-panel :deep(.ui-pagination-animal) {
+  flex: 0 0 auto;
 }
 
 .selector-dept-input {
@@ -801,12 +854,6 @@ defineExpose({
 }
 
 @media (max-width: 992px) {
-  .user-select-dialog :deep(.el-dialog__body) {
-    height: auto;
-    max-height: calc(100vh - 200px) !important;
-    overflow-y: auto;
-  }
-
   .query-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -843,16 +890,57 @@ defineExpose({
 <!-- el-dialog 使用 append-to-body 后会被 Teleport 到 body，必须用非 scoped 选择器覆盖全局弹窗滚动规则。 -->
 <style lang="scss">
 .user-select-dialog.el-dialog {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: calc(100vh - 40px);
   max-height: calc(100vh - 40px);
   margin-top: 20px !important;
   margin-bottom: 20px !important;
   overflow: hidden;
 }
 
+.user-select-dialog.el-dialog .el-dialog__header,
+.user-select-dialog.el-dialog .el-dialog__footer {
+  flex: 0 0 auto;
+}
+
 .user-select-dialog.el-dialog .el-dialog__body {
   box-sizing: border-box;
-  height: calc(100vh - 190px);
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
   max-height: none !important;
   overflow: hidden !important;
+}
+
+@media (max-width: 992px), (max-height: 720px) {
+  .user-select-dialog.el-dialog {
+    height: auto;
+  }
+
+  .user-select-dialog.el-dialog .el-dialog__body {
+    flex: 0 1 auto;
+    height: auto !important;
+    max-height: calc(100vh - 190px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .user-select-dialog.el-dialog .user-select-shell,
+  .user-select-dialog.el-dialog .selector-layout,
+  .user-select-dialog.el-dialog .user-select-main {
+    height: auto !important;
+  }
+
+  .user-select-dialog.el-dialog .table-panel--expanded {
+    flex: 0 0 auto;
+    min-height: 420px;
+  }
+
+  .user-select-dialog.el-dialog .table-panel--expanded .selector-table-frame {
+    flex: 0 0 280px;
+    min-height: 280px;
+  }
 }
 </style>

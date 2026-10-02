@@ -72,7 +72,8 @@
     }
 
     .el-sub-menu__icon-arrow {
-      right: 11px;
+      // 菜单箭头向内留出空间，避免贴近侧栏边缘。
+      right: 18px;
       color: var(--side-menu-muted) !important;
       font-size: 11px;
       transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;

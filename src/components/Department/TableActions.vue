@@ -16,7 +16,7 @@ defineOptions({ inheritAttrs: false });
   width: max-content;
   max-width: none;
   flex-wrap: nowrap;
-  gap: 7px;
+  gap: 5px;
   white-space: nowrap;
 
   :deep(.el-button) {
@@ -139,6 +139,36 @@ defineOptions({ inheritAttrs: false });
       inset 0 1px 0 rgb(255 255 255 / 24%) !important;
   }
 
+  // 动森表格的图标操作统一收成紧凑方形热区；纯图标按钮不再各自带凸起底板，
+  // 避免一排按钮像独立卡片一样挤满操作列。
+  :deep(.ui-animal-button:has(> .animal-btn__icon):not(:has(> span:not(.animal-btn__icon)))) {
+    box-sizing: border-box;
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    gap: 0;
+    border: 1px solid transparent !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none;
+  }
+
+  :deep(.ui-animal-button.animal-btn--link:has(> .animal-btn__icon):not(:has(> span:not(.animal-btn__icon))):hover:not(:disabled)) {
+    transform: none !important;
+    border-color: color-mix(in srgb, var(--animal-primary-color) 22%, transparent) !important;
+    background: color-mix(in srgb, var(--animal-primary-color-bg) 76%, transparent) !important;
+    box-shadow: none !important;
+  }
+
+  :deep(.ui-animal-button.animal-btn--danger.animal-btn--link:has(> .animal-btn__icon):not(:has(> span:not(.animal-btn__icon))):hover:not(:disabled)) {
+    border-color: color-mix(in srgb, var(--animal-status-danger) 24%, transparent) !important;
+    background: color-mix(in srgb, var(--animal-status-danger) 12%, transparent) !important;
+  }
+
   // 图标变成小徽章，帮助用户快速区分“编辑”和“结束服务”。
   :deep(.ui-animal-button .animal-btn__icon) {
     width: 19px;
@@ -160,10 +190,29 @@ defineOptions({ inheritAttrs: false });
     height: 13px;
   }
 
+  :deep(.ui-animal-button:has(> .animal-btn__icon):not(:has(> span:not(.animal-btn__icon))) .animal-btn__icon) {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    background: transparent;
+  }
+
+  :deep(.ui-animal-button:has(> .animal-btn__icon):not(:has(> span:not(.animal-btn__icon))) .animal-btn__icon svg) {
+    width: 14px;
+    height: 14px;
+  }
+
   :deep(.text-secondary) {
     color: var(--animal-text-color-secondary) !important;
     font-size: 12px;
     font-weight: 600;
   }
+}
+
+:global(html[data-ui-theme='animal'] .department-table-actions) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  gap: 5px;
 }
 </style>

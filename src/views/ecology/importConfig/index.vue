@@ -175,8 +175,8 @@
                 <strong>附件模板配置</strong>
                 <span>提交时按分组填充模板，保留原有样式、公式和固定尾部内容。</span>
               </div>
-              <UiTag v-if="attachmentConfig.templateOssId" type="success" effect="plain">模板已配置</UiTag>
-              <UiTag v-else type="warning" effect="plain">尚未上传模板</UiTag>
+              <UiTag v-if="attachmentConfig.templateOssId" class="attachment-template-status-tag" type="success" effect="light">模板已配置</UiTag>
+              <UiTag v-else class="attachment-template-status-tag" type="warning" effect="light">尚未上传模板</UiTag>
             </div>
             <el-form-item label="附件模板" required class="attachment-template-item">
               <div class="attachment-template-card">
@@ -216,8 +216,13 @@
             </div>
             <div v-if="attachmentConfig.templateOssId" class="attachment-fixed-area">
               <div class="attachment-columns-title">
-                <div><strong>固定区域配置</strong><span>只扫描合计行之后的非空文本，候选项需确认后才会覆盖模板内容。</span></div>
-                <UiTag type="success" effect="plain">已配置 {{ attachmentConfig.fixedMappings.length }} 个单元格</UiTag>
+                <div class="attachment-columns-title-copy">
+                  <div class="attachment-columns-title-row">
+                    <strong>固定区域配置</strong>
+                    <span class="attachment-count-badge attachment-count-badge--section">已配置 {{ attachmentConfig.fixedMappings.length }} 个单元格</span>
+                  </div>
+                  <span class="attachment-columns-description">只扫描合计行之后的非空文本，候选项需确认后才会覆盖模板内容。</span>
+                </div>
               </div>
               <el-alert title="请选择单元格并手动添加其中的多个标签；未配置的单元格会继续保留模板原内容。" type="info" :closable="false" class="fixed-area-alert" />
               <div v-if="attachmentTemplateCandidates.length" class="fixed-candidate-list">
@@ -240,14 +245,22 @@
                 <DepartmentDataTable :data="attachmentConfig.fixedMappings" border size="small" max-height="260px">
                   <el-table-column label="位置" width="88" align="center"><template #default="scope"><code>{{ scope.row.cell || `${scope.row.column + 1}:${scope.row.row + 1}` }}</code></template></el-table-column>
                   <el-table-column label="单元格原内容" min-width="250" show-overflow-tooltip><template #default="scope">{{ scope.row.originalContent || '—' }}</template></el-table-column>
-                  <el-table-column label="标签数量" width="100" align="center"><template #default="scope"><UiTag type="info" effect="plain">{{ scope.row.segments?.length || 0 }} 个</UiTag></template></el-table-column>
+                  <el-table-column label="标签数量" width="100" align="center"><template #default="scope"><span class="attachment-count-badge">{{ scope.row.segments?.length || 0 }} 个</span></template></el-table-column>
                   <el-table-column label="生成预览" min-width="360" show-overflow-tooltip><template #default="scope"><span class="fixed-preview-text">{{ fixedCellMappingPreview(scope.row) }}</span></template></el-table-column>
                   <el-table-column label="操作" width="160" align="center"><template #default="scope"><UiButton link type="primary" @click="openFixedSegmentDialog(scope.row)">编辑</UiButton><UiButton link type="danger" @click="removeFixedMapping(scope.$index)">移除</UiButton></template></el-table-column>
                 </DepartmentDataTable>
               </div>
             </div>
             <div v-if="attachmentConfig.headers.length" class="attachment-columns">
-              <div class="attachment-columns-title"><div><strong>附件列映射</strong><span>选择“不填充”可保留该列的模板公式。</span></div><UiTag type="info" effect="plain">{{ attachmentConfig.headers.length }} 列</UiTag></div>
+              <div class="attachment-columns-title">
+                <div class="attachment-columns-title-copy">
+                  <div class="attachment-columns-title-row">
+                    <strong>附件列映射</strong>
+                    <span class="attachment-count-badge attachment-count-badge--section">{{ attachmentConfig.headers.length }} 列</span>
+                  </div>
+                  <span class="attachment-columns-description">选择“不填充”可保留该列的模板公式。</span>
+                </div>
+              </div>
               <DepartmentDataTable :data="attachmentConfig.headers" border size="small" max-height="260px">
                 <el-table-column label="附件列标题" min-width="260" show-overflow-tooltip>
                   <template #default="scope">{{ scope.row.label || `第${(scope.row.columnIndex ?? scope.$index) + 1}列（保留模板内容）` }}</template>
@@ -1744,12 +1757,46 @@ onMounted(async () => { await Promise.all([loadList(), loadWorkflows(), loadBusi
   line-height: 1.6;
 }
 
-:global(.config-dialog .attachment-config-heading .el-tag) {
+:global(.config-dialog .attachment-template-status-tag) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  height: 28px;
   min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
   flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+:global(.config-dialog .attachment-count-badge) {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid #93b6e8;
+  border-radius: 999px;
+  background: #dceaff;
+  color: #234e87;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 1;
+  white-space: nowrap;
+}
+
+:global(html[data-color-mode='dark'] .config-dialog .attachment-count-badge) {
+  border-color: #5577a8;
+  background: #263b5c;
+  color: #d5e4ff;
 }
 
 :global(.config-dialog .attachment-template-item) {
@@ -2179,42 +2226,46 @@ onMounted(async () => { await Promise.all([loadList(), loadWorkflows(), loadBusi
 
 :global(.config-dialog .attachment-columns-title) {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: flex-start;
   margin-bottom: 9px;
 }
 
-:global(.config-dialog .attachment-columns-title > div) {
+:global(.config-dialog .attachment-columns-title-copy) {
+  display: flex;
   min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
-:global(.config-dialog .attachment-columns-title strong),
-:global(.config-dialog .attachment-columns-title span) {
+:global(.config-dialog .attachment-columns-title-row) {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:global(.config-dialog .attachment-columns-title-row strong) {
   display: inline-block;
-}
-
-:global(.config-dialog .attachment-columns-title strong) {
   color: var(--app-text-title);
   font-size: 12px;
 }
 
-:global(.config-dialog .attachment-columns-title span) {
-  margin-left: 8px;
+:global(.config-dialog .attachment-columns-description) {
+  display: block;
+  margin: 0;
   color: var(--el-text-color-secondary);
   font-size: 11px;
   font-weight: 400;
+  line-height: 1.5;
 }
 
-:global(.config-dialog .attachment-columns-title .el-tag) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 56px;
-  height: 28px;
-  padding: 0 10px;
-  line-height: 1;
-  white-space: nowrap;
+:global(.config-dialog .attachment-count-badge--section) {
+  height: 24px;
+  min-height: 24px;
+  padding: 0 9px;
+  font-size: 11px;
 }
 
 :global(.config-dialog .attachment-columns .el-table) {
@@ -2322,16 +2373,6 @@ onMounted(async () => { await Promise.all([loadList(), loadWorkflows(), loadBusi
   :global(.config-dialog .attachment-structure-grid),
   :global(.config-dialog .attachment-output-grid) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  :global(.config-dialog .attachment-columns-title) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  :global(.config-dialog .attachment-columns-title span) {
-    margin-top: 4px;
-    margin-left: 0;
   }
 
   :global(.config-dialog .dialog-footer-actions) {

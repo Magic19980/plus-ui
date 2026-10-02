@@ -5,7 +5,7 @@
     :style="animalStyle"
     v-bind="animalAttrs"
   >
-    <div class="ui-animal-table-scroll" :class="{ 'is-vertical-scroll': Boolean(props.scroll?.y) }" :style="tableScrollStyle">
+    <div ref="tableScrollRef" class="ui-animal-table-scroll" :class="{ 'is-vertical-scroll': Boolean(props.scroll?.y) }" :style="tableScrollStyle">
       <table class="ui-animal-table" :style="{ minWidth: tableMinWidth, gridTemplateColumns: tableGridTemplate }">
         <colgroup>
           <col v-for="(column, index) in columns" :key="columnKey(column, index)" :style="columnWidthStyle(column, index)" />
@@ -114,6 +114,7 @@
                 </button>
                 <span v-else-if="column.type === 'index' && !column.render" class="ui-animal-table__index">{{ rowIndexValue(column, rowIndex) }}</span>
                 <span
+                  v-if="column.type !== 'selection' && column.type !== 'expand' && (column.type !== 'index' || Boolean(column.render))"
                   class="ui-animal-table__cell-inner"
                   :class="{ 'is-tree-label-content': isTreeTable && columnIndex === treeLabelColumnIndex }"
                 >
@@ -315,6 +316,7 @@ interface UiTableColumn {
   selectable?: boolean | ((record: TableRecord, index: number) => boolean);
   style?: Record<string, string | number>;
   render?: (value: unknown, record: TableRecord, index: number) => VNodeChild;
+  renderExpanded?: (record: TableRecord, index: number) => VNodeChild;
   [key: string]: unknown;
 }
 
@@ -409,6 +411,9 @@ const selectedKeys = ref<string[]>(normalizeKeys(props.selectedRowKeys ?? props.
 const expandedKeys = ref<string[]>(normalizeKeys(props.expandedRowKeys ?? props.defaultExpandedRowKeys));
 const currentPage = ref(Math.max(1, paginationConfig.value?.current ?? paginationConfig.value?.defaultCurrent ?? 1));
 const currentPageSize = ref(Math.max(1, paginationConfig.value?.pageSize ?? paginationConfig.value?.defaultPageSize ?? 10));
+const tableScrollRef = ref<HTMLDivElement>();
+const verticalScrollbarGutter = ref(0);
+let tableLayoutObserver: ResizeObserver | undefined;
 const openFilterKey = ref<string | null>(null);
 const filterDraft = ref<unknown[]>([]);
 const filterState = ref<Record<string, unknown[]>>({});
@@ -624,6 +629,35 @@ const tableScrollStyle = computed<CSSProperties>(() => ({
   overflowY: props.scroll?.y ? 'auto' : undefined
 }));
 
+function updateVerticalScrollbarGutter() {
+  const scrollElement = tableScrollRef.value;
+  if (!scrollElement || !props.scroll?.y || scrollElement.scrollHeight <= scrollElement.clientHeight + 1) {
+    verticalScrollbarGutter.value = 0;
+    return;
+  }
+
+  // 读取当前浏览器实际占用的纵向滚动条宽度。覆盖 Windows 经典滚动条、
+  // thin scrollbar 和 macOS overlay scrollbar，不把固定列偏移写死为某个像素值。
+  verticalScrollbarGutter.value = Math.max(0, scrollElement.offsetWidth - scrollElement.clientWidth);
+}
+
+function observeTableLayout() {
+  tableLayoutObserver?.disconnect();
+  const scrollElement = tableScrollRef.value;
+  if (!useAnimalTable.value || !scrollElement) {
+    verticalScrollbarGutter.value = 0;
+    return;
+  }
+
+  if (typeof ResizeObserver !== 'undefined') {
+    tableLayoutObserver = new ResizeObserver(updateVerticalScrollbarGutter);
+    tableLayoutObserver.observe(scrollElement);
+    const tableElement = scrollElement.querySelector('table');
+    if (tableElement) tableLayoutObserver.observe(tableElement);
+  }
+  updateVerticalScrollbarGutter();
+}
+
 const leftOffsets = computed(() => {
   const offsets = new Map<string, number>();
   let offset = 0;
@@ -641,7 +675,8 @@ const rightOffsets = computed(() => {
   for (let index = columns.value.length - 1; index >= 0; index -= 1) {
     const column = columns.value[index];
     if (column.fixed === 'right') {
-      offsets.set(columnKey(column, index), offset);
+      // 固定列避开纵向滚动条的实际占位，避免最右侧操作按钮被滚动条压边。
+      offsets.set(columnKey(column, index), offset + verticalScrollbarGutter.value);
       offset += columnWidth(column, index);
     }
   }
@@ -692,7 +727,9 @@ function columnWidthStyle(column: UiTableColumn, index: number) {
 function cellStyle(column: UiTableColumn, index: number) {
   const key = columnKey(column, index);
   const align = column.align || (isOperationColumn(column) ? 'center' : 'left');
-  const style: Record<string, string | number> = { textAlign: align, ...column.style };
+  // 表格使用 CSS Grid 承载单元格；明确列坐标，避免嵌套展开表中的单元格
+  // 依赖隐式自动放置而落到同一列。
+  const style: Record<string, string | number> = { textAlign: align, ...column.style, gridColumn: String(index + 1) };
   if (column.fixed === 'left') {
     style.position = 'sticky';
     style.left = `${leftOffsets.value.get(key) || 0}px`;
@@ -777,7 +814,8 @@ function expandColumn(column: UiTableColumn | undefined) {
   return Boolean(column);
 }
 function renderExpandedCell(row: TableRecord, index: number) {
-  return columnForExpand.value?.render?.(undefined, row, index);
+  const column = columnForExpand.value;
+  return column?.renderExpanded?.(row, index) ?? column?.render?.(undefined, row, index);
 }
 
 function isRowSelectionDisabled(row: TableRecord, index: number) {
@@ -1148,12 +1186,17 @@ onMounted(() => {
   document.addEventListener('keydown', closeFilterOnEscape, true);
   window.addEventListener('resize', updateFilterMenuPosition);
   window.addEventListener('scroll', updateFilterMenuPosition, true);
+  window.addEventListener('resize', updateVerticalScrollbarGutter);
+  void nextTick(observeTableLayout);
 });
+watch([useAnimalTable, () => props.scroll?.y], () => void nextTick(observeTableLayout), { flush: 'post' });
 onBeforeUnmount(() => {
+  tableLayoutObserver?.disconnect();
   document.removeEventListener('click', closeFilterOnDocumentClick);
   document.removeEventListener('keydown', closeFilterOnEscape, true);
   window.removeEventListener('resize', updateFilterMenuPosition);
   window.removeEventListener('scroll', updateFilterMenuPosition, true);
+  window.removeEventListener('resize', updateVerticalScrollbarGutter);
 });
 
 defineExpose({
@@ -1203,12 +1246,12 @@ defineExpose({
 .ui-animal-table-scroll.is-vertical-scroll .ui-animal-table__th.is-fixed-left,
 .ui-animal-table-scroll.is-vertical-scroll .ui-animal-table__th.is-fixed-right { z-index: 5 !important; }
 .ui-animal-table__cell { min-height: 52px; padding: 13px 16px; background: var(--animal-bg-color, #f8f8f0); font-size: 14px; font-weight: 550; line-height: 1.55; overflow-wrap: anywhere; }
-.ui-animal-table__cell.is-operation { overflow: visible; padding-right: 12px; padding-left: 12px; white-space: nowrap; }
+.ui-animal-table__cell.is-operation { overflow: visible; padding-right: 8px; padding-left: 8px; white-space: nowrap; }
 .ui-animal-table__cell.is-operation :deep(.department-table-actions),
 .ui-animal-table__cell.is-operation :deep(.table-actions),
-.ui-animal-table__cell.is-operation :deep(.history-actions) { display: inline-flex; width: max-content; max-width: none; flex-wrap: nowrap; align-items: center; white-space: nowrap; }
-.ui-animal-table__cell.is-operation .ui-animal-table__cell-inner { display: inline-flex; width: max-content; max-width: none; align-items: center; justify-content: center; flex-wrap: nowrap; white-space: nowrap; }
-.ui-animal-table__cell.is-operation .ui-animal-table__cell-content { display: inline-flex; width: max-content; max-width: none; align-items: center; gap: 8px; flex-wrap: nowrap; white-space: nowrap; }
+.ui-animal-table__cell.is-operation :deep(.history-actions) { display: flex; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+.ui-animal-table__cell.is-operation .ui-animal-table__cell-inner { display: flex; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; align-items: center; justify-content: center; flex-wrap: nowrap; white-space: nowrap; }
+.ui-animal-table__cell.is-operation .ui-animal-table__cell-content { display: flex; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; align-items: center; justify-content: center; gap: 5px; flex-wrap: nowrap; white-space: nowrap; }
 .ui-animal-table__cell.is-operation :deep(.el-tooltip),
 .ui-animal-table__cell.is-operation :deep(.ui-tooltip),
 .ui-animal-table__cell.is-operation :deep(.el-button),
